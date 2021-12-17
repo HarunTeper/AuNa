@@ -33,7 +33,7 @@ Run the following commands in the terminal before using ROS2:
     export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/opt/ros/foxy/share/turtlebot3_gazebo/models
     
     source /opt/ros/foxy/setup.bash
-    source /home/harun/AuNa/install/setup.bash
+    source ~/AuNa/install/setup.bash
     
 After that, build the package:
 
