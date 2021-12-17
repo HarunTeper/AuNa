@@ -1,0 +1,4 @@
+uint16 value # 10 ms
+
+uint16 UNAVAILABLE = 0
+uint16 TEN_MILLISECONDS_IN_PAST = 1

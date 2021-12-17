@@ -1,0 +1,2 @@
+uint32 station_id
+uint16 sequence_number
