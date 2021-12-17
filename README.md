@@ -95,7 +95,7 @@ Finally, compile and run Artery using the following command:
 
 
 ## How to use?
-___
+
 ### File stucture:
 ```
 ├── car_simulator
@@ -136,6 +136,7 @@ ___
 
 
 ### ROS2
+
 After building the package, the currently implemented scenarios can be found in */src/car_simulator/launch/scenarios*. The multi-robot navigation scenario can be launched as follows:
 
     ros2 launch car_simulator scenario_multi_robot_racetrack.launch.py
@@ -160,7 +161,7 @@ In general, it is possible to add arbitrary services to Artery to evaluate other
 
 
 ## Acknowledgements
-___
+
 We would like to thank all the authors who helped to extend the framework. In particular, we would like to thank Anggera Bayuwindra, Enio Prates Vasconcelos Filho, Raphael Riebl, and Ricardo Severino for providing their components and implementation details for the integration.
 
 
