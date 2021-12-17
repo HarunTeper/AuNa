@@ -26,14 +26,14 @@ Then, install additional the following packages:
 Run the following commands in the terminal before using ROS2:
 
     export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    export GAZEBO_MODEL_PATH=~/CMRCE/src/car_simulator/models:$GAZEBO_MODEL_PATH
+    export GAZEBO_MODEL_PATH=~/AuNa/src/car_simulator/models:$GAZEBO_MODEL_PATH
     
     export GAZEBO_MODEL_DATABASE_URI=http://models.gazebosim.org/
     export TURTLEBOT3_MODEL=waffle
     export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/opt/ros/foxy/share/turtlebot3_gazebo/models
     
     source /opt/ros/foxy/setup.bash
-    source /home/harun/CMRCE/install/setup.bash
+    source /home/harun/AuNa/install/setup.bash
     
 After that, build the package:
 
