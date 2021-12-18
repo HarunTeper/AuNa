@@ -89,11 +89,11 @@ Then, follow the installation guide here:
 
     http://artery.v2x-research.eu/install/
     
-Finally, compile and run Artery using the following command:
+Before you can build the repository, you need to source ROS2-Foxy:
 
-    
-
-
+	source /opt/ros/foxy/setup.bash
+	cmake --build build --target run_ros2_platooning
+	
 ## How to use?
 
 ### File stucture:
@@ -135,7 +135,7 @@ Finally, compile and run Artery using the following command:
 ```
 
 
-### ROS2
+## ROS2
 
 After building the package, the currently implemented scenarios can be found in */src/car_simulator/launch/scenarios*. The multi-robot navigation scenario can be launched as follows:
 
