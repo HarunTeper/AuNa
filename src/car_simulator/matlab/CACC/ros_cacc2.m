@@ -3,7 +3,7 @@ pyenv('Version','/usr/bin/python3.7');
 %ros.ros2.internal.createOrGetLocalPython(true)
 
 if ~any(strcmp(ros2("msg","list"),'ros_its_msgs/CAM'))
-    ros2genmsg("/home/harun/CMRCE/src")
+    ros2genmsg("~/AuNa/src")
 end
 
 % simulation parameters

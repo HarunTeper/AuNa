@@ -4,7 +4,7 @@ pyenv('Version','/usr/bin/python3.7');
 
 existing_msgs = ros2("msg","list");
 if ~any(strcmp(existing_msgs,'ros_its_msgs/CAM'))
-    ros2genmsg("/home/harun/CMRCE/src")
+    ros2genmsg("~/AuNa/src")
 end
 
 % simulation parameters
