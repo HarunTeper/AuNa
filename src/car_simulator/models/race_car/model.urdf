@@ -81,7 +81,7 @@
       <origin xyz="${translateX * OffsetJointX} ${translateY * OffsetJointY} ${OffsetJointZ}" rpy="0 0 0" /> 
       <axis xyz="0 1 0" rpy="0 0 0" />
       <limit effort="20" velocity="500"/>
-      <joint_properties damping="1e-12" friction="1e-12"/>
+      <joint_properties damping="1e-9" friction="1e-9"/>
     </joint>
 
     <transmission name="${lr}_wheel_${fb}_transmission" type="SimpleTransmission">
@@ -311,12 +311,12 @@
       <max_steering_angle>7.85</max_steering_angle>
 
       <!-- Max absolute linear speed in m/s -->
-      <max_speed>1.5</max_speed>
+      <max_speed>10.0</max_speed>
 
-      <left_steering_pid_gain>5 0 0.3</left_steering_pid_gain>
-      <left_steering_i_range>0 0</left_steering_i_range>
-      <right_steering_pid_gain>5 0 0.3</right_steering_pid_gain>
-      <right_steering_i_range>0 0</right_steering_i_range>
+      <left_steering_pid_gain>5 0.5 0.15</left_steering_pid_gain>
+      <left_steering_i_range>-10 10</left_steering_i_range>
+      <right_steering_pid_gain>5 0.5 0.15</right_steering_pid_gain>
+      <right_steering_i_range>-10 10</right_steering_i_range>
       <linear_velocity_pid_gain>0.5 0 0</linear_velocity_pid_gain>
       <linear_velocity_i_range>0 0</linear_velocity_i_range>
 

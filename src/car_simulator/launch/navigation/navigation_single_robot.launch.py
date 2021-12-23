@@ -16,7 +16,7 @@ def include_navigation_description(context: LaunchContext):
     # Paths to folders and files
     nav_launch_file_dir = os.path.join(nav2_bringup_pkg_dir, 'launch')
     default_map_file = os.path.join(pkg_dir, 'maps', 'map.yaml'),
-    default_params_file = os.path.join(pkg_dir,'config', 'nav2_params', 'nav2_params_namespace.yaml')
+    default_params_file = os.path.join(pkg_dir,'config', 'nav2_params', 'nav2_params.yaml')
     default_rviz_config_file = os.path.join(pkg_dir, 'rviz','config_navigation_namespace.rviz')
     default_default_bt_xml_filename_file = os.path.join(get_package_share_directory('nav2_bt_navigator'),'behavior_trees', 'navigate_w_replanning_and_recovery.xml')
 
@@ -68,8 +68,8 @@ def generate_launch_description():
     pkg_dir = get_package_share_directory('car_simulator')
 
     # Paths to folders and files
-    default_map_file = os.path.join(pkg_dir, 'maps', 'map.yaml'),
-    default_params_file = os.path.join(pkg_dir,'config', 'nav2_params_namespace.yaml')
+    default_map_file = os.path.join(pkg_dir, 'maps', 'racetrack_decorated', 'map.yaml'),
+    default_params_file = os.path.join(pkg_dir,'config', 'nav2_params', 'nav2_params.yaml')
     default_rviz_config_file = os.path.join(pkg_dir, 'rviz','config_navigation_namespace.rviz')
     default_default_bt_xml_filename_file = os.path.join(get_package_share_directory('nav2_bt_navigator'),'behavior_trees', 'navigate_w_replanning_and_recovery.xml')
 
