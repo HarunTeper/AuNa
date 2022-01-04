@@ -22,7 +22,7 @@
   <depend>tf2_ros</depend>
   <depend>kdl</depend>
   <depend>ros_its_msgs</depend>
-  
+  <depend>etsi_its_msgs</depend>
   
   <exec_depend>joint_state_publisher</exec_depend>
   <exec_depend>joint_state_publisher_gui</exec_depend>

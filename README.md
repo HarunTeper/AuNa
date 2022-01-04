@@ -22,7 +22,11 @@ Then, install additional the following packages:
     pip install ruamel.yaml
     sudo apt-get install ros-foxy-xacro
     sudo apt install ros-foxy-navigation2 ros-foxy-nav2-bringup
-    
+
+After that, build the package:
+
+    colcon build
+        
 Run the following commands in the terminal before using ROS2:
 
     export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
@@ -34,12 +38,6 @@ Run the following commands in the terminal before using ROS2:
     
     source /opt/ros/foxy/setup.bash
     source ~/AuNa/install/setup.bash
-    
-After that, build the package:
-
-    colcon build --packages-select etsi_its_msgs
-    source install/setup.bash
-    colcon build --symlink-install
     
 ### MATLAB and Simulink
 
