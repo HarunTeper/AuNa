@@ -51,6 +51,8 @@ First, install MATLAB and Simulink as described here:
 
 Install Python3.7:
 
+    sudo add-apt-repository ppa:deadsnakes/ppa
+    sudo apt-get update
     sudo apt install python3.7 python3.7-venv libpython3.7
     
 Create symlinks to the Python3.7 installation:
@@ -90,10 +92,8 @@ Then, follow the installation guide here:
 Before you can build the repository, you need to source ROS2-Foxy:
 
 	source /opt/ros/foxy/setup.bash
-	cmake --build build --target run_ros2_platooning
+	cmake --build build
 	
-## How to use?
-
 ### File stucture:
 ```
 ├── car_simulator
@@ -131,8 +131,9 @@ Before you can build the repository, you need to source ROS2-Foxy:
 ├── etsi_its_msgs # ETSI-ITS-G5 messages for OMNeT++ and Artery
 └── ros_its_msgs # CAM simple message format
 ```
-
-
+	
+## How to use?
+___
 ## ROS2
 
 After building the package, the currently implemented scenarios can be found in */src/car_simulator/launch/scenarios*. The multi-robot navigation scenario can be launched as follows:
@@ -155,8 +156,11 @@ The wireless communication between robots is implemented via Artery, which imple
 
 For example, the platooning service is currently implemented in the ros2-platooning scenario in Artery. It detects whether or not a message originates from the direct leading vehicle and forwards these received messages to the platooning controller.
 
-In general, it is possible to add arbitrary services to Artery to evaluate other message formats or scenarios.
+The scenario can be launched by running the following command
 
+    cmake --build build --target run_ros2_platooning
+
+In general, it is possible to add arbitrary services to Artery to evaluate other message formats or scenarios.
 
 ## Acknowledgements
 
