@@ -163,6 +163,8 @@ For example, the platooning service is currently implemented in the ros2-platoon
 
 The scenario can be launched by running the following command
 
+    cmake --build build --target run_ros2_platooning
+
 In general, it is possible to add arbitrary services to Artery to evaluate other message formats or scenarios.
 
 ## Acknowledgements
