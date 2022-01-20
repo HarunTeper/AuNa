@@ -10,22 +10,24 @@ ___
 
 The following steps explain the required installation steps to run the framework on a machine running Ubuntu 20.04:
 
-First, install the following packages and tools as described in the following links:
+First, install the following packages and tools as described here:
 
     https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html
     http://gazebosim.org/tutorials?tut=install_ubuntu&cat=install
     https://docs.ros.org/en/foxy/Tutorials/Colcon-Tutorial.html
-    sudo apt-get install ros-foxy-gazebo-ros-pkgs
     
-Then, install additional the following packages:
+Then, additionally install the following packages:
     
-    pip install ruamel.yaml
-    sudo apt-get install ros-foxy-xacro
-    sudo apt install ros-foxy-navigation2 ros-foxy-nav2-bringup
+pip install ruamel.yaml
+sudo apt install ros-foxy-xacro
+sudo apt install ros-foxy-rmw-cyclonedds-cpp
+sudo apt install ros-foxy-gazebo-ros-pkgs
+sudo apt install ros-foxy-navigation2 ros-foxy-nav2-bringup
+sudo apt install ros-foxy-navigation2 ros-foxy-nav2-bringup ros-foxy-turtlebot3 ros-foxy-turtlebot3-*
 
 After that, build the package:
 
-    colcon build
+    colcon build --symlink-install
         
 Run the following commands in the terminal before using ROS2:
 
@@ -83,16 +85,19 @@ OMNeT++ can be installed as described here:
     
 After that, install the Artery framework. Clone the following GitHub repository:
 
-    https://github.com/HarunTeper/artery_ros2
+    git clone --recurse-submodule https://github.com/HarunTeper/artery_ros2
     
 Then, follow the installation guide here:
 
     http://artery.v2x-research.eu/install/
     
-Before you can build the repository, you need to source ROS2-Foxy:
+Build the artery_ros2 directory as follows:
 
-	source /opt/ros/foxy/setup.bash
-	cmake --build build
+    source /opt/ros/foxy/setup.bash
+    mkdir build
+    cd build
+    cmake ..
+    cmake --build .
 	
 ### File stucture:
 ```
@@ -157,8 +162,6 @@ The wireless communication between robots is implemented via Artery, which imple
 For example, the platooning service is currently implemented in the ros2-platooning scenario in Artery. It detects whether or not a message originates from the direct leading vehicle and forwards these received messages to the platooning controller.
 
 The scenario can be launched by running the following command
-
-    cmake --build build --target run_ros2_platooning
 
 In general, it is possible to add arbitrary services to Artery to evaluate other message formats or scenarios.
 
