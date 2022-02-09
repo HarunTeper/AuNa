@@ -22,7 +22,6 @@ pip install ruamel.yaml
 sudo apt install ros-foxy-xacro
 sudo apt install ros-foxy-rmw-cyclonedds-cpp
 sudo apt install ros-foxy-gazebo-ros-pkgs
-sudo apt install ros-foxy-navigation2 ros-foxy-nav2-bringup
 sudo apt install ros-foxy-navigation2 ros-foxy-nav2-bringup ros-foxy-turtlebot3 ros-foxy-turtlebot3-*
 
 After that, build the package:
