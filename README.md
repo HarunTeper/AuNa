@@ -4,7 +4,7 @@ This repository includes a complete ROS2 package for the simulation of autonomou
 
 Additionally, it integrates ROS2-Foxy with MATLAB/Simulink and OMNeT++/Artery, to enable the integration of control systems and communication standards. Currently, it includes a CACC-controller for platooning and an implementation of the ETSI-ITS-G5 communication architecture.
 
-![](https://github.com/HarunTeper/AuNa/tree/main/media/gazeboSimulation.gif)
+![](https://github.com/HarunTeper/AuNa/blob/main/media/gazeboSimulation.gif)
 
 ## Package Setup and Overview
 ___
@@ -169,7 +169,7 @@ The scenario can be launched by running the following command
 In general, it is possible to add arbitrary services to Artery to evaluate other message formats or scenarios.
 
 
-![](https://github.com/HarunTeper/AuNa/tree/main/media/omnetSimulation.gif)
+![](https://github.com/HarunTeper/AuNa/blob/main/media/omnetSimulation.gif)
 
 ## Acknowledgements
 
