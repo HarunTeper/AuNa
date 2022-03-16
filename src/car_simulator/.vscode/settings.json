@@ -79,7 +79,15 @@
         "valueobject": "cpp",
         "config": "cpp",
         "containers": "cpp",
-        "readerwriter": "cpp"
+        "readerwriter": "cpp",
+        "vec4b": "cpp",
+        "vec4d": "cpp",
+        "vec4f": "cpp",
+        "vec4i": "cpp",
+        "vec4s": "cpp",
+        "vec4ub": "cpp",
+        "vec4ui": "cpp",
+        "vec4us": "cpp"
     },
     "cmake.configureOnOpen": false
 }

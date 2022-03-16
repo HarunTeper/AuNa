@@ -6,6 +6,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "gazebo_msgs/srv/get_model_list.hpp"
+#include "gazebo_msgs/msg/model_states.hpp"
 
 using namespace std::placeholders;
 
@@ -16,34 +17,15 @@ class arteryInfo : public rclcpp::Node
         // Create the publisher, timer and service client
         arteryInfo(): Node("artery_info_node"), robot_names()
         {
-            publisher = this->create_publisher<std_msgs::msg::String>("/model_states", 10);
-            modelClient = this->create_client<gazebo_msgs::srv::GetModelList>("/get_model_list");
-            std::chrono::duration<double> timer_duration = std::chrono::duration<double>(1.0 / 100.0);
-            service_timer = this->create_wall_timer(timer_duration, std::bind(&arteryInfo::service_timer_callback, this));
+            subscription = this->create_subscription<gazebo_msgs::msg::ModelStates>("/model_states", 10, std::bind(&arteryInfo::model_state_callback, this, _1));
+            publisher = this->create_publisher<std_msgs::msg::String>("/artery_model_list", 10);
         }
 
     private:
         // Timer callback which starts the service request to Gazebo
-        void service_timer_callback()
-        {
-            auto request = std::make_shared<gazebo_msgs::srv::GetModelList::Request>();
-            while (!modelClient->wait_for_service()) 
-            {
-                if (!rclcpp::ok())
-                {
-                    RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for the service. Exiting.");
-                    return;
-                }
-                RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "service not available, waiting again...");
-            }
-            auto result = modelClient->async_send_request(request,std::bind(&arteryInfo::model_srv_callback,this,std::placeholders::_1));
-        }
 
-        // Service callback which publishes the model namespaces to Artery and OMNeT++
-        void model_srv_callback(const rclcpp::Client<gazebo_msgs::srv::GetModelList>::SharedFuture future)
-        {
-            auto result = future.get();
-            for(std::string model_name : result.get()->model_names)
+        void model_state_callback(const gazebo_msgs::msg::ModelStates::SharedPtr msg){
+            for(std::string model_name : msg->name)
             {
                 if(model_name.find("robot") != std::string::npos)
                 {
@@ -54,7 +36,7 @@ class arteryInfo : public rclcpp::Node
             }
         }
 
-        rclcpp::Client<gazebo_msgs::srv::GetModelList>::SharedPtr modelClient;
+        rclcpp::Subscription<gazebo_msgs::msg::ModelStates>::SharedPtr subscription;
         rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher;
         rclcpp::TimerBase::SharedPtr service_timer;
         std::vector<std::string> robot_names;

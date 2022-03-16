@@ -1,5 +1,5 @@
 clc; clear all;
-pyenv('Version','/usr/bin/python3.7');
+pyenv('Version','/usr/bin/python3.9');
 %ros.ros2.internal.createOrGetLocalPython(true)
 
 existing_msgs = ros2("msg","list");
@@ -8,9 +8,9 @@ if ~any(strcmp(existing_msgs,'ros_its_msgs/CAM'))
 end
 
 % simulation parameters
-num_robots = 6;
+num_robots = 4;
 
-cIN = 4;
+cIN = 0;
 
 if cIN==0
     Tsim = inf;
@@ -77,7 +77,7 @@ for idx = 1:num_robots-1
     simIn(idx) = simIn(idx).setVariable('theta_0',theta_0);
     
     simIn(idx) = simIn(idx).setBlockParameter([model '/subscriber/Subscribe'],'Topic',['/robot' num2str(idx) '/caccCam']);
-    simIn(idx) = simIn(idx).setBlockParameter([model '/publisher/Subscribe'],'Topic',['/robot' num2str(idx) '/robot_pose']);
+    simIn(idx) = simIn(idx).setBlockParameter([model '/publisher/Subscribe'],'Topic',['/robot' num2str(idx) '/localization_pose']);
     simIn(idx) = simIn(idx).setBlockParameter([model '/publisher/Subscribe1'],'Topic',['/robot' num2str(idx) '/odom']);
     simIn(idx) = simIn(idx).setBlockParameter([model '/publisher/Publish'],'Topic',['/robot' num2str(idx) '/cmd_vel']);
     simIn(idx) = simIn(idx).setBlockParameter([model '/ToWorkspace'],'VariableName',['robot' num2str(idx)]);

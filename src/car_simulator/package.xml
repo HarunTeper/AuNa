@@ -18,7 +18,6 @@
   <depend>nav_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
-  <depend>tf2</depend>
   <depend>tf2_ros</depend>
   <depend>kdl</depend>
   <depend>ros_its_msgs</depend>

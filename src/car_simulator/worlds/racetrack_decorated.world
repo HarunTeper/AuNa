@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sdf version="1.4">
     <world name="racetrack">
+        <plugin name="gazebo_ros_state" filename="libgazebo_ros_state.so">
+          <update_rate>10.0</update_rate>
+        </plugin>
         <physics type="ode">
             <real_time_update_rate>1000.0</real_time_update_rate>
             <max_step_size>0.001</max_step_size>

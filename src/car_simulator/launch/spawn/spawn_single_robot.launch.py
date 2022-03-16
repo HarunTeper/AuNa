@@ -71,12 +71,20 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(os.path.join(launch_file_dir, 'spawn_car.launch.py')),
         launch_arguments={'x_pose': x_pose,'y_pose': y_pose,'z_pose': z_pose, 'namespace':namespace, 'name':name}.items()
     )
-    robot_pose_cmd = Node(
+    localization_pose_cmd = Node(
         package='car_simulator',
-        executable='robot_pose',
-        name='robot_pose',
+        executable='localization_pose',
+        name='localization_pose',
         namespace = urdf_namespace,
         arguments= {urdf_namespace},
+        output='screen'
+    )
+    simulation_pose_cmd = Node(
+        package='car_simulator',
+        executable='simulation_pose',
+        name='simulation_pose',
+        namespace = namespace,
+        arguments= {namespace},
         output='screen'
     )
 
@@ -93,6 +101,7 @@ def generate_launch_description():
 
     ld.add_action(robot_state_publisher_cmd)
     ld.add_action(spawn_car_cmd)
-    ld.add_action(robot_pose_cmd)
+    ld.add_action(localization_pose_cmd)
+    ld.add_action(simulation_pose_cmd)
 
     return ld

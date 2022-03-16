@@ -13,27 +13,30 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
+
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
-find_package(gazebo REQUIRED)
-find_package(gazebo_ros_pkgs REQUIRED)
-find_package(gazebo_msgs REQUIRED)
+
+find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
-find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(tf2 REQUIRED)
-find_package(tf2_ros REQUIRED)
-find_package(tf2_kdl REQUIRED)
 find_package(ros_its_msgs REQUIRED)
 find_package(etsi_its_msgs REQUIRED)
+find_package(gazebo_msgs REQUIRED)
 
-add_executable(robot_pose src/transformations/robot_pose.cpp)
-ament_target_dependencies(robot_pose rclcpp std_msgs geometry_msgs nav_msgs tf2 tf2_ros tf2_kdl)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_kdl REQUIRED)
+
+
+add_executable(localization_pose src/transformations/localization_pose.cpp)
+ament_target_dependencies(localization_pose rclcpp std_msgs geometry_msgs nav_msgs tf2_ros tf2_kdl)
+
+add_executable(simulation_pose src/transformations/simulation_pose.cpp)
+ament_target_dependencies(simulation_pose rclcpp std_msgs geometry_msgs nav_msgs gazebo_msgs)
 
 add_executable(globalTF src/transformations/global_tf.cpp)
-ament_target_dependencies(globalTF rclcpp std_msgs gazebo_msgs geometry_msgs tf2 tf2_ros tf2_kdl)
+ament_target_dependencies(globalTF rclcpp std_msgs gazebo_msgs geometry_msgs tf2_ros tf2_kdl)
 
 add_executable(arteryInfo src/omnet/artery_info.cpp)
 ament_target_dependencies(arteryInfo rclcpp std_msgs gazebo_msgs)
@@ -44,30 +47,15 @@ ament_target_dependencies(omnetTX rclcpp std_msgs geometry_msgs nav_msgs etsi_it
 add_executable(omnetRX src/omnet/omnetRX.cpp)
 ament_target_dependencies(omnetRX rclcpp std_msgs etsi_its_msgs ros_its_msgs)
 
-set(dependencies
-  "geometry_msgs"
-  "nav_msgs"
-  "rclcpp"
-  "sensor_msgs"
-  "std_msgs"
-  "tf2"
-  "tf2_ros"
-  "tf2_kdl"
-  "ros_its_msgs"
-  "etsi_its_msgs"
-)
-
-install(TARGETS ${EXEC_NAME}
-  DESTINATION lib/${PROJECT_NAME}
-)
-
 install(TARGETS
-  robot_pose
+  localization_pose
+  simulation_pose
   arteryInfo
   globalTF
   omnetTX
   omnetRX
-  DESTINATION lib/${PROJECT_NAME})
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 install(DIRECTORY 
   config
@@ -80,7 +68,7 @@ install(DIRECTORY
 )
 
 install(DIRECTORY include/
-  DESTINATION include/
+  DESTINATION include
 )
 
 # Install Python modules
@@ -94,14 +82,4 @@ install(PROGRAMS
 )
 
 ament_export_include_directories(include)
-ament_export_dependencies(gazebo_ros_pkgs)
-ament_export_dependencies(geometry_msgs)
-ament_export_dependencies(nav_msgs)
-ament_export_dependencies(rclcpp)
-ament_export_dependencies(sensor_msgs)
-ament_export_dependencies(tf2)
-ament_export_dependencies(tf2_ros)
-ament_export_dependencies(tf2_kdl)
-ament_export_dependencies(ros_its_msgs)
-ament_export_dependencies(etsi_its_msgs)
 ament_package()

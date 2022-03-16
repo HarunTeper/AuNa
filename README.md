@@ -20,14 +20,17 @@ First, install the following packages and tools as described here:
     
 Then, additionally install the following packages:
     
-pip install ruamel.yaml
-sudo apt install ros-foxy-xacro
-sudo apt install ros-foxy-rmw-cyclonedds-cpp
-sudo apt install ros-foxy-gazebo-ros-pkgs
-sudo apt install ros-foxy-navigation2 ros-foxy-nav2-bringup ros-foxy-turtlebot3 ros-foxy-turtlebot3-*
+    sudo apt install python3-pip
+    pip install ruamel.yaml
+    sudo apt install python3-colcon-common-extensions
+    sudo apt install ros-foxy-xacro
+    sudo apt install ros-foxy-rmw-cyclonedds-cpp
+    sudo apt install ros-foxy-gazebo-ros-pkgs
+    sudo apt install ros-foxy-navigation2 ros-foxy-nav2-bringup ros-foxy-turtlebot3 ros-foxy-turtlebot3-*
 
 After that, build the package:
 
+    source /opt/ros/foxy/setup.bash
     colcon build --symlink-install
         
 Run the following commands in the terminal before using ROS2:

@@ -4,6 +4,7 @@ from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, OpaqueFunction, DeclareLaunchArgument
 from launch.launch_context import LaunchContext
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
 
 def include_world_description(context : LaunchContext):
 
@@ -12,11 +13,15 @@ def include_world_description(context : LaunchContext):
 
     # Paths to folders and files
     world = os.path.join(get_package_share_directory('car_simulator'),'worlds',str(context.launch_configurations['world_name'])+'.world')
+
+    state = LaunchConfiguration('gazebo_ros_state', default='true')
     
     # Nodes and other launch files
     gazebo_launch_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(pkg_gazebo_ros, 'launch', 'gazebo.launch.py')),
-        launch_arguments={'world': world}.items()
+        launch_arguments={'world': world,
+        'gazebo_ros_state': state,
+        }.items()
     )
 
     # Create launch description actions

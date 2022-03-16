@@ -76,7 +76,7 @@ for idx = 1:num_robots-1
     simIn(idx) = simIn(idx).setVariable('theta_0',theta_0);
     
     simIn(idx) = simIn(idx).setBlockParameter([model '/subscriber/Subscribe'],'Topic',['/robot' num2str(idx) '/caccCam']);
-    simIn(idx) = simIn(idx).setBlockParameter([model '/publisher/Subscribe'],'Topic',['/robot' num2str(idx) '/robot_pose']);
+    simIn(idx) = simIn(idx).setBlockParameter([model '/publisher/Subscribe'],'Topic',['/robot' num2str(idx) '/localization_pose']);
     simIn(idx) = simIn(idx).setBlockParameter([model '/publisher/Subscribe1'],'Topic',['/robot' num2str(idx) '/odom']);
     simIn(idx) = simIn(idx).setBlockParameter([model '/publisher/Publish'],'Topic',['/robot' num2str(idx) '/cmd_vel']);
     simIn(idx) = simIn(idx).setBlockParameter([model '/ToWorkspace'],'VariableName',['robot' num2str(idx)]);
@@ -117,7 +117,7 @@ for idx = 1:num_robots-1
     return
     
     %set_param([tmp_model_name '/robot' num2str(idx) '/subscriber/Subscribe'], 'Topic',['/robot' num2str(idx) '/caccCam']);
-    %set_param([tmp_model_name '/robot' num2str(idx) '/publisher/Subscribe'], 'Topic',['/robot' num2str(idx) '/robot_pose']);
+    %set_param([tmp_model_name '/robot' num2str(idx) '/publisher/Subscribe'], 'Topic',['/robot' num2str(idx) '/localization_pose']);
     %set_param([tmp_model_name '/robot' num2str(idx) '/publisher/Subscribe1'], 'Topic',['/robot' num2str(idx) '/odom']);
     %set_param([tmp_model_name '/robot' num2str(idx) '/publisher/Publish'], 'Topic',['/robot' num2str(idx) '/cmd_vel']);
     %set_param([tmp_model_name '/robot' num2str(idx) '/ToWorkspace'], 'VariableName',['robot' num2str(idx)]);

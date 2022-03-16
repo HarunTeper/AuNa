@@ -25,7 +25,7 @@ class omnetTX : public rclcpp::Node
 
             timer = this->create_wall_timer(100ms, std::bind(&omnetTX::cam_callback, this));
 
-            pose_subscriber = this->create_subscription<geometry_msgs::msg::PoseStamped>("robot_pose", 10, std::bind(&omnetTX::pose_callback, this, _1));
+            pose_subscriber = this->create_subscription<geometry_msgs::msg::PoseStamped>("localization_pose", 10, std::bind(&omnetTX::pose_callback, this, _1));
             odom_subscriber = this->create_subscription<nav_msgs::msg::Odometry>("odom", 10, std::bind(&omnetTX::odom_callback, this, _1));
 
             this->robot_name = robot_name;
