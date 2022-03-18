@@ -44,17 +44,24 @@ class omnetTX : public rclcpp::Node
 
             msg.station_type.value = msg.station_type.PASSENGER_CAR;
 
+            // Scale car and adjust for data format
             msg.reference_position.longitude = this->longitude*10*10; //0.1m
             msg.reference_position.latitude = this->latitude*10*10; //0.1m
             msg.reference_position.altitude.value = this->altitude*100*10; //0.01m
 
+            // Adjust for data format
             msg.high_frequency_container.heading.value = this->heading*10;//0.1 degree
+            // Scale car and adjust for data format
             msg.high_frequency_container.speed.value = this->speed*100*10;//0.01 m/s
             msg.high_frequency_container.drive_direction.value = this->speed<0;
-            msg.high_frequency_container.vehicle_length.value = 0.49*10;
-            msg.high_frequency_container.vehicle_width.value = 0.18*10;
+            // Adjust for data format
+            msg.high_frequency_container.vehicle_length.value = 0.49*10;//m
+            msg.high_frequency_container.vehicle_width.value = 0.18*10;//m
+            // Scale car and adjust for data format
             msg.high_frequency_container.longitudinal_acceleration.value = this->acceleration*10*10;//0.1m/s^2
-            msg.high_frequency_container.curvature.value = this->curvature/10;
+            // Scale car data format
+            msg.high_frequency_container.curvature.value = this->curvature/10;//1/m
+            // Adjust for data format
             msg.high_frequency_container.yaw_rate.value = this->yaw_rate*100;//0.01degree/s
 
             publisher->publish(msg);
@@ -68,7 +75,7 @@ class omnetTX : public rclcpp::Node
             this->acceleration = (old_speed-this->speed)/odom_rate;
             this->yaw_rate = msg->twist.twist.angular.z; //yaw rate in radians/s
             this->yaw_rate = this->yaw_rate * 180 / M_PI; //yaw rate in degree/s
-            this->curvature = this->yaw_rate/std::max(1.0f,this->speed);
+            this->curvature = this->yaw_rate/std::max(0.01f,this->speed);
         }
 
         // Receive and save the robot pose data
