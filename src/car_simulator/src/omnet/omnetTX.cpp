@@ -71,8 +71,8 @@ class omnetTX : public rclcpp::Node
         void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
         {
             float old_speed = this->speed;
-            this->speed = sqrt(pow(msg->twist.twist.linear.x,2)+pow(msg->twist.twist.linear.y,2));//absolute speed times the sign of the direction
-            this->acceleration = (old_speed-this->speed)/odom_rate;
+            this->speed = sqrt(pow(msg->twist.twist.linear.x,2)+pow(msg->twist.twist.linear.y,2));//absolute speed without direction
+            this->acceleration = (this->speed-old_speed)/odom_rate;
             this->yaw_rate = msg->twist.twist.angular.z; //yaw rate in radians/s
             this->yaw_rate = this->yaw_rate * 180 / M_PI; //yaw rate in degree/s
             this->curvature = this->yaw_rate/std::max(0.01f,this->speed);

@@ -2,23 +2,15 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <math.h>
 
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "geometry_msgs/msg/transform_stamped.hpp"
-#include "nav_msgs/msg/odometry.hpp"
 #include "std_msgs/msg/header.hpp"
+#include "ros_its_msgs/msg/cam.hpp"
 
-#include "gazebo_msgs/srv/get_model_list.hpp"
 #include "gazebo_msgs/msg/model_states.hpp"
 #include "gazebo_msgs/srv/get_entity_state.hpp"
 #include "gazebo_msgs/msg/entity_state.hpp"
-
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
-
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 using namespace std::placeholders;
 
@@ -29,9 +21,9 @@ class SimulationPose : public rclcpp::Node
         // Create the publisher, timer and service client
         SimulationPose(std::string name): Node("model_state_node")
         {
-            publisher = this->create_publisher<geometry_msgs::msg::PoseStamped>("simulation_pose", 10);
+            publisher = this->create_publisher<ros_its_msgs::msg::CAM>("simulation_pose", 10);
             modelClient = this->create_client<gazebo_msgs::srv::GetEntityState>("/get_entity_state");
-            std::chrono::duration<double> timer_duration = std::chrono::duration<double>(1.0 / 100.0);
+            std::chrono::duration<double> timer_duration = std::chrono::duration<double>(publish_rate);
             service_timer = this->create_wall_timer(timer_duration, std::bind(&SimulationPose::service_timer_callback, this));
             this->name = name;
         }
@@ -59,18 +51,65 @@ class SimulationPose : public rclcpp::Node
         {
             auto result = future.get();
             auto entity = result.get();
-            geometry_msgs::msg::PoseStamped simulation_pose;
-            simulation_pose.header.frame_id = name;
+
+            ros_its_msgs::msg::CAM simulation_pose;
+            simulation_pose.header.frame_id = this->name;
             simulation_pose.header.stamp = entity->header.stamp;
-            simulation_pose.pose = entity->state.pose;
+
+            // Adjust for robot size
+            simulation_pose.x = entity->state.pose.position.x*10*10;
+            simulation_pose.y = entity->state.pose.position.y*10*10;
+            simulation_pose.z = entity->state.pose.position.z*10*10;
+
+            std::vector<double> rpy = euler_from_quaternion(std::vector<double>{entity->state.pose.orientation.x,entity->state.pose.orientation.y,entity->state.pose.orientation.z,entity->state.pose.orientation.w});
+            simulation_pose.theta = rpy[2] * 180 / M_PI - 360 * floor( rpy[2] * 180 / M_PI / 360 ); // get heading in radians
+            simulation_pose.thetadot = entity->state.twist.angular.z * 180 / M_PI;
+
+            // Determine the speed and drive direction, in reference to the global frame
+            float old_speed = this->speed;
+
+            float len_x = entity->state.twist.linear.x/(abs(entity->state.twist.linear.x)+abs(entity->state.twist.linear.y));
+            float len_y = entity->state.twist.linear.y/(abs(entity->state.twist.linear.x)+abs(entity->state.twist.linear.y));
+            float len_h = sqrt(pow(len_x,2)+pow(len_y,2));
+            float velocity_heading = acos(len_x/len_h) * 180 / M_PI;
+            velocity_heading = (len_y>=0) * velocity_heading + (len_y<0)* (360-velocity_heading);
+            int drive_direction = simulation_pose.theta-velocity_heading>90 || simulation_pose.theta-velocity_heading<270;
+            this->speed = sqrt(pow(entity->state.twist.linear.x,2)+pow(entity->state.twist.linear.y,2)) * 10;
+
+            simulation_pose.drive_direction = drive_direction;
+            simulation_pose.v = this->speed;
+            simulation_pose.vdot = (this->speed-old_speed)/publish_rate*10;
+
+            simulation_pose.curv = simulation_pose.thetadot/std::max(0.01,simulation_pose.v)/10;
+
+            simulation_pose.vehicle_length = 0.49*10;
+            simulation_pose.vehicle_width = 0.18*10;
+
             publisher->publish(simulation_pose);
+        }
+
+        // Converts to Euler angles from quaternion representation of orientation
+        std::vector<double> euler_from_quaternion(std::vector<double> quaternion)
+        {
+            double x = quaternion[0];
+            double y = quaternion[1];
+            double z = quaternion[2];
+            double w = quaternion[3];
+
+            double roll = atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y));
+            double pitch = asin(2 * (w * y - z * x));
+            double yaw = atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z));
+
+            return std::vector<double>{roll,pitch,yaw};
         }
 
         rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedPtr modelClient;
         rclcpp::Subscription<gazebo_msgs::msg::ModelStates>::SharedPtr subscription;
-        rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr publisher;
+        rclcpp::Publisher<ros_its_msgs::msg::CAM>::SharedPtr publisher;
         rclcpp::TimerBase::SharedPtr service_timer;
         std::string name;
+        double speed;
+        double publish_rate = 0.1;
 };
 
 int main(int argc, char * argv[])
