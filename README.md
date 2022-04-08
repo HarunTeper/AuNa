@@ -16,17 +16,16 @@ First, install the following packages and tools as described here:
 
     https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html
     http://gazebosim.org/tutorials?tut=install_ubuntu&cat=install
-    https://docs.ros.org/en/foxy/Tutorials/Colcon-Tutorial.html
     
 Then, additionally install the following packages:
     
     sudo apt install python3-pip
-    pip install ruamel.yaml
     sudo apt install python3-colcon-common-extensions
     sudo apt install ros-foxy-xacro
     sudo apt install ros-foxy-rmw-cyclonedds-cpp
     sudo apt install ros-foxy-gazebo-ros-pkgs
     sudo apt install ros-foxy-navigation2 ros-foxy-nav2-bringup ros-foxy-turtlebot3 ros-foxy-turtlebot3-*
+    pip install ruamel.yaml
 
 After that, build the package:
 
@@ -47,39 +46,32 @@ Run the following commands in the terminal before using ROS2:
     
 ### MATLAB and Simulink
 
-MATLAB does not currently support ROS2-Foxy by default. However, it is possible to connect MATLAB and ROS2 systems using the following steps:
-
 First, install MATLAB and Simulink as described here:
 
     https://de.mathworks.com/help/install/
     https://de.mathworks.com/products/matlab.html
     https://de.mathworks.com/products/simulink.html
 
-Install Python3.7:
+Install Python3.9:
 
     sudo add-apt-repository ppa:deadsnakes/ppa
     sudo apt-get update
-    sudo apt install python3.7 python3.7-venv libpython3.7
+    sudo apt install python3.9 python3.9-venv libpython3.9
     
-Create symlinks to the Python3.7 installation:
+Create symlinks to the Python3.9 installation:
 
-    sudo ln -s /usr/lib/x86_64-linux-gnu/libpython3.7m.so.1 /usr/lib/libpython3.7m.so.1
-    sudo ln -s /usr/lib/x86_64-linux-gnu/libpython3.7m.so.1.0 /usr/lib/libpython3.7m.so.1.0
+    sudo ln -s /usr/lib/x86_64-linux-gnu/libpython3.9.so.1 /usr/lib/libpython3.9.so.1
+    sudo ln -s /usr/lib/x86_64-linux-gnu/libpython3.9.so.1.0 /usr/lib/libpython3.9.so.1.0
     
 Install numpy:
 
     sudo apt-get install python-numpy
     
-Before launching MATLAB, you need to enter the following two commands in the terminal:
-
-    source /usr/local/MATLAB/R2021b/sys/ros2/glnxa64/ros2/setup.bash
-    export LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libstdc++.so.6:/usr/lib/x86_64-linux-gnu/libcurl.so"
-    
 In every MATLAB script, you need to add the following line at the beginning:
     
-    pyenv('Version','/usr/bin/python3.7');
+    pyenv('Version','/usr/bin/python3.9');
     
-After that, it should be possible for ROS2 and MATLAB/Simulink to communicate via DDS.
+After that, ROS2 and MATLAB/Simulink are connected.
 
 ### OMNeT++ and Artery
 
