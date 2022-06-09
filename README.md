@@ -89,13 +89,13 @@ OMNeT++ can be installed as described here:
     
 After that, install the Artery framework. Clone the following GitHub repository:
 
-    git clone --recurse-submodule https://github.com/HarunTeper/artery_ros2
+    git clone --recurse-submodule https://github.com/HarunTeper/artery-ros2
     
 Then, follow the installation guide here:
 
     http://artery.v2x-research.eu/install/
     
-Build the artery_ros2 directory as follows:
+Build the artery-ros2 directory as follows:
 
     source /opt/ros/foxy/setup.bash
     mkdir build
