@@ -57,13 +57,13 @@ class SimulationPose : public rclcpp::Node
             simulation_pose.header.stamp = entity->header.stamp;
 
             // Adjust for robot size
-            simulation_pose.x = entity->state.pose.position.x*10*10;
-            simulation_pose.y = entity->state.pose.position.y*10*10;
-            simulation_pose.z = entity->state.pose.position.z*10*10;
+            simulation_pose.x = entity->state.pose.position.x*10*scale_factor;//0.1m
+            simulation_pose.y = entity->state.pose.position.y*10*scale_factor;//0.1m
+            simulation_pose.z = entity->state.pose.position.z*100*scale_factor;//0.01m
 
             std::vector<double> rpy = euler_from_quaternion(std::vector<double>{entity->state.pose.orientation.x,entity->state.pose.orientation.y,entity->state.pose.orientation.z,entity->state.pose.orientation.w});
-            simulation_pose.theta = rpy[2] * 180 / M_PI - 360 * floor( rpy[2] * 180 / M_PI / 360 ); // get heading in radians
-            simulation_pose.thetadot = entity->state.twist.angular.z * 180 / M_PI;
+            simulation_pose.theta = rpy[2] * 180 / M_PI - 360 * floor( rpy[2] * 180 / M_PI / 360 ); // get heading in radians //1 degree
+            simulation_pose.thetadot = entity->state.twist.angular.z * 180 / M_PI;//1 yydegree/s
 
             // Determine the speed and drive direction, in reference to the global frame
             float old_speed = this->speed;
@@ -74,16 +74,16 @@ class SimulationPose : public rclcpp::Node
             float velocity_heading = acos(len_x/len_h) * 180 / M_PI;
             velocity_heading = (len_y>=0) * velocity_heading + (len_y<0)* (360-velocity_heading);
             int drive_direction = simulation_pose.theta-velocity_heading>90 || simulation_pose.theta-velocity_heading<270;
-            this->speed = sqrt(pow(entity->state.twist.linear.x,2)+pow(entity->state.twist.linear.y,2)) * 10;
+            this->speed = sqrt(pow(entity->state.twist.linear.x,2)+pow(entity->state.twist.linear.y,2)) * scale_factor; //1 m/s
 
             simulation_pose.drive_direction = drive_direction;
             simulation_pose.v = this->speed;
-            simulation_pose.vdot = (this->speed-old_speed)/publish_rate*10;
+            simulation_pose.vdot = (this->speed-old_speed)/publish_rate*scale_factor;//1 m/s^2
 
-            simulation_pose.curv = simulation_pose.thetadot/std::max(0.01,simulation_pose.v)/10;
+            simulation_pose.curv = simulation_pose.thetadot/std::max(0.01,simulation_pose.v)/scale_factor;//1/m
 
-            simulation_pose.vehicle_length = 0.49*10;
-            simulation_pose.vehicle_width = 0.18*10;
+            simulation_pose.vehicle_length = 0.49*scale_factor;
+            simulation_pose.vehicle_width = 0.18*scale_factor;
 
             publisher->publish(simulation_pose);
         }
@@ -110,6 +110,7 @@ class SimulationPose : public rclcpp::Node
         std::string name;
         double speed;
         double publish_rate = 0.1;
+        double scale_factor = 10;
 };
 
 int main(int argc, char * argv[])
