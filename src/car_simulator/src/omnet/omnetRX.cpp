@@ -29,18 +29,19 @@ class omnetRX : public rclcpp::Node
         {
             ros_its_msgs::msg::CAM cacc_msg;
 
-            cacc_msg.x = (float)msg->reference_position.longitude/10/10;
-            cacc_msg.y = (float)msg->reference_position.latitude/10/10;
-            cacc_msg.theta = (((float)msg->high_frequency_container.heading.value/10)*M_PI/180 - (2*M_PI) * floor(((float)msg->high_frequency_container.heading.value/10)*M_PI/180 / (M_PI)));
-            cacc_msg.thetadot = (msg->high_frequency_container.yaw_rate.value/10/10)*M_PI/180;
-            cacc_msg.v = (float)msg->high_frequency_container.speed.value/100/10;
-            cacc_msg.vdot = (float)msg->high_frequency_container.longitudinal_acceleration.value/10/10;
+            cacc_msg.x = (float)msg->reference_position.longitude/10/scale_factor; //0.1m
+            cacc_msg.y = (float)msg->reference_position.latitude/10/scale_factor; //0.1m
+            cacc_msg.theta = (((float)msg->high_frequency_container.heading.value/10)*M_PI/180 - (2*M_PI) * floor(((float)msg->high_frequency_container.heading.value/10)*M_PI/180 / (M_PI)));//0.1 degree
+            cacc_msg.thetadot = (msg->high_frequency_container.yaw_rate.value/100)*M_PI/180;//0.01degree/s
+            cacc_msg.v = (float)msg->high_frequency_container.speed.value/100/scale_factor;//0.01 m/s
+            cacc_msg.vdot = (float)msg->high_frequency_container.longitudinal_acceleration.value/10/scale_factor;//0.1m/s^2
 
             cam_publisher->publish(cacc_msg);
         }
 
         rclcpp::Publisher<ros_its_msgs::msg::CAM>::SharedPtr cam_publisher;
         rclcpp::Subscription<etsi_its_msgs::msg::CAM>::SharedPtr omnet_subscriber;
+        double scale_factor = 10;
 };
 
 

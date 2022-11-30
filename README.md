@@ -75,60 +75,65 @@ After that, ROS2 and MATLAB/Simulink are connected.
 
 ### OMNeT++ and Artery
 
-OMNeT++ can be installed as described here:
+Please install OMNeT++ 5.x as described here:
 
     https://omnetpp.org/
-    
+
 After that, install the Artery framework. Clone the following GitHub repository:
 
-    git clone --recurse-submodule https://github.com/HarunTeper/artery_ros2
-    
+    git clone --recurse-submodule https://github.com/HarunTeper/artery-ros2
+
 Then, follow the installation guide here:
 
     http://artery.v2x-research.eu/install/
-    
-Build the artery_ros2 directory as follows:
+
+Before building artery, move to the AuNa folder and run the following commands:
 
     source /opt/ros/foxy/setup.bash
+    colcon build --symlink-install
+    source install/setup.bash
+
+In the same terminal, build the artery-ros2 directory as follows:
+
     mkdir build
     cd build
     cmake ..
     cmake --build .
-	
+
 ### File stucture:
 ```
 ├── car_simulator
-│   ├── car_simulator
-│   │   └── yaml_launch.py  #Includes commands to read and configure .yaml files
-│   ├── CMakeLists.txt
-│   ├── config
-│   │   ├── map_params #Parameter files for maps, such as spawn locations and others
-│   │   ├── model_params # Model paramters of each robot model
-│   │   ├── nav2_params # Navigation parameters for Nav2 nodes
-│   │   └── scenario_params # Scenario parameters for robot nodes
-│   ├── include # Include files for scripts in src
-│   ├── launch # Launch files
-│   │   ├── gazebo # Gazebo launch files for arbitrary world files
-│   │   ├── navigation # Navigation launch files for single and multiple robots
-│   │   ├── omnet # OMNeT++ launch files to launch bridge-nodes for communication with OMNeT++ and Artery
-│   │   ├── scenarios # Currently implemented launch files for custom scenarios
-│   │   └── spawn # Launch files to correctly spawn robots in Gazebo
-│   ├── maps # Map files for Gazebo worlds
-│   │   └── racetrack_decorated
-│   ├── matlab
-│   │   ├── CACC # Platooning controller implementation in MATLAB and Simulink
-│   ├── models # Implemented robot models and world model files
-│   │   ├── prius_custom
-│   │   ├── race_car
-│   │   └── racetrack
-│   ├── package.xml
-│   ├── rviz # RViz configuration files for scenarios
-│   ├── scripts # Python scripts for scenarios and tools
-│   │   ├── teleoperation # Scripts for keyboard controls
-│   ├── src # C++ scripts
-│   │   ├── omnet # OMNeT++ bridge-nodes
-│   │   └── transformations # Transformation nodes for multi-robot setups
-│   └── worlds # World files for Gazebo
+│   ├── car_simulator
+│   │   └── yaml_launch.py  #Includes commands to read and configure .yaml files
+│   ├── CMakeLists.txt
+│   ├── config
+│   │   ├── map_params #Parameter files for maps, such as spawn locations and others
+│   │   ├── model_params # Model paramters of each robot model
+│   │   ├── nav2_params # Navigation parameters for Nav2 nodes
+│   │   └── scenario_params # Scenario parameters for robot nodes
+│   ├── include # Include files for scripts in src
+│   ├── launch # Launch files
+│   │   ├── gazebo # Gazebo launch files for arbitrary world files
+│   │   ├── navigation # Navigation launch files for single and multiple robots
+│   │   ├── omnet # OMNeT++ launch files to launch bridge-nodes for communication with OMNeT++ and Artery
+│   │   ├── scenarios # Currently implemented launch files for custom scenarios
+│   │   └── spawn # Launch files to correctly spawn robots in Gazebo
+│   ├── maps # Map files for Gazebo worlds
+│   │   └── racetrack_decorated
+│   ├── matlab
+│   │   ├── CACC # Platooning controller implementation in MATLAB and Simulink
+│   ├── models # Implemented robot models and world model files
+│   │   ├── prius_custom
+│   │   ├── race_car
+│   │   └── racetrack
+│   ├── package.xml
+│   ├── rviz # RViz configuration files for scenarios
+│   ├── scripts # Python scripts for scenarios and tools
+│   │   ├── teleoperation # Scripts for keyboard controls
+│   ├── src # C++ scripts
+│   │   ├── omnet # OMNeT++ bridge-nodes
+│   │   └── transformations # Transformation nodes for multi-robot setups
+│   └── worlds # World files for Gazebo
 ├── etsi_its_msgs # ETSI-ITS-G5 messages for OMNeT++ and Artery
 └── ros_its_msgs # CAM simple message format
 ```
@@ -169,26 +174,3 @@ In general, it is possible to add arbitrary services to Artery to evaluate other
 ## Acknowledgements
 
 We would like to thank all the authors who helped to extend the framework. In particular, we would like to thank Anggera Bayuwindra, Enio Prates Vasconcelos Filho, Raphael Riebl, and Ricardo Severino for providing their components and implementation details for the integration.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
