@@ -19,12 +19,7 @@ First, install the following packages and tools as described here:
     
 Then, additionally install the following packages:
     
-    sudo apt install python3-pip
-    sudo apt install python3-colcon-common-extensions
-    sudo apt install ros-foxy-xacro
-    sudo apt install ros-foxy-rmw-cyclonedds-cpp
-    sudo apt install ros-foxy-gazebo-ros-pkgs
-    sudo apt install ros-foxy-navigation2 ros-foxy-nav2-bringup ros-foxy-turtlebot3 ros-foxy-turtlebot3-*
+    sudo apt install python3-pip python3-colcon-common-extensions ros-foxy-xacro ros-foxy-rmw-cyclonedds-cpp ros-foxy-gazebo-ros-pkgs ros-foxy-navigation2 ros-foxy-nav2-bringup ros-foxy-turtlebot3 ros-foxy-turtlebot3-*
     pip install ruamel.yaml
 
 After that, build the package:
