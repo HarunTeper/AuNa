@@ -36,6 +36,8 @@ class omnetRX : public rclcpp::Node
             // cacc_msg.v // m/s
             // cacc_msg.vdot // m/s^2
 
+            cacc_msg.robot_name = msg->header.frame_id;
+
             cacc_msg.x = (float)msg->reference_position.longitude/10/scale_factor; //0.1m
             cacc_msg.y = (float)msg->reference_position.latitude/10/scale_factor; //0.1m
             cacc_msg.theta = (((float)msg->high_frequency_container.heading.value/10)*M_PI/180 - (2*M_PI) * floor(((float)msg->high_frequency_container.heading.value/10)*M_PI/180 / (M_PI)));//0.1 degree

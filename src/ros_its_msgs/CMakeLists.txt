@@ -24,6 +24,7 @@ find_package(std_msgs REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/CAM.msg"
   "msg/StringArray.msg"
+  "srv/Identifier.srv"
   DEPENDENCIES builtin_interfaces std_msgs
  )
  
