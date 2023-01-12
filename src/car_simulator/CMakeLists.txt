@@ -47,6 +47,9 @@ ament_target_dependencies(omnetTX rclcpp std_msgs geometry_msgs nav_msgs etsi_it
 add_executable(omnetRX src/omnet/omnetRX.cpp)
 ament_target_dependencies(omnetRX rclcpp std_msgs etsi_its_msgs ros_its_msgs)
 
+add_executable(omnet_cam_filter src/omnet/omnet_cam_filter.cpp)
+ament_target_dependencies(omnet_cam_filter rclcpp ros_its_msgs)
+
 install(TARGETS
   localization_pose
   simulation_pose
@@ -54,6 +57,7 @@ install(TARGETS
   globalTF
   omnetTX
   omnetRX
+  omnet_cam_filter
   DESTINATION lib/${PROJECT_NAME}
 )
 
