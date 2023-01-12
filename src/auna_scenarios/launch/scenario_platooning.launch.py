@@ -1,7 +1,6 @@
-"""Multiple cars omnet module launch file"""
-
 import os
 from ament_index_python.packages import get_package_share_directory
+from launch_ros.actions import Node
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription
 from launch.launch_context import LaunchContext
@@ -13,24 +12,38 @@ def include_launch_description(context: LaunchContext):
     """Return launch description"""
 
     # Package Directories
-    pkg_dir = get_package_share_directory('auna_omnet')
+    scenario_pkg_dir = get_package_share_directory('auna_scenarios')
 
     # Paths to folders and files
-    omnet_launch_file_dir = os.path.join(pkg_dir, 'launch')
+    scenario_launch_file_dir = os.path.join(scenario_pkg_dir, 'launch')
 
     # Launch Argument Configurations
     robot_number = LaunchConfiguration('robot_number', default='2')
+    world_name = LaunchConfiguration('world_name', default='racetrack_decorated')
 
     # Nodes and other launch files
     launch_description_content = []
 
-    for num in range(int(robot_number.perform(context))):
+    # Nodes and other launch files
+    launch_description_content.append(
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(os.path.join(scenario_launch_file_dir, 'scenario_omnet_multi_robot_racetrack.launch.py')),
+            launch_arguments={
+                'robot_number': robot_number,
+                'world_name': world_name
+            }.items(),
+        )
+    )
+
+    for num in range(int(robot_number.perform(context))-1):
         launch_description_content.append(
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(os.path.join(omnet_launch_file_dir, 'omnet_single_robot_modules.launch.py')),
-                launch_arguments={
-                    'namespace': "robot"+str(num)
-                }.items(),
+            Node(
+                package='auna_omnet',
+                executable='omnet_cam_filter',
+                name='omnet_cam_filter',
+                namespace="robot"+str(num+1),
+                arguments={str(num)},
+                output='screen'
             )
         )
 
@@ -46,11 +59,17 @@ def generate_launch_description():
         default_value='2',
         description='Number of spawned robots'
     )
+    world_name_arg = DeclareLaunchArgument(
+        'world_name',
+        default_value='racetrack_decorated',
+        description='Gazebo world file name'
+    )
 
     # Launch Description
     launch_description = LaunchDescription()
 
     launch_description.add_action(robot_number_arg)
+    launch_description.add_action(world_name_arg)
 
     launch_description.add_action(OpaqueFunction(function=include_launch_description))
 

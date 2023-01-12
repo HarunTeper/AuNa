@@ -1,7 +1,7 @@
 #include "auna_omnet/omnet_receiver.hpp"
 
 // Create a publisher and subscriber
-OmnetReceiver::OmnetReceiver() : Node("omnetRX")
+OmnetReceiver::OmnetReceiver() : Node("omnet_receiver_node")
 {
     omnet_subscriber_ = this->create_subscription<etsi_its_msgs::msg::CAM>("cam_in", 2, [this](const etsi_its_msgs::msg::CAM::SharedPtr msg){cam_callback(msg);});
     cam_publisher_ = this->create_publisher<auna_its_msgs::msg::CAM>("cam", 2);
@@ -11,6 +11,8 @@ OmnetReceiver::OmnetReceiver() : Node("omnetRX")
 void OmnetReceiver::cam_callback(const etsi_its_msgs::msg::CAM::SharedPtr msg)
 {
     auna_its_msgs::msg::CAM cacc_msg;
+
+    cacc_msg.robot_name = msg->header.frame_id;
 
     cacc_msg.x = (float)msg->reference_position.longitude/10/scale_factor_; //0.1m
     cacc_msg.y = (float)msg->reference_position.latitude/10/scale_factor_; //0.1m

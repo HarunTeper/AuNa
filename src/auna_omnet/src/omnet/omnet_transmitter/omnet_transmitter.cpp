@@ -1,7 +1,7 @@
 #include "auna_omnet/omnet_transmitter.hpp"
 
 // Create subscribers to get robot data and publisher to send to Artery and OMNeT++
-OmnetTransmitter::OmnetTransmitter(std::string robot_name):Node("omnetTX")
+OmnetTransmitter::OmnetTransmitter(std::string robot_name):Node("omnet_transmitter_node")
 {
     pose_subscriber = this->create_subscription<geometry_msgs::msg::PoseStamped>("localization_pose", 2, [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg){pose_callback(msg);});
     odom_subscriber = this->create_subscription<nav_msgs::msg::Odometry>("odom", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg){odom_callback(msg);});

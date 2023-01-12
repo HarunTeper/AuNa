@@ -1,3 +1,4 @@
+#!/bin/sh
 # ROS2
 sudo apt-get -y install software-properties-common
 sudo add-apt-repository universe
