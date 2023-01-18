@@ -1,5 +1,5 @@
 clc; clear all;
-pyenv('Version','/usr/bin/python3.9');
+pyenv('Version','/home/harun/Python-3.9.9/python');
 %ros.ros2.internal.createOrGetLocalPython(true)
 
 existing_msgs = ros2("msg","list");
@@ -8,7 +8,7 @@ if ~any(strcmp(existing_msgs,'auna_its_msgs/CAM'))
 end
 
 % simulation parameters
-num_robots = 4;
+num_robots = 2;
 
 cIN = 0;
 
