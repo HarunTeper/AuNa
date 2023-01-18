@@ -37,9 +37,9 @@ void SimulationPose::model_srv_callback(const rclcpp::Client<gazebo_msgs::srv::G
     simulation_pose.header.stamp = entity->header.stamp;
 
     // Adjust for robot size
-    simulation_pose.x = entity->state.pose.position.x*10*scale_factor_;//0.1m
-    simulation_pose.y = entity->state.pose.position.y*10*scale_factor_;//0.1m
-    simulation_pose.z = entity->state.pose.position.z*100*scale_factor_;//0.01m
+    simulation_pose.x = entity->state.pose.position.x*scale_factor_;//0.1m
+    simulation_pose.y = entity->state.pose.position.y*scale_factor_;//0.1m
+    simulation_pose.z = entity->state.pose.position.z*scale_factor_;//0.01m
 
     // Determine yaw from orientation quaternion
     tf2::Quaternion quat(
