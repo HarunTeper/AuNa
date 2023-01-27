@@ -13,3 +13,11 @@
 	path = src/transport_drivers
 	url = git@github.com:ros-drivers/transport_drivers.git
 	branch = galactic
+[submodule "src/physical/diagnostics"]
+	path = src/physical/diagnostics
+	url = git@github.com:ros/diagnostics.git
+	branch=galactic
+[submodule "src/physical/ackermann_msgs"]
+	path = src/physical/ackermann_msgs
+	url = git@github.com:ros-drivers/ackermann_msgs.git
+	branch = ros2

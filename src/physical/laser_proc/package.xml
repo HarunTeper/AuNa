@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>laser_proc</name>
+  <version>1.0.2</version>
+  <description>laser_proc</description>
+
+  <maintainer email="chadrockey@willowgarage.com">Chad Rockey</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/laser_proc</url>
+  <url type="bugtracker">https://github.com/ros-perception/laser_proc/issues</url>
+  <url type="repository">https://github.com/ros-perception/laser_proce</url>
+
+  <author email="chadrockey@willowgarage.com">Chad Rockey</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <build_depend>class_loader</build_depend>
+  <build_depend>rclcpp</build_depend>
+  <build_depend>rclcpp_components</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+
+  <exec_depend>class_loader</exec_depend>
+  <exec_depend>rclcpp</exec_depend>
+  <exec_depend>rclcpp_components</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
