@@ -81,6 +81,10 @@ for idx = 1:num_robots-1
     simIn(idx) = simIn(idx).setBlockParameter([model '/publisher/Subscribe1'],'Topic',['/robot' num2str(idx) '/odom']);
     simIn(idx) = simIn(idx).setBlockParameter([model '/publisher/Publish'],'Topic',['/robot' num2str(idx) '/cmd_vel']);
     simIn(idx) = simIn(idx).setBlockParameter([model '/ToWorkspace'],'VariableName',['robot' num2str(idx)]);
+
+    simIn(idx) = simIn(idx).setBlockParameter([model '/controller/LA/Subscribe'],'Topic',['/robot' num2str(idx) '/standstill_distance']);
+    simIn(idx) = simIn(idx).setBlockParameter([model '/controller/LA/Subscribe1'],'Topic',['/robot' num2str(idx) '/time_gap']);
+
 end
 
 simOut = parsim(simIn);
