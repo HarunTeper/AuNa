@@ -1,28 +1,28 @@
 [submodule "src/physical/laser_proc"]
 	path = src/physical/laser_proc
-	url = git@github.com:ros-perception/laser_proc.git
+	url = https://github.com/ros-perception/laser_proc.git
 	branch = ros2-devel
 [submodule "src/physical/urg_node2"]
 	path = src/physical/urg_node2
-	url = git@github.com:Hokuyo-aut/urg_node2.git
+	url = https://github.com/Hokuyo-aut/urg_node2.git
 	branch = main
 [submodule "src/physical/transport_drivers"]
 	path = src/physical/transport_drivers
-	url = git@github.com:ros-drivers/transport_drivers.git
+	url = https://github.com/ros-drivers/transport_drivers.git
 	branch = galactic
 [submodule "src/physical/vesc"]
 	path = src/physical/vesc
-	url = git@github.com:f1tenth/vesc.git
+	url = https://github.com/f1tenth/vesc.git
 	branch = ros2
 [submodule "src/physical/ackermann_msgs"]
 	path = src/physical/ackermann_msgs
-	url = git@github.com:ros-drivers/ackermann_msgs.git
+	url = https://github.com/ros-drivers/ackermann_msgs.git
 	branch = ros2
 [submodule "src/physical/diagnostics"]
 	path = src/physical/diagnostics
-	url = git@github.com:ros/diagnostics.git
+	url = https://github.com/ros/diagnostics.git
 	branch = galactic
 [submodule "src/physical/udp_msgs"]
 	path = src/physical/udp_msgs
-	url = git@github.com:flynneva/udp_msgs.git
+	url = https://github.com/flynneva/udp_msgs.git
 	branch = main
