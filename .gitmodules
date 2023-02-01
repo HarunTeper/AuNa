@@ -21,6 +21,6 @@
 	path = src/physical/ackermann_msgs
 	url = git@github.com:ros-drivers/ackermann_msgs.git
 	branch = ros2
-[submodule "src/udp_msgs"]
-	path = src/udp_msgs
+[submodule "src/physical/udp_msgs"]
+	path = src/physical/udp_msgs
 	url = git@github.com:flynneva/udp_msgs.git
