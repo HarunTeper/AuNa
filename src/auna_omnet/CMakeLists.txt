@@ -23,6 +23,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(etsi_its_msgs REQUIRED)
 find_package(auna_msgs REQUIRED)
+find_package(tf2 REQUIRED)
 
 # Include Cpp "include" directory
 include_directories(include)
@@ -38,7 +39,7 @@ add_executable(omnet_receiver src/omnet/omnet_receiver/omnet_receiver_main.cpp)
 add_executable(omnet_cam_filter src/omnet/omnet_cam_filter/omnet_cam_filter_main.cpp)
 
 # Target dependencies
-set(omnet_transmitter_dependencies rclcpp std_msgs geometry_msgs nav_msgs etsi_its_msgs auna_its_msgs)
+set(omnet_transmitter_dependencies rclcpp std_msgs geometry_msgs nav_msgs etsi_its_msgs auna_its_msgs tf2)
 ament_target_dependencies(omnet_transmitter_node ${omnet_transmitter_dependencies})
 ament_target_dependencies(omnet_transmitter ${omnet_transmitter_dependencies})
 set(omnet_receiver_dependencies rclcpp std_msgs etsi_its_msgs auna_its_msgs)
