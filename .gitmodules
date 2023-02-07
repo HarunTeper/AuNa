@@ -30,3 +30,7 @@
 	path = src/physical/joystick_drivers
 	url = https://github.com/ros-drivers/joystick_drivers.git
 	branch = ros2
+[submodule "src/physical/teleop_twist_joy"]
+	path = src/physical/teleop_twist_joy
+	url = https://github.com/ros2/teleop_twist_joy.git
+	branch = foxy
