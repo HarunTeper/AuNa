@@ -14,9 +14,15 @@ def include_launch_description(context: LaunchContext):
     # Package Directories
     vesc_pkg_dir = get_package_share_directory('vesc_driver')
     lidar_pkg_dir = get_package_share_directory('urg_node2')
+    joy_pkg_dir = get_package_share_directory('teleop_twist_joy')
+    physical_pkg_dir = get_package_share_directory('auna_physical')
 
     vesc_config = os.path.join(vesc_pkg_dir,'params','vesc_config.yaml')
     lidar_launch_file_dir = os.path.join(lidar_pkg_dir, 'launch')
+    joy_launch_file_dir = os.path.join(joy_pkg_dir, 'launch')
+    config_file_dir = os.path.join(physical_pkg_dir, 'config')
+
+    joy_config_file_path = os.path.join(config_file_dir, 'ps3.config.yaml')
 
     # Nodes and other launch files
     launch_description_content = []
@@ -25,6 +31,15 @@ def include_launch_description(context: LaunchContext):
     launch_description_content.append(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(lidar_launch_file_dir, 'urg_node2.launch.py')),
+        )
+    )
+
+    launch_description_content.append(
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(os.path.join(joy_launch_file_dir, 'teleop-launch.py')),
+            launch_arguments={
+                'config_filepath': joy_config_file_path
+            }.items(),
         )
     )
 
