@@ -5,7 +5,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription
 from launch.launch_context import LaunchContext
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, TextSubstitution
 
 
 def include_launch_description(context: LaunchContext):
@@ -14,15 +14,14 @@ def include_launch_description(context: LaunchContext):
     # Package Directories
     vesc_pkg_dir = get_package_share_directory('vesc_driver')
     lidar_pkg_dir = get_package_share_directory('urg_node2')
-    joy_pkg_dir = get_package_share_directory('teleop_twist_joy')
-    physical_pkg_dir = get_package_share_directory('auna_physical')
 
     vesc_config = os.path.join(vesc_pkg_dir,'params','vesc_config.yaml')
     lidar_launch_file_dir = os.path.join(lidar_pkg_dir, 'launch')
-    joy_launch_file_dir = os.path.join(joy_pkg_dir, 'launch')
-    config_file_dir = os.path.join(physical_pkg_dir, 'config')
+    
+    # Launch configurations
 
-    joy_config_file_path = os.path.join(config_file_dir, 'ps3.config.yaml')
+    joy_dev = LaunchConfiguration('joy_dev')
+    config_filepath = LaunchConfiguration('config_filepath')
 
     # Nodes and other launch files
     launch_description_content = []
@@ -31,15 +30,6 @@ def include_launch_description(context: LaunchContext):
     launch_description_content.append(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(lidar_launch_file_dir, 'urg_node2.launch.py')),
-        )
-    )
-
-    launch_description_content.append(
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(joy_launch_file_dir, 'teleop-launch.py')),
-            launch_arguments={
-                'config_filepath': joy_config_file_path
-            }.items(),
         )
     )
 
@@ -99,16 +89,53 @@ def include_launch_description(context: LaunchContext):
         )
     )
 
+    launch_description_content.append(
+        Node(
+            package='joy', 
+            executable='joy_node', 
+            name='joy_node',
+            namespace='robot',
+            parameters=[{
+                'dev': joy_dev,
+                'deadzone': 0.3,
+                'autorepeat_rate': 20.0,
+            }])
+    )
+
+    launch_description_content.append(
+        Node(
+            package='teleop_twist_joy', 
+            executable='teleop_node',
+            name='teleop_twist_joy_node',
+            namespace='robot',
+            parameters=[config_filepath]
+        )
+    )
+
     return launch_description_content
 
 
 def generate_launch_description():
     """Return launch description"""
 
-    # Launch Arguments
+    # Paths to folders and files
+
+    physical_pkg_dir = get_package_share_directory('auna_physical')
+    config_file_dir = os.path.join(physical_pkg_dir, 'config')
+    joy_config_file_path = os.path.join(config_file_dir, 'ps3.config.yaml')
 
     # Launch Description
     launch_description = LaunchDescription()
+
+    # Launch arguments
+
+    joy_config_arg = DeclareLaunchArgument('joy_config', default_value='ps3')
+    joy_dev_arg = DeclareLaunchArgument('joy_dev', default_value='/dev/input/js0')
+    config_filepath_arg = DeclareLaunchArgument('config_filepath', default_value=joy_config_file_path)
+
+    launch_description.add_action(joy_config_arg)
+    launch_description.add_action(joy_dev_arg)
+    launch_description.add_action(config_filepath_arg)
 
     launch_description.add_action(OpaqueFunction(function=include_launch_description))
 
