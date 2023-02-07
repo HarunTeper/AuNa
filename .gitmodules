@@ -26,3 +26,7 @@
 	path = src/physical/udp_msgs
 	url = https://github.com/flynneva/udp_msgs.git
 	branch = main
+[submodule "src/physical/joystick_drivers"]
+	path = src/physical/joystick_drivers
+	url = https://github.com/ros-drivers/joystick_drivers.git
+	branch = ros2
