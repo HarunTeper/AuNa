@@ -12,10 +12,11 @@ def include_launch_description(context: LaunchContext):
     """Return launch description"""
 
     # Package Directories
+    pkg_dir = get_package_share_directory('auna_physical')
     vesc_pkg_dir = get_package_share_directory('vesc_driver')
     lidar_pkg_dir = get_package_share_directory('urg_node2')
 
-    vesc_config = os.path.join(vesc_pkg_dir,'params','vesc_config.yaml')
+    vesc_config = os.path.join(pkg_dir,'config','vesc.config.yaml')
     lidar_launch_file_dir = os.path.join(lidar_pkg_dir, 'launch')
     
     # Launch configurations

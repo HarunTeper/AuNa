@@ -5,12 +5,12 @@
     scale_linear:
       x: 1.0
     scale_linear_turbo:
-      x: 1.0
+      x: 2.0
 
     axis_angular:
-      yaw: 0
+      yaw: 2
     scale_angular:
-      yaw: 0.4
+      yaw: 0.5
 
     enable_button: 8  # L2 shoulder button
     enable_turbo_button: 10  # L1 shoulder button
