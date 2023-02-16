@@ -25,15 +25,14 @@ def generate_launch_description():
 
     namespace_arg = DeclareLaunchArgument('namespace', default_value='robot')
     vesc_config_arg = DeclareLaunchArgument('vesc_config', default_value=vesc_config)
-    joy_config_arg = DeclareLaunchArgument('joy_config', default_value='ps3')
     joy_dev_arg = DeclareLaunchArgument('joy_dev', default_value='/dev/input/js0')
-    config_filepath_arg = DeclareLaunchArgument('joy_config', default_value=joy_config_file_path)
+    config_filepath_arg = DeclareLaunchArgument('joy_config_file', default_value=joy_config_file_path)
 
     # Launch configurations
 
     namespace = LaunchConfiguration('namespace')
     joy_dev = LaunchConfiguration('joy_dev')
-    joy_config = LaunchConfiguration('vesc_config')
+    joy_config_file = LaunchConfiguration('joy_config_file')
     vesc_config = LaunchConfiguration('vesc_config')
 
     # Nodes and other launch files
@@ -79,7 +78,7 @@ def generate_launch_description():
         parameters=[
             {"speed_to_erpm_gain": 4614.0},
             {"speed_to_erpm_offset": 0.0},
-            {"steering_angle_to_servo_gain": -1.2135},
+            {"steering_angle_to_servo_gain": -1.0},
             {"steering_angle_to_servo_offset": 0.530}
         ],
         output='screen'
@@ -102,7 +101,7 @@ def generate_launch_description():
         executable='teleop_node',
         name='teleop_twist_joy_node',
         namespace=namespace,
-        parameters=[joy_config]
+        parameters=[joy_config_file]
     )
 
     # Launch Description
@@ -110,7 +109,6 @@ def generate_launch_description():
 
     launch_description.add_action(namespace_arg)
     launch_description.add_action(vesc_config_arg)
-    launch_description.add_action(joy_config_arg)
     launch_description.add_action(joy_dev_arg)
     launch_description.add_action(config_filepath_arg)
 
