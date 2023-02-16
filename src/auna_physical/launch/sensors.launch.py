@@ -12,6 +12,7 @@ def generate_launch_description():
 
     # Paths to folders and files
     auna_physical_pkg_dir = get_package_share_directory('auna_physical')
+    auna_physical_launch_file_dir = os.path.join(auna_physical_pkg_dir, 'launch')
 
     # Launch arguments
     namespace_arg = DeclareLaunchArgument('namespace', default_value='robot')
@@ -21,14 +22,14 @@ def generate_launch_description():
 
     # Nodes and other launch files
     lidar_launch_file = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(auna_physical_pkg_dir, 'lidar_sensor.launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(auna_physical_launch_file_dir 'lidar_sensor.launch.py')),
         launch_arguments={
             'namespace': namespace
         }.items()
     )
 
     vesc_launch_file = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(auna_physical_pkg_dir, 'vesc.launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(auna_physical_launch_file_dir, 'vesc.launch.py')),
         launch_arguments={
             'namespace': namespace
         }.items()
