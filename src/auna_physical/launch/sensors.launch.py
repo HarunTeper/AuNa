@@ -22,7 +22,7 @@ def generate_launch_description():
 
     # Nodes and other launch files
     lidar_launch_file = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(auna_physical_launch_file_dir 'lidar_sensor.launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(auna_physical_launch_file_dir, 'lidar_sensor.launch.py')),
         launch_arguments={
             'namespace': namespace
         }.items()
