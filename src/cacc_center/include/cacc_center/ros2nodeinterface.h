@@ -4,9 +4,9 @@
 //
 // Code generated for Simulink model 'CACC_Center'.
 //
-// Model version                  : 4.5
+// Model version                  : 4.6
 // Simulink Coder version         : 9.8 (R2022b) 13-May-2022
-// C/C++ source code generated on : Mon Jan 30 12:36:57 2023
+// C/C++ source code generated on : Tue Feb 21 12:19:03 2023
 //
 #ifndef _ROS2_MATLAB_NODEINTERFACE_
 #define _ROS2_MATLAB_NODEINTERFACE_

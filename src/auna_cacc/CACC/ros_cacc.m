@@ -1,5 +1,5 @@
 clc; clear all;
-pyenv('Version','/home/harun/Python-3.9.9/python');
+pyenv('Version','/usr/bin/python3.9');
 %ros.ros2.internal.createOrGetLocalPython(true)
 
 existing_msgs = ros2("msg","list");

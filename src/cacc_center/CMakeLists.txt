@@ -76,7 +76,7 @@ target_include_directories(CACC_Center PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 target_link_libraries(CACC_Center 
-    "/usr/local/MATLAB/R2022b/sys/os/glnxa64/orig/libstdc++.so.6"
+    "/home/ls12-gpuhost/install_dir/MATLAB/sys/os/glnxa64/orig/libstdc++.so.6"
 	${CMAKE_DL_LIBS}
     )
 install(TARGETS CACC_Center
@@ -100,4 +100,4 @@ add_custom_command(
 				   )				   
 endforeach(file_i)
 ament_package()
-# Generated on Mon Jan 30 12:36:59 2023
+# Generated on Tue Feb 21 12:19:05 2023
