@@ -13,11 +13,9 @@ def include_launch_description(context: LaunchContext):
 
     # Package Directories
     scenario_pkg_dir = get_package_share_directory('auna_scenarios')
-    cacc_pkg_dir = get_package_share_directory('auna_cacc')
 
     # Paths to folders and files
     scenario_launch_file_dir = os.path.join(scenario_pkg_dir, 'launch')
-    cacc_launch_file_dir = os.path.join(cacc_pkg_dir, 'launch')
 
     # Launch Argument Configurations
     robot_number = LaunchConfiguration('robot_number', default='2')
@@ -33,16 +31,6 @@ def include_launch_description(context: LaunchContext):
             launch_arguments={
                 'robot_number': robot_number,
                 'world_name': world_name
-            }.items(),
-        )
-    )
-
-    # Nodes and other launch files
-    launch_description_content.append(
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(cacc_launch_file_dir, 'cacc_controller.launch.py')),
-            launch_arguments={
-                'robot_number': robot_number,
             }.items(),
         )
     )
