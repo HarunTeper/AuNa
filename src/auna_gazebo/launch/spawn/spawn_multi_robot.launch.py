@@ -26,14 +26,15 @@ def include_launch_description(context: LaunchContext):
     world_name = LaunchConfiguration('world_name')
 
     # Names and poses of the robots
+    map_path = os.path.join(pkg_dir, "config", "map_params", world_name.perform(context)+".yaml")
     robots = []
     for num in range(int(robot_number.perform(context))):
         robots.append({
             'name': 'robot'+str(num),
             'namespace': 'robot'+str(num),
-            'x_pose': yaml_launch.get_yaml_value('auna_gazebo', "map_params", world_name.perform(context), ["spawn", "offset", "x"])+num*yaml_launch.get_yaml_value('auna_gazebo', "map_params", world_name.perform(context), ["spawn", "linear", "x"]),
-            'y_pose': yaml_launch.get_yaml_value('auna_gazebo', "map_params", world_name.perform(context), ["spawn", "offset", "y"])+num*yaml_launch.get_yaml_value('auna_gazebo', "map_params", world_name.perform(context), ["spawn", "linear", "y"]),
-            'z_pose': yaml_launch.get_yaml_value('auna_gazebo', "map_params", world_name.perform(context), ["spawn", "offset", "z"])+num*yaml_launch.get_yaml_value('auna_gazebo', "map_params", world_name.perform(context), ["spawn", "linear", "z"]),
+            'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"]),
+            'y_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"]),
+            'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"]),
             }
         )
 

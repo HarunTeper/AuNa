@@ -13,6 +13,7 @@ def include_launch_description(context: LaunchContext):
 
     # Package Directories
     pkg_dir = get_package_share_directory('auna_nav2')
+    gazebo_pkg_dir = get_package_share_directory('auna_gazebo')
 
     # Paths to folders and files
     nav_launch_file_dir = os.path.join(pkg_dir, 'launch')
@@ -30,14 +31,15 @@ def include_launch_description(context: LaunchContext):
     world_name = LaunchConfiguration('world_name')
 
     # Names and poses of the robots
+    map_path = os.path.join(gazebo_pkg_dir, "config", "map_params", world_name.perform(context)+".yaml")
     robots = []
     for num in range(int(robot_number.perform(context))):
         robots.append({
             'name': 'robot'+str(num),
             'namespace': 'robot'+str(num),
-            'x_pose': yaml_launch.get_yaml_value('auna_gazebo', "map_params", world_name.perform(context), ["spawn", "offset", "x"])+num*yaml_launch.get_yaml_value('auna_gazebo', "map_params", world_name.perform(context), ["spawn", "linear", "x"]),
-            'y_pose': yaml_launch.get_yaml_value('auna_gazebo', "map_params", world_name.perform(context), ["spawn", "offset", "y"])+num*yaml_launch.get_yaml_value('auna_gazebo', "map_params", world_name.perform(context), ["spawn", "linear", "y"]),
-            'z_pose': yaml_launch.get_yaml_value('auna_gazebo', "map_params", world_name.perform(context), ["spawn", "offset", "z"])+num*yaml_launch.get_yaml_value('auna_gazebo', "map_params", world_name.perform(context), ["spawn", "linear", "z"]),
+            'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"]),
+            'y_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"]),
+            'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"]),
             }
         )
 
@@ -49,7 +51,7 @@ def include_launch_description(context: LaunchContext):
             'initial_pose.y': robots[num]['y_pose'],
             'initial_pose.z': robots[num]['z_pose'],
         }
-        tmp_params_file = yaml_launch.get_yaml('auna_nav2','nav2_params', params_file_name.perform(context))
+        tmp_params_file = yaml_launch.get_yaml(os.path.join(pkg_dir, 'config', 'nav2_params', params_file_name.perform(context)+".yaml"))
         tmp_params_file = yaml_launch.substitute_values(tmp_params_file, param_substitutions)
         tmp_params_file = yaml_launch.insert_namespace(tmp_params_file, robots[num]['namespace'])
         tmp_params_file = yaml_launch.get_temp_file(tmp_params_file)
