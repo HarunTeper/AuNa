@@ -37,7 +37,8 @@ def include_launch_description(context: LaunchContext):
                 Command([
                     'xacro ', model,
                     ' namespace:=', urdf_namespace]),
-                'use_sim_time': use_sim_time
+                'use_sim_time': use_sim_time,
+                'use_tf_static' : False
             },
         ],
         remappings=remapping_tf
