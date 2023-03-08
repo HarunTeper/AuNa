@@ -11,7 +11,7 @@ sudo apt-get -y install build-essential clang lld gdb bison flex perl python3 py
 python3 -m pip install --user --upgrade numpy pandas matplotlib scipy seaborn posix_ipc
 sudo apt-get -y install openscenegraph-plugin-osgearth libosgearth-dev
 sudo apt-get -y install mpi-default-dev
-sudo apt install default-jre
+sudo apt-get -y install default-jre
 
 echo "export OMNETPP_PATH=~/omnetpp-5.6.2" >> ~/.bashrc
 echo "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${OMNETPP_PATH}/lib" >> ~/.bashrc
