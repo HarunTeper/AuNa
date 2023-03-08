@@ -12,37 +12,9 @@ ___
 
 The following steps explain the required installation steps to run the framework on a machine running Ubuntu 20.04:
 
-First, install the following packages and tools as described here:
+### ROS2 and Gazebo
 
-    https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html
-    http://gazebosim.org/tutorials?tut=install_ubuntu&cat=install
-    
-Then, additionally install the following packages:
-    
-    sudo apt install python3-pip
-    sudo apt install python3-colcon-common-extensions
-    sudo apt install ros-foxy-xacro
-    sudo apt install ros-foxy-rmw-cyclonedds-cpp
-    sudo apt install ros-foxy-gazebo-ros-pkgs
-    sudo apt install ros-foxy-navigation2 ros-foxy-nav2-bringup ros-foxy-turtlebot3 ros-foxy-turtlebot3-*
-    pip install ruamel.yaml
-
-After that, build the package:
-
-    source /opt/ros/foxy/setup.bash
-    colcon build --symlink-install
-        
-Run the following commands in the terminal before using ROS2:
-
-    export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    export GAZEBO_MODEL_PATH=~/AuNa/src/car_simulator/models:$GAZEBO_MODEL_PATH
-    
-    export GAZEBO_MODEL_DATABASE_URI=http://models.gazebosim.org/
-    export TURTLEBOT3_MODEL=waffle
-    export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/opt/ros/foxy/share/turtlebot3_gazebo/models
-    
-    source /opt/ros/foxy/setup.bash
-    source ~/AuNa/install/setup.bash
+Run the auto_setup.sh script or manually run the commands in the script.
     
 ### MATLAB and Simulink
 
@@ -75,80 +47,58 @@ After that, ROS2 and MATLAB/Simulink are connected.
 
 ### OMNeT++ and Artery
 
-Please install OMNeT++ 5.x as described here:
-
-    https://omnetpp.org/
-
-After that, install the Artery framework. Clone the following GitHub repository:
-
-    git clone --recurse-submodule https://github.com/HarunTeper/artery-ros2
-
-Then, follow the installation guide here:
-
-    http://artery.v2x-research.eu/install/
-
-Before building artery, move to the AuNa folder and run the following commands:
-
-    source /opt/ros/foxy/setup.bash
-    colcon build --symlink-install
-    source install/setup.bash
-
-In the same terminal, build the artery-ros2 directory as follows:
-
-    mkdir build
-    cd build
-    cmake ..
-    cmake --build .
+Run the omnet_auto_setup.sh and artery_auto_setup.sh script and follow the instructions that are given in the scripts to complete the installation.
 
 ### File stucture:
 ```
-├── car_simulator
-│   ├── car_simulator
-│   │   └── yaml_launch.py  #Includes commands to read and configure .yaml files
-│   ├── CMakeLists.txt
-│   ├── config
-│   │   ├── map_params #Parameter files for maps, such as spawn locations and others
-│   │   ├── model_params # Model paramters of each robot model
-│   │   ├── nav2_params # Navigation parameters for Nav2 nodes
-│   │   └── scenario_params # Scenario parameters for robot nodes
-│   ├── include # Include files for scripts in src
-│   ├── launch # Launch files
-│   │   ├── gazebo # Gazebo launch files for arbitrary world files
-│   │   ├── navigation # Navigation launch files for single and multiple robots
-│   │   ├── omnet # OMNeT++ launch files to launch bridge-nodes for communication with OMNeT++ and Artery
-│   │   ├── scenarios # Currently implemented launch files for custom scenarios
-│   │   └── spawn # Launch files to correctly spawn robots in Gazebo
-│   ├── maps # Map files for Gazebo worlds
-│   │   └── racetrack_decorated
-│   ├── matlab
-│   │   ├── CACC # Platooning controller implementation in MATLAB and Simulink
-│   ├── models # Implemented robot models and world model files
-│   │   ├── prius_custom
-│   │   ├── race_car
-│   │   └── racetrack
-│   ├── package.xml
-│   ├── rviz # RViz configuration files for scenarios
-│   ├── scripts # Python scripts for scenarios and tools
-│   │   ├── teleoperation # Scripts for keyboard controls
-│   ├── src # C++ scripts
-│   │   ├── omnet # OMNeT++ bridge-nodes
-│   │   └── transformations # Transformation nodes for multi-robot setups
-│   └── worlds # World files for Gazebo
-├── etsi_its_msgs # ETSI-ITS-G5 messages for OMNeT++ and Artery
-└── ros_its_msgs # CAM simple message format
+├── auna_cacc
+│   ├── CACC # Includes the MATLAB script and Simulink model
+│   └── launch # Launch files for the CACC controller
+├── auna_common # Commonly used scripts and functions
+│   └── auna_common # Scripts
+├── auna_gazebo
+│   ├── config # Configuration files
+│   │   ├── map_params # Map specific parameters
+│   │   └── model_params # Robot model specific parameters
+│   ├── include # Header files
+│   ├── launch # ROS2 launch files
+│   ├── models # Robot model URDF files
+│   ├── src # Source files
+│   └── worlds # Gazebo world files
+├── auna_its_msgs # Simplified CAM message
+│   └── msg # Message folder
+├── auna_msgs # Commonly used custom message types
+│   ├── msg # Messages
+│   └── srv # Services
+├── auna_nav2
+│   ├── config # Configuration files
+│   │   └── nav2_params # Nav2 parameters
+│   ├── launch # ROS2 launch files
+│   ├── maps # Map-specific occupancy grid maps
+│   └── rviz # Rviz configurations
+├── auna_omnet
+│   ├── include # Header files
+│   ├── launch # ROS2 launch files
+│   └── src # Source files
+├── auna_scenarios # Compiled ROS2 launch files for scenarios
+│   └── launch # ROS2 launch files
+├── auna_teleoperation # Teleoperation scripts
+│   └── scripts # Scripts
+└── etsi_its_msgs # CAM Message
+    └── msg # Messages
 ```
 	
 ## How to use?
 ___
-## ROS2
+## ROS2W
+    
+Run the platooning scenario using the following command:
 
-After building the package, the currently implemented scenarios can be found in */src/car_simulator/launch/scenarios*. The multi-robot navigation scenario can be launched as follows:
+    ros2 launch auna_scenarios scenario_platooning.launch.py
 
-    ros2 launch car_simulator scenario_multi_robot_racetrack.launch.py
+Adjust the number of robots using parameters:
 
-Each launch file includes several parameters that can be adjusted. For example, the number of robots can be adjusted:
-
-    ros2 launch car_simulator scenario_multi_robot_racetrack.launch.py robot_number:=3
+    ros2 launch auna_scenarios scenario_platooning.launch.py robot_number:=3
     
 ## MATLAB and Simulink
 
@@ -158,16 +108,11 @@ An example is shown by the platooning controller, which can be found in *src/car
 
 ## OMNeT++ and Artery
 
-The wireless communication between robots is implemented via Artery, which implements the ETSI-ITS-G5 communication architecture. It is possible to add application-specific services to Artery in order to implement custom functionalities for communication.
-
-For example, the platooning service is currently implemented in the ros2-platooning scenario in Artery. It detects whether or not a message originates from the direct leading vehicle and forwards these received messages to the platooning controller.
-
 The scenario can be launched by running the following command
 
     cmake --build build --target run_ros2_platooning
 
-In general, it is possible to add arbitrary services to Artery to evaluate other message formats or scenarios.
-
+After building, select the *Fast* option to run the simulation.
 
 ![](https://github.com/HarunTeper/AuNa/blob/main/media/omnetSimulation.gif)
 
