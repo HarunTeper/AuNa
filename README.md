@@ -84,8 +84,8 @@ Run the omnet_auto_setup.sh and artery_auto_setup.sh script and follow the instr
 │   └── launch # ROS2 launch files
 ├── auna_teleoperation # Teleoperation scripts
 │   └── scripts # Scripts
-├── etsi_its_msgs # CAM Message
-│   └── msg # Messages
+└── etsi_its_msgs # CAM Message
+    └── msg # Messages
 ```
 	
 ## How to use?
