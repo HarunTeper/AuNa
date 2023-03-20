@@ -81,7 +81,7 @@ def generate_launch_description():
         executable='simulation_pose',
         name='simulation_pose',
         namespace=namespace,
-        arguments={namespace},
+        arguments={name},
         output='screen'
     )
 
