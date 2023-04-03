@@ -22,7 +22,7 @@ def include_launch_description(context: LaunchContext):
     # Launch Argument Configurations
     autostart = LaunchConfiguration('autostart')
     default_bt_xml_filename = LaunchConfiguration('default_bt_xml_filename')
-    map = LaunchConfiguration('map', default=default_map_file)
+    map_file = LaunchConfiguration('map', default=default_map_file)
     params_file_name = LaunchConfiguration('params_file_name')
     robot_number = LaunchConfiguration('robot_number')
     rviz_config = LaunchConfiguration('rviz_config')
@@ -67,7 +67,7 @@ def include_launch_description(context: LaunchContext):
                 launch_arguments={
                     'autostart': autostart,
                     'default_bt_xml_filename': default_bt_xml_filename,
-                    'map': map,
+                    'map': map_file,
                     'namespace': robots[num]['namespace'],
                     'params_file': robot_params_file_args[num],
                     'rviz_config': rviz_config,

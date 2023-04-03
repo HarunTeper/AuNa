@@ -23,7 +23,7 @@ def generate_launch_description():
     rviz_config = LaunchConfiguration('rviz_config', default = default_rviz_config_file)
     slam = LaunchConfiguration('slam', default = 'True')
     use_namespace = LaunchConfiguration('use_namespace', default='false')
-    world_name = LaunchConfiguration('world_name', default='racetrack_decorated')
+    world_name = LaunchConfiguration('world_name')
 
     # Launch Arguments
     world_name_arg = DeclareLaunchArgument(
