@@ -17,7 +17,9 @@ void OmnetCamFilter::filter_service_callback(const std::shared_ptr<auna_msgs::sr
 // Filter CAMs using the identifier
 void OmnetCamFilter::cam_callback(const auna_its_msgs::msg::CAM::SharedPtr msg)
 {
-    if(std::stoi(msg->robot_name) == identifier_){
+    std::string filtered_string;
+    std::copy_if(msg->robot_name.begin(), msg->robot_name.end(),std::back_inserter(filtered_string),[this](char ch){return '0' <= ch && ch <= '9';});
+    if(std::stoi(filtered_string) == identifier_){
         cam_publisher_->publish(*msg);
     }
 }

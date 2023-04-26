@@ -10,6 +10,7 @@ sudo apt-get -y upgrade
 sudo apt-get -y install ros-galactic-desktop
 
 echo "source /opt/ros/galactic/setup.bash" >> ~/.bashrc
+echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> ~/.bashrc
 source ~/.bashrc
 
 # Gazebo
@@ -21,6 +22,6 @@ sudo apt-get -y install gazebo11
 
 # AuNa
 
-sudo apt-get -y install python3-pip python3-colcon-common-extensions ros-galactic-xacro ros-galactic-rmw-cyclonedds-cpp ros-galactic-gazebo-ros-pkgs ros-galactic-navigation2 ros-galactic-nav2-bringup
-pip install ruamel.yaml
+sudo apt-get -y install python3-pip python3-colcon-common-extensions ros-galactic-xacro ros-galactic-rmw-cyclonedds-cpp ros-galactic-gazebo-ros-pkgs ros-galactic-navigation2 ros-galactic-nav2-bringup ros-galactic-libg2o
 sudo apt-get -y install libspnav-dev libasio-dev libbluetooth-dev libcwiid-dev
+colcon build --symlink-install

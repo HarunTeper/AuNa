@@ -1,5 +1,5 @@
 clc; clear all;
-pyenv('Version','/home/harun/Python-3.9.9/python');
+pyenv('Version','/usr/bin/python3.9');
 %ros.ros2.internal.createOrGetLocalPython(true)
 
 existing_msgs = ros2("msg","list");
@@ -76,11 +76,15 @@ for idx = 1:num_robots-1
     simIn(idx) = simIn(idx).setVariable('y_0',y_0);
     simIn(idx) = simIn(idx).setVariable('theta_0',theta_0);
     
-    simIn(idx) = simIn(idx).setBlockParameter([model '/subscriber/Subscribe'],'Topic',['/robot' num2str(idx) '/caccCam']);
+    simIn(idx) = simIn(idx).setBlockParameter([model '/subscriber/Subscribe'],'Topic',['/robot' num2str(idx) '/cam_filtered']);
     simIn(idx) = simIn(idx).setBlockParameter([model '/publisher/Subscribe'],'Topic',['/robot' num2str(idx) '/localization_pose']);
     simIn(idx) = simIn(idx).setBlockParameter([model '/publisher/Subscribe1'],'Topic',['/robot' num2str(idx) '/odom']);
     simIn(idx) = simIn(idx).setBlockParameter([model '/publisher/Publish'],'Topic',['/robot' num2str(idx) '/cmd_vel']);
     simIn(idx) = simIn(idx).setBlockParameter([model '/ToWorkspace'],'VariableName',['robot' num2str(idx)]);
+
+    simIn(idx) = simIn(idx).setBlockParameter([model '/controller/LA/Subscribe'],'Topic',['/robot' num2str(idx) '/standstill_distance']);
+    simIn(idx) = simIn(idx).setBlockParameter([model '/controller/LA/Subscribe1'],'Topic',['/robot' num2str(idx) '/time_gap']);
+
 end
 
 simOut = parsim(simIn);
