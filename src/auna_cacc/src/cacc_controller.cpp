@@ -115,8 +115,6 @@ void CaccController::time_gap_callback(const std_msgs::msg::Float64::SharedPtr m
 
 void CaccController::timer_callback()
 {
-    //print hello
-
     if(cam_curvature_ <= 0.01 && cam_curvature_ >= -0.01){
         s_ = 0.5*pow(standstill_distance_+time_gap_*odom_velocity_, 2)*cam_curvature_-0.125*pow(standstill_distance_+time_gap_*odom_velocity_, 4)*pow(cam_curvature_, 3);
     }
@@ -174,14 +172,11 @@ void CaccController::timer_callback()
     }
     last_velocity_ = v_;
 
-    //create a twist message
     geometry_msgs::msg::Twist twist_msg;
 
-    //set the linear and angular velocities
     twist_msg.linear.x = v_;
     twist_msg.angular.z = w_;
 
-    //publish the twist message
     pub_cmd_vel->publish(twist_msg);
 }
 
