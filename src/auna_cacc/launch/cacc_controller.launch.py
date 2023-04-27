@@ -19,9 +19,9 @@ def include_launch_description(context: LaunchContext):
     for num in range(int(robot_number.perform(context))-1):
         launch_description_content.append(
             Node(
-                package='cacc_center',
-                executable='CACC_Center',
-                name='CACC_Center',
+                package='auna_cacc',
+                executable='cacc_controller',
+                name='cacc_controller',
                 namespace="robot"+str(num+1),
                 output='screen'
             )

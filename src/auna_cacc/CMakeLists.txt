@@ -17,9 +17,44 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(auna_its_msgs REQUIRED)
+
+# Include Cpp "include" directory
+include_directories(include)
+
+# Add libraries
+add_library(cacc_controller_node SHARED src/cacc_controller.cpp)
+
+# Create Cpp executable
+add_executable(cacc_controller src/cacc_controller_main.cpp)
+
+# Target dependencies
+set(cacc_controller_dependencies rclcpp std_msgs geometry_msgs nav_msgs auna_its_msgs)
+ament_target_dependencies(cacc_controller_node ${cacc_controller_dependencies})
+ament_target_dependencies(cacc_controller ${cacc_controller_dependencies})
+
+# Link libraries
+target_link_libraries(cacc_controller cacc_controller_node)
+
 install(DIRECTORY 
   launch
   DESTINATION share/${PROJECT_NAME}
+)
+
+# Install Cpp executables
+install(TARGETS
+  cacc_controller
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS 
+  cacc_controller_node
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
 # Install Python modules
