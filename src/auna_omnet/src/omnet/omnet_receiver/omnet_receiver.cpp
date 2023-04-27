@@ -13,6 +13,7 @@ void OmnetReceiver::cam_callback(const etsi_its_msgs::msg::CAM::SharedPtr msg)
     auna_its_msgs::msg::CAM cacc_msg;
 
     cacc_msg.robot_name = msg->header.frame_id;
+    cacc_msg.header.stamp = msg->header.stamp;
 
     cacc_msg.x = (float)msg->reference_position.longitude/10/scale_factor_; //0.1m
     cacc_msg.y = (float)msg->reference_position.latitude/10/scale_factor_; //0.1m
