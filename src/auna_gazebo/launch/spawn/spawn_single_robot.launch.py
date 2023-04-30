@@ -8,6 +8,10 @@ from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import GroupAction
+from launch.conditions import IfCondition
+from launch.substitutions import PythonExpression
+
 
 
 def generate_launch_description():
@@ -18,6 +22,7 @@ def generate_launch_description():
 
     # Paths to folders and files
     launch_file_dir = os.path.join(pkg_dir, 'launch', 'spawn')
+    gazebo_pose_launch_file_dir = os.path.join(pkg_dir, 'launch', 'pose')
 
     # Launch Argument Configurations
     name = LaunchConfiguration('name')
@@ -26,6 +31,7 @@ def generate_launch_description():
     x_pose = LaunchConfiguration('x_pose')
     y_pose = LaunchConfiguration('y_pose')
     z_pose = LaunchConfiguration('z_pose')
+    ground_truth = LaunchConfiguration('ground_truth')
 
     # Launch Arguments
     name_arg = DeclareLaunchArgument(
@@ -58,6 +64,11 @@ def generate_launch_description():
         default_value='0.0',
         description='Robot spawn z position'
     )
+    ground_truth_arg = DeclareLaunchArgument(
+        'ground_truth',
+        default_value='false',
+        description='Use ground truth pose'
+    )
 
     # Nodes and other launch files
     robot_state_publisher_cmd = IncludeLaunchDescription(
@@ -84,6 +95,14 @@ def generate_launch_description():
         arguments={name},
         output='screen'
     )
+    gazebo_pose_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(gazebo_pose_launch_file_dir, 'gazebo_pose.launch.py')),
+        launch_arguments={'namespace': namespace, 'name': name}.items()
+    )
+    gazebo_pose_group_cmd = GroupAction(
+        condition=IfCondition(PythonExpression([ground_truth])),
+        actions=[gazebo_pose_cmd]
+    )
 
     # Launch Description
     launch_description = LaunchDescription()
@@ -94,10 +113,12 @@ def generate_launch_description():
     launch_description.add_action(x_pose_arg)
     launch_description.add_action(y_pose_arg)
     launch_description.add_action(z_pose_arg)
+    launch_description.add_action(ground_truth_arg)
 
     launch_description.add_action(robot_state_publisher_cmd)
     launch_description.add_action(spawn_car_cmd)
     launch_description.add_action(localization_pose_cmd)
     launch_description.add_action(simulation_pose_cmd)
+    launch_description.add_action(gazebo_pose_group_cmd)
 
     return launch_description

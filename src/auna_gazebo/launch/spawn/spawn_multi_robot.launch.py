@@ -24,6 +24,7 @@ def include_launch_description(context: LaunchContext):
     robot_number = LaunchConfiguration('robot_number')
     use_sim_time = LaunchConfiguration('use_sim_time')
     world_name = LaunchConfiguration('world_name')
+    ground_truth = LaunchConfiguration('ground_truth')
 
     # Names and poses of the robots
     map_path = os.path.join(pkg_dir, "config", "map_params", world_name.perform(context)+".yaml")
@@ -51,7 +52,8 @@ def include_launch_description(context: LaunchContext):
                     'y_pose': TextSubstitution(text=str(robot['y_pose'])),
                     'z_pose': TextSubstitution(text=str(robot['z_pose'])),
                     'namespace': robot['namespace'],
-                    'name': robot['name']
+                    'name': robot['name'],
+                    'ground_truth': ground_truth,
                 }.items()
             )
         )
@@ -87,6 +89,11 @@ def generate_launch_description():
         default_value='racetrack_decorated',
         description='Gazebo world file name in /worlds folder'
     )
+    ground_truth_arg = DeclareLaunchArgument(
+        'ground_truth',
+        default_value='false',
+        description='Whether to use gazebo_pose as ground truth localization'
+    )
 
     # Launch Description
     launch_description = LaunchDescription()
@@ -94,6 +101,7 @@ def generate_launch_description():
     launch_description.add_action(robot_number_arg)
     launch_description.add_action(use_sim_time_arg)
     launch_description.add_action(world_name_arg)
+    launch_description.add_action(ground_truth_arg)
 
     launch_description.add_action(OpaqueFunction(function=include_launch_description))
 
