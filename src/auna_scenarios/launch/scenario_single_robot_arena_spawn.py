@@ -1,7 +1,6 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument,IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
@@ -15,9 +14,7 @@ def generate_launch_description():
 
     # Paths to folders and files
     gazebo_launch_file_dir = os.path.join(gazebo_pkg_dir, 'launch', 'gazebo')
-    gazebo_pose_launch_file_dir = os.path.join(gazebo_pkg_dir, 'launch', 'pose')
     spawn_launch_file_dir = os.path.join(gazebo_pkg_dir, 'launch', 'spawn')
-    nav_launch_file_dir = os.path.join(navigation_pkg_dir, 'launch')
 
     # Launch Argument Configurations
     world_name = LaunchConfiguration('world_name', default='racetrack_decorated')
