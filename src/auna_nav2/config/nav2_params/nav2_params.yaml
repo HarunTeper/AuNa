@@ -38,7 +38,11 @@ amcl:
     z_max: 0.05
     z_rand: 0.5
     z_short: 0.05
+<<<<<<< HEAD
     scan_topic: "scan"
+=======
+    scan_topic: /robot/scan
+>>>>>>> origin/physical
     set_initial_pose: True
     initial_pose.x: 0.0
     initial_pose.y: 0.0
@@ -283,7 +287,11 @@ local_costmap:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
         scan:
+<<<<<<< HEAD
           topic: scan
+=======
+          topic: /robot/scan
+>>>>>>> origin/physical
           max_obstacle_height: 2.0
           clearing: True
           marking: True
@@ -305,7 +313,11 @@ global_costmap:
       obstacle_layer:
         enabled: True
         scan:
+<<<<<<< HEAD
           topic: scan
+=======
+          topic: /robot/scan
+>>>>>>> origin/physical
           max_obstacle_height: 2.0
           clearing: True
           marking: True

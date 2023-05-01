@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>auna_omnet</name>
+  <name>auna_physical</name>
   <version>1.0.0</version>
-  <description>AuNa OMNeT++ Package</description>
+  <description>AuNa Physical Package</description>
   <maintainer email="harun.teper@tu-dortmund.de">Harun Teper</maintainer>
   <license>TODO</license>
 
@@ -12,14 +12,9 @@
 
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
-  
   <depend>std_msgs</depend>
-  <depend>auna_msgs</depend>
-  <depend>auna_its_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>nav_msgs</depend>
-  <depend>etsi_its_msgs</depend>
-  <depend>tf2</depend>
+  <depend>ackermann_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
