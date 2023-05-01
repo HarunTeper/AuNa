@@ -13,36 +13,18 @@ def generate_launch_description():
     # Package Directories
     pkg_dir = get_package_share_directory('auna_physical')
 
-    # Paths to folders and files
-    physical_pkg_dir = get_package_share_directory('auna_physical')
-    config_file_dir = os.path.join(physical_pkg_dir, 'config')
-    joy_config_file_path = os.path.join(config_file_dir, 'ps3.config.yaml')
-
     # Config files
     vesc_config = os.path.join(pkg_dir,'config','vesc.config.yaml')
 
     # Launch arguments
-
     namespace_arg = DeclareLaunchArgument('namespace', default_value='robot')
     vesc_config_arg = DeclareLaunchArgument('vesc_config', default_value=vesc_config)
-    joy_dev_arg = DeclareLaunchArgument('joy_dev', default_value='/dev/input/js0')
-    config_filepath_arg = DeclareLaunchArgument('joy_config_file', default_value=joy_config_file_path)
 
     # Launch configurations
-
     namespace = LaunchConfiguration('namespace')
-    joy_dev = LaunchConfiguration('joy_dev')
-    joy_config_file = LaunchConfiguration('joy_config_file')
     vesc_config = LaunchConfiguration('vesc_config')
 
     # Nodes and other launch files
-    cmd_vel_to_ackermann_node = Node(
-        package='auna_physical',
-        executable='cmd_vel_to_ackermann',
-        name='cmd_vel_to_ackermann',
-        namespace=namespace
-    )
-
     vesc_driver_node = Node(
         package='vesc_driver',
         executable='vesc_driver_node',
@@ -84,39 +66,14 @@ def generate_launch_description():
         output='screen'
     )
 
-    joy_node = Node(
-        package='joy',
-        executable='joy_node',
-        name='joy_node',
-        namespace=namespace,
-        parameters=[{
-            'dev': joy_dev,
-            'deadzone': 0.3,
-            'autorepeat_rate': 20.0,
-        }]
-    )
-
-    teleop_twist_joy_node = Node(
-        package='teleop_twist_joy',
-        executable='teleop_node',
-        name='teleop_twist_joy_node',
-        namespace=namespace,
-        parameters=[joy_config_file]
-    )
-
     # Launch Description
     launch_description = LaunchDescription()
 
     launch_description.add_action(namespace_arg)
     launch_description.add_action(vesc_config_arg)
-    launch_description.add_action(joy_dev_arg)
-    launch_description.add_action(config_filepath_arg)
 
-    launch_description.add_action(cmd_vel_to_ackermann_node)
     launch_description.add_action(vesc_driver_node)
     launch_description.add_action(vesc_to_odom_node)
     launch_description.add_action(ackermann_to_vesc_node)
-    launch_description.add_action(joy_node)
-    launch_description.add_action(teleop_twist_joy_node)
 
     return launch_description
