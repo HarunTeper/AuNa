@@ -26,9 +26,11 @@ def include_launch_description(context: LaunchContext):
     params_file_name = LaunchConfiguration('params_file_name')
     robot_number = LaunchConfiguration('robot_number')
     rviz_config = LaunchConfiguration('rviz_config')
-    slam = LaunchConfiguration('slam')
     use_sim_time = LaunchConfiguration('use_sim_time')
     world_name = LaunchConfiguration('world_name')
+    enable_slam = LaunchConfiguration('enable_slam')
+    enable_localization = LaunchConfiguration('enable_localization')
+    enable_navigation = LaunchConfiguration('enable_navigation')
 
     # Names and poses of the robots
     map_path = os.path.join(gazebo_pkg_dir, "config", "map_params", world_name.perform(context)+".yaml")
@@ -71,10 +73,12 @@ def include_launch_description(context: LaunchContext):
                     'namespace': robots[num]['namespace'],
                     'params_file': robot_params_file_args[num],
                     'rviz_config': rviz_config,
-                    'slam': slam,
                     'use_namespace': 'true',
                     'use_sim_time': use_sim_time,
                     'world_name': world_name,
+                    'enable_slam': enable_slam,
+                    'enable_localization': enable_localization,
+                    'enable_navigation': enable_navigation,
                 }.items(),
             )
         )
@@ -105,8 +109,8 @@ def generate_launch_description():
     )
     params_file_name_arg = DeclareLaunchArgument(
         'params_file_name',
-        default_value='nav2_params_namespace',
-        description='Name of the parameter file in /config/nav2_params/'
+        default_value='nav2_params',
+        description='Name of the parameter file in /config/nav2_params/ without .yaml'
     )
     robot_number_arg = DeclareLaunchArgument(
         'robot_number',
@@ -118,11 +122,6 @@ def generate_launch_description():
         default_value=default_rviz_config_file,
         description='Absolute path to rviz config file'
     )
-    slam_arg = DeclareLaunchArgument(
-        name='slam',
-        default_value='False',
-        description='Launch SLAM node to generate a map during navigation'
-    )
     use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',
         default_value='true',
@@ -133,6 +132,21 @@ def generate_launch_description():
         default_value='racetrack_decorated',
         description='Gazebo world file name in /worlds folder'
     )
+    enable_slam_arg = DeclareLaunchArgument(
+        'enable_slam',
+        default_value='False',
+        description='Enable SLAM'
+    )
+    enable_localization_arg = DeclareLaunchArgument(
+        'enable_localization',
+        default_value='True',
+        description='Enable Localization'
+    )
+    enable_navigation_arg = DeclareLaunchArgument(
+        'enable_navigation',
+        default_value='True',
+        description='Enable Navigation'
+    )
 
     # Launch Description
     launch_description = LaunchDescription()
@@ -142,9 +156,11 @@ def generate_launch_description():
     launch_description.add_action(params_file_name_arg)
     launch_description.add_action(robot_number_arg)
     launch_description.add_action(rviz_config_arg)
-    launch_description.add_action(slam_arg)
     launch_description.add_action(use_sim_time_arg)
     launch_description.add_action(world_name_arg)
+    launch_description.add_action(enable_slam_arg)
+    launch_description.add_action(enable_localization_arg)
+    launch_description.add_action(enable_navigation_arg)
 
     launch_description.add_action(OpaqueFunction(function=include_launch_description))
 

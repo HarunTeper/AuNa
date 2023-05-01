@@ -20,17 +20,17 @@ def generate_launch_description():
     # Paths to folders and files
     default_rviz_config_file = os.path.join(navigation_pkg_dir, 'rviz','config_navigation_namespace.rviz')
     default_params_file = os.path.join(navigation_pkg_dir, 'config', 'nav2_params', 'nav2_params.yaml')
-    map_path = os.path.join(navigation_pkg_dir, 'maps', 'racetrack_decorated', 'map.yaml')
+    map_path = os.path.join(navigation_pkg_dir, 'maps', 'arena', 'map.yaml')
 
     # Launch Argument Configurations
-    world_name = LaunchConfiguration('world_name')
+    world_name = LaunchConfiguration('world_name', default='racetrack_decorated')
     rviz_config = LaunchConfiguration('rviz_config', default = default_rviz_config_file)
     world_name = LaunchConfiguration('world_name')
 
     # Launch Arguments
     world_name_arg = DeclareLaunchArgument(
         'world_name',
-        default_value='racetrack_decorated',
+        default_value='arena',
         description='Gazebo world file name'
     )
 
@@ -56,8 +56,8 @@ def generate_launch_description():
             'rviz_config':rviz_config,
             'map': map_path,
             'params_file': default_params_file,
-            'enable_slam': 'False', # slam can only be used without a namespace
-            'enable_localization': 'True',
+            'enable_slam': 'True', # slam can only be used without a namespace
+            'enable_localization': 'False',
             'enable_navigation': 'True'
         }.items(),
     )

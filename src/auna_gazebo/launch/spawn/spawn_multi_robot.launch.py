@@ -91,7 +91,7 @@ def generate_launch_description():
     )
     ground_truth_arg = DeclareLaunchArgument(
         'ground_truth',
-        default_value='false',
+        default_value='False',
         description='Whether to use gazebo_pose as ground truth localization'
     )
 

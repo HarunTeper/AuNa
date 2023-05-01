@@ -112,7 +112,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Best Effort
-        Value: <robot_namespace>/laser/out
+        Value: <robot_namespace>/scan
       Use Fixed Frame: true
       Use rainbow: true
       Value: true

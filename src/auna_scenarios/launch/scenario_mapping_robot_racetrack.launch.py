@@ -16,13 +16,15 @@ def generate_launch_description():
     gazebo_launch_file_dir = os.path.join(gazebo_pkg_dir, 'launch', 'gazebo')
     spawn_launch_file_dir = os.path.join(gazebo_pkg_dir, 'launch', 'spawn')
     nav_launch_file_dir = os.path.join(navigation_pkg_dir, 'launch')
-    default_rviz_config_file = os.path.join(navigation_pkg_dir, 'rviz','config_mapping.rviz')
-    default_params_file = os.path.join(navigation_pkg_dir, 'config', 'nav2_params', 'nav2_params_mapping.yaml')
+
+    # Paths to folders and files
+    default_rviz_config_file = os.path.join(navigation_pkg_dir, 'rviz','config_navigation_namespace.rviz')
+    default_params_file = os.path.join(navigation_pkg_dir, 'config', 'nav2_params', 'nav2_params.yaml')
+    map_path = os.path.join(navigation_pkg_dir, 'maps', 'racetrack_decorated', 'map.yaml')
 
     # Launch Argument Configurations
+    world_name = LaunchConfiguration('world_name')
     rviz_config = LaunchConfiguration('rviz_config', default = default_rviz_config_file)
-    slam = LaunchConfiguration('slam', default = 'True')
-    use_namespace = LaunchConfiguration('use_namespace', default='false')
     world_name = LaunchConfiguration('world_name')
 
     # Launch Arguments
@@ -42,8 +44,9 @@ def generate_launch_description():
     spawn_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(spawn_launch_file_dir, 'spawn_single_robot.launch.py')),
         launch_arguments={
-            'name':'robot',
-            'namespace':'',
+            'world_name': world_name,
+            'namespace': '',
+            'ground_truth': 'False'
         }.items(),
     )
     nav_cmd = IncludeLaunchDescription(
@@ -51,10 +54,11 @@ def generate_launch_description():
         launch_arguments={
             'namespace': '',
             'rviz_config':rviz_config,
-            'slam': slam,
-            'use_namespace': use_namespace,
-            'world_name': world_name,
-            'params_file': default_params_file
+            'map': map_path,
+            'params_file': default_params_file,
+            'enable_slam': 'True', # slam can only be used without a namespace
+            'enable_localization': 'False',
+            'enable_navigation': 'True'
         }.items(),
     )
 

@@ -5,16 +5,17 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, Opaq
 from launch.launch_context import LaunchContext
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
+from auna_common import yaml_launch
 
 
 def include_launch_description(context: LaunchContext):
     """Return launch description"""
 
     # Package Directories
-    nav2_bringup_pkg_dir = get_package_share_directory('nav2_bringup')
+    pkg_dir = get_package_share_directory('auna_nav2')
 
     # Paths to folders and files
-    nav_launch_file_dir = os.path.join(nav2_bringup_pkg_dir, 'launch')
+    nav_launch_file_dir = os.path.join(pkg_dir, 'launch')
 
     # Launch Argument Configurations
     autostart = LaunchConfiguration('autostart')
@@ -23,30 +24,35 @@ def include_launch_description(context: LaunchContext):
     namespace = LaunchConfiguration('namespace')
     params_file = LaunchConfiguration('params_file')
     rviz_config = LaunchConfiguration('rviz_config')
-    slam = LaunchConfiguration('slam')
-    use_namespace = LaunchConfiguration('use_namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
+    enable_slam = LaunchConfiguration('enable_slam')
+    enable_localization = LaunchConfiguration('enable_localization')
+    enable_navigation = LaunchConfiguration('enable_navigation')
+
+    tmp_params_file = yaml_launch.get_yaml(params_file.perform(context))
+    tmp_params_file = yaml_launch.insert_namespace(tmp_params_file, context.launch_configurations['namespace'])
+    tmp_params_file = yaml_launch.get_temp_file(tmp_params_file)
 
     # Nodes and other launch files
     bringup_launch_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(nav_launch_file_dir, 'bringup_launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(nav_launch_file_dir, 'bringup.launch.py')),
         launch_arguments={
             'autostart': autostart,
             'default_bt_xml_filename': default_bt_xml_filename,
             'map': map_file,
             'namespace': namespace,
-            'params_file': params_file,
-            'slam': slam,
-            'use_namespace': use_namespace,
+            'params_file': tmp_params_file,
             'use_sim_time': use_sim_time,
+            'enable_slam': enable_slam,
+            'enable_localization': enable_localization,
+            'enable_navigation': enable_navigation,
         }.items(),
     )
     rviz_launch_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(nav_launch_file_dir, 'rviz_launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(nav_launch_file_dir, 'rviz.launch.py')),
         launch_arguments={
             'namespace': namespace,
             'rviz_config': rviz_config,
-            'use_namespace': use_namespace,
         }.items(),
     )
 
@@ -102,20 +108,25 @@ def generate_launch_description():
         default_value=default_rviz_config_file,
         description='Absolute path to rviz config file'
     )
-    slam_arg = DeclareLaunchArgument(
-        name='slam',
-        default_value='False',
-        description='Launch SLAM node to generate a map during navigation'
-    )
-    use_namespace_arg = DeclareLaunchArgument(
-        name='use_namespace',
-        default_value='true',
-        description='Use namespace for navigation nodes'
-    )
     use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',
         default_value='true',
         description='Use simulation (Gazebo) clock if true'
+    )
+    use_enable_slam_arg = DeclareLaunchArgument(
+        name='enable_slam',
+        default_value='False',
+        description='Enable SLAM'
+    )
+    use_enable_localization_arg = DeclareLaunchArgument(
+        name='enable_localization',
+        default_value='True',
+        description='Enable Localization'
+    )
+    use_enable_navigation_arg = DeclareLaunchArgument(
+        name='enable_navigation',
+        default_value='True',
+        description='Enable Navigation'
     )
 
     launch_description = LaunchDescription()
@@ -126,9 +137,10 @@ def generate_launch_description():
     launch_description.add_action(namespace_arg)
     launch_description.add_action(params_file_arg)
     launch_description.add_action(rviz_config_arg)
-    launch_description.add_action(slam_arg)
-    launch_description.add_action(use_namespace_arg)
     launch_description.add_action(use_sim_time_arg)
+    launch_description.add_action(use_enable_slam_arg)
+    launch_description.add_action(use_enable_localization_arg)
+    launch_description.add_action(use_enable_navigation_arg)
 
     launch_description.add_action(OpaqueFunction(function=include_launch_description))
 
