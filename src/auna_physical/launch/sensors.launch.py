@@ -28,6 +28,13 @@ def generate_launch_description():
         }.items()
     )
 
+    joy_launch_file = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(auna_physical_launch_file_dir, 'joy.launch.py')),
+        launch_arguments={
+            'namespace': namespace
+        }.items()
+    )
+
     vesc_launch_file = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(auna_physical_launch_file_dir, 'vesc.launch.py')),
         launch_arguments={
@@ -40,6 +47,7 @@ def generate_launch_description():
 
     launch_description.add_action(namespace_arg)
     launch_description.add_action(lidar_launch_file)
+    launch_description.add_action(joy_launch_file)
     launch_description.add_action(vesc_launch_file)
 
     return launch_description

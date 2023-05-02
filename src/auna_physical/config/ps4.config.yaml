@@ -3,12 +3,12 @@
     axis_linear:
       x: 4
     scale_linear:
-      x: 1.0
+      x: 2.0
 
     axis_angular:
       yaw: 0
     scale_angular:
-      yaw: -0.3
+      yaw: 0.3
 
     enable_button: 6  # L2 shoulder button
 
