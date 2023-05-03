@@ -33,7 +33,6 @@ void GazeboPose::model_srv_callback(const rclcpp::Client<gazebo_msgs::srv::GetEn
 
     tf2::Quaternion q(entity->state.pose.orientation.x, entity->state.pose.orientation.y, entity->state.pose.orientation.z, entity->state.pose.orientation.w);
     tf2::Transform map_to_base(q, tf2::Vector3(entity->state.pose.position.x, entity->state.pose.position.y, entity->state.pose.position.z));
-    map_to_base = map_to_base.inverse();
 
     geometry_msgs::msg::TransformStamped odom_to_base_link_lookup;
     try
@@ -54,7 +53,7 @@ void GazeboPose::model_srv_callback(const rclcpp::Client<gazebo_msgs::srv::GetEn
     tf2::Quaternion q_ob(odom_to_base_link_lookup.transform.rotation.x, odom_to_base_link_lookup.transform.rotation.y, odom_to_base_link_lookup.transform.rotation.z, odom_to_base_link_lookup.transform.rotation.w); 
     tf2::Transform odom_to_base(q_ob, tf2::Vector3(odom_to_base_link_lookup.transform.translation.x, odom_to_base_link_lookup.transform.translation.y, odom_to_base_link_lookup.transform.translation.z));
 
-    tf2::Transform map_to_odom = map_to_base*odom_to_base;
+    tf2::Transform map_to_odom = map_to_base*odom_to_base.inverse();
 
     geometry_msgs::msg::TransformStamped map_to_odom_transform_msg;
     map_to_odom_transform_msg.transform.translation.x = map_to_odom.getOrigin()[0];
