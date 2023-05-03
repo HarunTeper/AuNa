@@ -47,7 +47,7 @@ def generate_launch_description():
         launch_arguments={
             'world_name': world_name,
             'namespace': 'robot',
-            'ground_truth': 'True'
+            'ground_truth': 'False'
         }.items(),
     )
     nav_cmd = IncludeLaunchDescription(
@@ -58,7 +58,7 @@ def generate_launch_description():
             'map': map_path,
             'params_file': default_params_file,
             'enable_slam': 'False',  # slam can only be used without a namespace
-            'enable_localization': 'False',
+            'enable_localization': 'True',
             'enable_navigation': 'True',
             'enable_rviz': 'True',
             'enable_map_server': 'True',
