@@ -35,5 +35,4 @@ class GazeboPose : public rclcpp::Node
         std::string name_;
         double speed_;
         int publish_milliseconds_ = 100;
-        double scale_factor_ = 10;
 };

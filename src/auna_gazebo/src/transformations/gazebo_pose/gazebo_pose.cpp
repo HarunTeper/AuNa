@@ -6,7 +6,6 @@ GazeboPose::GazeboPose(std::string name): Node("model_state_node"), buffer_(this
     modelClient_ = this->create_client<gazebo_msgs::srv::GetEntityState>("/get_entity_state");
     service_timer_ = this->create_wall_timer(std::chrono::milliseconds(publish_milliseconds_), [this](){service_timer_callback();});
     this->name_ = name;
-    RCLCPP_INFO(this->get_logger(), "Hello world! Constructor");
 }
 
 // Timer callback to periodically call a service request for the model state

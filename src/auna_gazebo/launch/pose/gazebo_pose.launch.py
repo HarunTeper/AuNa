@@ -12,15 +12,9 @@ def generate_launch_description():
     """Return launch description"""
 
     # Launch Argument Configurations
-    name = LaunchConfiguration('name')
     namespace = LaunchConfiguration('namespace')
 
     # Launch Arguments
-    name_arg = DeclareLaunchArgument(
-        'name',
-        default_value='robot',
-        description='Gazebo robot object name'
-    )
     namespace_arg = DeclareLaunchArgument(
         'namespace',
         default_value='',
@@ -36,17 +30,13 @@ def generate_launch_description():
             name='gazebo_pose',
             namespace=namespace,
             output='screen',
-            arguments={name},
+            arguments={namespace},
         )
     ])
-
-    # Nodes and other launch files
-    
 
     # Launch Description
     launch_description = LaunchDescription()
 
-    launch_description.add_action(name_arg)
     launch_description.add_action(namespace_arg)
 
     launch_description.add_action(group_cmd)

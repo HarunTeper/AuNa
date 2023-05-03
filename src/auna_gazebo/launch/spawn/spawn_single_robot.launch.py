@@ -97,7 +97,7 @@ def generate_launch_description():
     )
     gazebo_pose_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(gazebo_pose_launch_file_dir, 'gazebo_pose.launch.py')),
-        launch_arguments={'namespace': namespace, 'name': name}.items()
+        launch_arguments={'namespace': namespace}.items()
     )
     gazebo_pose_group_cmd = GroupAction(
         condition=IfCondition(PythonExpression([ground_truth])),
