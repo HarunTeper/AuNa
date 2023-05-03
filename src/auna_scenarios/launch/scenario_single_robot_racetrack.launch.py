@@ -1,7 +1,7 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument,IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
@@ -18,13 +18,13 @@ def generate_launch_description():
     nav_launch_file_dir = os.path.join(navigation_pkg_dir, 'launch')
 
     # Paths to folders and files
-    default_rviz_config_file = os.path.join(navigation_pkg_dir, 'rviz','config_navigation_namespace.rviz')
+    default_rviz_config_file = os.path.join(navigation_pkg_dir, 'rviz', 'config_navigation_namespace.rviz')
     default_params_file = os.path.join(navigation_pkg_dir, 'config', 'nav2_params', 'nav2_params.yaml')
     map_path = os.path.join(navigation_pkg_dir, 'maps', 'racetrack_decorated', 'map.yaml')
 
     # Launch Argument Configurations
     world_name = LaunchConfiguration('world_name')
-    rviz_config = LaunchConfiguration('rviz_config', default = default_rviz_config_file)
+    rviz_config = LaunchConfiguration('rviz_config', default=default_rviz_config_file)
     world_name = LaunchConfiguration('world_name')
 
     # Launch Arguments

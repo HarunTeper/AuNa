@@ -1,7 +1,7 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument,IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
@@ -24,7 +24,7 @@ def generate_launch_description():
 
     # Launch Argument Configurations
     world_name = LaunchConfiguration('world_name')
-    rviz_config = LaunchConfiguration('rviz_config', default = default_rviz_config_file)
+    rviz_config = LaunchConfiguration('rviz_config', default=default_rviz_config_file)
     world_name = LaunchConfiguration('world_name')
 
     # Launch Arguments
@@ -53,12 +53,14 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(os.path.join(nav_launch_file_dir, 'navigation_single_robot.launch.py')),
         launch_arguments={
             'namespace': '',
-            'rviz_config':rviz_config,
+            'rviz_config': rviz_config,
             'map': map_path,
             'params_file': default_params_file,
-            'enable_slam': 'True', # slam can only be used without a namespace
+            'enable_slam': 'True',  # slam can only be used without a namespace
             'enable_localization': 'False',
-            'enable_navigation': 'True'
+            'enable_navigation': 'True',
+            'enable_rviz': 'True',
+            'enable_map_server': 'False',
         }.items(),
     )
 
