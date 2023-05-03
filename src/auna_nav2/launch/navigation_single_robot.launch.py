@@ -58,7 +58,6 @@ def include_launch_description(context: LaunchContext):
             condition=IfCondition(enable_map_server),
             launch_arguments={
                 'namespace': namespace,
-                'params_file': tmp_params_file,
                 'map': map_file,
                 'use_sim_time': use_sim_time,
                 'autostart': autostart,

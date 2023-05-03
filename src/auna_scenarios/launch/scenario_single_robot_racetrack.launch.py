@@ -53,12 +53,14 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(os.path.join(nav_launch_file_dir, 'navigation_single_robot.launch.py')),
         launch_arguments={
             'namespace': '',
-            'rviz_config':rviz_config,
+            'rviz_config': rviz_config,
             'map': map_path,
             'params_file': default_params_file,
-            'enable_slam': 'False', # slam can only be used without a namespace
+            'enable_slam': 'False',  # slam can only be used without a namespace
             'enable_localization': 'True',
-            'enable_navigation': 'True'
+            'enable_navigation': 'True',
+            'enable_rviz': 'True',
+            'enable_map_server': 'True',
         }.items(),
     )
 

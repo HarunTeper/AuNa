@@ -23,21 +23,10 @@ def generate_launch_description():
     map_yaml_file = LaunchConfiguration('map')
     use_sim_time = LaunchConfiguration('use_sim_time')
     autostart = LaunchConfiguration('autostart')
-    params_file = LaunchConfiguration('params_file')
     lifecycle_nodes = ['map_server']
 
     remappings = [('/tf', 'tf'),
                   ('/tf_static', 'tf_static')]
-
-    param_substitutions = {
-        'use_sim_time': use_sim_time,
-        'yaml_filename': map_yaml_file}
-
-    configured_params = RewrittenYaml(
-        source_file=params_file,
-        root_key=namespace,
-        param_rewrites=param_substitutions,
-        convert_types=True)
 
     return LaunchDescription([
         # Set env var to print messages to stdout immediately

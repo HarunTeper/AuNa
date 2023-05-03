@@ -48,8 +48,6 @@ def generate_launch_description():
             root_key=namespace,
             param_rewrites=param_substitutions,
             convert_types=True)
-    
-    print(configured_params)
 
     return LaunchDescription([
         # Set env var to print messages to stdout immediately

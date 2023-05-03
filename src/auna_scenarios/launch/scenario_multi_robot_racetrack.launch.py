@@ -45,14 +45,20 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(os.path.join(spawn_launch_file_dir, 'spawn_multi_robot.launch.py')),
         launch_arguments={
             'robot_number': robot_number,
-            'world_name': world_name
+            'world_name': world_name,
+            'ground_truth': 'False'
         }.items(),
     )
     nav_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(nav_launch_file_dir, 'navigation_multi_robot.launch.py')),
         launch_arguments={
             'robot_number': robot_number,
-            'world_name': world_name
+            'world_name': world_name,
+            'enable_slam': 'False',  # slam can only be used without a namespace
+            'enable_localization': 'True',
+            'enable_navigation': 'True',
+            'enable_rviz': 'True',
+            'enable_map_server': 'True',
         }.items(),
     )
 
