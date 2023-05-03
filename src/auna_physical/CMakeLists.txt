@@ -20,31 +20,42 @@ find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(ackermann_msgs REQUIRED)
 
+find_package(tf2_ros REQUIRED)
+find_package(tf2_kdl REQUIRED)
+
 # Include Cpp "include" directory
 include_directories(include)
 
 # Add libraries
 add_library(cmd_vel_to_ackermann_node SHARED src/converter/cmd_vel_to_ackermann.cpp)
+add_library(vicon_tf_converter_node SHARED src/vicon/vicon_tf_converter.cpp)
 
 # Create Cpp executable
 add_executable(cmd_vel_to_ackermann src/converter/cmd_vel_to_ackermann_main.cpp)
+add_executable(vicon_tf_converter src/vicon/vicon_tf_converter_main.cpp)
 
 # Target dependencies
 set(cmd_vel_to_ackermann_dependencies rclcpp std_msgs geometry_msgs ackermann_msgs)
 ament_target_dependencies(cmd_vel_to_ackermann_node ${cmd_vel_to_ackermann_dependencies})
 ament_target_dependencies(cmd_vel_to_ackermann ${cmd_vel_to_ackermann_dependencies})
+set(vicon_tf_converter_dependencies rclcpp geometry_msgs tf2_kdl tf2_kdl)
+ament_target_dependencies(vicon_tf_converter_node ${vicon_tf_converter_dependencies})
+ament_target_dependencies(vicon_tf_converter ${vicon_tf_converter_dependencies})
 
 # Link libraries
 target_link_libraries(cmd_vel_to_ackermann cmd_vel_to_ackermann_node)
+target_link_libraries(vicon_tf_converter vicon_tf_converter_node)
 
 # Install Cpp executables
 install(TARGETS
   cmd_vel_to_ackermann
+  vicon_tf_converter
   DESTINATION lib/${PROJECT_NAME}
 )
 
 install(TARGETS 
   cmd_vel_to_ackermann_node
+  vicon_tf_converter_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
