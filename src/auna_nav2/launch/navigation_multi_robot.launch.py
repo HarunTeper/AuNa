@@ -31,6 +31,8 @@ def include_launch_description(context: LaunchContext):
     enable_slam = LaunchConfiguration('enable_slam')
     enable_localization = LaunchConfiguration('enable_localization')
     enable_navigation = LaunchConfiguration('enable_navigation')
+    enable_rviz = LaunchConfiguration('enable_rviz')
+    enable_map_server = LaunchConfiguration('enable_map_server')
 
     # Names and poses of the robots
     map_path = os.path.join(gazebo_pkg_dir, "config", "map_params", world_name.perform(context)+".yaml")
@@ -79,6 +81,8 @@ def include_launch_description(context: LaunchContext):
                     'enable_slam': enable_slam,
                     'enable_localization': enable_localization,
                     'enable_navigation': enable_navigation,
+                    'enable_rviz': enable_rviz,
+                    'enable_map_server': enable_map_server,
                 }.items(),
             )
         )
@@ -147,6 +151,16 @@ def generate_launch_description():
         default_value='True',
         description='Enable Navigation'
     )
+    enable_rviz_arg = DeclareLaunchArgument(
+        'enable_rviz',
+        default_value='True',
+        description='Enable RViz'
+    )
+    enable_map_server_arg = DeclareLaunchArgument(
+        'enable_map_server',
+        default_value='True',
+        description='Enable Map Server'
+    )
 
     # Launch Description
     launch_description = LaunchDescription()
@@ -161,6 +175,8 @@ def generate_launch_description():
     launch_description.add_action(enable_slam_arg)
     launch_description.add_action(enable_localization_arg)
     launch_description.add_action(enable_navigation_arg)
+    launch_description.add_action(enable_rviz_arg)
+    launch_description.add_action(enable_map_server_arg)
 
     launch_description.add_action(OpaqueFunction(function=include_launch_description))
 

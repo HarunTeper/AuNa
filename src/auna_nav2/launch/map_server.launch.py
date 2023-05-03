@@ -24,7 +24,7 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
     autostart = LaunchConfiguration('autostart')
     params_file = LaunchConfiguration('params_file')
-    lifecycle_nodes = ['amcl']
+    lifecycle_nodes = ['map_server']
 
     remappings = [('/tf', 'tf'),
                   ('/tf_static', 'tf_static')]
@@ -66,11 +66,13 @@ def generate_launch_description():
             description='Full path to the ROS2 parameters file to use'),
 
         Node(
-            package='nav2_amcl',
-            executable='amcl',
-            name='amcl',
+            package='nav2_map_server',
+            executable='map_server',
+            name='map_server',
             output='screen',
-            parameters=[configured_params],
+            namespace=namespace,
+            parameters=[{'yaml_filename': map_yaml_file,
+                         'use_sim_time': use_sim_time}],
             remappings=remappings),
 
         Node(
@@ -78,6 +80,7 @@ def generate_launch_description():
             executable='lifecycle_manager',
             name='lifecycle_manager_localization',
             output='screen',
+            namespace=namespace,
             parameters=[{'use_sim_time': use_sim_time},
                         {'autostart': autostart},
                         {'node_names': lifecycle_nodes}])

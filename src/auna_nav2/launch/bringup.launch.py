@@ -96,7 +96,7 @@ def generate_launch_description():
                               'map': map_yaml_file,
                               'use_sim_time': use_sim_time,
                               'autostart': autostart,
-                              'params_file': params_file,}.items()),
+                              'params_file': params_file}.items()),
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(launch_dir, 'navigation.launch.py')),
