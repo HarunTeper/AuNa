@@ -37,3 +37,11 @@
 [submodule "src/physical/realsense-ros"]
 	path = src/physical/realsense-ros
 	url = https://github.com/IntelRealSense/realsense-ros.git
+[submodule "src/physical/robot_localization"]
+	path = src/physical/robot_localization
+	url = https://github.com/cra-ros-pkg/robot_localization.git
+	branch = galactic-devel
+[submodule "src/physical/geographic_info"]
+	path = src/physical/geographic_info
+	url = https://github.com/ros-geographic-info/geographic_info.git
+	branch = ros2

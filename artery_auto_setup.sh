@@ -1,6 +1,6 @@
 #!/bin/sh
 
-sudo apt-get install libgeographic-dev libcrypto++-dev
+sudo apt-get -y install libgeographic-dev libcrypto++-dev
 
 source ~/AuNa/install/setup.bash
 git clone --recurse-submodule https://github.com/HarunTeper/artery-ros2 ~/artery-ros2
