@@ -11,7 +11,6 @@ void ViconTFConverter::vicon_callback(const geometry_msgs::msg::TransformStamped
 
     tf2::Quaternion q_vicon(msg->transform.rotation.x, msg->transform.rotation.y, msg->transform.rotation.z, msg->transform.rotation.w);
     tf2::Transform map_to_base(q_vicon, tf2::Vector3(msg->transform.translation.x, msg->transform.translation.y, msg->transform.translation.z));
-    map_to_base = map_to_base.inverse();
 
     geometry_msgs::msg::TransformStamped odom_to_base_link_lookup;
     try
@@ -32,7 +31,7 @@ void ViconTFConverter::vicon_callback(const geometry_msgs::msg::TransformStamped
     tf2::Quaternion q_ob(odom_to_base_link_lookup.transform.rotation.x, odom_to_base_link_lookup.transform.rotation.y, odom_to_base_link_lookup.transform.rotation.z, odom_to_base_link_lookup.transform.rotation.w); 
     tf2::Transform odom_to_base(q_ob, tf2::Vector3(odom_to_base_link_lookup.transform.translation.x, odom_to_base_link_lookup.transform.translation.y, odom_to_base_link_lookup.transform.translation.z));
 
-    tf2::Transform map_to_odom = map_to_base*odom_to_base;
+    tf2::Transform map_to_odom = map_to_base*odom_to_base.inverse();
 
     geometry_msgs::msg::TransformStamped map_to_odom_transform_msg;
     map_to_odom_transform_msg.transform.translation.x = map_to_odom.getOrigin()[0];
@@ -52,6 +51,29 @@ void ViconTFConverter::vicon_callback(const geometry_msgs::msg::TransformStamped
         map_to_odom_transform_msg.child_frame_id = name_+"/odom";
     }
     auto stamp = tf2_ros::fromMsg(this->now());
-    map_to_odom_transform_msg.header.stamp = tf2_ros::toMsg(stamp+tf2::durationFromSec(1.0));
+    map_to_odom_transform_msg.header.stamp = tf2_ros::toMsg(stamp);
     broadcaster_.sendTransform(map_to_odom_transform_msg);
+
+
+
+    geometry_msgs::msg::TransformStamped reference_transform;
+    reference_transform.transform.translation.x = msg->transform.translation.x;
+    reference_transform.transform.translation.y = msg->transform.translation.y;
+    reference_transform.transform.translation.z = msg->transform.translation.z;
+    reference_transform.transform.rotation.x = msg->transform.rotation.x;
+    reference_transform.transform.rotation.y = msg->transform.rotation.y;
+    reference_transform.transform.rotation.z = msg->transform.rotation.z;
+    reference_transform.transform.rotation.w = msg->transform.rotation.w;
+    reference_transform.header.frame_id = "map";
+    if (name_ == "")
+    {
+        reference_transform.child_frame_id = "reference";
+    }
+    else
+    {
+        reference_transform.child_frame_id = name_+"/reference";
+    }
+    auto stamp_reference = tf2_ros::fromMsg(this->now());
+    reference_transform.header.stamp = tf2_ros::toMsg(stamp_reference);
+    broadcaster_.sendTransform(reference_transform);
 }
