@@ -1,47 +1,4 @@
-[submodule "src/physical/laser_proc"]
-	path = src/physical/laser_proc
-	url = https://github.com/ros-perception/laser_proc.git
-	branch = ros2-devel
-[submodule "src/physical/urg_node2"]
-	path = src/physical/urg_node2
-	url = https://github.com/Hokuyo-aut/urg_node2.git
-	branch = main
-[submodule "src/physical/transport_drivers"]
-	path = src/physical/transport_drivers
-	url = https://github.com/ros-drivers/transport_drivers.git
-	branch = galactic
 [submodule "src/physical/vesc"]
 	path = src/physical/vesc
 	url = https://github.com/f1tenth/vesc.git
-	branch = ros2
-[submodule "src/physical/ackermann_msgs"]
-	path = src/physical/ackermann_msgs
-	url = https://github.com/ros-drivers/ackermann_msgs.git
-	branch = ros2
-[submodule "src/physical/diagnostics"]
-	path = src/physical/diagnostics
-	url = https://github.com/ros/diagnostics.git
-	branch = galactic
-[submodule "src/physical/udp_msgs"]
-	path = src/physical/udp_msgs
-	url = https://github.com/flynneva/udp_msgs.git
-	branch = main
-[submodule "src/physical/joystick_drivers"]
-	path = src/physical/joystick_drivers
-	url = https://github.com/ros-drivers/joystick_drivers.git
-	branch = foxy-devel
-[submodule "src/physical/teleop_twist_joy"]
-	path = src/physical/teleop_twist_joy
-	url = https://github.com/ros2/teleop_twist_joy.git
-	branch = foxy
-[submodule "src/physical/realsense-ros"]
-	path = src/physical/realsense-ros
-	url = https://github.com/IntelRealSense/realsense-ros.git
-[submodule "src/physical/robot_localization"]
-	path = src/physical/robot_localization
-	url = https://github.com/cra-ros-pkg/robot_localization.git
-	branch = galactic-devel
-[submodule "src/physical/geographic_info"]
-	path = src/physical/geographic_info
-	url = https://github.com/ros-geographic-info/geographic_info.git
 	branch = ros2
