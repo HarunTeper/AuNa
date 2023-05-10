@@ -24,4 +24,9 @@ sudo apt-get -y install gazebo11
 
 sudo apt-get -y install python3-pip python3-colcon-common-extensions ros-galactic-xacro ros-galactic-rmw-cyclonedds-cpp ros-galactic-gazebo-ros-pkgs ros-galactic-navigation2 ros-galactic-nav2-bringup ros-galactic-libg2o
 sudo apt-get -y install libspnav-dev libasio-dev libbluetooth-dev libcwiid-dev libgeographic-dev
+
+# AuNa physical
+
+sudo apt-get -y install ros-galactic-ackermann-msgs ros-galactic-diagnostic-* ros-galactic-geographic-* ros-galactic-joy* ros-galactic-laser* ros-galactic-realsense2-* ros-galactic-robot-localization* ros-galactic-teleop-twist-joy* ros-galactic-serial-driver ros-galactic-udp-* ros-galactic-asio-cmake-module ros-galactic-io-context ros-galactic-urg-node* 
+
 colcon build --symlink-install
