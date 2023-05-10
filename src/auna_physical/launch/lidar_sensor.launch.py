@@ -41,8 +41,8 @@ def include_launch_description(context: LaunchContext):
 
     # Nodes and other launch files
     lifecycle_node = LifecycleNode(
-        package='urg_node2',
-        executable='urg_node2_node',
+        package='urg_node',
+        executable='urg_node_driver',
         name=urg_node_name,
         remappings=[('scan', scan_topic_name)],
         parameters=[config_params],
