@@ -85,7 +85,10 @@ def generate_launch_description():
         name='localization_pose',
         namespace=namespace,
         arguments={namespace},
-        output='screen'
+        output='screen',
+        remappings=[('/tf', 'tf'),
+                    ('/tf_static', 'tf_static')
+        ]
     )
     simulation_pose_cmd = Node(
         package='auna_gazebo',

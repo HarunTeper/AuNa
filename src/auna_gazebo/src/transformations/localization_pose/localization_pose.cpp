@@ -4,7 +4,6 @@
 LocalizationPose::LocalizationPose(std::string prefix) : Node("localization_pose_node"),buffer(this->get_clock()), listener(buffer)
 {
     publisher = this->create_publisher<geometry_msgs::msg::PoseStamped>("localization_pose", 2);
-    subscription = this->create_subscription<nav_msgs::msg::Odometry>("odom", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg){odom_callback(msg);});
     if(prefix == "")
     {
         this->prefix = prefix;
@@ -13,42 +12,41 @@ LocalizationPose::LocalizationPose(std::string prefix) : Node("localization_pose
     {
         this->prefix = prefix+"/";
     }
+    timer_ = this->create_wall_timer(std::chrono::milliseconds(10), [this](){timer_callback();});
 }
 
-
-// Receives the odometry pose and transforms it to the global pose with the map frame_id.
-void LocalizationPose::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg) const
-{
-    // Create a pose message for the latest odomery post
-    geometry_msgs::msg::PoseStamped localization_pose;
-    localization_pose.header.frame_id = prefix+"odom";
-    localization_pose.header.stamp = msg->header.stamp;
-    localization_pose.pose = msg->pose.pose;
-    // Prepare the new pose and transformation between map and odom
-    geometry_msgs::msg::PoseStamped new_localization_pose;
+void LocalizationPose::timer_callback(){
     geometry_msgs::msg::TransformStamped transformStamped;
     try
     {
-        // Look up the transformation between map and odom
-        if (this->buffer._frameExists("map"))
+        if(this->buffer.canTransform("map",prefix+"base_link",tf2::TimePointZero))
         {
-            transformStamped = this->buffer.lookupTransform("map",prefix+"odom",localization_pose.header.stamp);
+            transformStamped = this->buffer.lookupTransform("map",prefix+"base_link",tf2::TimePointZero);
+        }
+        else if(this->buffer.canTransform(prefix+"odom",prefix+"base_link",tf2::TimePointZero))
+        {
+            transformStamped = this->buffer.lookupTransform(prefix+"odom",prefix+"base_link",tf2::TimePointZero);
         }
         else
         {
-            // If no transformation is available, create an identity transformation
-            transformStamped.header.frame_id = "map";
-            transformStamped.header.stamp = localization_pose.header.stamp;
-            transformStamped.child_frame_id = prefix+"odom";
+            return;
         }
     }
     catch (tf2::TransformException &ex)
     {
         return;
     }
-    // Transform the odom pose to the map frame and publish it
-    tf2::doTransform(localization_pose,new_localization_pose,transformStamped);
-    this->publisher->publish(new_localization_pose);
+
+    geometry_msgs::msg::PoseStamped localization_pose;
+    localization_pose.header.frame_id = "map";
+    localization_pose.header.stamp = this->get_clock()->now();
+    localization_pose.pose.position.x = transformStamped.transform.translation.x;
+    localization_pose.pose.position.y = transformStamped.transform.translation.y;
+    localization_pose.pose.position.z = transformStamped.transform.translation.z;
+    localization_pose.pose.orientation.x = transformStamped.transform.rotation.x;
+    localization_pose.pose.orientation.y = transformStamped.transform.rotation.y;
+    localization_pose.pose.orientation.z = transformStamped.transform.rotation.z;
+    localization_pose.pose.orientation.w = transformStamped.transform.rotation.w;
+
+    this->publisher->publish(localization_pose);
 }
-
-

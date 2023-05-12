@@ -19,7 +19,10 @@ class LocalizationPose : public rclcpp::Node
 
         tf2_ros::Buffer buffer;
         tf2_ros::TransformListener listener;
-        rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr subscription;
         rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr publisher;
+
+        rclcpp::TimerBase::SharedPtr timer_;
+        void timer_callback();
+
         std::string prefix;
 };
