@@ -12,9 +12,11 @@ def include_launch_description(context: LaunchContext):
 
     # Package Directories
     pkg_dir = get_package_share_directory('auna_physical')
+    cam_pkg_dir = get_package_share_directory('auna_cam')
 
     # Paths to folders and files
     launch_file_dir = os.path.join(pkg_dir, 'launch')
+    cam_launch_file_dir = os.path.join(cam_pkg_dir, 'launch')
 
     # Launch Configuration
     namespace = LaunchConfiguration('namespace')
@@ -41,7 +43,7 @@ def include_launch_description(context: LaunchContext):
         }.items(),
     )
     cam_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(launch_file_dir, 'cam_communication.launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(cam_launch_file_dir, 'cam_communication.launch.py')),
         launch_arguments={
             'namespace': namespace.perform(context)+"_"+robot_index.perform(context),
             'robot_index': robot_index,
