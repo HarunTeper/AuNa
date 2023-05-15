@@ -12,7 +12,7 @@ def include_launch_description(context: LaunchContext):
 
     # Package Directories
     pkg_dir = get_package_share_directory('auna_physical')
-    cam_pkg_dir = get_package_share_directory('auna_cam')
+    cam_pkg_dir = get_package_share_directory('auna_comm')
 
     # Paths to folders and files
     launch_file_dir = os.path.join(pkg_dir, 'launch')
