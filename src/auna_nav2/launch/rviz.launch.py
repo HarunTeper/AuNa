@@ -26,10 +26,12 @@ def include_launch_description(context: LaunchContext):
         namespaced_rviz_config_file = ReplaceString(
             source_file=rviz_config_file,
             replacements={'<robot_namespace>': ('')})
+        base_frame = ''
     else:
         namespaced_rviz_config_file = ReplaceString(
                 source_file=rviz_config_file,
                 replacements={'<robot_namespace>': ('/', namespace)})
+        base_frame = namespace.perform(context)+'/'+'base_link  '
 
     start_rviz_cmd = Node(
         package='rviz2',
@@ -41,7 +43,9 @@ def include_launch_description(context: LaunchContext):
                     ('/tf_static', 'tf_static'),
                     ('/goal_pose', 'goal_pose'),
                     ('/clicked_point', 'clicked_point'),
-                    ('/initialpose', 'initialpose')])
+                    ('/initialpose', 'initialpose')],
+        parameters=[{'base_frame': base_frame}]
+    )
 
     exit_event_handler = RegisterEventHandler(
         event_handler=OnProcessExit(

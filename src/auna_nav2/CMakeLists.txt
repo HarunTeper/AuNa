@@ -20,6 +20,7 @@ find_package(rclpy REQUIRED)
 find_package(auna_common REQUIRED)
 
 install(DIRECTORY 
+  behavior_trees
   config
   launch
   maps
