@@ -25,6 +25,10 @@ find_package(nav2_msgs REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_components REQUIRED)
 
+find_package(PahoMqttCpp REQUIRED)
+link_libraries(${PAHO_MQTT_CPP_LIBRARIES})
+find_package(nlohmann_json REQUIRED)
+
 # Include Cpp "include" directory
 include_directories(include)
 
@@ -42,12 +46,13 @@ target_compile_definitions(mqtt_waypoint_receiver_node
   PRIVATE "ACTION_TUTORIALS_CPP_BUILDING_DLL")
 
 # Target dependencies
-set(mqtt_waypoint_receiver_dependencies rclcpp geometry_msgs nav2_msgs rclcpp_action rclcpp_components)
+set(mqtt_waypoint_receiver_dependencies rclcpp geometry_msgs nav2_msgs rclcpp_action rclcpp_components PahoMqttCpp nlohmann_json)
 ament_target_dependencies(mqtt_waypoint_receiver_node ${mqtt_waypoint_receiver_dependencies})
 ament_target_dependencies(mqtt_waypoint_receiver ${mqtt_waypoint_receiver_dependencies})
 
 # Link libraries
 target_link_libraries(mqtt_waypoint_receiver mqtt_waypoint_receiver_node)
+target_link_libraries(mqtt_waypoint_receiver PahoMqttCpp::paho-mqttpp3)
 
 install(DIRECTORY 
   launch

@@ -9,7 +9,6 @@ MQTTWaypointReceiver::MQTTWaypointReceiver() : Node("mqtt_waypoint_receiver")
 
 void MQTTWaypointReceiver::timer_callback() 
 {
-    timer_->cancel();
 
     if (!this->client_ptr_->wait_for_action_server()) {
       RCLCPP_ERROR(this->get_logger(), "Action server not available after waiting");
@@ -90,5 +89,5 @@ void MQTTWaypointReceiver::result_callback(const GoalHandleNavigateThroughPoses:
       return;
   }
   RCLCPP_INFO(this->get_logger(), "Navigation finished");
-  rclcpp::shutdown();
+  // rclcpp::shutdown();
 }
