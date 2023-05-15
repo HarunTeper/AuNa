@@ -5,7 +5,7 @@ CaccController::CaccController() : Node("cacc_controller")
     sub_cam_ = this->create_subscription<auna_its_msgs::msg::CAM>("cam_filtered", 2, [this](const auna_its_msgs::msg::CAM::SharedPtr msg){this->cam_callback(msg);});
     sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>("odom", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg){this->odom_callback(msg);});
     sub_pose_stamped_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("localization_pose", 2, [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg){this->pose_callback(msg);});
-    pub_cmd_vel = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 2);
+    pub_cmd_vel = this->create_publisher<geometry_msgs::msg::Twist>("cacc_output", 2);
     timer_ = this->create_wall_timer(std::chrono::milliseconds(50), [this](){this->timer_callback();});
 
     pub_x_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/x_lookahead_point", 2);
@@ -14,8 +14,8 @@ CaccController::CaccController() : Node("cacc_controller")
     this->declare_parameter("standstill_distance", 1.0);
     this->declare_parameter("time_gap", 1.0);
     this->declare_parameter("wheelbase", 0.32);
-    this->declare_parameter("kp", 1.0);
-    this->declare_parameter("kd", 1.0);
+    this->declare_parameter("kp", 2.0);
+    this->declare_parameter("kd", 2.0);
     this->declare_parameter("max_velocity", 1.0);
 
     standstill_distance_ = this->get_parameter("standstill_distance").as_double();
@@ -160,9 +160,12 @@ void CaccController::timer_callback()
     if(v_ > max_velocity_){
         v_ = max_velocity_;
     }
-    else if(v_ < 0.01){
-        v_ = 0.0;
+    else if(v_ < -max_velocity_){
+        v_ = -max_velocity_;
     }
+    // else if(v_ < 0.01){
+    //     v_ = 0.0;
+    // }
 
     if(v_ == 0.0){
         w_ = 0.0;

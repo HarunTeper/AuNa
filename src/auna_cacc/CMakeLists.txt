@@ -26,10 +26,10 @@ find_package(auna_its_msgs REQUIRED)
 include_directories(include)
 
 # Add libraries
-add_library(cacc_controller_node SHARED src/cacc_controller.cpp)
+add_library(cacc_controller_node SHARED src/cacc_controller/cacc_controller.cpp)
 
 # Create Cpp executable
-add_executable(cacc_controller src/cacc_controller_main.cpp)
+add_executable(cacc_controller src/cacc_controller/cacc_controller_main.cpp)
 
 # Target dependencies
 set(cacc_controller_dependencies rclcpp std_msgs geometry_msgs nav_msgs auna_its_msgs)
