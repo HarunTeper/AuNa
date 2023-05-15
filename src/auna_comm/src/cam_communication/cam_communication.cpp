@@ -10,8 +10,8 @@ CamCommunication::CamCommunication() : Node("cam_communication")
     this->robot_index_ = this->get_parameter("robot_index").as_int();
 
     cam_filtered_publisher_ = this->create_publisher<auna_its_msgs::msg::CAM>("cam_filtered", 2);
-    cam_publisher_ = this->create_publisher<auna_its_msgs::msg::CAM>("cam", 2);
-    cam_subscriber_ = this->create_subscription<auna_its_msgs::msg::CAM>("cam", 2, [this](auna_its_msgs::msg::CAM::SharedPtr msg) -> void { this->cam_callback(msg); });
+    cam_publisher_ = this->create_publisher<auna_its_msgs::msg::CAM>("/cam", 2);
+    cam_subscriber_ = this->create_subscription<auna_its_msgs::msg::CAM>("/cam", 2, [this](auna_its_msgs::msg::CAM::SharedPtr msg) -> void { this->cam_callback(msg); });
     timer_ = this->create_wall_timer(std::chrono::milliseconds(100), [this]() -> void { this->timer_callback(); });
     
     this->pose_subscriber_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("localization_pose", 2, [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg){pose_callback(msg);});
