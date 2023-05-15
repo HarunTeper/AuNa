@@ -2,3 +2,10 @@
 	path = src/physical/vesc
 	url = https://github.com/f1tenth/vesc.git
 	branch = ros2
+[submodule "src/physical/navigation2"]
+	path = src/physical/navigation2
+	url = https://github.com/ros-planning/navigation2.git
+	branch = galactic
+[submodule "src/physical/paho.mqtt.c"]
+	path = src/physical/paho.mqtt.c
+	url = https://github.com/eclipse/paho.mqtt.c.git
