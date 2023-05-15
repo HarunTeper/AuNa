@@ -45,7 +45,7 @@ def include_launch_description(context: LaunchContext):
         launch_arguments={
             'namespace': namespace.perform(context)+"_"+robot_index.perform(context),
             'robot_index': robot_index,
-            'filter_index': robot_index.perform(context)-1,
+            'filter_index': str(int(robot_index.perform(context))-1),
         }.items(),
     )
 
