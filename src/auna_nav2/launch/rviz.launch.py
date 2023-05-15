@@ -65,7 +65,7 @@ def include_launch_description(context: LaunchContext):
 def generate_launch_description():
     """Launch RViz2 with the default view for the navigation stack. """
     # Get the launch directory
-    bringup_dir = get_package_share_directory('nav2_bringup')
+    pkg_dir = get_package_share_directory('auna_nav2')
 
     # Declare the launch arguments
     declare_namespace_cmd = DeclareLaunchArgument(
@@ -76,7 +76,7 @@ def generate_launch_description():
 
     declare_rviz_config_file_cmd = DeclareLaunchArgument(
         'rviz_config',
-        default_value=os.path.join(bringup_dir, 'rviz', 'nav2_default_view.rviz'),
+        default_value=os.path.join(pkg_dir, 'rviz', 'config_navigation_namespace.rviz'),
         description='Full path to the RVIZ config file to use')
 
     # Create the launch description and populate
