@@ -15,7 +15,7 @@ def generate_launch_description():
     # Launch Arguments
     namespace_arg = DeclareLaunchArgument(
         'namespace',
-        default_value='robot',
+        default_value='',
         description='Robot namespace for ROS nodes and topics'
     )
 
@@ -25,6 +25,7 @@ def generate_launch_description():
             executable='mqtt_waypoint_receiver',
             name='mqtt_waypoint_receiver',
             namespace=namespace,
+            parameters=[{namespace: LaunchConfiguration('namespace')}],
             output='screen'
         )
 

@@ -2,6 +2,9 @@
 #include <vector>
 #include "nav2_msgs/action/navigate_through_poses.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
+#include "tf2_ros/transform_listener.h"
+#include "tf2_ros/buffer.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 
 using NavigateThroughPoses = nav2_msgs::action::NavigateThroughPoses;
@@ -12,6 +15,12 @@ class MQTTWaypointReceiver : public rclcpp::Node
     public:
         MQTTWaypointReceiver();
     private:
+        //create a namespace variable
+        std::string namespace_;
+
+        //create a buffer and listener for tf2
+        tf2_ros::Buffer tf_buffer_;
+        tf2_ros::TransformListener tf_listener_;
 
         //create a timer
         rclcpp::TimerBase::SharedPtr timer_;

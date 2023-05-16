@@ -1,46 +1,75 @@
 #include "auna_mqtt/mqtt_waypoint_receiver.hpp"
 
-MQTTWaypointReceiver::MQTTWaypointReceiver() : Node("mqtt_waypoint_receiver")
+MQTTWaypointReceiver::MQTTWaypointReceiver() : Node("mqtt_waypoint_receiver"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
     timer_ = this->create_wall_timer(std::chrono::milliseconds(1000), [this](){timer_callback();});
 
     this->client_ptr_ = rclcpp_action::create_client<NavigateThroughPoses>(this,"navigate_through_poses");
+
+    this->declare_parameter<std::string>("namespace", "");
+    this->get_parameter<std::string>("namespace", namespace_);
 }
 
 void MQTTWaypointReceiver::timer_callback() 
 {
+    timer_->cancel();
 
     if (!this->client_ptr_->wait_for_action_server()) {
       RCLCPP_ERROR(this->get_logger(), "Action server not available after waiting");
       rclcpp::shutdown();
     }
 
+    geometry_msgs::msg::TransformStamped transformStamped;
+    try {
+        if (namespace_ != "") {
+            transformStamped = tf_buffer_.lookupTransform("map", namespace_+"/base_link", tf2::TimePointZero);
+        } else {
+            transformStamped = tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero);
+        }
+    } catch (tf2::TransformException &ex) {
+        RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
+        rclcpp::shutdown();
+    }
+
     auto goal_msg = NavigateThroughPoses::Goal();
 
-    //create a vector of poses in a square with 2 m sides
     std::vector<geometry_msgs::msg::PoseStamped> poses;
 
     geometry_msgs::msg::PoseStamped pose;
     pose.header.frame_id = "map";
-    pose.pose.position.x = 2;
-    pose.pose.position.y = 2;
-    pose.pose.orientation.w = 1;
+    pose.pose.position.x = transformStamped.transform.translation.x;
+    pose.pose.position.y = transformStamped.transform.translation.y;
+    pose.pose.position.z = transformStamped.transform.translation.z;
+    pose.pose.orientation.x = transformStamped.transform.rotation.x;
+    pose.pose.orientation.y = transformStamped.transform.rotation.y;
+    pose.pose.orientation.z = transformStamped.transform.rotation.z;
+    pose.pose.orientation.w = transformStamped.transform.rotation.w;
     poses.push_back(pose);
 
-    pose.pose.position.x = 2;
-    pose.pose.position.y = -2;
-    pose.pose.orientation.w = 1;
+    double distance = 3.0;
+    pose.pose.position.x = distance;
+    pose.pose.position.y = distance;
+    double heading = atan2(pose.pose.position.y - poses[0].pose.position.y, pose.pose.position.x - poses[0].pose.position.x);
+    pose.pose.orientation = tf2::toMsg(tf2::Quaternion(tf2::Vector3(0,0,1), heading));
+    poses.push_back(pose);
+    pose.pose.position.x = distance;
+    pose.pose.position.y = -distance;
+    heading = atan2(pose.pose.position.y - poses[1].pose.position.y, pose.pose.position.x - poses[0].pose.position.x);
+    pose.pose.orientation = tf2::toMsg(tf2::Quaternion(tf2::Vector3(0,0,1), heading));
+    poses.push_back(pose);
+    pose.pose.position.x = -distance;
+    pose.pose.position.y = -distance;
+    heading = atan2(pose.pose.position.y - poses[2].pose.position.y, pose.pose.position.x - poses[0].pose.position.x);
+    pose.pose.orientation = tf2::toMsg(tf2::Quaternion(tf2::Vector3(0,0,1), heading));
+    poses.push_back(pose);
+    pose.pose.position.x = -distance;
+    pose.pose.position.y = distance;
+    heading = atan2(pose.pose.position.y - poses[3].pose.position.y, pose.pose.position.x - poses[0].pose.position.x);
+    pose.pose.orientation = tf2::toMsg(tf2::Quaternion(tf2::Vector3(0,0,1), heading));
     poses.push_back(pose);
 
-    pose.pose.position.x = -2;
-    pose.pose.position.y = -2;
-    pose.pose.orientation.w = 1;
-    poses.push_back(pose);
+    
 
-    pose.pose.position.x = -2;
-    pose.pose.position.y = 2;
-    pose.pose.orientation.w = 1;
-    poses.push_back(pose);
 
     goal_msg.poses = poses;
 
@@ -70,7 +99,7 @@ void MQTTWaypointReceiver::feedback_callback(
   GoalHandleNavigateThroughPoses::SharedPtr,
   const std::shared_ptr<const NavigateThroughPoses::Feedback> feedback)
 {
-  RCLCPP_INFO(this->get_logger(), "Received feedback: %i", feedback->navigation_time.sec);
+  // RCLCPP_INFO(this->get_logger(), "Received feedback: %i", feedback->navigation_time.sec);
 }
 
 void MQTTWaypointReceiver::result_callback(const GoalHandleNavigateThroughPoses::WrappedResult & result)
@@ -89,5 +118,5 @@ void MQTTWaypointReceiver::result_callback(const GoalHandleNavigateThroughPoses:
       return;
   }
   RCLCPP_INFO(this->get_logger(), "Navigation finished");
-  // rclcpp::shutdown();
+  timer_->reset();
 }
