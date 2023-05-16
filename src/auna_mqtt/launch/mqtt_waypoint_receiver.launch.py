@@ -25,8 +25,10 @@ def generate_launch_description():
             executable='mqtt_waypoint_receiver',
             name='mqtt_waypoint_receiver',
             namespace=namespace,
-            parameters=[{namespace: LaunchConfiguration('namespace')}],
-            output='screen'
+            parameters=[{'namespace': LaunchConfiguration('namespace')}],
+            output='screen',
+            remappings=[('/tf', 'tf'),
+                        ('/tf_static', 'tf_static')]
         )
 
     # Launch Description

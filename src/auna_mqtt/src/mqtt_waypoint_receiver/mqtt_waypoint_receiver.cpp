@@ -2,7 +2,7 @@
 
 MQTTWaypointReceiver::MQTTWaypointReceiver() : Node("mqtt_waypoint_receiver"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
-    timer_ = this->create_wall_timer(std::chrono::milliseconds(1000), [this](){timer_callback();});
+    timer_ = this->create_wall_timer(std::chrono::milliseconds(100), [this](){timer_callback();});
 
     this->client_ptr_ = rclcpp_action::create_client<NavigateThroughPoses>(this,"navigate_through_poses");
 
@@ -28,7 +28,8 @@ void MQTTWaypointReceiver::timer_callback()
         }
     } catch (tf2::TransformException &ex) {
         RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
-        rclcpp::shutdown();
+        timer_->reset();
+        return;
     }
 
     auto goal_msg = NavigateThroughPoses::Goal();
