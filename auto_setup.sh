@@ -32,6 +32,10 @@ sudo usermod -a -G dialout $USER
 sudo apt-get -y install ros-galactic-ackermann-msgs ros-galactic-diagnostic-* ros-galactic-geographic-* ros-galactic-joy* ros-galactic-laser* ros-galactic-realsense2-* ros-galactic-robot-localization* ros-galactic-teleop-twist-joy* ros-galactic-serial-driver ros-galactic-udp-* ros-galactic-asio-cmake-module ros-galactic-io-context ros-galactic-urg-node* 
 
 # MQTT
+sudo apt-get install build-essential gcc make cmake cmake-gui cmake-curses-gui
+sudo apt-get install libssl-dev 
+sudo apt-get install doxygen graphviz
+
 git clone https://github.com/eclipse/paho.mqtt.c.git ~/paho.mqtt.c
 cd ~/paho.mqtt.c
 git checkout v1.3.8
