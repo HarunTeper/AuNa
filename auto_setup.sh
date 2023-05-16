@@ -55,5 +55,6 @@ sudo apt-get -y install nlohmann-json3-dev
 # Build
 
 cd ~/AuNa
+git submodule update --init --recursive
 source /opt/ros/galactic/setup.bash
 colcon build --symlink-install
