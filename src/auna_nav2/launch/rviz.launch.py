@@ -26,10 +26,12 @@ def include_launch_description(context: LaunchContext):
         namespaced_rviz_config_file = ReplaceString(
             source_file=rviz_config_file,
             replacements={'<robot_namespace>': ('')})
+        base_frame = ''
     else:
         namespaced_rviz_config_file = ReplaceString(
                 source_file=rviz_config_file,
                 replacements={'<robot_namespace>': ('/', namespace)})
+        base_frame = namespace.perform(context)+'/'+'base_link  '
 
     start_rviz_cmd = Node(
         package='rviz2',
@@ -41,7 +43,9 @@ def include_launch_description(context: LaunchContext):
                     ('/tf_static', 'tf_static'),
                     ('/goal_pose', 'goal_pose'),
                     ('/clicked_point', 'clicked_point'),
-                    ('/initialpose', 'initialpose')])
+                    ('/initialpose', 'initialpose')],
+        parameters=[{'base_frame': base_frame}]
+    )
 
     exit_event_handler = RegisterEventHandler(
         event_handler=OnProcessExit(
@@ -61,7 +65,7 @@ def include_launch_description(context: LaunchContext):
 def generate_launch_description():
     """Launch RViz2 with the default view for the navigation stack. """
     # Get the launch directory
-    bringup_dir = get_package_share_directory('nav2_bringup')
+    pkg_dir = get_package_share_directory('auna_nav2')
 
     # Declare the launch arguments
     declare_namespace_cmd = DeclareLaunchArgument(
@@ -72,7 +76,7 @@ def generate_launch_description():
 
     declare_rviz_config_file_cmd = DeclareLaunchArgument(
         'rviz_config',
-        default_value=os.path.join(bringup_dir, 'rviz', 'nav2_default_view.rviz'),
+        default_value=os.path.join(pkg_dir, 'rviz', 'config_navigation_namespace.rviz'),
         description='Full path to the RVIZ config file to use')
 
     # Create the launch description and populate
