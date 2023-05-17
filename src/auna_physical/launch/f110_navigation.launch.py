@@ -1,7 +1,6 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
@@ -10,12 +9,9 @@ def generate_launch_description():
     """Return launch description"""
 
     # Package Directories
-    gazebo_pkg_dir = get_package_share_directory('auna_gazebo')
     navigation_pkg_dir = get_package_share_directory('auna_nav2')
 
     # Paths to folders and files
-    gazebo_launch_file_dir = os.path.join(gazebo_pkg_dir, 'launch', 'gazebo')
-    spawn_launch_file_dir = os.path.join(gazebo_pkg_dir, 'launch', 'spawn')
     nav_launch_file_dir = os.path.join(navigation_pkg_dir, 'launch')
 
     # Paths to folders and files
@@ -45,23 +41,10 @@ def generate_launch_description():
         }.items(),
     )
 
-    localization_pose_cmd = Node(
-        package='auna_gazebo',
-        executable='localization_pose',
-        name='localization_pose',
-        namespace=namespace,
-        arguments={namespace},
-        output='screen',
-        remappings=[('/tf', 'tf'),
-                    ('/tf_static', 'tf_static')
-        ],
-    )
-
     # Launch Description
     launch_description = LaunchDescription()
 
     launch_description.add_action(namespace_arg)
     launch_description.add_action(nav_cmd)
-    launch_description.add_action(localization_pose_cmd)
 
     return launch_description

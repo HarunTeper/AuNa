@@ -5,6 +5,7 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, Opaq
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch.launch_context import LaunchContext
+from launch_ros.actions import Node
 
 
 def include_launch_description(context: LaunchContext):
@@ -50,9 +51,21 @@ def include_launch_description(context: LaunchContext):
             'filter_index': str(int(robot_index.perform(context))-1),
         }.items(),
     )
+    localization_pose_cmd = Node(
+        package='auna_gazebo',
+        executable='localization_pose',
+        name='localization_pose',
+        namespace=namespace,
+        arguments={namespace},
+        output='screen',
+        remappings=[('/tf', 'tf'),
+                    ('/tf_static', 'tf_static')
+                    ],
+    )
 
     cmds.append(sensor_cmd)
     cmds.append(nav_cmd)
+    cmds.append(localization_pose_cmd)
     cmds.append(vicon_cmd)
     cmds.append(cam_cmd)
 

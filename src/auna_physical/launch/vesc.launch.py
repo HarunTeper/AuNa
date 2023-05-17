@@ -36,7 +36,7 @@ def include_launch_description(context: LaunchContext):
             parameters=[
                 {"odom_frame": "odom"},
                 {"base_frame": "base_link"},
-                {"speed_to_erpm_gain": 4614.0},
+                {"speed_to_erpm_gain": -4614.0},
                 {"speed_to_erpm_offset": 0.0},
                 {"use_servo_cmd_to_calc_angular_velocity": True},
                 {"steering_angle_to_servo_gain": -1.0},
@@ -56,7 +56,7 @@ def include_launch_description(context: LaunchContext):
             parameters=[
                 {"odom_frame": namespace.perform(context)+"/odom"},
                 {"base_frame": namespace.perform(context)+"/base_link"},
-                {"speed_to_erpm_gain": 4614.0},
+                {"speed_to_erpm_gain": -4614.0},
                 {"speed_to_erpm_offset": 0.0},
                 {"use_servo_cmd_to_calc_angular_velocity": True},
                 {"steering_angle_to_servo_gain": -1.0},
