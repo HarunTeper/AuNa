@@ -2,7 +2,7 @@
 
 MQTTWaypointReceiver::MQTTWaypointReceiver() : Node("mqtt_waypoint_receiver"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
-    timer_ = this->create_wall_timer(std::chrono::milliseconds(100), [this](){timer_callback();});
+    // timer_ = this->create_wall_timer(std::chrono::milliseconds(100), [this](){timer_callback();});
 
     this->client_ptr_ = rclcpp_action::create_client<NavigateThroughPoses>(this,"navigate_through_poses");
 
@@ -100,7 +100,7 @@ void MQTTWaypointReceiver::feedback_callback(
   GoalHandleNavigateThroughPoses::SharedPtr,
   const std::shared_ptr<const NavigateThroughPoses::Feedback> feedback)
 {
-  // RCLCPP_INFO(this->get_logger(), "Received feedback: %i", feedback->navigation_time.sec);
+  RCLCPP_INFO(this->get_logger(), "Received feedback: %i", feedback->navigation_time.sec);
 }
 
 void MQTTWaypointReceiver::result_callback(const GoalHandleNavigateThroughPoses::WrappedResult & result)

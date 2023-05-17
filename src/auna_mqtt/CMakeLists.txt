@@ -35,6 +35,7 @@ include_directories(include)
 
 # Add libraries
 add_library(mqtt_waypoint_receiver_node SHARED src/mqtt_waypoint_receiver/mqtt_waypoint_receiver.cpp)
+add_library(mqtt_callback SHARED src/mqtt_callback/mqtt_callback.cpp)
 
 # Create Cpp executable
 add_executable(mqtt_waypoint_receiver src/mqtt_waypoint_receiver/mqtt_waypoint_receiver_main.cpp)
@@ -50,9 +51,13 @@ target_compile_definitions(mqtt_waypoint_receiver_node
 set(mqtt_waypoint_receiver_dependencies rclcpp geometry_msgs nav2_msgs rclcpp_action rclcpp_components tf2_ros PahoMqttCpp nlohmann_json)
 ament_target_dependencies(mqtt_waypoint_receiver_node ${mqtt_waypoint_receiver_dependencies})
 ament_target_dependencies(mqtt_waypoint_receiver ${mqtt_waypoint_receiver_dependencies})
+set(mqtt_callback_dependencies rclcpp PahoMqttCpp nlohmann_json)
+ament_target_dependencies(mqtt_callback ${mqtt_callback_dependencies})
 
 # Link libraries
 target_link_libraries(mqtt_waypoint_receiver mqtt_waypoint_receiver_node)
+target_link_libraries(mqtt_waypoint_receiver mqtt_callback)
+target_link_libraries(mqtt_callback mqtt_waypoint_receiver_node)
 target_link_libraries(mqtt_waypoint_receiver PahoMqttCpp::paho-mqttpp3)
 
 install(DIRECTORY 
@@ -68,6 +73,7 @@ install(TARGETS
 
 install(TARGETS 
   mqtt_waypoint_receiver_node
+  mqtt_callback
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
