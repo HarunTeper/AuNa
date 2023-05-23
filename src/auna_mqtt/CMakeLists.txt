@@ -33,9 +33,13 @@ find_package(nlohmann_json REQUIRED)
 # Include Cpp "include" directory
 include_directories(include)
 
+# Add static libraries
+add_library(mqtt_callback STATIC src/mqtt_callback/mqtt_callback.cpp)
+set_target_properties( mqtt_callback PROPERTIES PREFIX lib )
+target_link_libraries( mqtt_callback mqtt_waypoint_receiver_node )
+
 # Add libraries
-add_library(mqtt_waypoint_receiver_node SHARED src/mqtt_waypoint_receiver/mqtt_waypoint_receiver.cpp)
-add_library(mqtt_callback SHARED src/mqtt_callback/mqtt_callback.cpp)
+add_library(mqtt_waypoint_receiver_node STATIC src/mqtt_waypoint_receiver/mqtt_waypoint_receiver.cpp)
 
 # Create Cpp executable
 add_executable(mqtt_waypoint_receiver src/mqtt_waypoint_receiver/mqtt_waypoint_receiver_main.cpp)
@@ -56,8 +60,7 @@ ament_target_dependencies(mqtt_callback ${mqtt_callback_dependencies})
 
 # Link libraries
 target_link_libraries(mqtt_waypoint_receiver mqtt_waypoint_receiver_node)
-target_link_libraries(mqtt_waypoint_receiver mqtt_callback)
-target_link_libraries(mqtt_callback mqtt_waypoint_receiver_node)
+target_link_libraries(mqtt_waypoint_receiver_node mqtt_callback)
 target_link_libraries(mqtt_waypoint_receiver PahoMqttCpp::paho-mqttpp3)
 
 install(DIRECTORY 
