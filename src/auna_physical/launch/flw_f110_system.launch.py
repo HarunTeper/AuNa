@@ -14,14 +14,18 @@ def include_launch_description(context: LaunchContext):
     # Package Directories
     pkg_dir = get_package_share_directory('auna_physical')
     cam_pkg_dir = get_package_share_directory('auna_comm')
+    cacc_pkg_dir = get_package_share_directory('auna_cacc')
 
     # Paths to folders and files
     launch_file_dir = os.path.join(pkg_dir, 'launch')
     cam_launch_file_dir = os.path.join(cam_pkg_dir, 'launch')
+    cacc_launch_file_dir = os.path.join(cacc_pkg_dir, 'launch')
 
     # Launch Configuration
     namespace = LaunchConfiguration('namespace')
     robot_index = LaunchConfiguration('robot_index')
+    enable_navigation = LaunchConfiguration('enable_navigation')
+    enable_cacc = LaunchConfiguration('enable_cacc')
 
     cmds = []
 
@@ -62,9 +66,18 @@ def include_launch_description(context: LaunchContext):
                     ('/tf_static', 'tf_static')
                     ],
     )
+    cacc_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(cacc_launch_file_dir, 'single_cacc_controller.launch.py')),
+        launch_arguments={
+            'namespace': namespace.perform(context)+"_"+robot_index.perform(context),
+        }.items(),
+    )
 
     cmds.append(sensor_cmd)
-    cmds.append(nav_cmd)
+    if enable_navigation.perform(context) == 'true':
+        cmds.append(nav_cmd)
+    if enable_cacc.perform(context) == 'true':
+        cmds.append(cacc_cmd)
     cmds.append(localization_pose_cmd)
     cmds.append(vicon_cmd)
     cmds.append(cam_cmd)
@@ -78,12 +91,16 @@ def generate_launch_description():
     # Launch arguments
     namespace_arg = DeclareLaunchArgument('namespace', default_value='robot')
     robot_index_arg = DeclareLaunchArgument('robot_index', default_value='0')
+    enable_navigation_arg = DeclareLaunchArgument('enable_navigation', default_value='false')
+    enable_cacc_arg = DeclareLaunchArgument('enable_cacc', default_value='false')
 
     # Launch Description
     launch_description = LaunchDescription()
 
     launch_description.add_action(namespace_arg)
     launch_description.add_action(robot_index_arg)
+    launch_description.add_action(enable_navigation_arg)
+    launch_description.add_action(enable_cacc_arg)
 
     launch_description.add_action(OpaqueFunction(function=include_launch_description))
 
