@@ -26,6 +26,7 @@ def include_launch_description(context: LaunchContext):
     robot_index = LaunchConfiguration('robot_index')
     enable_navigation = LaunchConfiguration('enable_navigation')
     enable_cacc = LaunchConfiguration('enable_cacc')
+    cam_index = LaunchConfiguration('cam_index')
 
     cmds = []
 
@@ -52,7 +53,7 @@ def include_launch_description(context: LaunchContext):
         launch_arguments={
             'namespace': namespace.perform(context)+"_"+robot_index.perform(context),
             'robot_index': robot_index,
-            'filter_index': str(int(robot_index.perform(context))-1),
+            'filter_index': cam_index,
         }.items(),
     )
     localization_pose_cmd = Node(
@@ -91,6 +92,7 @@ def generate_launch_description():
     # Launch arguments
     namespace_arg = DeclareLaunchArgument('namespace', default_value='robot')
     robot_index_arg = DeclareLaunchArgument('robot_index', default_value='0')
+    cam_index_arg = DeclareLaunchArgument('cam_index', default_value='1')
     enable_navigation_arg = DeclareLaunchArgument('enable_navigation', default_value='false')
     enable_cacc_arg = DeclareLaunchArgument('enable_cacc', default_value='false')
 
@@ -101,6 +103,7 @@ def generate_launch_description():
     launch_description.add_action(robot_index_arg)
     launch_description.add_action(enable_navigation_arg)
     launch_description.add_action(enable_cacc_arg)
+    launch_description.add_action(cam_index_arg)
 
     launch_description.add_action(OpaqueFunction(function=include_launch_description))
 
