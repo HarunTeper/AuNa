@@ -7,6 +7,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch.launch_context import LaunchContext
+from auna_common import yaml_launch
 
 def include_launch_description(context: LaunchContext):
     """Return launch description"""
@@ -18,67 +19,36 @@ def include_launch_description(context: LaunchContext):
     remappings = [('/tf', 'tf'),
                 ('/tf_static', 'tf_static')]
 
+    tmp_params_file = yaml_launch.get_yaml(vesc_config.perform(context))
+    tmp_params_file = yaml_launch.insert_namespace(tmp_params_file, context.launch_configurations['namespace'])
+    tmp_params_file = yaml_launch.get_temp_file(tmp_params_file)
+
     # Nodes and other launch files
     vesc_driver_node = Node(
         package='vesc_driver',
         executable='vesc_driver_node',
         name='vesc_driver_node',
         namespace=namespace,
-        parameters=[vesc_config]
+        parameters=[yaml_launch.get_yaml_value(tmp_params_file, ['vesc_driver_node', 'ros__parameters'])],
+        output='screen'
     )
 
-    if namespace.perform(context) == "":
-        vesc_to_odom_node = Node(
-            package='vesc_ackermann',
-            executable='vesc_to_odom_node',
-            name='vesc_to_odom_node',
-            namespace=namespace,
-            parameters=[
-                {"odom_frame": "odom"},
-                {"base_frame": "base_link"},
-                {"speed_to_erpm_gain": -4614.0},
-                {"speed_to_erpm_offset": 0.0},
-                {"use_servo_cmd_to_calc_angular_velocity": True},
-                {"steering_angle_to_servo_gain": -1.0},
-                {"steering_angle_to_servo_offset": 0.530},
-                {"wheelbase": 0.32},
-                {"publish_tf": True}
-            ],
-            output='screen',
-            remappings=remappings
-        )
-    else:
-        vesc_to_odom_node = Node(
-            package='vesc_ackermann',
-            executable='vesc_to_odom_node',
-            name='vesc_to_odom_node',
-            namespace=namespace,
-            parameters=[
-                {"odom_frame": namespace.perform(context)+"/odom"},
-                {"base_frame": namespace.perform(context)+"/base_link"},
-                {"speed_to_erpm_gain": -4614.0},
-                {"speed_to_erpm_offset": 0.0},
-                {"use_servo_cmd_to_calc_angular_velocity": True},
-                {"steering_angle_to_servo_gain": -1.0},
-                {"steering_angle_to_servo_offset": 0.530},
-                {"wheelbase": 0.32},
-                {"publish_tf": True}
-            ],
-            output='screen',
-            remappings=remappings
-        )
+    vesc_to_odom_node = Node(
+        package='vesc_ackermann',
+        executable='vesc_to_odom_node',
+        name='vesc_to_odom_node',
+        namespace=namespace,
+        parameters=[yaml_launch.get_yaml_value(tmp_params_file, ['vesc_to_odom_node', 'ros__parameters'])],
+        output='screen',
+        remappings=remappings
+    )
 
     ackermann_to_vesc_node = Node(
         package='vesc_ackermann',
         executable='ackermann_to_vesc_node',
         name='ackermann_to_vesc_node',
         namespace=namespace,
-        parameters=[
-            {"speed_to_erpm_gain": 4614.0},
-            {"speed_to_erpm_offset": 0.0},
-            {"steering_angle_to_servo_gain": -1.0},
-            {"steering_angle_to_servo_offset": 0.530}
-        ],
+        parameters=[yaml_launch.get_yaml_value(tmp_params_file, ['ackermann_to_vesc_node', 'ros__parameters'])],
         output='screen'
     )
 
