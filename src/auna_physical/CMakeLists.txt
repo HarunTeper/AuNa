@@ -20,8 +20,6 @@ find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(ackermann_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
-find_package(ALGLIB REQUIRED)
-find_package(visualization_msgs REQUIRED)
 
 find_package(tf2_ros REQUIRED)
 find_package(tf2_kdl REQUIRED)
@@ -46,7 +44,7 @@ ament_target_dependencies(cmd_vel_to_ackermann ${cmd_vel_to_ackermann_dependenci
 set(vicon_tf_converter_dependencies rclcpp geometry_msgs tf2_kdl tf2_kdl)
 ament_target_dependencies(vicon_tf_converter_node ${vicon_tf_converter_dependencies})
 ament_target_dependencies(vicon_tf_converter ${vicon_tf_converter_dependencies})
-set(waypoint_publisher_dependencies rclcpp geometry_msgs nav2_msgs visualization_msgs rclcpp_action rclcpp_components tf2_ros ALGLIB)
+set(waypoint_publisher_dependencies rclcpp geometry_msgs nav2_msgs rclcpp_action rclcpp_components tf2_ros)
 ament_target_dependencies(waypoint_publisher_node ${waypoint_publisher_dependencies})
 ament_target_dependencies(waypoint_publisher ${waypoint_publisher_dependencies})
 
@@ -54,7 +52,6 @@ ament_target_dependencies(waypoint_publisher ${waypoint_publisher_dependencies})
 target_link_libraries(cmd_vel_to_ackermann cmd_vel_to_ackermann_node)
 target_link_libraries(vicon_tf_converter vicon_tf_converter_node)
 target_link_libraries(waypoint_publisher waypoint_publisher_node)
-target_link_libraries(waypoint_publisher ALGLIB)
 
 # Install Cpp executables
 install(TARGETS
