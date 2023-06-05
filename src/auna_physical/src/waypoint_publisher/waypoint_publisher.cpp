@@ -2,7 +2,7 @@
 
 WaypointPublisher::WaypointPublisher() : Node("waypoint_publisher"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
-    timer_ = this->create_wall_timer(std::chrono::milliseconds(100), [this](){timer_callback();});
+    timer_ = this->create_wall_timer(std::chrono::milliseconds(1000), [this](){timer_callback();});
 
     this->client_ptr_ = rclcpp_action::create_client<NavigateThroughPoses>(this,"navigate_through_poses");
 
@@ -48,14 +48,26 @@ WaypointPublisher::WaypointPublisher() : Node("waypoint_publisher"), tf_buffer_(
             poses_[i].pose.orientation = tf2::toMsg(tf2::Quaternion(tf2::Vector3(0,0,1), heading));
         }
     }
+
+    // to start from zero at first iteration
+    current_pose_index_ = -number_of_waypoints_;
 }
 
 void WaypointPublisher::timer_callback()
 {
-    RCLCPP_INFO(this->get_logger(), "Timer callback");
+    publish_waypoints();
+}
+
+void WaypointPublisher::publish_waypoints(){
+    if(remaining_number_of_poses_ >= number_of_waypoints_){
+        return;
+    }
+
+    RCLCPP_INFO(this->get_logger(), "Publishing waypoints");
+
+    current_pose_index_ = (current_pose_index_ + number_of_waypoints_ - remaining_number_of_poses_) % poses_.size();
 
     auto goal_msg = NavigateThroughPoses::Goal();
-
     for (int i = current_pose_index_; i < current_pose_index_ + number_of_waypoints_; i++) {
         goal_msg.poses.push_back(poses_[i % poses_.size()]);
     }
@@ -70,6 +82,7 @@ void WaypointPublisher::timer_callback()
 
     RCLCPP_INFO(this->get_logger(), "Sending goal");
     this->client_ptr_->async_send_goal(goal_msg, send_goal_options);
+    remaining_number_of_poses_ = number_of_waypoints_;
 }
 
 void WaypointPublisher::goal_response_callback(std::shared_future<GoalHandleNavigateThroughPoses::SharedPtr> future)
@@ -77,7 +90,6 @@ void WaypointPublisher::goal_response_callback(std::shared_future<GoalHandleNavi
     auto goal_handle = future.get();
     if (!goal_handle) {
         RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
-        timer_->reset();
     } else {
         RCLCPP_INFO(this->get_logger(), "Goal accepted by server, waiting for result");
     }
@@ -87,21 +99,8 @@ void WaypointPublisher::feedback_callback(
     GoalHandleNavigateThroughPoses::SharedPtr,
     const std::shared_ptr<const NavigateThroughPoses::Feedback> feedback)
 {
-    RCLCPP_INFO(this->get_logger(), "Received feedback: %i", feedback->navigation_time.sec);
-    RCLCPP_INFO(this->get_logger(), "Number of poses remaining: %i", feedback->number_of_poses_remaining);
-
-    if (feedback->number_of_poses_remaining < remaining_number_of_poses_) {
-        remaining_decreased_ = true;
-    }
-
-    if (feedback->number_of_poses_remaining < number_of_waypoints_ && !remaining_decreased_) {
-        remaining_number_of_poses_ = feedback->number_of_poses_remaining;
-    }
-    else if (feedback->number_of_poses_remaining < number_of_waypoints_ && remaining_decreased_) {
-        remaining_decreased_ = false;
-        current_pose_index_ = (current_pose_index_ + number_of_waypoints_ - remaining_number_of_poses_) % poses_.size();
-        remaining_number_of_poses_ = feedback->number_of_poses_remaining;
-    }
+    // RCLCPP_INFO(this->get_logger(), "Received feedback: %i", feedback->number_of_poses_remaining);
+    remaining_number_of_poses_ = feedback->number_of_poses_remaining;
 }
 
 void WaypointPublisher::result_callback(const GoalHandleNavigateThroughPoses::WrappedResult & result)
@@ -111,17 +110,13 @@ void WaypointPublisher::result_callback(const GoalHandleNavigateThroughPoses::Wr
         break;
     case rclcpp_action::ResultCode::ABORTED:
         RCLCPP_ERROR(this->get_logger(), "Goal was aborted");
-        timer_->reset();
         return;
     case rclcpp_action::ResultCode::CANCELED:
         RCLCPP_ERROR(this->get_logger(), "Goal was canceled");
-        timer_->reset();
         return;
     default:
         RCLCPP_ERROR(this->get_logger(), "Unknown result code");
-        timer_->reset();
         return;
     }
     RCLCPP_INFO(this->get_logger(), "Navigation finished");
-    timer_->reset();
 }

@@ -78,7 +78,7 @@ class WaypointPublisher(Node):
         # filter the waypoints with a distance of less than 0.1m
         filtered_waypoints = [new_waypoints[0]]
         for i in range(1, len(new_waypoints)):
-            if np.sqrt((new_waypoints[i][0] - filtered_waypoints[-1][0])**2 + (new_waypoints[i][1] - filtered_waypoints[-1][1])**2) > 0.1:
+            if np.sqrt((new_waypoints[i][0] - filtered_waypoints[-1][0])**2 + (new_waypoints[i][1] - filtered_waypoints[-1][1])**2) > 1.0:
                 filtered_waypoints.append(new_waypoints[i])
 
 

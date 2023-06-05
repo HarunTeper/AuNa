@@ -50,7 +50,7 @@ void ViconTFConverter::vicon_callback(const geometry_msgs::msg::TransformStamped
     {
         map_to_odom_transform_msg.child_frame_id = name_+"/odom";
     }
-    auto stamp = tf2_ros::fromMsg(this->now());
+    auto stamp = tf2_ros::fromMsg(msg->header.stamp) + tf2::durationFromSec(0.5);
     map_to_odom_transform_msg.header.stamp = tf2_ros::toMsg(stamp);
     broadcaster_.sendTransform(map_to_odom_transform_msg);
 
@@ -73,7 +73,7 @@ void ViconTFConverter::vicon_callback(const geometry_msgs::msg::TransformStamped
     {
         reference_transform.child_frame_id = name_+"/reference";
     }
-    auto stamp_reference = tf2_ros::fromMsg(this->now());
+    auto stamp = tf2_ros::fromMsg(msg->header.stamp) + tf2::durationFromSec(0.5);
     reference_transform.header.stamp = tf2_ros::toMsg(stamp_reference);
     broadcaster_.sendTransform(reference_transform);
 }
