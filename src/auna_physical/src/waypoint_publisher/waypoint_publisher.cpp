@@ -55,13 +55,12 @@ WaypointPublisher::WaypointPublisher() : Node("waypoint_publisher"), tf_buffer_(
 
 void WaypointPublisher::timer_callback()
 {
-    publish_waypoints();
+    if(remaining_number_of_poses_ < number_of_waypoints_*0.5){
+        publish_waypoints();
+    }
 }
 
 void WaypointPublisher::publish_waypoints(){
-    if(remaining_number_of_poses_ >= number_of_waypoints_){
-        return;
-    }
 
     RCLCPP_INFO(this->get_logger(), "Publishing waypoints");
 
@@ -90,6 +89,7 @@ void WaypointPublisher::goal_response_callback(std::shared_future<GoalHandleNavi
     auto goal_handle = future.get();
     if (!goal_handle) {
         RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
+        publish_waypoints();
     } else {
         RCLCPP_INFO(this->get_logger(), "Goal accepted by server, waiting for result");
     }
@@ -110,12 +110,15 @@ void WaypointPublisher::result_callback(const GoalHandleNavigateThroughPoses::Wr
         break;
     case rclcpp_action::ResultCode::ABORTED:
         RCLCPP_ERROR(this->get_logger(), "Goal was aborted");
+        publish_waypoints();
         return;
     case rclcpp_action::ResultCode::CANCELED:
         RCLCPP_ERROR(this->get_logger(), "Goal was canceled");
+        publish_waypoints();
         return;
     default:
         RCLCPP_ERROR(this->get_logger(), "Unknown result code");
+        publish_waypoints();
         return;
     }
     RCLCPP_INFO(this->get_logger(), "Navigation finished");
