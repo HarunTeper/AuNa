@@ -124,8 +124,8 @@ controller_server:
       plugin: teb_local_planner::TebLocalPlannerROS
 
       teb_autosize: 1.0
-      dt_ref: 0.3
-      dt_hysteresis: 0.1
+      dt_ref: 0.5
+      dt_hysteresis: 0.4
       max_samples: 500
       global_plan_overwrite_orientation: False
       allow_init_with_backwards_motion: False
@@ -141,7 +141,7 @@ controller_server:
       max_vel_x: 3.0
       max_vel_theta: 2.0 
       acc_lim_x: 3.0
-      acc_lim_theta: 10.0
+      acc_lim_theta: 0.5
       min_turning_radius: 1.0
       wheelbase: 0.32
       cmd_angle_instead_rotvel: true
