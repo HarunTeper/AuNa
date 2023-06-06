@@ -14,9 +14,9 @@ CaccController::CaccController() : Node("cacc_controller")
     this->declare_parameter("standstill_distance", 1.5);
     this->declare_parameter("time_gap", 0.5);
     this->declare_parameter("wheelbase", 0.32);
-    this->declare_parameter("kp", 1.0);
-    this->declare_parameter("kd", 1.0);
-    this->declare_parameter("max_velocity", 2.0);
+    this->declare_parameter("kp", 0.5);
+    this->declare_parameter("kd", 0.5);
+    this->declare_parameter("max_velocity", 1.0);
 
     standstill_distance_ = this->get_parameter("standstill_distance").as_double();
     time_gap_ = this->get_parameter("time_gap").as_double();
