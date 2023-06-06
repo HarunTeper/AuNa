@@ -73,7 +73,7 @@ void ViconTFConverter::vicon_callback(const geometry_msgs::msg::TransformStamped
     {
         reference_transform.child_frame_id = name_+"/reference";
     }
-    auto stamp = tf2_ros::fromMsg(msg->header.stamp) + tf2::durationFromSec(0.5);
+    auto stamp_reference = tf2_ros::fromMsg(msg->header.stamp) + tf2::durationFromSec(0.5);
     reference_transform.header.stamp = tf2_ros::toMsg(stamp_reference);
     broadcaster_.sendTransform(reference_transform);
 }
