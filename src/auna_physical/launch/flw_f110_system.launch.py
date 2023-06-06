@@ -33,25 +33,25 @@ def include_launch_description(context: LaunchContext):
     sensor_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(launch_file_dir, 'sensors.launch.py')),
         launch_arguments={
-            'namespace': namespace.perform(context)+"_"+robot_index.perform(context),
+            'namespace': namespace.perform(context)+robot_index.perform(context),
         }.items(),
     )
     nav_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(launch_file_dir, 'f110_navigation.launch.py')),
         launch_arguments={
-            'namespace': namespace.perform(context)+"_"+robot_index.perform(context),
+            'namespace': namespace.perform(context)+robot_index.perform(context),
         }.items(),
     )
     vicon_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(launch_file_dir, 'vicon_tf_converter.launch.py')),
         launch_arguments={
-            'namespace': namespace.perform(context)+"_"+robot_index.perform(context),
+            'namespace': namespace.perform(context)+robot_index.perform(context),
         }.items(),
     )
     cam_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(cam_launch_file_dir, 'cam_communication.launch.py')),
         launch_arguments={
-            'namespace': namespace.perform(context)+"_"+robot_index.perform(context),
+            'namespace': namespace.perform(context)+robot_index.perform(context),
             'robot_index': robot_index,
             'filter_index': cam_index,
         }.items(),
@@ -60,8 +60,8 @@ def include_launch_description(context: LaunchContext):
         package='auna_gazebo',
         executable='localization_pose',
         name='localization_pose',
-        namespace=namespace,
-        arguments={namespace},
+        namespace=namespace.perform(context)+robot_index.perform(context),
+        arguments={namespace.perform(context)+robot_index.perform(context)},
         output='screen',
         remappings=[('/tf', 'tf'),
                     ('/tf_static', 'tf_static')
