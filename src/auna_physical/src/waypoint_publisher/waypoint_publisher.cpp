@@ -110,7 +110,6 @@ void WaypointPublisher::result_callback(const GoalHandleNavigateThroughPoses::Wr
         break;
     case rclcpp_action::ResultCode::ABORTED:
         RCLCPP_ERROR(this->get_logger(), "Goal was aborted");
-        publish_waypoints();
         return;
     case rclcpp_action::ResultCode::CANCELED:
         RCLCPP_ERROR(this->get_logger(), "Goal was canceled");
