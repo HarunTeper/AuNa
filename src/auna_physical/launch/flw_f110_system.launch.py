@@ -70,7 +70,7 @@ def include_launch_description(context: LaunchContext):
     cacc_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(cacc_launch_file_dir, 'single_cacc_controller.launch.py')),
         launch_arguments={
-            'namespace': namespace.perform(context)+"_"+robot_index.perform(context),
+            'namespace': namespace.perform(context)+robot_index.perform(context),
         }.items(),
     )
 
