@@ -19,18 +19,8 @@ void LocalizationPose::timer_callback(){
     geometry_msgs::msg::TransformStamped transformStamped;
     try
     {
-        if(this->buffer.canTransform("map",prefix+"base_link",tf2::TimePointZero))
-        {
-            transformStamped = this->buffer.lookupTransform("map",prefix+"base_link",tf2::TimePointZero);
-        }
-        else if(this->buffer.canTransform(prefix+"odom",prefix+"base_link",tf2::TimePointZero))
-        {
-            transformStamped = this->buffer.lookupTransform(prefix+"odom",prefix+"base_link",tf2::TimePointZero);
-        }
-        else
-        {
-            return;
-        }
+        transformStamped = this->buffer.lookupTransform(prefix+"odom",prefix+"base_link",tf2::TimePointZero);
+        transformStamped = this->buffer.lookupTransform("map",prefix+"base_link",tf2::TimePointZero);
     }
     catch (tf2::TransformException &ex)
     {
