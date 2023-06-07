@@ -5,11 +5,16 @@ CaccController::CaccController() : Node("cacc_controller")
     sub_cam_ = this->create_subscription<auna_its_msgs::msg::CAM>("cam_filtered", 2, [this](const auna_its_msgs::msg::CAM::SharedPtr msg){this->cam_callback(msg);});
     sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>("odom", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg){this->odom_callback(msg);});
     sub_pose_stamped_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("localization_pose", 2, [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg){this->pose_callback(msg);});
-    pub_cmd_vel = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 2);
-    timer_ = this->create_wall_timer(std::chrono::milliseconds(20), [this](){this->timer_callback();});
+    
+    pub_cmd_vel = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
+    pub_x_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/x", 1);
+    pub_y_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/y", 1);
 
-    pub_x_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/x_lookahead_point", 2);
-    pub_y_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/y_lookahead_point", 2);
+    timer_ = this->create_wall_timer(std::chrono::milliseconds(20), [this](){this->timer_callback();});
+    setup_timer_ = this->create_wall_timer(std::chrono::milliseconds(1000), [this](){this->setup_timer_callback();});
+    timer_->cancel();
+
+    set_standstill_distance
 
     this->declare_parameter("standstill_distance", 1.5);
     this->declare_parameter("time_gap", 0.5);
@@ -84,7 +89,6 @@ void CaccController::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
         odom_curvature_ = odom_yaw_rate_ / odom_velocity_;
     }
-
 }
 
 void CaccController::pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
@@ -101,16 +105,18 @@ void CaccController::pose_callback(const geometry_msgs::msg::PoseStamped::Shared
     m_.getRPY(roll_, pitch_, yaw_);
     pose_yaw_ = yaw_;
 
+    last_pose_msg_ = msg;
 }
 
-void CaccController::standstill_distance_callback(const std_msgs::msg::Float64::SharedPtr msg)
+void CaccController::setup_timer_callback()
 {
-    standstill_distance_ = msg->data;
-}
-
-void CaccController::time_gap_callback(const std_msgs::msg::Float64::SharedPtr msg)
-{
-    time_gap_ = msg->data;
+    // if all last messages exist, start timer
+    if (last_cam_msg_ != nullptr && last_odom_msg_ != nullptr && last_pose_msg_ != nullptr)
+    {
+        RCLCPP_INFO(this->get_logger(), "CACC controller started");
+        timer_->reset();
+        setup_timer_->cancel();
+    }
 }
 
 void CaccController::timer_callback()
@@ -180,3 +186,26 @@ void CaccController::timer_callback()
     pub_cmd_vel->publish(twist_msg);
 }
 
+void set_standstill_distance(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){
+    RCLCPP_INFO(this->get_logger(), "Setting standstill distance to %f", request->data);
+    standstill_distance_ = request->data;
+    response->success = true;
+}
+
+void set_time_gap(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){
+    RCLCPP_INFO(this->get_logger(), "Setting time gap to %f", request->data);
+    time_gap_ = request->data;
+    response->success = true;
+}
+
+void set_cacc_enable(const std::shared_ptr<auna_msgs::srv::SetBool::Request> request, std::shared_ptr<auna_msgs::srv::SetBool::Response> response){
+    if(request->data){
+        RCLCPP_INFO(this->get_logger(), "Enabling CACC controller");
+        timer_->reset();
+    }
+    else{
+        RCLCPP_INFO(this->get_logger(), "Disabling CACC controller");
+        timer_->cancel();
+    }
+    response->success = true;
+}

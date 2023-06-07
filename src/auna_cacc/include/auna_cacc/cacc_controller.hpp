@@ -6,6 +6,8 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "auna_msgs/srv/set_float64.hpp"
+#include "auna_msgs/srv/set_bool.hpp"
 
 //includes for tf matrix
 #include "tf2/LinearMath/Matrix3x3.h"
@@ -25,9 +27,14 @@ class CaccController : public rclcpp::Node
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_pose_stamped_;
         rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd_vel;
         rclcpp::TimerBase::SharedPtr timer_;
+        rclcpp::TimerBase::SharedPtr setup_timer_;
 
-        rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr sub_standstill_distance_;
-        rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr sub_time_gap_;
+        //service for standstill_distance and time_gap
+        rclcpp::Service<std_srvs::srv::SetFloat64>::SharedPtr client_set_standstill_distance_;
+        rclcpp::Service<std_srvs::srv::SetFloat64>::SharedPtr client_set_time_gap_;
+        
+        //service for cacc_enable
+        rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr client_set_cacc_enable_;
 
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_x_lookahead_point_;
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_y_lookahead_point_;
@@ -72,14 +79,22 @@ class CaccController : public rclcpp::Node
         double roll_;
         double pitch_;
         double yaw_;
+        geometry_msgs::msg::PoseStamped::SharedPtr last_pose_msg_;
 
         //callback functions
         void cam_callback(const auna_its_msgs::msg::CAM::SharedPtr msg);
         void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
         void pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
         void timer_callback();
-        void standstill_distance_callback(const std_msgs::msg::Float64::SharedPtr msg);
-        void time_gap_callback(const std_msgs::msg::Float64::SharedPtr msg);
+        void setup_timer_callback();
+
+        //service callback functions
+        void set_standstill_distance(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
+                                    std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response)
+        void set_time_gap(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
+                        std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response)
+        void set_cacc_enable(const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
+                            std::shared_ptr<auna_msgs::srv::SetBool::Response> response)
 
         //controller function variables
         double s_ = 0;
