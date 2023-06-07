@@ -18,6 +18,14 @@ class WaypointPublisher(Node):
         self.declare_parameter('waypoint_file', '~/auna_ws/src/auna_physical/config/flw_waypoints.csv')
         self.waypoint_file_path = self.get_parameter('waypoint_file').value
 
+        # declare parameter for filter distance
+        self.declare_parameter('filter_distance', 1.0)
+        self.filter_distance = self.get_parameter('filter_distance').value
+        self.declare_parameter('plot_results', False)
+        self.plot_results = self.get_parameter('plot_results').value
+        self.declare_parameter('swap_xy', False)
+        self.swap_xy = self.get_parameter('swap_xy').value
+
     def timer_callback(self):
         """Timer callback function."""
 
@@ -27,7 +35,10 @@ class WaypointPublisher(Node):
         with open(self.waypoint_file_path, 'r', encoding='utf-8') as file:
             waypoints = file.readlines()
             waypoints = [line.strip().split(',') for line in waypoints]
-            waypoints = [[float(line[0]), float(line[1])] for line in waypoints]
+            if self.swap_xy:
+                waypoints = [[float(point[1]), float(point[0])] for point in waypoints]
+            else:
+                waypoints = [[float(point[0]), float(point[1])] for point in waypoints]
 
         # save the x and y coordinates separately
         x = [point[0] for point in waypoints]
@@ -75,13 +86,16 @@ class WaypointPublisher(Node):
             new_waypoints.append(new_waypoint)
             new_angles.append(new_angle)
 
-        # filter the waypoints with a distance of less than 0.1m
+        # filter the waypoints by accumulating the distance between consecutive waypoints until it is greater than the filter distance
         filtered_waypoints = [new_waypoints[0]]
-        for i in range(1, len(new_waypoints)):
-            if np.sqrt((new_waypoints[i][0] - filtered_waypoints[-1][0])**2 + (new_waypoints[i][1] - filtered_waypoints[-1][1])**2) > 1.0:
-                filtered_waypoints.append(new_waypoints[i])
-
-
+        i = 0
+        distance = 0
+        while i < len(new_waypoints) - 1:
+            distance += np.sqrt((new_waypoints[i+1][0] - new_waypoints[i][0])**2 + (new_waypoints[i+1][1] - new_waypoints[i][1])**2)
+            if distance > self.filter_distance:
+                filtered_waypoints.append(new_waypoints[i+1])
+                distance = 0
+            i += 1
         # save new waypoints to a csv file
         with open('new_waypoints.csv', 'w', encoding='utf-8') as file:
             for point in filtered_waypoints:
@@ -89,6 +103,13 @@ class WaypointPublisher(Node):
 
         # Print that the new waypoints have been saved using rclpy
         self.get_logger().info('New waypoints saved to new_waypoints.csv')
+
+        # plot the filtered waypoints
+        if self.plot_results:
+            plt.figure()
+            plt.plot(x, y, 'go')
+            plt.plot([point[0] for point in filtered_waypoints], [point[1] for point in filtered_waypoints], 'ro')
+            plt.show()
 
 
 def main(args=None):
