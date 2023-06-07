@@ -39,11 +39,7 @@ def generate_launch_description():
         executable='joy_node',
         name='joy_node',
         namespace=namespace,
-        parameters=[{
-            'dev': joy_dev,
-            'deadzone': 0.3,
-            'autorepeat_rate': 20.0,
-        }]
+        parameters=[yaml_launch.get_yaml_value(joy_config_file_path, ['joy_node', 'ros__parameters'])],
     )
 
     teleop_joy_node = Node(
