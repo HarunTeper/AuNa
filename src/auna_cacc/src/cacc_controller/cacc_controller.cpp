@@ -14,7 +14,9 @@ CaccController::CaccController() : Node("cacc_controller")
     setup_timer_ = this->create_wall_timer(std::chrono::milliseconds(1000), [this](){this->setup_timer_callback();});
     timer_->cancel();
 
-    set_standstill_distance
+    client_set_standstill_distance_ = this->create_service<auna_msgs::srv::SetFloat64>("cacc/set_standstill_distance", [this](const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){this->set_standstill_distance(request, response);});
+    client_set_time_gap_ = this->create_service<auna_msgs::srv::SetFloat64>("cacc/set_time_gap", [this](const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){this->set_time_gap(request, response);});
+    client_set_cacc_enable_ = this->create_service<auna_msgs::srv::SetBool>("cacc/set_cacc_enable", [this](const std::shared_ptr<auna_msgs::srv::SetBool::Request> request, std::shared_ptr<auna_msgs::srv::SetBool::Response> response){this->set_cacc_enable(request, response);});
 
     this->declare_parameter("standstill_distance", 1.5);
     this->declare_parameter("time_gap", 0.5);
@@ -29,9 +31,6 @@ CaccController::CaccController() : Node("cacc_controller")
     kp_ = this->get_parameter("kp").as_double();
     kd_ = this->get_parameter("kd").as_double();
     max_velocity_ = this->get_parameter("max_velocity").as_double();
-
-    sub_standstill_distance_ = this->create_subscription<std_msgs::msg::Float64>("cacc/standstill_distance", 2, [this](const std_msgs::msg::Float64::SharedPtr msg){this->standstill_distance_ = msg->data;});
-    sub_time_gap_ = this->create_subscription<std_msgs::msg::Float64>("cacc/time_gap", 2, [this](const std_msgs::msg::Float64::SharedPtr msg){this->time_gap_ = msg->data;});
 }
 
 void CaccController::cam_callback(const auna_its_msgs::msg::CAM::SharedPtr msg)
@@ -186,20 +185,20 @@ void CaccController::timer_callback()
     pub_cmd_vel->publish(twist_msg);
 }
 
-void set_standstill_distance(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){
-    RCLCPP_INFO(this->get_logger(), "Setting standstill distance to %f", request->data);
-    standstill_distance_ = request->data;
+void CaccController::set_standstill_distance(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){
+    RCLCPP_INFO(this->get_logger(), "Setting standstill distance to %f", request->value);
+    standstill_distance_ = request->value;
     response->success = true;
 }
 
-void set_time_gap(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){
-    RCLCPP_INFO(this->get_logger(), "Setting time gap to %f", request->data);
-    time_gap_ = request->data;
+void CaccController::set_time_gap(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){
+    RCLCPP_INFO(this->get_logger(), "Setting time gap to %f", request->value);
+    time_gap_ = request->value;
     response->success = true;
 }
 
-void set_cacc_enable(const std::shared_ptr<auna_msgs::srv::SetBool::Request> request, std::shared_ptr<auna_msgs::srv::SetBool::Response> response){
-    if(request->data){
+void CaccController::set_cacc_enable(const std::shared_ptr<auna_msgs::srv::SetBool::Request> request, std::shared_ptr<auna_msgs::srv::SetBool::Response> response){
+    if(request->value){
         RCLCPP_INFO(this->get_logger(), "Enabling CACC controller");
         timer_->reset();
     }

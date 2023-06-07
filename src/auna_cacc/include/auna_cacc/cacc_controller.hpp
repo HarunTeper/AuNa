@@ -30,11 +30,11 @@ class CaccController : public rclcpp::Node
         rclcpp::TimerBase::SharedPtr setup_timer_;
 
         //service for standstill_distance and time_gap
-        rclcpp::Service<std_srvs::srv::SetFloat64>::SharedPtr client_set_standstill_distance_;
-        rclcpp::Service<std_srvs::srv::SetFloat64>::SharedPtr client_set_time_gap_;
+        rclcpp::Service<auna_msgs::srv::SetFloat64>::SharedPtr client_set_standstill_distance_;
+        rclcpp::Service<auna_msgs::srv::SetFloat64>::SharedPtr client_set_time_gap_;
         
         //service for cacc_enable
-        rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr client_set_cacc_enable_;
+        rclcpp::Service<auna_msgs::srv::SetBool>::SharedPtr client_set_cacc_enable_;
 
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_x_lookahead_point_;
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_y_lookahead_point_;
@@ -90,11 +90,11 @@ class CaccController : public rclcpp::Node
 
         //service callback functions
         void set_standstill_distance(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
-                                    std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response)
+                                    std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response);
         void set_time_gap(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
-                        std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response)
+                        std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response);
         void set_cacc_enable(const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
-                            std::shared_ptr<auna_msgs::srv::SetBool::Response> response)
+                            std::shared_ptr<auna_msgs::srv::SetBool::Response> response);
 
         //controller function variables
         double s_ = 0;
