@@ -25,14 +25,6 @@ def generate_launch_description():
     joy_dev = LaunchConfiguration('joy_dev')
     joy_config_file = LaunchConfiguration('joy_config_file')
 
-    # Nodes and other launch files
-    cmd_vel_to_ackermann_node = Node(
-        package='auna_physical',
-        executable='cmd_vel_to_ackermann',
-        name='cmd_vel_to_ackermann',
-        namespace=namespace,
-    )
-
     joy_node = Node(
         package='joy',
         executable='joy_node',
@@ -60,7 +52,6 @@ def generate_launch_description():
     launch_description.add_action(joy_dev_arg)
     launch_description.add_action(config_filepath_arg)
 
-    launch_description.add_action(cmd_vel_to_ackermann_node)
     launch_description.add_action(joy_node)
     launch_description.add_action(teleop_twist_joy_node)
 

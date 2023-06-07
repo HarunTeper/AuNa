@@ -31,7 +31,7 @@ def include_launch_description(context: LaunchContext):
     cmds = []
 
     sensor_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(launch_file_dir, 'sensors.launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(launch_file_dir, 'f110_platform.launch.py')),
         launch_arguments={
             'namespace': namespace.perform(context)+robot_index.perform(context),
         }.items(),

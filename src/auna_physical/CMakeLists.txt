@@ -28,12 +28,12 @@ find_package(tf2_kdl REQUIRED)
 include_directories(include)
 
 # Add libraries
-add_library(cmd_vel_to_ackermann_node SHARED src/converter/cmd_vel_to_ackermann.cpp)
+add_library(cmd_vel_to_ackermann_node SHARED src/cmd_vel_to_ackermann/cmd_vel_to_ackermann.cpp)
 add_library(vicon_tf_converter_node SHARED src/vicon/vicon_tf_converter.cpp)
 add_library(waypoint_publisher_node SHARED src/waypoint_publisher/waypoint_publisher.cpp)
 
 # Create Cpp executable
-add_executable(cmd_vel_to_ackermann src/converter/cmd_vel_to_ackermann_main.cpp)
+add_executable(cmd_vel_to_ackermann src/cmd_vel_to_ackermann/cmd_vel_to_ackermann_main.cpp)
 add_executable(vicon_tf_converter src/vicon/vicon_tf_converter_main.cpp)
 add_executable(waypoint_publisher src/waypoint_publisher/waypoint_publisher_main.cpp)
 
