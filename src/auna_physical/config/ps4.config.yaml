@@ -16,7 +16,3 @@
   ros__parameters:
     deadzone: 0.3
     autorepeat_rate: 20.0
-
-/**/cmd_vel_to_ackermann:
-  ros__parameters:
-    linear_min: 0.5

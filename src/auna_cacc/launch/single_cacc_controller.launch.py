@@ -45,7 +45,7 @@ def generate_launch_description():
     namespace_arg = DeclareLaunchArgument(
         'namespace',
         default_value='robot',
-        description='Number of spawned robots'
+        description='Robot namespace'
     )
     cacc_config_arg = DeclareLaunchArgument(
         'cacc_config',

@@ -1,0 +1,21 @@
+joy_teleop:
+  ros__parameters:
+    walk:
+      type: topic
+      interface_type: geometry_msgs/msg/Twist
+      topic_name: cmd_vel
+      deadman_buttons: [6]
+      axis_mappings:
+        linear-x:
+          axis: 4
+          scale: 2.0
+          offset: 0.0
+        angular-z:
+          axis: 0
+          scale: 0.3
+          offset: -0.005
+
+joy_node:
+  ros__parameters:
+    deadzone: 0.3
+    autorepeat_rate: 20.0
