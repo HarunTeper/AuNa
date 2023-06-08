@@ -44,6 +44,13 @@ def generate_launch_description():
         }.items()
     )
 
+    vesc_start_node = Node(
+        package='auna_physical',
+        executable='vesc_start',
+        name='vesc_start',
+        namespace=namespace,
+    )
+
     # Launch Description
     launch_description = LaunchDescription()
 
@@ -51,5 +58,6 @@ def generate_launch_description():
     launch_description.add_action(lidar_launch_file)
     launch_description.add_action(vesc_launch_file)
     launch_description.add_action(cmd_vel_to_ackermann_node)
+    launch_description.add_action(vesc_start_node)
 
     return launch_description
