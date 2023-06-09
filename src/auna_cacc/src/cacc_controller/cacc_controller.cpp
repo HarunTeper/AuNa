@@ -20,14 +20,12 @@ CaccController::CaccController() : Node("cacc_controller")
 
     this->declare_parameter("standstill_distance", 1.5);
     this->declare_parameter("time_gap", 0.5);
-    this->declare_parameter("wheelbase", 0.32);
     this->declare_parameter("kp", 0.5);
     this->declare_parameter("kd", 0.5);
     this->declare_parameter("max_velocity", 1.0);
 
     standstill_distance_ = this->get_parameter("standstill_distance").as_double();
     time_gap_ = this->get_parameter("time_gap").as_double();
-    wheelbase_ = this->get_parameter("wheelbase").as_double();
     kp_ = this->get_parameter("kp").as_double();
     kd_ = this->get_parameter("kd").as_double();
     max_velocity_ = this->get_parameter("max_velocity").as_double();
@@ -167,13 +165,6 @@ void CaccController::timer_callback()
     }
     else if(v_ < 0.01){
         v_ = 0.0;
-    }
-
-    if(v_ == 0.0){
-        w_ = 0.0;
-    }
-    else{
-        w_ = atan(w_*wheelbase_/v_);
     }
     last_velocity_ = v_;
 

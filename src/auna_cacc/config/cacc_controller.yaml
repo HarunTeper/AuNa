@@ -2,7 +2,6 @@ cacc_controller:
   ros__parameters:
     standstill_distance: 1.0
     time_gap: 1.0
-    wheelbase: 0.32
     kp: 0.5
     kd: 0.5
     max_velocity: 1.25
