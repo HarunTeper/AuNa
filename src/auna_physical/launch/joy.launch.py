@@ -6,7 +6,7 @@ from launch_ros.actions import Node
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
-
+from auna_common import yaml_launch
 
 def generate_launch_description():
     """Return launch description"""
@@ -14,46 +14,36 @@ def generate_launch_description():
     # Paths to folders and files
     physical_pkg_dir = get_package_share_directory('auna_physical')
     config_file_dir = os.path.join(physical_pkg_dir, 'config')
-    joy_config_file_path = os.path.join(config_file_dir, 'ps4.config.yaml')
+    joy_config_file_path = os.path.join(config_file_dir, 'teleop_joy.yaml')
 
     # Launch arguments
     namespace_arg = DeclareLaunchArgument('namespace', default_value='robot')
-    joy_dev_arg = DeclareLaunchArgument('joy_dev', default_value='/dev/input/js0')
-    config_filepath_arg = DeclareLaunchArgument('joy_config_file', default_value=joy_config_file_path)
 
     # Launch configurations
     namespace = LaunchConfiguration('namespace')
-    joy_dev = LaunchConfiguration('joy_dev')
-    joy_config_file = LaunchConfiguration('joy_config_file')
 
     joy_node = Node(
         package='joy',
         executable='joy_node',
         name='joy_node',
         namespace=namespace,
-        parameters=[{
-            'dev': joy_dev,
-            'deadzone': 0.3,
-            'autorepeat_rate': 20.0,
-        }]
+        parameters=[yaml_launch.get_yaml_value(joy_config_file_path, ['joy_node', 'ros__parameters'])],
     )
 
-    teleop_twist_joy_node = Node(
-        package='teleop_twist_joy',
-        executable='teleop_node',
-        name='teleop_twist_joy_node',
+    teleop_joy_node = Node(
+        package='joy_teleop',
+        executable='joy_teleop',
+        name='joy_teleop',
         namespace=namespace,
-        parameters=[joy_config_file]
+        parameters=[yaml_launch.get_yaml_value(joy_config_file_path, ['joy_teleop', 'ros__parameters'])],
     )
 
     # Launch Description
     launch_description = LaunchDescription()
 
     launch_description.add_action(namespace_arg)
-    launch_description.add_action(joy_dev_arg)
-    launch_description.add_action(config_filepath_arg)
 
     launch_description.add_action(joy_node)
-    launch_description.add_action(teleop_twist_joy_node)
+    launch_description.add_action(teleop_joy_node)
 
     return launch_description
