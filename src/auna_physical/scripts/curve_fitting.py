@@ -96,6 +96,11 @@ class WaypointPublisher(Node):
                 filtered_waypoints.append(new_waypoints[i+1])
                 distance = 0
             i += 1
+
+        # remove the last waypoint if it is too close to the first waypoint
+        if np.sqrt((filtered_waypoints[-1][0] - filtered_waypoints[0][0])**2 + (filtered_waypoints[-1][1] - filtered_waypoints[0][1])**2) < self.filter_distance:
+            filtered_waypoints.pop()
+
         # save new waypoints to a csv file
         with open('new_waypoints.csv', 'w', encoding='utf-8') as file:
             for point in filtered_waypoints:
