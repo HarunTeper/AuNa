@@ -18,13 +18,9 @@ def generate_launch_description():
 
     # Launch arguments
     namespace_arg = DeclareLaunchArgument('namespace', default_value='robot')
-    joy_dev_arg = DeclareLaunchArgument('joy_dev', default_value='/dev/input/js0')
 
     # Launch configurations
     namespace = LaunchConfiguration('namespace')
-    joy_dev = LaunchConfiguration('joy_dev')
-
-    print(yaml_launch.get_yaml(joy_config_file_path))
 
     joy_node = Node(
         package='joy',
@@ -46,9 +42,7 @@ def generate_launch_description():
     launch_description = LaunchDescription()
 
     launch_description.add_action(namespace_arg)
-    launch_description.add_action(joy_dev_arg)
 
-    launch_description.add_action(cmd_vel_to_ackermann_node)
     launch_description.add_action(joy_node)
     launch_description.add_action(teleop_joy_node)
 
