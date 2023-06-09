@@ -9,6 +9,7 @@ from launch.substitutions import LaunchConfiguration
 from launch.launch_context import LaunchContext
 from auna_common import yaml_launch
 
+
 def include_launch_description(context: LaunchContext):
     """Return launch description"""
 
@@ -67,7 +68,7 @@ def generate_launch_description():
     pkg_dir = get_package_share_directory('auna_physical')
 
     # Config files
-    vesc_config = os.path.join(pkg_dir,'config','vesc.config.yaml')
+    vesc_config = os.path.join(pkg_dir, 'config', 'vesc.config.yaml')
 
     # Launch arguments
     namespace_arg = DeclareLaunchArgument('namespace', default_value='robot')

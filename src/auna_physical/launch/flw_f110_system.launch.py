@@ -30,7 +30,7 @@ def include_launch_description(context: LaunchContext):
 
     cmds = []
 
-    sensor_cmd = IncludeLaunchDescription(
+    platform_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(launch_file_dir, 'f110_platform.launch.py')),
         launch_arguments={
             'namespace': namespace.perform(context)+robot_index.perform(context),
@@ -74,7 +74,7 @@ def include_launch_description(context: LaunchContext):
         }.items(),
     )
 
-    cmds.append(sensor_cmd)
+    cmds.append(platform_cmd)
     if enable_navigation.perform(context) == 'true':
         cmds.append(nav_cmd)
     if enable_cacc.perform(context) == 'true':

@@ -12,4 +12,7 @@ class CmdVelToAckermann : public rclcpp::Node
         void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
         rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr ackermann_publisher;
         rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_subscription;
+
+        bool convert_yaw_to_steering_angle_;
+        double wheelbase_;
 };
