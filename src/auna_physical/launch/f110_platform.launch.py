@@ -35,7 +35,9 @@ def generate_launch_description():
         executable='cmd_vel_to_ackermann',
         name='cmd_vel_to_ackermann',
         namespace=namespace,
-        parameters=[{'convert_yaw_to_steering_angle': True}]
+        parameters=[{'convert_yaw_to_steering_angle': True,
+                     'wheelbase': 0.32,
+                     }]
     )
 
     vesc_launch_file = IncludeLaunchDescription(
