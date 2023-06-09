@@ -24,7 +24,14 @@ void CmdVelToAckermann::cmd_vel_callback(const geometry_msgs::msg::Twist::Shared
 
     if(convert_yaw_to_steering_angle_)
     {
-        ackermann_msg.drive.steering_angle = atan2(wheelbase_ * msg->angular.z, msg->linear.x);
+        if(fabs(msg->linear.x) < 0.001)
+        {
+            ackermann_msg.drive.steering_angle = atan(wheelbase_ * msg->angular.z);
+        }
+        else
+        {
+            ackermann_msg.drive.steering_angle = atan(wheelbase_ * msg->angular.z / msg->linear.x);
+        }
     }
     else
     {

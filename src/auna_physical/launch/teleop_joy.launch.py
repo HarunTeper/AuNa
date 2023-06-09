@@ -26,14 +26,6 @@ def generate_launch_description():
 
     print(yaml_launch.get_yaml(joy_config_file_path))
 
-    # Nodes and other launch files
-    cmd_vel_to_ackermann_node = Node(
-        package='auna_physical',
-        executable='cmd_vel_to_ackermann',
-        name='cmd_vel_to_ackermann',
-        namespace=namespace
-    )
-
     joy_node = Node(
         package='joy',
         executable='joy_node',
