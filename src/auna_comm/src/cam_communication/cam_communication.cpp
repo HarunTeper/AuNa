@@ -14,7 +14,7 @@ CamCommunication::CamCommunication() : Node("cam_communication")
     cam_subscriber_ = this->create_subscription<auna_its_msgs::msg::CAM>("/cam", 2, [this](auna_its_msgs::msg::CAM::SharedPtr msg) -> void { this->cam_callback(msg); });
     timer_ = this->create_wall_timer(std::chrono::milliseconds(100), [this]() -> void { this->timer_callback(); });
     
-    this->pose_subscriber_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("localization_pose", 2, [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg){pose_callback(msg);});
+    this->pose_subscriber_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("global_pose", 2, [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg){pose_callback(msg);});
     this->odom_subscriber_ = this->create_subscription<nav_msgs::msg::Odometry>("odom", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg){odom_callback(msg);});
 }
 
