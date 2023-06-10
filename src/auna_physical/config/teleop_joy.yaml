@@ -1,4 +1,4 @@
-joy_teleop:
+joy_teleop_ps4:
   ros__parameters:
     walk:
       type: topic
@@ -8,8 +8,25 @@ joy_teleop:
       axis_mappings:
         linear-x:
           axis: 4
-          scale: 2.0
+          scale: 3.0
           offset: 0.0
+        angular-z:
+          axis: 0
+          scale: 1.25
+          offset: 0.0
+
+joy_teleop_g29:
+  ros__parameters:
+    walk:
+      type: topic
+      interface_type: geometry_msgs/msg/Twist
+      topic_name: cmd_vel
+      deadman_buttons: [5]
+      axis_mappings:
+        linear-x:
+          axis: 2
+          scale: 1.0
+          offset: 1.0
         angular-z:
           axis: 0
           scale: 1.25

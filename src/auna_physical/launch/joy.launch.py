@@ -6,6 +6,7 @@ from launch_ros.actions import Node
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
+from launch.conditions import IfCondition
 from auna_common import yaml_launch
 
 def generate_launch_description():
@@ -18,9 +19,13 @@ def generate_launch_description():
 
     # Launch arguments
     namespace_arg = DeclareLaunchArgument('namespace', default_value='robot')
+    use_ps4_arg = DeclareLaunchArgument('use_ps4', default_value='true')
+    use_g29_arg = DeclareLaunchArgument('use_g29', default_value='false')
 
     # Launch configurations
     namespace = LaunchConfiguration('namespace')
+    use_ps4 = LaunchConfiguration('use_ps4')
+    use_g29 = LaunchConfiguration('use_g29')
 
     joy_node = Node(
         package='joy',
@@ -30,20 +35,35 @@ def generate_launch_description():
         parameters=[yaml_launch.get_yaml_value(joy_config_file_path, ['joy_node', 'ros__parameters'])],
     )
 
-    teleop_joy_node = Node(
+    teleop_joy_node_ps4 = Node(
         package='joy_teleop',
         executable='joy_teleop',
         name='joy_teleop',
         namespace=namespace,
-        parameters=[yaml_launch.get_yaml_value(joy_config_file_path, ['joy_teleop', 'ros__parameters'])],
+        parameters=[yaml_launch.get_yaml_value(joy_config_file_path, ['joy_teleop_ps4', 'ros__parameters'])],
+        condition=IfCondition(use_ps4),
     )
+
+    teleop_joy_node_g29 = Node(
+        package='joy_teleop',
+        executable='joy_teleop',
+        name='joy_teleop',
+        namespace=namespace,
+        parameters=[yaml_launch.get_yaml_value(joy_config_file_path, ['joy_teleop_g29', 'ros__parameters'])],
+        condition=IfCondition(use_g29),
+    )
+
+
 
     # Launch Description
     launch_description = LaunchDescription()
 
     launch_description.add_action(namespace_arg)
+    launch_description.add_action(use_ps4_arg)
+    launch_description.add_action(use_g29_arg)
 
     launch_description.add_action(joy_node)
-    launch_description.add_action(teleop_joy_node)
+    launch_description.add_action(teleop_joy_node_ps4)
+    launch_description.add_action(teleop_joy_node_g29)
 
     return launch_description
