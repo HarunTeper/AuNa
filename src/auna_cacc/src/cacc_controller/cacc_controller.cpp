@@ -155,7 +155,10 @@ void CaccController::timer_callback()
     a_ = invGam_1_ * inP_1_ + invGam_2_ * inP_2_;
     w_ = invGam_3_ * inP_1_ + invGam_4_ * inP_2_;
 
-    double dt_ = (rclcpp::Clock().now() - last_time_).seconds();
+    if(last_time_.nanoseconds() == 0){
+        last_time_ = rclcpp::Clock().now();
+    }
+    dt_ = (rclcpp::Clock().now() - last_time_).seconds();
     last_time_ = rclcpp::Clock().now();
 
     v_ = last_velocity_ + a_ * dt_;
