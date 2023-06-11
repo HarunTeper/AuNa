@@ -82,6 +82,18 @@ class CurveFitting(Node):
         plt.figure(figsize=(8, 6))
         plt.plot(*zip(*self.waypoints), 'r-', label='Waypoints')
         plt.plot(x_interpolated, y_interpolated, 'bo', label='Interpolated Points')
+
+        # number the waypoints
+        for i, point in enumerate(self.interpolated_waypoints):
+            plt.annotate(f'{i}', point)
+
+        # draw a circle that intersects the left most point and the center
+        center = (-7.0, 0.575)
+        radius = 2.4
+        circle = plt.Circle(center, radius, color='g', fill=False)
+        plt.gcf().gca().add_artist(circle)
+
+
         plt.xlabel('X')
         plt.ylabel('Y')
         plt.title('Interpolated Waypoints')
@@ -91,7 +103,7 @@ class CurveFitting(Node):
 
     def save_interpolated_waypoints(self):
         """Saves the interpolated waypoints to a csv file"""
-        with open('interpolated_waypoints.csv', 'w', newline='', encoding='utf-8-sig') as file:
+        with open('new_waypoints.csv', 'w', newline='', encoding='utf-8-sig') as file:
             writer = csv.writer(file)
             writer.writerows(self.interpolated_waypoints)
 
