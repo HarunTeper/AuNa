@@ -53,21 +53,9 @@ def include_launch_description(context: LaunchContext):
             'filter_index': str(int(robot_index.perform(context))-1),
         }.items(),
     )
-    localization_pose_cmd = Node(
-        package='auna_gazebo',
-        executable='localization_pose',
-        name='localization_pose',
-        namespace=namespace.perform(context)+robot_index.perform(context),
-        arguments={namespace.perform(context)+robot_index.perform(context)},
-        output='screen',
-        remappings=[('/tf', 'tf'),
-                    ('/tf_static', 'tf_static')
-                    ],
-    )
 
     cmds.append(robomaster_bringup_cmd)
     cmds.append(nav_cmd)
-    cmds.append(localization_pose_cmd)
     cmds.append(vicon_cmd)
     cmds.append(cam_cmd)
 

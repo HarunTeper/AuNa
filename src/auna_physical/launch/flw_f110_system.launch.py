@@ -56,17 +56,6 @@ def include_launch_description(context: LaunchContext):
             'filter_index': cam_index,
         }.items(),
     )
-    localization_pose_cmd = Node(
-        package='auna_gazebo',
-        executable='localization_pose',
-        name='localization_pose',
-        namespace=namespace.perform(context)+robot_index.perform(context),
-        arguments={namespace.perform(context)+robot_index.perform(context)},
-        output='screen',
-        remappings=[('/tf', 'tf'),
-                    ('/tf_static', 'tf_static')
-                    ],
-    )
     cacc_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(cacc_launch_file_dir, 'single_cacc_controller.launch.py')),
         launch_arguments={
@@ -79,7 +68,6 @@ def include_launch_description(context: LaunchContext):
         cmds.append(nav_cmd)
     if enable_cacc.perform(context) == 'true':
         cmds.append(cacc_cmd)
-    cmds.append(localization_pose_cmd)
     cmds.append(vicon_cmd)
     cmds.append(cam_cmd)
 

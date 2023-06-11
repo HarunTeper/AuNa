@@ -58,7 +58,8 @@ void CmdVelToAckermann::cmd_vel_callback(const geometry_msgs::msg::Twist::Shared
         }
         else
         {
-            ackermann_msg.drive.steering_angle = atan(wheelbase_ * msg->angular.z / msg->linear.x);
+            // use ackermann_msg.drive.steering_angle = atan(wheelbase_ * msg->angular.z / msg->linear.x); to calculate the steering angle for positive velocies, but swap sign for negative velocities
+            ackermann_msg.drive.steering_angle = atan(wheelbase_ * msg->angular.z / fabs(msg->linear.x));
         }
     }
     else

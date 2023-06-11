@@ -3,7 +3,7 @@
 // Create a publisher, subscriber and prefix. Initialize the transform buffer and listener.
 LocalizationPose::LocalizationPose(std::string prefix) : Node("localization_pose_node"),buffer(this->get_clock()), listener(buffer)
 {
-    publisher = this->create_publisher<geometry_msgs::msg::PoseStamped>("localization_pose", 2);
+    publisher = this->create_publisher<geometry_msgs::msg::PoseStamped>("global_pose", 2);
     if(prefix == "")
     {
         this->prefix = prefix;

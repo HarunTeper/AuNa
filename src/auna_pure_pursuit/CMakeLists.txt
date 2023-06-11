@@ -15,10 +15,12 @@ find_package(ament_cmake REQUIRED)
 
 find_package(rclcpp REQUIRED)
 
+find_package(ament_cmake REQUIRED)
 find_package(nav2_common REQUIRED)
 find_package(nav2_core REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
 find_package(nav2_util REQUIRED)
+find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(pluginlib REQUIRED)
@@ -29,7 +31,12 @@ find_package(tf2_geometry_msgs REQUIRED)
 include_directories(include)
 
 # Add libraries
-add_library(auna_pure_pursuit_controller SHARED src/auna_pure_pursuit_controller/auna_pure_pursuit_controller.cpp)
+add_library(auna_pure_pursuit_controller SHARED 
+  src/auna_pure_pursuit_controller/auna_pure_pursuit_controller.cpp
+  src/auna_pure_pursuit_controller/collision_checker.cpp
+  src/auna_pure_pursuit_controller/path_handler.cpp
+  src/auna_pure_pursuit_controller/parameter_handler.cpp
+)
 
 # Target dependencies
 set(auna_pure_pursuit_controller_dependencies rclcpp geometry_msgs nav2_costmap_2d pluginlib nav_msgs nav2_util nav2_core tf2 tf2_geometry_msgs)
