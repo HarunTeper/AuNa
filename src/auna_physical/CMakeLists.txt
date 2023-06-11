@@ -17,6 +17,7 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(ackermann_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
@@ -40,7 +41,7 @@ add_executable(waypoint_publisher src/waypoint_publisher/waypoint_publisher_main
 add_executable(vesc_start src/vesc_start/vesc_start_main.cpp)
 
 # Target dependencies
-set(cmd_vel_to_ackermann_dependencies rclcpp std_msgs geometry_msgs ackermann_msgs)
+set(cmd_vel_to_ackermann_dependencies rclcpp std_msgs std_srvs geometry_msgs ackermann_msgs)
 ament_target_dependencies(cmd_vel_to_ackermann_node ${cmd_vel_to_ackermann_dependencies})
 ament_target_dependencies(cmd_vel_to_ackermann ${cmd_vel_to_ackermann_dependencies})
 set(vicon_tf_converter_dependencies rclcpp geometry_msgs tf2_kdl tf2_kdl)

@@ -11,6 +11,26 @@ CmdVelToAckermann::CmdVelToAckermann() : Node("cmd_vel_to_ackermann_node")
     this->get_parameter<bool>("convert_yaw_to_steering_angle", convert_yaw_to_steering_angle_);
     this->get_parameter<double>("wheelbase", wheelbase_);
 
+    emergency_stop_active_ = false;
+
+    //service server for emergency stop
+    emergency_stop_service = this->create_service<std_srvs::srv::Empty>("emergency_stop", [this](const std_srvs::srv::Empty::Request::SharedPtr request, const std_srvs::srv::Empty::Response::SharedPtr response){emergency_stop_callback(request, response);});
+
+    //service server for emergency stop disable
+    emergency_stop_disable_service = this->create_service<std_srvs::srv::Empty>("emergency_stop_disable", [this](const std_srvs::srv::Empty::Request::SharedPtr request, const std_srvs::srv::Empty::Response::SharedPtr response){emergency_stop_disable_callback(request, response);});
+
+}
+
+// Emergency stop callback
+void CmdVelToAckermann::emergency_stop_callback(const std_srvs::srv::Empty::Request::SharedPtr request, const std_srvs::srv::Empty::Response::SharedPtr response)
+{
+    emergency_stop_active_ = true;
+}
+
+// Emergency stop disable callback
+void CmdVelToAckermann::emergency_stop_disable_callback(const std_srvs::srv::Empty::Request::SharedPtr request, const std_srvs::srv::Empty::Response::SharedPtr response)
+{
+    emergency_stop_active_ = false;
 }
 
 // Convert cmd_vel to ackermann msg
@@ -19,6 +39,14 @@ void CmdVelToAckermann::cmd_vel_callback(const geometry_msgs::msg::Twist::Shared
     ackermann_msgs::msg::AckermannDriveStamped ackermann_msg;
 
     ackermann_msg.header.stamp = this->get_clock()->now();
+
+    if(emergency_stop_active_)
+    {
+        ackermann_msg.drive.speed = 0.0;
+        ackermann_msg.drive.steering_angle = 0.0;
+        ackermann_publisher->publish(ackermann_msg);
+        return;
+    }
 
     ackermann_msg.drive.speed = msg->linear.x;
 
