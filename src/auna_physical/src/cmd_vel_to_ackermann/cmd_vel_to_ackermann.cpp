@@ -14,16 +14,17 @@ CmdVelToAckermann::CmdVelToAckermann() : Node("cmd_vel_to_ackermann_node")
     emergency_stop_active_ = false;
 
     //service server for emergency stop
-    emergency_stop_service = this->create_service<std_srvs::srv::Empty>("emergency_stop", [this](const std_srvs::srv::Empty::Request::SharedPtr request, const std_srvs::srv::Empty::Response::SharedPtr response){emergency_stop_callback(request, response);});
+    emergency_stop_service = this->create_service<std_srvs::srv::Empty>("/emergency_stop_enable", [this](const std_srvs::srv::Empty::Request::SharedPtr request, const std_srvs::srv::Empty::Response::SharedPtr response){emergency_stop_callback(request, response);});
 
     //service server for emergency stop disable
-    emergency_stop_disable_service = this->create_service<std_srvs::srv::Empty>("emergency_stop_disable", [this](const std_srvs::srv::Empty::Request::SharedPtr request, const std_srvs::srv::Empty::Response::SharedPtr response){emergency_stop_disable_callback(request, response);});
+    emergency_stop_disable_service = this->create_service<std_srvs::srv::Empty>("/emergency_stop_disable", [this](const std_srvs::srv::Empty::Request::SharedPtr request, const std_srvs::srv::Empty::Response::SharedPtr response){emergency_stop_disable_callback(request, response);});
 
 }
 
 // Emergency stop callback
 void CmdVelToAckermann::emergency_stop_callback(const std_srvs::srv::Empty::Request::SharedPtr request, const std_srvs::srv::Empty::Response::SharedPtr response)
 {
+    RCLCPP_INFO(this->get_logger(), "Emergency stop activated");
     emergency_stop_active_ = true;
     (void)request;
     (void)response;
@@ -32,6 +33,7 @@ void CmdVelToAckermann::emergency_stop_callback(const std_srvs::srv::Empty::Requ
 // Emergency stop disable callback
 void CmdVelToAckermann::emergency_stop_disable_callback(const std_srvs::srv::Empty::Request::SharedPtr request, const std_srvs::srv::Empty::Response::SharedPtr response)
 {
+    RCLCPP_INFO(this->get_logger(), "Emergency stop disabled");
     emergency_stop_active_ = false;
     (void)request;
     (void)response;
