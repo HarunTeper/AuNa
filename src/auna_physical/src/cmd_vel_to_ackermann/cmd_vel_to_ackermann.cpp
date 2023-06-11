@@ -25,12 +25,16 @@ CmdVelToAckermann::CmdVelToAckermann() : Node("cmd_vel_to_ackermann_node")
 void CmdVelToAckermann::emergency_stop_callback(const std_srvs::srv::Empty::Request::SharedPtr request, const std_srvs::srv::Empty::Response::SharedPtr response)
 {
     emergency_stop_active_ = true;
+    (void)request;
+    (void)response;
 }
 
 // Emergency stop disable callback
 void CmdVelToAckermann::emergency_stop_disable_callback(const std_srvs::srv::Empty::Request::SharedPtr request, const std_srvs::srv::Empty::Response::SharedPtr response)
 {
     emergency_stop_active_ = false;
+    (void)request;
+    (void)response;
 }
 
 // Convert cmd_vel to ackermann msg
