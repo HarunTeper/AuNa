@@ -159,6 +159,10 @@ void CaccController::timer_callback()
         last_time_ = rclcpp::Clock().now();
     }
     dt_ = (rclcpp::Clock().now() - last_time_).seconds();
+    if(dt_ > 0.1){
+        dt_ = 0.1;
+    }
+
     last_time_ = rclcpp::Clock().now();
 
     v_ = last_velocity_ + a_ * dt_;
