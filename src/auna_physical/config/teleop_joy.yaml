@@ -14,6 +14,16 @@ joy_teleop_ps4:
           axis: 0
           scale: 1.25
           offset: 0.0
+    enable_emergency_stop:
+      type: service
+      interface_type: std_srvs/srv/Empty
+      service_name: /emergency_stop_enable
+      buttons: [9]
+    disable_emergency_stop:
+      type: service
+      interface_type: std_srvs/srv/Empty
+      service_name: /emergency_stop_disable
+      buttons: [8]
 
 joy_teleop_g29:
   ros__parameters:
