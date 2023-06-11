@@ -14,6 +14,7 @@ void ViconTFConverter::vicon_callback(const geometry_msgs::msg::TransformStamped
     //publish posestamped msg
     geometry_msgs::msg::PoseStamped pose_msg;
     pose_msg.header = msg->header;
+    pose_msg.header.frame_id = "map";
     pose_msg.pose.position.x = msg->transform.translation.x;
     pose_msg.pose.position.y = msg->transform.translation.y;
     pose_msg.pose.position.z = msg->transform.translation.z;
