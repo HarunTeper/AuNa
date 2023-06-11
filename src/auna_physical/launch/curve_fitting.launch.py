@@ -18,19 +18,13 @@ def generate_launch_description():
     waypoints = os.path.join(pkg_dir, 'config', 'flw_waypoints.csv')
 
     # Launch Argument Configurations
-    namespace = LaunchConfiguration('namespace')
-    filter_distance = LaunchConfiguration('filter_distance')
+    interpolation_distance = LaunchConfiguration('interpolation_distance')
     plot_results = LaunchConfiguration('plot_results')
     swap_xy = LaunchConfiguration('swap_xy')
 
     # Launch Arguments
-    namespace_arg = DeclareLaunchArgument(
-        'namespace',
-        default_value='robot',
-        description='Robot namespace for ROS nodes and topics'
-    )
-    filter_distance_arg = DeclareLaunchArgument(
-        'filter_distance',
+    interpolation_distance_arg = DeclareLaunchArgument(
+        'interpolation_distance',
         default_value='1.0',
         description='Distance between waypoints to filter'
     )
@@ -46,14 +40,12 @@ def generate_launch_description():
     )
 
     # Nodes and other launch files
-    waypoint_publisher_cmd = Node(
+    curve_fitting_node = Node(
         package='auna_physical',
         executable='curve_fitting.py',
         name='curve_fitting',
-        namespace=namespace,
-        parameters=[{'namespace': LaunchConfiguration('namespace'),
-                     'waypoint_file': waypoints,
-                     'filter_distance': filter_distance,
+        parameters=[{'waypoint_file': waypoints,
+                     'interpolation_distance': interpolation_distance,
                      'plot_results': plot_results,
                      'swap_xy': swap_xy}],
         output='screen',
@@ -64,10 +56,9 @@ def generate_launch_description():
     # Launch Description
     launch_description = LaunchDescription()
 
-    launch_description.add_action(namespace_arg)
-    launch_description.add_action(filter_distance_arg)
+    launch_description.add_action(interpolation_distance_arg)
     launch_description.add_action(plot_results_arg)
     launch_description.add_action(swap_xy_arg)
 
-    launch_description.add_action(waypoint_publisher_cmd)
+    launch_description.add_action(curve_fitting_node)
     return launch_description
