@@ -83,17 +83,6 @@ class CurveFitting(Node):
         plt.plot(*zip(*self.waypoints), 'r-', label='Waypoints')
         plt.plot(x_interpolated, y_interpolated, 'bo', label='Interpolated Points')
 
-        # number the waypoints
-        for i, point in enumerate(self.interpolated_waypoints):
-            plt.annotate(f'{i}', point)
-
-        # draw a circle that intersects the left most point and the center
-        center = (-7.0, 0.575)
-        radius = 2.4
-        circle = plt.Circle(center, radius, color='g', fill=False)
-        plt.gcf().gca().add_artist(circle)
-
-
         plt.xlabel('X')
         plt.ylabel('Y')
         plt.title('Interpolated Waypoints')

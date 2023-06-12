@@ -19,7 +19,7 @@ def generate_launch_description():
 
     # Launch arguments
     namespace_arg = DeclareLaunchArgument('namespace', default_value='robot')
-    use_ps4_arg = DeclareLaunchArgument('use_ps4', default_value='true')
+    use_ps4_arg = DeclareLaunchArgument('use_ps4', default_value='false')
     use_g29_arg = DeclareLaunchArgument('use_g29', default_value='false')
 
     # Launch configurations
