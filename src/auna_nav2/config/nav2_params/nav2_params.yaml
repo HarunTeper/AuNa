@@ -151,7 +151,7 @@ controller_server:
       approach_velocity_scaling_dist: 2.0
       use_fixed_curvature_lookahead: true
       curvature_lookahead_dist: 3.5
-      use_regulated_linear_velocity_scaling: false
+      use_regulated_linear_velocity_scaling: true
       regulated_linear_scaling_min_radius: 3.5
       regulated_linear_scaling_min_speed: 3.25
       max_robot_pose_search_dist: 10.0
