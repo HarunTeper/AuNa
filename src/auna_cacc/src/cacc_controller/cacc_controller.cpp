@@ -209,15 +209,23 @@ void CaccController::timer_callback()
         }
 
         // Calculate yaw difference between previous and next waypoints
-        int prev_index = (closest_waypoint_index_ - 1 + num_waypoints) % num_waypoints;
+        int curr_index = closest_waypoint_index_;
         int next_index = (closest_waypoint_index_ + 1) % num_waypoints;
 
-        double prev_yaw = waypoints_yaw_[prev_index];
+        double current_yaw = waypoints_yaw_[curr_index];
         double next_yaw = waypoints_yaw_[next_index];
-        // double yaw_difference = next_yaw - prev_yaw;
+        double yaw_difference = next_yaw - current_yaw;
+
+        double dx = waypoints_x_[next_index] - waypoints_x_[curr_index];
+        double dy = waypoints_y_[next_index] - waypoints_y_[curr_index];
+        double distance = std::hypot(dx, dy);
+
+        // calculate the required time by dividing distance through cam_velocity_
+        double required_time = distance / cam_velocity_;
 
         // Use closest waypoint yaw
         cam_yaw_ = waypoints_yaw_[closest_waypoint_index_];
+        cam_yaw_rate_ = yaw_difference / required_time;
     }
 
     if(cam_curvature_ <= 0.01 && cam_curvature_ >= -0.01){
