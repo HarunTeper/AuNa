@@ -4,6 +4,7 @@ cacc_controller:
     time_gap: 0.25
     kp: 0.2
     kd: 0.9
-    max_velocity: 4.0
+    max_velocity: 2.0
     frequency: 50
     use_waypoints: true
+    target_velocity: 1.0

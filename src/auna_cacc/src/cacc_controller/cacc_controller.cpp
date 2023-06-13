@@ -22,6 +22,7 @@ CaccController::CaccController() : Node("cacc_controller")
     this->declare_parameter("frequency", 50);
     this->declare_parameter("use_waypoints", false);
     this->declare_parameter("waypoint_file", "/home/$USER/waypoints.txt");
+    this->declare_parameter("target_velocity", 1.0);
 
     standstill_distance_ = this->get_parameter("standstill_distance").as_double();
     time_gap_ = this->get_parameter("time_gap").as_double();
@@ -30,8 +31,12 @@ CaccController::CaccController() : Node("cacc_controller")
     max_velocity_ = this->get_parameter("max_velocity").as_double();
     frequency_ = this->get_parameter("frequency").as_int();
     use_waypoints_ = this->get_parameter("use_waypoints").as_bool();
+    target_velocity_ = this->get_parameter("target_velocity").as_double();
 
     dt_ = 1.0 / frequency_;
+    auto_mode_ = false;
+    auto_mode_ready_ = false;
+    client_set_auto_mode_ = this->create_service<auna_msgs::srv::SetBool>("cacc/set_auto_mode", [this](const std::shared_ptr<auna_msgs::srv::SetBool::Request> request, std::shared_ptr<auna_msgs::srv::SetBool::Response> response){this->set_auto_mode(request, response);});
 
     timer_ = this->create_wall_timer(std::chrono::milliseconds(1000 / frequency_), [this](){this->timer_callback();});
     setup_timer_ = this->create_wall_timer(std::chrono::milliseconds(250), [this](){this->setup_timer_callback();});
@@ -104,6 +109,13 @@ void CaccController::setup_timer_callback()
         RCLCPP_INFO(this->get_logger(), "CACC controller started");
         timer_->reset();
         setup_timer_->cancel();
+    }
+    if (last_odom_msg_ != nullptr && last_pose_msg_ != nullptr)
+    {
+        if(!auto_mode_ready_){
+            RCLCPP_INFO(this->get_logger(), "Auto mode ready");
+            auto_mode_ready_ = true;
+        }
     }
 }
 
@@ -208,9 +220,33 @@ void CaccController::timer_callback()
             closest_waypoint_index_ = i;
         }
 
+        int target_waypoint_index_ = closest_waypoint_index_;
+        if (auto_mode_)
+        {
+            // Calculate target waypoint index (the waypoint that is closest to the vehicle and within the time gap
+
+            double target_distance = standstill_distance_ + time_gap_ * target_velocity_;
+
+
+            for (int i = closest_waypoint_index_; true; i = (i + 1) % num_waypoints)
+            {
+                double dx = waypoints_x_[i] - pose_x_;
+                double dy = waypoints_y_[i] - pose_y_;
+                double distance_squared = dx * dx + dy * dy;
+
+                if (distance_squared > target_distance * target_distance)
+                {
+                    // Stop the loop if the distance is increasing
+                    break;
+                }
+
+                target_waypoint_index_ = i;
+            }
+        }
+
         // Calculate yaw difference between previous and next waypoints
-        int curr_index = closest_waypoint_index_;
-        int next_index = (closest_waypoint_index_ + 1) % num_waypoints;
+        int curr_index = target_waypoint_index_;
+        int next_index = (target_waypoint_index_ + 1) % num_waypoints;
 
         double current_yaw = waypoints_yaw_[curr_index];
         double next_yaw = waypoints_yaw_[next_index];
@@ -221,11 +257,32 @@ void CaccController::timer_callback()
         double distance = std::hypot(dx, dy);
 
         // calculate the required time by dividing distance through cam_velocity_
-        double required_time = distance / cam_velocity_;
+        double required_time;
+        if(auto_mode_){
+            required_time = distance / target_velocity_;
+        }
+        else{
+            required_time = distance / cam_velocity_;
+        }
 
         // Use closest waypoint yaw
-        cam_yaw_ = waypoints_yaw_[closest_waypoint_index_];
+        cam_yaw_ = current_yaw;
         cam_yaw_rate_ = yaw_difference / required_time;
+
+        //cam curvature depending on auto_mode
+        if(auto_mode_){
+            cam_curvature_ = cam_yaw_rate_ / target_velocity_;
+        }
+        else{
+            if (cam_velocity_ == 0)
+            {
+                cam_curvature_ = 0;
+            }
+            else
+            {
+                cam_curvature_ = cam_yaw_rate_ / cam_velocity_;
+            }
+        }
     }
 
     if(cam_curvature_ <= 0.01 && cam_curvature_ >= -0.01){
@@ -308,3 +365,37 @@ void CaccController::set_cacc_enable(const std::shared_ptr<auna_msgs::srv::SetBo
     }
     response->success = true;
 }
+
+//service server callback for auto_mode
+void CaccController::set_auto_mode(const std::shared_ptr<auna_msgs::srv::SetBool::Request> request, std::shared_ptr<auna_msgs::srv::SetBool::Response> response){
+    if(request->value){
+        if(auto_mode_ready_){
+            RCLCPP_INFO(this->get_logger(), "Enabling auto mode");
+            auto_mode_ = true;
+            timer_->reset();
+            setup_timer_->cancel();
+        }
+    }
+    else{
+        RCLCPP_INFO(this->get_logger(), "Disabling auto mode");
+
+        geometry_msgs::msg::Twist twist_msg;
+
+        twist_msg.linear.x = 0.0;
+        twist_msg.angular.z = 0.0;
+
+        pub_cmd_vel->publish(twist_msg);
+
+        auto_mode_ = false;
+        // if all last messages exist, start timer
+        if (last_cam_msg_ == nullptr || last_odom_msg_ == nullptr || last_pose_msg_ == nullptr)
+        {
+            RCLCPP_INFO(this->get_logger(), "Waiting for messages to start CACC controller");
+            setup_timer_->reset();
+            timer_->cancel();
+        }
+    }
+    response->success = true;
+
+}
+

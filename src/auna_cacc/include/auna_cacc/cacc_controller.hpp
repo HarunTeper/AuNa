@@ -90,6 +90,14 @@ class CaccController : public rclcpp::Node
         std::vector<double> waypoints_yaw_;
         int closest_waypoint_index_;
 
+        //auto mode
+        bool auto_mode_;
+        bool auto_mode_ready_;
+        double target_velocity_;
+
+        //ros2 service server for auto_mode
+        rclcpp::Service<auna_msgs::srv::SetBool>::SharedPtr client_set_auto_mode_;
+
         // general functions
         void read_waypoints_from_csv();
 
@@ -106,6 +114,8 @@ class CaccController : public rclcpp::Node
         void set_time_gap(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
                         std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response);
         void set_cacc_enable(const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
+                            std::shared_ptr<auna_msgs::srv::SetBool::Response> response);
+        void set_auto_mode(const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
                             std::shared_ptr<auna_msgs::srv::SetBool::Response> response);
 
         //controller function variables
