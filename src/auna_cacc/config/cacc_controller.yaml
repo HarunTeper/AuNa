@@ -5,3 +5,5 @@ cacc_controller:
     kp: 0.2
     kd: 0.9
     max_velocity: 4.0
+    frequency: 50
+    use_waypoints: true

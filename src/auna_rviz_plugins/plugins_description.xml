@@ -1,0 +1,8 @@
+<library path="auna_rviz_plugins">
+    <class  name="auna_rviz_plugins/ControlPanel"
+            type="auna_rviz_plugins::ControlPanel"
+            base_class_type="rviz_common::Panel">
+        <description>AuNa Rviz Control Panel</description>
+    </class>
+</library>
+
