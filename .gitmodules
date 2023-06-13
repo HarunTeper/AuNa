@@ -10,3 +10,6 @@
 	path = src/physical/teb_local_planner
 	url = https://github.com/rst-tu-dortmund/teb_local_planner.git
 	branch = galactic
+[submodule "src/physical/ros-g29-force-feedback"]
+	path = src/physical/ros-g29-force-feedback
+	url = https://github.com/kuriatsu/ros-g29-force-feedback.git
