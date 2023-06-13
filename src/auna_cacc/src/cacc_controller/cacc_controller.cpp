@@ -264,12 +264,12 @@ void CaccController::timer_callback()
 
             // Calculate yaw difference between previous and next waypoints
             int curr_index = target_waypoint_index_;
-            int next_index = (target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints;
-
             cam_yaw_ = waypoints_yaw_[curr_index];
 
             // Calculate cam_yaw_rate_ and cam_curvature_
             double current_yaw = waypoints_yaw_[curr_index];
+
+            int next_index = (target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints;
             double next_yaw = waypoints_yaw_[next_index];
 
             //yaw difference modulo for the case that one is negative and the other positive
@@ -329,8 +329,41 @@ void CaccController::timer_callback()
             cam_velocity_ = cam_velocity_;
             cam_acceleration_ = cam_acceleration_;
             cam_yaw_ =  waypoints_yaw_[target_waypoint_index_];
-            cam_yaw_rate_ = cam_yaw_rate_;
-            cam_curvature_ = cam_curvature_;
+
+            // Calculate cam_yaw_rate_ and cam_curvature_
+            double current_yaw = waypoints_yaw_[target_waypoint_index_];
+
+            int next_index = (target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints;
+            double next_yaw = waypoints_yaw_[next_index];
+
+            //yaw difference modulo for the case that one is negative and the other positive
+            double yaw_difference;
+            if (next_yaw >= current_yaw) {
+                if (next_yaw - current_yaw <= M_PI) {
+                    yaw_difference = next_yaw - current_yaw;
+                } else {
+                    yaw_difference = -((2 * M_PI) - (next_yaw - current_yaw));
+                }
+            } else {
+                if (current_yaw - next_yaw <= M_PI) {
+                    yaw_difference = -(current_yaw - next_yaw);
+                } else {
+                    yaw_difference = 2 * M_PI - (current_yaw - next_yaw);
+                }
+            }
+
+            // Calculate the required time to reach the n-th next waypoint
+            double dx = waypoints_x_[(target_waypoint_index_+params_.curvature_lookahead)%num_waypoints] - waypoints_x_[target_waypoint_index_];
+            double dy = waypoints_y_[(target_waypoint_index_+params_.curvature_lookahead)%num_waypoints] - waypoints_y_[target_waypoint_index_];
+            double distance = std::hypot(dx, dy);
+
+            // calculate the required time by dividing distance through cam_velocity_
+            double required_time = distance / cam_velocity_
+
+            cam_yaw_rate_ = yaw_difference / required_time;
+
+            //cam curvature depending on auto_mode
+            cam_curvature_ = cam_yaw_rate_ / cam_velocity_;
         }
     }
 
