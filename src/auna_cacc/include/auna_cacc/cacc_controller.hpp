@@ -14,8 +14,23 @@
 #include "tf2/LinearMath/Matrix3x3.h"
 #include "tf2/LinearMath/Quaternion.h"
 
+#include "rcl_interfaces/msg/set_parameters_result.hpp"
 
 
+struct Parameters
+{
+    double standstill_distance;
+    double time_gap;
+    double kp;
+    double kd;
+    double max_velocity;
+    bool use_waypoints;
+    std::string waypoint_file;
+    int frequency;
+    double target_velocity;
+    int curvature_lookahead;
+    double extra_distance;
+};
 
 class CaccController : public rclcpp::Node
 {
@@ -40,15 +55,8 @@ class CaccController : public rclcpp::Node
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_x_lookahead_point_;
         rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_y_lookahead_point_;
 
-        //parameters
-        double standstill_distance_;
-        double time_gap_;
-        double kp_;
-        double kd_;
-        double max_velocity_;
-        bool use_waypoints_;
-        std::string waypoint_file_;
-        int frequency_;
+        //pub_cam_ publisher for cam
+        rclcpp::Publisher<auna_its_msgs::msg::CAM>::SharedPtr pub_cam_;
 
         //variables for cam_callback
         double cam_x_;
@@ -88,7 +96,6 @@ class CaccController : public rclcpp::Node
         std::vector<double> waypoints_x_;
         std::vector<double> waypoints_y_;
         std::vector<double> waypoints_yaw_;
-        int closest_waypoint_index_;
 
         //auto mode
         bool auto_mode_;
@@ -117,6 +124,12 @@ class CaccController : public rclcpp::Node
                             std::shared_ptr<auna_msgs::srv::SetBool::Response> response);
         void set_auto_mode(const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
                             std::shared_ptr<auna_msgs::srv::SetBool::Response> response);
+
+        //dynamic parameters
+        rcl_interfaces::msg::SetParametersResult
+        dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters);
+        rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr dyn_params_handler_;
+        Parameters params_;
 
         //controller function variables
         double s_ = 0;

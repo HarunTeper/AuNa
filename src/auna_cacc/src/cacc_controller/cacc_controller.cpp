@@ -23,30 +23,40 @@ CaccController::CaccController() : Node("cacc_controller")
     this->declare_parameter("use_waypoints", false);
     this->declare_parameter("waypoint_file", "/home/$USER/waypoints.txt");
     this->declare_parameter("target_velocity", 1.0);
+    this->declare_parameter("curvature_lookahead", 10);
+    this->declare_parameter("extra_distance", 1.0);
 
-    standstill_distance_ = this->get_parameter("standstill_distance").as_double();
-    time_gap_ = this->get_parameter("time_gap").as_double();
-    kp_ = this->get_parameter("kp").as_double();
-    kd_ = this->get_parameter("kd").as_double();
-    max_velocity_ = this->get_parameter("max_velocity").as_double();
-    frequency_ = this->get_parameter("frequency").as_int();
-    use_waypoints_ = this->get_parameter("use_waypoints").as_bool();
-    target_velocity_ = this->get_parameter("target_velocity").as_double();
+    //use params_
+    params_.standstill_distance = this->get_parameter("standstill_distance").as_double();
+    params_.time_gap = this->get_parameter("time_gap").as_double();
+    params_.kp = this->get_parameter("kp").as_double();
+    params_.kd = this->get_parameter("kd").as_double();
+    params_.max_velocity = this->get_parameter("max_velocity").as_double();
+    params_.frequency = this->get_parameter("frequency").as_int();
+    params_.use_waypoints = this->get_parameter("use_waypoints").as_bool();
+    params_.waypoint_file = this->get_parameter("waypoint_file").as_string();
+    params_.target_velocity = this->get_parameter("target_velocity").as_double();
+    params_.curvature_lookahead = this->get_parameter("curvature_lookahead").as_int();
+    params_.extra_distance = this->get_parameter("extra_distance").as_double();
 
-    dt_ = 1.0 / frequency_;
+    dt_ = 1.0 / params_.frequency;
     auto_mode_ = false;
     auto_mode_ready_ = false;
     client_set_auto_mode_ = this->create_service<auna_msgs::srv::SetBool>("cacc/set_auto_mode", [this](const std::shared_ptr<auna_msgs::srv::SetBool::Request> request, std::shared_ptr<auna_msgs::srv::SetBool::Response> response){this->set_auto_mode(request, response);});
 
-    timer_ = this->create_wall_timer(std::chrono::milliseconds(1000 / frequency_), [this](){this->timer_callback();});
+    timer_ = this->create_wall_timer(std::chrono::milliseconds(1000 / params_.frequency), [this](){this->timer_callback();});
     setup_timer_ = this->create_wall_timer(std::chrono::milliseconds(250), [this](){this->setup_timer_callback();});
     timer_->cancel();
 
-    if (use_waypoints_)
+    if (params_.use_waypoints)
     {
         read_waypoints_from_csv();
-        closest_waypoint_index_ = 0;
     }
+
+    dyn_params_handler_ = this->add_on_set_parameters_callback(
+        [this](std::vector<rclcpp::Parameter> parameters) -> rcl_interfaces::msg::SetParametersResult {
+            return this->dynamicParametersCallback(parameters);
+        });
 }
 
 void CaccController::read_waypoints_from_csv()
@@ -88,13 +98,19 @@ void CaccController::read_waypoints_from_csv()
     file.close();
 
     // Calculate yaw for each waypoint
-    for (size_t i = 1; i < waypoints_x_.size() - 1; ++i)
-    {
-        double next_x = waypoints_x_[i + 1];
-        double next_y = waypoints_y_[i + 1];
+    waypoints_yaw_.clear(); // Clear the existing waypoints_yaw_ vector
 
-        double prev_x = waypoints_x_[i - 1];
-        double prev_y = waypoints_y_[i - 1];
+    size_t num_waypoints = waypoints_x_.size();
+    for (size_t i = 0; i < num_waypoints; ++i)
+    {
+        size_t prev_index = (i == 0) ? (num_waypoints - 1) : (i - 1);
+        size_t next_index = (i + 1) % num_waypoints;
+
+        double next_x = waypoints_x_[next_index];
+        double next_y = waypoints_y_[next_index];
+
+        double prev_x = waypoints_x_[prev_index];
+        double prev_y = waypoints_y_[prev_index];
 
         double yaw = std::atan2(next_y - prev_y, next_x - prev_x);
         waypoints_yaw_.push_back(yaw);
@@ -200,35 +216,33 @@ void CaccController::pose_callback(const geometry_msgs::msg::PoseStamped::Shared
 
 void CaccController::timer_callback()
 {
-    if(use_waypoints_){
+    if(params_.use_waypoints){
         double closest_distance_squared = std::numeric_limits<double>::max();
         int num_waypoints = waypoints_x_.size();
 
-        for (int i = closest_waypoint_index_; true; i = (i + 1) % num_waypoints)
+        int closest_waypoint_index;
+
+        for (int i = 0; i < num_waypoints; ++i)
         {
             double dx = waypoints_x_[i] - pose_x_;
             double dy = waypoints_y_[i] - pose_y_;
             double distance_squared = dx * dx + dy * dy;
 
-            if (distance_squared > closest_distance_squared)
+            if (distance_squared < closest_distance_squared)
             {
-                // Stop the loop if the distance is increasing
-                break;
+                closest_distance_squared = distance_squared;
+                closest_waypoint_index = i;
             }
-
-            closest_distance_squared = distance_squared;
-            closest_waypoint_index_ = i;
         }
 
-        int target_waypoint_index_ = closest_waypoint_index_;
+        int target_waypoint_index_ = closest_waypoint_index;
         if (auto_mode_)
         {
             // Calculate target waypoint index (the waypoint that is closest to the vehicle and within the time gap
 
-            double target_distance = standstill_distance_ + time_gap_ * target_velocity_;
+            double target_distance = params_.standstill_distance + params_.time_gap * params_.target_velocity;
 
-
-            for (int i = closest_waypoint_index_; true; i = (i + 1) % num_waypoints)
+            for (int i = closest_waypoint_index; true; i = (i + 1) % num_waypoints)
             {
                 double dx = waypoints_x_[i] - pose_x_;
                 double dy = waypoints_y_[i] - pose_y_;
@@ -244,34 +258,60 @@ void CaccController::timer_callback()
             }
         }
 
+        // set cam_velocity_ depending on auto_mode
+        if(auto_mode_){
+            cam_x_= waypoints_x_[target_waypoint_index_];
+            cam_y_= waypoints_y_[target_waypoint_index_];
+            cam_velocity_ = params_.target_velocity;
+            cam_acceleration_ = 0;
+        }
+
         // Calculate yaw difference between previous and next waypoints
         int curr_index = target_waypoint_index_;
-        int next_index = (target_waypoint_index_ + 1) % num_waypoints;
+        int next_index = (target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints;
 
+        cam_yaw_ = waypoints_yaw_[curr_index];
+
+        // Calculate cam_yaw_rate_ and cam_curvature_
         double current_yaw = waypoints_yaw_[curr_index];
         double next_yaw = waypoints_yaw_[next_index];
-        double yaw_difference = next_yaw - current_yaw;
 
-        double dx = waypoints_x_[next_index] - waypoints_x_[curr_index];
-        double dy = waypoints_y_[next_index] - waypoints_y_[curr_index];
+
+        //yaw difference modulo for the case that one is negative and the other positive
+        double yaw_difference;
+        if (next_yaw >= current_yaw) {
+            if (next_yaw - current_yaw <= M_PI) {
+                yaw_difference = next_yaw - current_yaw;
+            } else {
+                yaw_difference = -((2 * M_PI) - (next_yaw - current_yaw));
+            }
+        } else {
+            if (current_yaw - next_yaw <= M_PI) {
+                yaw_difference = -(current_yaw - next_yaw);
+            } else {
+                yaw_difference = 2 * M_PI - (current_yaw - next_yaw);
+            }
+        }
+
+        // Calculate the required time to reach the n-th next waypoint
+        double dx = waypoints_x_[(curr_index+params_.curvature_lookahead)%num_waypoints] - waypoints_x_[curr_index];
+        double dy = waypoints_y_[(curr_index+params_.curvature_lookahead)%num_waypoints] - waypoints_y_[curr_index];
         double distance = std::hypot(dx, dy);
 
         // calculate the required time by dividing distance through cam_velocity_
         double required_time;
         if(auto_mode_){
-            required_time = distance / target_velocity_;
+            required_time = distance / params_.target_velocity;
         }
         else{
             required_time = distance / cam_velocity_;
         }
 
-        // Use closest waypoint yaw
-        cam_yaw_ = current_yaw;
         cam_yaw_rate_ = yaw_difference / required_time;
 
         //cam curvature depending on auto_mode
         if(auto_mode_){
-            cam_curvature_ = cam_yaw_rate_ / target_velocity_;
+            cam_curvature_ = cam_yaw_rate_ / params_.target_velocity;
         }
         else{
             if (cam_velocity_ == 0)
@@ -286,12 +326,12 @@ void CaccController::timer_callback()
     }
 
     if(cam_curvature_ <= 0.01 && cam_curvature_ >= -0.01){
-        s_ = 0.5*pow(standstill_distance_+time_gap_*odom_velocity_, 2)*cam_curvature_-0.125*pow(standstill_distance_+time_gap_*odom_velocity_, 4)*pow(cam_curvature_, 3);
+        s_ = 0.5*pow(params_.standstill_distance+params_.time_gap*odom_velocity_, 2)*cam_curvature_-0.125*pow(params_.standstill_distance+params_.time_gap*odom_velocity_, 4)*pow(cam_curvature_, 3);
     }
     else{
-        s_ = (-1 + sqrt(1 + pow(cam_curvature_, 2) * pow(standstill_distance_ + time_gap_ * odom_velocity_, 2))) / cam_curvature_;
+        s_ = (-1 + sqrt(1 + pow(cam_curvature_, 2) * pow(params_.standstill_distance + params_.time_gap * odom_velocity_, 2))) / cam_curvature_;
     }
-    alpha_ = atan(cam_curvature_ * (standstill_distance_ + time_gap_ * odom_velocity_));
+    alpha_ = atan(cam_curvature_ * (params_.standstill_distance + params_.time_gap * odom_velocity_));
 
     x_lookahead_point_ = cam_x_+s_*sin(cam_yaw_);
     y_lookahead_point_ = cam_y_-s_*cos(cam_yaw_);
@@ -304,20 +344,20 @@ void CaccController::timer_callback()
     y_lookahead_point_msg.data = y_lookahead_point_;
     pub_y_lookahead_point_->publish(y_lookahead_point_msg);
 
-    z_1_ = cam_x_ - pose_x_ + s_ * sin(cam_yaw_) - (standstill_distance_+time_gap_*odom_velocity_) * cos(pose_yaw_);
-    z_2_ = cam_y_ - pose_y_ - s_ * cos(cam_yaw_) - (standstill_distance_+time_gap_*odom_velocity_) * sin(pose_yaw_);
+    z_1_ = cam_x_ - pose_x_ + s_ * sin(cam_yaw_) - (params_.standstill_distance+params_.time_gap*odom_velocity_) * cos(pose_yaw_);
+    z_2_ = cam_y_ - pose_y_ - s_ * cos(cam_yaw_) - (params_.standstill_distance+params_.time_gap*odom_velocity_) * sin(pose_yaw_);
     z_3_ = cam_velocity_ * cos(cam_yaw_) - odom_velocity_ * cos(pose_yaw_ + alpha_);
     z_4_ = cam_velocity_ * sin(cam_yaw_) - odom_velocity_ * sin(pose_yaw_ + alpha_);
 
-    invGam_Det_ = (standstill_distance_+time_gap_*odom_velocity_)*(time_gap_-time_gap_*sin(s_)*sin(cam_yaw_-pose_yaw_));
+    invGam_Det_ = (params_.standstill_distance+params_.time_gap*odom_velocity_)*(params_.time_gap-params_.time_gap*sin(s_)*sin(cam_yaw_-pose_yaw_));
 
-    invGam_1_ = ((standstill_distance_+time_gap_*odom_velocity_)*cos(pose_yaw_))/invGam_Det_;
-    invGam_2_ = ((standstill_distance_+time_gap_*odom_velocity_)*sin(pose_yaw_))/invGam_Det_;
-    invGam_3_ = (-time_gap_*sin(pose_yaw_)-time_gap_*sin(s_)*cos(cam_yaw_))/invGam_Det_;
-    invGam_4_ = (time_gap_*cos(pose_yaw_)-time_gap_*sin(s_)*sin(cam_yaw_))/invGam_Det_;
+    invGam_1_ = ((params_.standstill_distance+params_.time_gap*odom_velocity_)*cos(pose_yaw_))/invGam_Det_;
+    invGam_2_ = ((params_.standstill_distance+params_.time_gap*odom_velocity_)*sin(pose_yaw_))/invGam_Det_;
+    invGam_3_ = (-params_.time_gap*sin(pose_yaw_)-params_.time_gap*sin(s_)*cos(cam_yaw_))/invGam_Det_;
+    invGam_4_ = (params_.time_gap*cos(pose_yaw_)-params_.time_gap*sin(s_)*sin(cam_yaw_))/invGam_Det_;
 
-    inP_1_ = (z_1_ * kp_) + ( cos(alpha_)*z_3_+sin(alpha_)*z_4_ ) + ( (1-cos(alpha_))*cam_velocity_*cos(cam_yaw_)-sin(alpha_)*cam_velocity_*sin(cam_yaw_) ) + ( cos(cam_yaw_)*s_*cam_yaw_rate_ );
-    inP_2_ = (z_2_ * kd_) + ( sin(alpha_)*z_3_+cos(alpha_)*z_4_ ) + ( sin(alpha_)*cam_velocity_*cos(cam_yaw_)+(1-cos(alpha_))*cam_velocity_*sin(cam_yaw_) ) + ( sin(cam_yaw_)*s_*cam_yaw_rate_ );
+    inP_1_ = (z_1_ * params_.kp) + ( cos(alpha_)*z_3_+sin(alpha_)*z_4_ ) + ( (1-cos(alpha_))*cam_velocity_*cos(cam_yaw_)-sin(alpha_)*cam_velocity_*sin(cam_yaw_) ) + ( cos(cam_yaw_)*s_*cam_yaw_rate_ );
+    inP_2_ = (z_2_ * params_.kd) + ( sin(alpha_)*z_3_+cos(alpha_)*z_4_ ) + ( sin(alpha_)*cam_velocity_*cos(cam_yaw_)+(1-cos(alpha_))*cam_velocity_*sin(cam_yaw_) ) + ( sin(cam_yaw_)*s_*cam_yaw_rate_ );
 
     a_ = invGam_1_ * inP_1_ + invGam_2_ * inP_2_;
     w_ = invGam_3_ * inP_1_ + invGam_4_ * inP_2_;
@@ -326,8 +366,8 @@ void CaccController::timer_callback()
 
     v_ = last_velocity_ + a_ * dt_;
 
-    if(v_ > max_velocity_){
-        v_ = max_velocity_;
+    if(v_ > params_.max_velocity){
+        v_ = params_.max_velocity;
     }
     else if(v_ < 0.01){
         v_ = 0.0;
@@ -344,13 +384,13 @@ void CaccController::timer_callback()
 
 void CaccController::set_standstill_distance(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){
     RCLCPP_INFO(this->get_logger(), "Setting standstill distance to %f", request->value);
-    standstill_distance_ = request->value;
+    params_.standstill_distance = request->value;
     response->success = true;
 }
 
 void CaccController::set_time_gap(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){
     RCLCPP_INFO(this->get_logger(), "Setting time gap to %f", request->value);
-    time_gap_ = request->value;
+    params_.time_gap = request->value;
     response->success = true;
 }
 
@@ -399,3 +439,48 @@ void CaccController::set_auto_mode(const std::shared_ptr<auna_msgs::srv::SetBool
 
 }
 
+
+rcl_interfaces::msg::SetParametersResult
+CaccController::dynamicParametersCallback(
+  std::vector<rclcpp::Parameter> parameters)
+{
+  rcl_interfaces::msg::SetParametersResult result;
+
+  for (auto parameter : parameters) {
+    const auto & type = parameter.get_type();
+    const auto & name = parameter.get_name();
+
+    //print
+    RCLCPP_INFO(this->get_logger(), "Parameter '%s' was changed.", name.c_str());
+
+
+    if (type == rclcpp::ParameterType::PARAMETER_DOUBLE) {
+      if (name == "standstill_distance") {
+        params_.standstill_distance = parameter.as_double();
+      } else if (name == "time_gap") {
+        params_.time_gap = parameter.as_double();
+      } else if (name == "kp") {
+        params_.kp = parameter.as_double();
+      } else if (name == "kd") {
+        params_.kd = parameter.as_double();
+      } else if (name == "max_velocity") {
+        params_.max_velocity = parameter.as_double();
+      } else if (name == "frequency") {
+        params_.frequency = parameter.as_int();
+      } else if (name == "use_waypoints") {
+        params_.use_waypoints = parameter.as_bool();
+      } else if (name == "waypoint_file") {
+        params_.waypoint_file = parameter.as_string();
+      } else if (name == "target_velocity") {
+        params_.target_velocity = parameter.as_double();
+      } else if (name == "curvature_lookahead") {
+        params_.curvature_lookahead = parameter.as_int();
+      } else if (name == "extra_distance") {
+            params_.extra_distance = parameter.as_double();
+        }
+    }
+  }
+
+  result.successful = true;
+  return result;
+}
