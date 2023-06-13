@@ -24,6 +24,20 @@ joy_teleop_ps4:
       interface_type: std_srvs/srv/Empty
       service_name: /emergency_stop_disable
       buttons: [8]
+    enable_auto_mode:
+      type: service
+      interface_type: auna_msgs/srv/SetBool
+      service_name: cacc/set_auto_mode
+      service_request:
+        value: True
+      buttons: [1]
+    disable_auto_mode:
+      type: service
+      interface_type: auna_msgs/srv/SetBool
+      service_name: cacc/set_auto_mode
+      service_request:
+        value: False
+      buttons: [2]
 
 joy_teleop_g29:
   ros__parameters:
@@ -39,10 +53,10 @@ joy_teleop_g29:
           offset: 1.0
         angular-z:
           axis: 0
-          scale: 1.25
+          scale: 5.0
           offset: 0.0
 
 joy_node:
   ros__parameters:
-    deadzone: 0.1
-    autorepeat_rate: 20.0
+    deadzone: 0.00
+    autorepeat_rate: 100.0
