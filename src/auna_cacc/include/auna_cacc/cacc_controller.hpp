@@ -1,3 +1,4 @@
+#include <fstream>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -42,10 +43,12 @@ class CaccController : public rclcpp::Node
         //parameters
         double standstill_distance_;
         double time_gap_;
-        double wheelbase_;
         double kp_;
         double kd_;
         double max_velocity_;
+        bool use_waypoints_;
+        std::string waypoint_file_;
+        int frequency_;
 
         //variables for cam_callback
         double cam_x_;
@@ -80,6 +83,15 @@ class CaccController : public rclcpp::Node
         double pitch_;
         double yaw_;
         geometry_msgs::msg::PoseStamped::SharedPtr last_pose_msg_;
+
+        //variables for waypoints
+        std::vector<double> waypoints_x_;
+        std::vector<double> waypoints_y_;
+        std::vector<double> waypoints_yaw_;
+        int closest_waypoint_index_;
+
+        // general functions
+        void read_waypoints_from_csv();
 
         //callback functions
         void cam_callback(const auna_its_msgs::msg::CAM::SharedPtr msg);

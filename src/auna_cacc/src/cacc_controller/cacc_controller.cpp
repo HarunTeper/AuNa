@@ -10,10 +10,6 @@ CaccController::CaccController() : Node("cacc_controller")
     pub_x_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/x", 1);
     pub_y_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/y", 1);
 
-    timer_ = this->create_wall_timer(std::chrono::milliseconds(20), [this](){this->timer_callback();});
-    setup_timer_ = this->create_wall_timer(std::chrono::milliseconds(1000), [this](){this->setup_timer_callback();});
-    timer_->cancel();
-
     client_set_standstill_distance_ = this->create_service<auna_msgs::srv::SetFloat64>("cacc/set_standstill_distance", [this](const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){this->set_standstill_distance(request, response);});
     client_set_time_gap_ = this->create_service<auna_msgs::srv::SetFloat64>("cacc/set_time_gap", [this](const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){this->set_time_gap(request, response);});
     client_set_cacc_enable_ = this->create_service<auna_msgs::srv::SetBool>("cacc/set_cacc_enable", [this](const std::shared_ptr<auna_msgs::srv::SetBool::Request> request, std::shared_ptr<auna_msgs::srv::SetBool::Response> response){this->set_cacc_enable(request, response);});
@@ -23,12 +19,92 @@ CaccController::CaccController() : Node("cacc_controller")
     this->declare_parameter("kp", 0.5);
     this->declare_parameter("kd", 0.5);
     this->declare_parameter("max_velocity", 1.0);
+    this->declare_parameter("frequency", 50);
+    this->declare_parameter("use_waypoints", false);
+    this->declare_parameter("waypoint_file", "/home/$USER/waypoints.txt");
 
     standstill_distance_ = this->get_parameter("standstill_distance").as_double();
     time_gap_ = this->get_parameter("time_gap").as_double();
     kp_ = this->get_parameter("kp").as_double();
     kd_ = this->get_parameter("kd").as_double();
     max_velocity_ = this->get_parameter("max_velocity").as_double();
+    frequency_ = this->get_parameter("frequency").as_int();
+    use_waypoints_ = this->get_parameter("use_waypoints").as_bool();
+
+    dt_ = 1.0 / frequency_;
+
+    timer_ = this->create_wall_timer(std::chrono::milliseconds(1000 / frequency_), [this](){this->timer_callback();});
+    setup_timer_ = this->create_wall_timer(std::chrono::milliseconds(250), [this](){this->setup_timer_callback();});
+    timer_->cancel();
+
+    if (use_waypoints_)
+    {
+        read_waypoints_from_csv();
+        closest_waypoint_index_ = 0;
+    }
+}
+
+void CaccController::read_waypoints_from_csv()
+{
+    std::string file_path = this->get_parameter("waypoint_file").as_string();
+
+    std::ifstream file(file_path, std::ifstream::in);
+    std::string line;
+    if (file.is_open())
+    {
+        waypoints_x_.clear(); // Clear the existing waypoints_x_ vector
+        waypoints_y_.clear(); // Clear the existing waypoints_y_ vector
+
+        while (std::getline(file, line))
+        {
+            std::istringstream iss(line);
+            std::string x, y;
+            std::getline(iss, x, ',');
+            std::getline(iss, y, ',');
+            try
+            {
+                double x_value = std::stod(x);
+                double y_value = std::stod(y);
+
+                waypoints_x_.push_back(x_value);
+                waypoints_y_.push_back(y_value);
+            }
+            catch (const std::invalid_argument& e)
+            {
+                RCLCPP_ERROR(this->get_logger(), "Invalid waypoint format in CSV file: %s", file_path.c_str());
+            }
+        }
+    }
+    else
+    {
+        RCLCPP_ERROR(this->get_logger(), "Unable to open file: %s", file_path.c_str());
+        return;
+    }
+    file.close();
+
+    // Calculate yaw for each waypoint
+    for (size_t i = 1; i < waypoints_x_.size() - 1; ++i)
+    {
+        double next_x = waypoints_x_[i + 1];
+        double next_y = waypoints_y_[i + 1];
+
+        double prev_x = waypoints_x_[i - 1];
+        double prev_y = waypoints_y_[i - 1];
+
+        double yaw = std::atan2(next_y - prev_y, next_x - prev_x);
+        waypoints_yaw_.push_back(yaw);
+    }
+}
+
+void CaccController::setup_timer_callback()
+{
+    // if all last messages exist, start timer
+    if (last_cam_msg_ != nullptr && last_odom_msg_ != nullptr && last_pose_msg_ != nullptr)
+    {
+        RCLCPP_INFO(this->get_logger(), "CACC controller started");
+        timer_->reset();
+        setup_timer_->cancel();
+    }
 }
 
 void CaccController::cam_callback(const auna_its_msgs::msg::CAM::SharedPtr msg)
@@ -43,7 +119,9 @@ void CaccController::cam_callback(const auna_its_msgs::msg::CAM::SharedPtr msg)
     }
     else
     {
-        cam_acceleration_ = (cam_velocity_ - last_cam_velocity_) / (msg->header.stamp.sec - last_cam_msg_->header.stamp.sec + (msg->header.stamp.nanosec - last_cam_msg_->header.stamp.nanosec) / 1000000000.0);
+        double dt = msg->header.stamp.sec - last_cam_msg_->header.stamp.sec + (msg->header.stamp.nanosec - last_cam_msg_->header.stamp.nanosec) / 1e9;
+        dt = std::min(dt, 0.1);
+        cam_acceleration_ = (cam_velocity_ - last_cam_velocity_) / dt;
     }
 
     last_cam_msg_ = msg;
@@ -72,7 +150,10 @@ void CaccController::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     }
     else
     {
-        odom_acceleration_ = (odom_velocity_ - last_odom_velocity_) / (msg->header.stamp.sec - last_odom_msg_->header.stamp.sec + (msg->header.stamp.nanosec - last_odom_msg_->header.stamp.nanosec) / 1000000000.0);
+        double dt = msg->header.stamp.sec - last_odom_msg_->header.stamp.sec + (msg->header.stamp.nanosec - last_odom_msg_->header.stamp.nanosec) / 1e9;
+        dt = std::min(dt, 0.01);
+        odom_acceleration_ = (odom_velocity_ - last_odom_velocity_) / dt;
+        
     }
     last_odom_msg_ = msg;
     last_odom_velocity_ = odom_velocity_;
@@ -105,19 +186,40 @@ void CaccController::pose_callback(const geometry_msgs::msg::PoseStamped::Shared
     last_pose_msg_ = msg;
 }
 
-void CaccController::setup_timer_callback()
-{
-    // if all last messages exist, start timer
-    if (last_cam_msg_ != nullptr && last_odom_msg_ != nullptr && last_pose_msg_ != nullptr)
-    {
-        RCLCPP_INFO(this->get_logger(), "CACC controller started");
-        timer_->reset();
-        setup_timer_->cancel();
-    }
-}
-
 void CaccController::timer_callback()
 {
+    if(use_waypoints_){
+        double closest_distance_squared = std::numeric_limits<double>::max();
+        int num_waypoints = waypoints_x_.size();
+
+        for (int i = closest_waypoint_index_; true; i = (i + 1) % num_waypoints)
+        {
+            double dx = waypoints_x_[i] - pose_x_;
+            double dy = waypoints_y_[i] - pose_y_;
+            double distance_squared = dx * dx + dy * dy;
+
+            if (distance_squared > closest_distance_squared)
+            {
+                // Stop the loop if the distance is increasing
+                break;
+            }
+
+            closest_distance_squared = distance_squared;
+            closest_waypoint_index_ = i;
+        }
+
+        // Calculate yaw difference between previous and next waypoints
+        int prev_index = (closest_waypoint_index_ - 1 + num_waypoints) % num_waypoints;
+        int next_index = (closest_waypoint_index_ + 1) % num_waypoints;
+
+        double prev_yaw = waypoints_yaw_[prev_index];
+        double next_yaw = waypoints_yaw_[next_index];
+        // double yaw_difference = next_yaw - prev_yaw;
+
+        // Use closest waypoint yaw
+        cam_yaw_ = waypoints_yaw_[closest_waypoint_index_];
+    }
+
     if(cam_curvature_ <= 0.01 && cam_curvature_ >= -0.01){
         s_ = 0.5*pow(standstill_distance_+time_gap_*odom_velocity_, 2)*cam_curvature_-0.125*pow(standstill_distance_+time_gap_*odom_velocity_, 4)*pow(cam_curvature_, 3);
     }
@@ -154,14 +256,6 @@ void CaccController::timer_callback()
 
     a_ = invGam_1_ * inP_1_ + invGam_2_ * inP_2_;
     w_ = invGam_3_ * inP_1_ + invGam_4_ * inP_2_;
-
-    if(last_time_.nanoseconds() == 0){
-        last_time_ = rclcpp::Clock().now();
-    }
-    dt_ = (rclcpp::Clock().now() - last_time_).seconds();
-    if(dt_ > 0.1){
-        dt_ = 0.1;
-    }
 
     last_time_ = rclcpp::Clock().now();
 
