@@ -358,7 +358,7 @@ void CaccController::timer_callback()
             double distance = std::hypot(dx, dy);
 
             // calculate the required time by dividing distance through cam_velocity_
-            double required_time = distance / cam_velocity_
+            double required_time = distance / cam_velocity_;
 
             cam_yaw_rate_ = yaw_difference / required_time;
 
