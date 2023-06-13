@@ -36,6 +36,7 @@ WaypointPublisher::WaypointPublisher() : Node("waypoint_publisher"), tf_buffer_(
         RCLCPP_ERROR(this->get_logger(), "Unable to open file");
         return;
     }
+    file.close();
     for (uint i = 0; i < poses_.size(); i++) {
         if (i == 0) {
             double heading = atan2(poses_[i+1].pose.position.y - poses_[poses_.size()-1].pose.position.y, poses_[i+1].pose.position.x - poses_[poses_.size()-1].pose.position.x);
