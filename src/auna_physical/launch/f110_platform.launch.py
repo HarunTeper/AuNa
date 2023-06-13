@@ -58,7 +58,7 @@ def generate_launch_description():
     launch_description = LaunchDescription()
 
     launch_description.add_action(namespace_arg)
-    launch_description.add_action(lidar_launch_file)
+    # launch_description.add_action(lidar_launch_file)
     launch_description.add_action(vesc_launch_file)
     launch_description.add_action(cmd_vel_to_ackermann_node)
     launch_description.add_action(vesc_start_node)
