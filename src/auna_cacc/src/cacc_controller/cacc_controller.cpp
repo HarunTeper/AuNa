@@ -217,27 +217,27 @@ void CaccController::pose_callback(const geometry_msgs::msg::PoseStamped::Shared
 void CaccController::timer_callback()
 {
     if(params_.use_waypoints){
-        double closest_distance_squared = std::numeric_limits<double>::max();
-        int num_waypoints = waypoints_x_.size();
+        if(auto_mode_){
+            double closest_distance_squared = std::numeric_limits<double>::max();
+            int num_waypoints = waypoints_x_.size();
 
-        int closest_waypoint_index;
+            int closest_waypoint_index;
 
-        for (int i = 0; i < num_waypoints; ++i)
-        {
-            double dx = waypoints_x_[i] - pose_x_;
-            double dy = waypoints_y_[i] - pose_y_;
-            double distance_squared = dx * dx + dy * dy;
-
-            if (distance_squared < closest_distance_squared)
+            for (int i = 0; i < num_waypoints; ++i)
             {
-                closest_distance_squared = distance_squared;
-                closest_waypoint_index = i;
-            }
-        }
+                double dx = waypoints_x_[i] - pose_x_;
+                double dy = waypoints_y_[i] - pose_y_;
+                double distance_squared = dx * dx + dy * dy;
 
-        int target_waypoint_index_ = closest_waypoint_index;
-        if (auto_mode_)
-        {
+                if (distance_squared < closest_distance_squared)
+                {
+                    closest_distance_squared = distance_squared;
+                    closest_waypoint_index = i;
+                }
+            }
+
+            int target_waypoint_index_ = closest_waypoint_index;
+
             // Calculate target waypoint index (the waypoint that is closest to the vehicle and within the time gap
 
             double target_distance = params_.standstill_distance + params_.time_gap * params_.target_velocity;
@@ -256,72 +256,81 @@ void CaccController::timer_callback()
 
                 target_waypoint_index_ = i;
             }
-        }
-
-        // set cam_velocity_ depending on auto_mode
-        if(auto_mode_){
             cam_x_= waypoints_x_[target_waypoint_index_];
             cam_y_= waypoints_y_[target_waypoint_index_];
             cam_velocity_ = params_.target_velocity;
             cam_acceleration_ = 0;
-        }
-
-        // Calculate yaw difference between previous and next waypoints
-        int curr_index = target_waypoint_index_;
-        int next_index = (target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints;
-
-        cam_yaw_ = waypoints_yaw_[curr_index];
-
-        // Calculate cam_yaw_rate_ and cam_curvature_
-        double current_yaw = waypoints_yaw_[curr_index];
-        double next_yaw = waypoints_yaw_[next_index];
 
 
-        //yaw difference modulo for the case that one is negative and the other positive
-        double yaw_difference;
-        if (next_yaw >= current_yaw) {
-            if (next_yaw - current_yaw <= M_PI) {
-                yaw_difference = next_yaw - current_yaw;
+            // Calculate yaw difference between previous and next waypoints
+            int curr_index = target_waypoint_index_;
+            int next_index = (target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints;
+
+            cam_yaw_ = waypoints_yaw_[curr_index];
+
+            // Calculate cam_yaw_rate_ and cam_curvature_
+            double current_yaw = waypoints_yaw_[curr_index];
+            double next_yaw = waypoints_yaw_[next_index];
+
+            //yaw difference modulo for the case that one is negative and the other positive
+            double yaw_difference;
+            if (next_yaw >= current_yaw) {
+                if (next_yaw - current_yaw <= M_PI) {
+                    yaw_difference = next_yaw - current_yaw;
+                } else {
+                    yaw_difference = -((2 * M_PI) - (next_yaw - current_yaw));
+                }
             } else {
-                yaw_difference = -((2 * M_PI) - (next_yaw - current_yaw));
+                if (current_yaw - next_yaw <= M_PI) {
+                    yaw_difference = -(current_yaw - next_yaw);
+                } else {
+                    yaw_difference = 2 * M_PI - (current_yaw - next_yaw);
+                }
             }
-        } else {
-            if (current_yaw - next_yaw <= M_PI) {
-                yaw_difference = -(current_yaw - next_yaw);
-            } else {
-                yaw_difference = 2 * M_PI - (current_yaw - next_yaw);
-            }
-        }
 
-        // Calculate the required time to reach the n-th next waypoint
-        double dx = waypoints_x_[(curr_index+params_.curvature_lookahead)%num_waypoints] - waypoints_x_[curr_index];
-        double dy = waypoints_y_[(curr_index+params_.curvature_lookahead)%num_waypoints] - waypoints_y_[curr_index];
-        double distance = std::hypot(dx, dy);
+            // Calculate the required time to reach the n-th next waypoint
+            double dx = waypoints_x_[(curr_index+params_.curvature_lookahead)%num_waypoints] - waypoints_x_[curr_index];
+            double dy = waypoints_y_[(curr_index+params_.curvature_lookahead)%num_waypoints] - waypoints_y_[curr_index];
+            double distance = std::hypot(dx, dy);
 
-        // calculate the required time by dividing distance through cam_velocity_
-        double required_time;
-        if(auto_mode_){
-            required_time = distance / params_.target_velocity;
-        }
-        else{
-            required_time = distance / cam_velocity_;
-        }
+            // calculate the required time by dividing distance through cam_velocity_
+            double required_time = distance / params_.target_velocity;
 
-        cam_yaw_rate_ = yaw_difference / required_time;
+            cam_yaw_rate_ = yaw_difference / required_time;
 
-        //cam curvature depending on auto_mode
-        if(auto_mode_){
+            //cam curvature depending on auto_mode
             cam_curvature_ = cam_yaw_rate_ / params_.target_velocity;
+            
         }
         else{
-            if (cam_velocity_ == 0)
+
+            double closest_distance_squared = std::numeric_limits<double>::max();
+            int num_waypoints = waypoints_x_.size();
+
+            int closest_waypoint_index;
+
+            for (int i = 0; i < num_waypoints; ++i)
             {
-                cam_curvature_ = 0;
+                double dx = waypoints_x_[i] - cam_x_;
+                double dy = waypoints_y_[i] - cam_y_;
+                double distance_squared = dx * dx + dy * dy;
+
+                if (distance_squared < closest_distance_squared)
+                {
+                    closest_distance_squared = distance_squared;
+                    closest_waypoint_index = i;
+                }
             }
-            else
-            {
-                cam_curvature_ = cam_yaw_rate_ / cam_velocity_;
-            }
+
+            int target_waypoint_index_ = closest_waypoint_index;
+
+            cam_x_ = waypoints_x_[target_waypoint_index_];
+            cam_y_ = waypoints_y_[target_waypoint_index_];
+            cam_velocity_ = cam_velocity_;
+            cam_acceleration_ = cam_acceleration_;
+            cam_yaw_ =  waypoints_yaw_[target_waypoint_index_];
+            cam_yaw_rate_ = cam_yaw_rate_;
+            cam_curvature_ = cam_curvature_;
         }
     }
 
