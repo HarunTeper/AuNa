@@ -124,6 +124,10 @@ class CaccController : public rclcpp::Node
                             std::shared_ptr<auna_msgs::srv::SetBool::Response> response);
         void set_auto_mode(const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
                             std::shared_ptr<auna_msgs::srv::SetBool::Response> response);
+        void set_target_velocity(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
+                                std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response);
+        void set_extra_distance(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
+                                std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response);
 
         //dynamic parameters
         rcl_interfaces::msg::SetParametersResult

@@ -242,7 +242,28 @@ void CaccController::timer_callback()
                 }
             }
 
-            int target_waypoint_index_ = closest_waypoint_index;
+            int target_waypoint_index_;
+
+            // Find the previous index at which the distance to the closest waypoint is at least params_.extra_distance
+            for (int i = closest_waypoint_index; ; i = (i - 1 + num_waypoints) % num_waypoints)
+            {
+                double dx = waypoints_x_[i] - waypoints_x_[closest_waypoint_index];
+                double dy = waypoints_y_[i] - waypoints_y_[closest_waypoint_index];
+                double distance_squared = dx * dx + dy * dy;
+
+                if (distance_squared >= params_.extra_distance * params_.extra_distance)
+                {
+                    target_waypoint_index_ = i;
+                    break;
+                }
+
+                if (i == (closest_waypoint_index - 1 + num_waypoints) % num_waypoints)
+                {
+                    // If the loop has wrapped around without finding a suitable index, set target_waypoint_index_ to closest_waypoint_index
+                    target_waypoint_index_ = closest_waypoint_index;
+                    break;
+                }
+            }
 
             // Calculate target waypoint index (the waypoint that is closest to the vehicle and within the time gap
 
@@ -327,6 +348,7 @@ void CaccController::timer_callback()
                     closest_waypoint_index = i;
                 }
             }
+
 
             int target_waypoint_index_ = closest_waypoint_index;
 
@@ -432,6 +454,18 @@ void CaccController::timer_callback()
     twist_msg.angular.z = w_;
 
     pub_cmd_vel->publish(twist_msg);
+}
+
+void CaccController::set_target_velocity(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){
+    RCLCPP_INFO(this->get_logger(), "Setting target velocity to %f", request->value);
+    params_.target_velocity = request->value;
+    response->success = true;
+}
+
+void CaccController::set_extra_distance(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){
+    RCLCPP_INFO(this->get_logger(), "Setting extra distance to %f", request->value);
+    params_.extra_distance = request->value;
+    response->success = true;
 }
 
 void CaccController::set_standstill_distance(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){
