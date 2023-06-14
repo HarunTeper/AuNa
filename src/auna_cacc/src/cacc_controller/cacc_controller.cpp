@@ -400,6 +400,15 @@ void CaccController::timer_callback()
         }
     }
 
+    //print all cam values
+    RCLCPP_INFO(this->get_logger(), "cam_x: %f", cam_x_);
+    RCLCPP_INFO(this->get_logger(), "cam_y: %f", cam_y_);
+    RCLCPP_INFO(this->get_logger(), "cam_velocity: %f", cam_velocity_);
+    RCLCPP_INFO(this->get_logger(), "cam_acceleration: %f", cam_acceleration_);
+    RCLCPP_INFO(this->get_logger(), "cam_yaw: %f", cam_yaw_);
+    RCLCPP_INFO(this->get_logger(), "cam_yaw_rate: %f", cam_yaw_rate_);
+    RCLCPP_INFO(this->get_logger(), "cam_curvature: %f", cam_curvature_);
+
     if(cam_curvature_ <= 0.01 && cam_curvature_ >= -0.01){
         s_ = 0.5*pow(params_.standstill_distance+params_.time_gap*odom_velocity_, 2)*cam_curvature_-0.125*pow(params_.standstill_distance+params_.time_gap*odom_velocity_, 4)*pow(cam_curvature_, 3);
     }
