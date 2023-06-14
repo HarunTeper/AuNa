@@ -30,14 +30,56 @@ joy_teleop_ps4:
       service_name: cacc/set_auto_mode
       service_request:
         value: True
-      buttons: [1]
+      buttons: [2]
     disable_auto_mode:
       type: service
       interface_type: auna_msgs/srv/SetBool
       service_name: cacc/set_auto_mode
       service_request:
         value: False
-      buttons: [2]
+      buttons: [1]
+    enable_cacc:
+      type: service
+      interface_type: auna_msgs/srv/SetBool
+      service_name: /cacc/set_cacc_enable
+      service_request:
+        value: True
+      buttons: [0]
+    disable_cacc:
+      type: service
+      interface_type: auna_msgs/srv/SetBool
+      service_name: /cacc/set_cacc_enable
+      service_request:
+        value: False
+      buttons: [3]
+    increase_target_velocity:
+      type: service
+      interface_type: auna_msgs/srv/SetFloat64
+      service_name: /cacc/set_target_velocity
+      service_request:
+        value: 1.0
+      buttons: [5]
+    decrease_target_velocity:
+      type: service
+      interface_type: auna_msgs/srv/SetFloat64
+      service_name: /cacc/set_target_velocity
+      service_request:
+        value: 0.0
+      buttons: [7]
+    increase_extra_distance:
+      type: service
+      interface_type: auna_msgs/srv/SetFloat64
+      service_name: /cacc/set_extra_distance
+      service_request:
+        value: 1.0
+      buttons: [4]
+    decrease_extra_distance:
+      type: service
+      interface_type: auna_msgs/srv/SetFloat64
+      service_name: /cacc/set_extra_distance
+      service_request:
+        value: 0.0
+      buttons: [10]
 
 joy_teleop_g29:
   ros__parameters:
