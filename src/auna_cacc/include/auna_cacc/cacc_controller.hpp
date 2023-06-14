@@ -48,6 +48,10 @@ class CaccController : public rclcpp::Node
         //service for standstill_distance and time_gap
         rclcpp::Service<auna_msgs::srv::SetFloat64>::SharedPtr client_set_standstill_distance_;
         rclcpp::Service<auna_msgs::srv::SetFloat64>::SharedPtr client_set_time_gap_;
+
+        //service for target_velocity and extra_distance
+        rclcpp::Service<auna_msgs::srv::SetFloat64>::SharedPtr client_set_target_velocity_;
+        rclcpp::Service<auna_msgs::srv::SetFloat64>::SharedPtr client_set_extra_distance_;
         
         //service for cacc_enable
         rclcpp::Service<auna_msgs::srv::SetBool>::SharedPtr client_set_cacc_enable_;

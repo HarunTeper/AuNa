@@ -12,7 +12,9 @@ CaccController::CaccController() : Node("cacc_controller")
 
     client_set_standstill_distance_ = this->create_service<auna_msgs::srv::SetFloat64>("cacc/set_standstill_distance", [this](const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){this->set_standstill_distance(request, response);});
     client_set_time_gap_ = this->create_service<auna_msgs::srv::SetFloat64>("cacc/set_time_gap", [this](const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){this->set_time_gap(request, response);});
-    client_set_cacc_enable_ = this->create_service<auna_msgs::srv::SetBool>("cacc/set_cacc_enable", [this](const std::shared_ptr<auna_msgs::srv::SetBool::Request> request, std::shared_ptr<auna_msgs::srv::SetBool::Response> response){this->set_cacc_enable(request, response);});
+    client_set_cacc_enable_ = this->create_service<auna_msgs::srv::SetBool>("/cacc/set_cacc_enable", [this](const std::shared_ptr<auna_msgs::srv::SetBool::Request> request, std::shared_ptr<auna_msgs::srv::SetBool::Response> response){this->set_cacc_enable(request, response);});
+    client_set_target_velocity_ = this->create_service<auna_msgs::srv::SetFloat64>("/cacc/set_target_velocity", [this](const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){this->set_target_velocity(request, response);});
+    client_set_extra_distance_ = this->create_service<auna_msgs::srv::SetFloat64>("/cacc/set_extra_distance", [this](const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){this->set_extra_distance(request, response);});
 
     this->declare_parameter("standstill_distance", 1.5);
     this->declare_parameter("time_gap", 0.5);
@@ -122,8 +124,7 @@ void CaccController::setup_timer_callback()
     // if all last messages exist, start timer
     if (last_cam_msg_ != nullptr && last_odom_msg_ != nullptr && last_pose_msg_ != nullptr)
     {
-        RCLCPP_INFO(this->get_logger(), "CACC controller started");
-        timer_->reset();
+        RCLCPP_INFO(this->get_logger(), "CACC controller ready");
         setup_timer_->cancel();
     }
     if (last_odom_msg_ != nullptr && last_pose_msg_ != nullptr)
@@ -457,14 +458,34 @@ void CaccController::timer_callback()
 }
 
 void CaccController::set_target_velocity(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){
-    RCLCPP_INFO(this->get_logger(), "Setting target velocity to %f", request->value);
-    params_.target_velocity = request->value;
+    if(request->value == 1.0){
+        params_.target_velocity += 0.5;
+    }
+    else if(request->value == 0.0){
+        params_.target_velocity -= 0.5;
+    }
+    else{
+        RCLCPP_ERROR(this->get_logger(), "Invalid value for target velocity");
+    }
+
+    RCLCPP_INFO(this->get_logger(), "Target velocity is now %f", params_.target_velocity);
     response->success = true;
 }
 
 void CaccController::set_extra_distance(const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){
     RCLCPP_INFO(this->get_logger(), "Setting extra distance to %f", request->value);
-    params_.extra_distance = request->value;
+    //if the request value is 1.0, increase the parameter by 0.5, if it is 0.0, decrease it by 0.5
+    if(request->value == 1.0){
+        params_.extra_distance += 0.5;
+    }
+    else if(request->value == 0.0){
+        params_.extra_distance -= 0.5;
+    }
+    else{
+        RCLCPP_ERROR(this->get_logger(), "Invalid value for extra distance");
+    }
+
+    RCLCPP_INFO(this->get_logger(), "Extra distance is now %f", params_.extra_distance);
     response->success = true;
 }
 
@@ -487,6 +508,14 @@ void CaccController::set_cacc_enable(const std::shared_ptr<auna_msgs::srv::SetBo
     }
     else{
         RCLCPP_INFO(this->get_logger(), "Disabling CACC controller");
+
+        geometry_msgs::msg::Twist twist_msg;
+
+        twist_msg.linear.x = 0.0;
+        twist_msg.angular.z = 0.0;
+
+        pub_cmd_vel->publish(twist_msg);
+        
         timer_->cancel();
     }
     response->success = true;
@@ -513,13 +542,7 @@ void CaccController::set_auto_mode(const std::shared_ptr<auna_msgs::srv::SetBool
         pub_cmd_vel->publish(twist_msg);
 
         auto_mode_ = false;
-        // if all last messages exist, start timer
-        if (last_cam_msg_ == nullptr || last_odom_msg_ == nullptr || last_pose_msg_ == nullptr)
-        {
-            RCLCPP_INFO(this->get_logger(), "Waiting for messages to start CACC controller");
-            setup_timer_->reset();
-            timer_->cancel();
-        }
+        timer_->cancel();
     }
     response->success = true;
 
