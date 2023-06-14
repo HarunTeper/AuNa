@@ -143,13 +143,18 @@ void CaccController::cam_callback(const auna_its_msgs::msg::CAM::SharedPtr msg)
 
     if (last_cam_msg_ == nullptr)
     {
-        cam_acceleration_ = cam_velocity_;
+        cam_acceleration_ = 0.0;
     }
     else
     {
         double dt = msg->header.stamp.sec - last_cam_msg_->header.stamp.sec + (msg->header.stamp.nanosec - last_cam_msg_->header.stamp.nanosec) / 1e9;
         dt = std::min(dt, 0.1);
-        cam_acceleration_ = (cam_velocity_ - last_cam_velocity_) / dt;
+        if(dt == 0){
+            cam_acceleration_ = 0.0;
+        }
+        else{
+            cam_acceleration_ = (cam_velocity_ - last_cam_velocity_) / dt;
+        }
     }
 
     last_cam_msg_ = msg;
@@ -179,6 +184,7 @@ void CaccController::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     else
     {
         double dt = msg->header.stamp.sec - last_odom_msg_->header.stamp.sec + (msg->header.stamp.nanosec - last_odom_msg_->header.stamp.nanosec) / 1e9;
+
         dt = std::min(dt, 0.01);
         odom_acceleration_ = (odom_velocity_ - last_odom_velocity_) / dt;
         
@@ -326,8 +332,6 @@ void CaccController::timer_callback()
 
             cam_x_ = waypoints_x_[target_waypoint_index_];
             cam_y_ = waypoints_y_[target_waypoint_index_];
-            cam_velocity_ = cam_velocity_;
-            cam_acceleration_ = cam_acceleration_;
             cam_yaw_ =  waypoints_yaw_[target_waypoint_index_];
 
             // Calculate cam_yaw_rate_ and cam_curvature_
@@ -363,7 +367,13 @@ void CaccController::timer_callback()
             cam_yaw_rate_ = yaw_difference / required_time;
 
             //cam curvature depending on auto_mode
-            cam_curvature_ = cam_yaw_rate_ / cam_velocity_;
+            if(cam_velocity_ == 0){
+                cam_curvature_ = 0;
+            }
+            else{
+                cam_curvature_ = cam_yaw_rate_ / cam_velocity_;
+            }
+
         }
     }
 
