@@ -140,7 +140,7 @@ controller_server:
     #   use_cost_regulated_linear_velocity_scaling: false
     FollowPath:
       plugin: "auna_pure_pursuit_controller::AuNaPurePursuitController"
-      desired_linear_vel: 3.5
+      desired_linear_vel: 1.5
       lookahead_dist: 1.5
       min_lookahead_dist: 0.5
       max_lookahead_dist: 5.0
