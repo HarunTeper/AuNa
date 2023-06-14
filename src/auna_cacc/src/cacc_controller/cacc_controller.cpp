@@ -502,6 +502,13 @@ void CaccController::set_time_gap(const std::shared_ptr<auna_msgs::srv::SetFloat
 }
 
 void CaccController::set_cacc_enable(const std::shared_ptr<auna_msgs::srv::SetBool::Request> request, std::shared_ptr<auna_msgs::srv::SetBool::Response> response){
+    //if cam message pointer is not null
+    if(last_cam_msg_ == nullptr){
+        RCLCPP_ERROR(this->get_logger(), "No cam message received yet");
+        response->success = false;
+        return;
+    }
+    
     if(request->value){
         RCLCPP_INFO(this->get_logger(), "Enabling CACC controller");
         timer_->reset();
@@ -523,6 +530,14 @@ void CaccController::set_cacc_enable(const std::shared_ptr<auna_msgs::srv::SetBo
 
 //service server callback for auto_mode
 void CaccController::set_auto_mode(const std::shared_ptr<auna_msgs::srv::SetBool::Request> request, std::shared_ptr<auna_msgs::srv::SetBool::Response> response){
+    
+    //return if there is a cam message
+    if(last_cam_msg_ != nullptr){
+        RCLCPP_ERROR(this->get_logger(), "CACC controller is already running");
+        response->success = false;
+        return;
+    }
+    
     if(request->value){
         if(auto_mode_ready_){
             RCLCPP_INFO(this->get_logger(), "Enabling auto mode");
