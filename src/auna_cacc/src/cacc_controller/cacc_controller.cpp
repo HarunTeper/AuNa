@@ -245,27 +245,6 @@ void CaccController::timer_callback()
 
             int target_waypoint_index_;
 
-            // Find the previous index at which the distance to the closest waypoint is at least params_.extra_distance
-            for (int i = closest_waypoint_index; ; i = (i - 1 + num_waypoints) % num_waypoints)
-            {
-                double dx = waypoints_x_[i] - waypoints_x_[closest_waypoint_index];
-                double dy = waypoints_y_[i] - waypoints_y_[closest_waypoint_index];
-                double distance_squared = dx * dx + dy * dy;
-
-                if (distance_squared >= params_.extra_distance * params_.extra_distance)
-                {
-                    target_waypoint_index_ = i;
-                    break;
-                }
-
-                if (i == (closest_waypoint_index - 1 + num_waypoints) % num_waypoints)
-                {
-                    // If the loop has wrapped around without finding a suitable index, set target_waypoint_index_ to closest_waypoint_index
-                    target_waypoint_index_ = closest_waypoint_index;
-                    break;
-                }
-            }
-
             // Calculate target waypoint index (the waypoint that is closest to the vehicle and within the time gap
 
             double target_distance = params_.standstill_distance + params_.time_gap * params_.target_velocity;
@@ -353,6 +332,27 @@ void CaccController::timer_callback()
 
             int target_waypoint_index_ = closest_waypoint_index;
 
+            // Find the previous index at which the distance to the closest waypoint is at least params_.extra_distance
+            for (int i = closest_waypoint_index; ; i = (i - 1 + num_waypoints) % num_waypoints)
+            {
+                double dx = waypoints_x_[i] - waypoints_x_[closest_waypoint_index];
+                double dy = waypoints_y_[i] - waypoints_y_[closest_waypoint_index];
+                double distance_squared = dx * dx + dy * dy;
+
+                if (distance_squared >= params_.extra_distance * params_.extra_distance)
+                {
+                    target_waypoint_index_ = i;
+                    break;
+                }
+
+                if (i == (closest_waypoint_index - 1 + num_waypoints) % num_waypoints)
+                {
+                    // If the loop has wrapped around without finding a suitable index, set target_waypoint_index_ to closest_waypoint_index
+                    target_waypoint_index_ = closest_waypoint_index;
+                    break;
+                }
+            }
+
             cam_x_ = waypoints_x_[target_waypoint_index_];
             cam_y_ = waypoints_y_[target_waypoint_index_];
             cam_yaw_ =  waypoints_yaw_[target_waypoint_index_];
@@ -399,16 +399,7 @@ void CaccController::timer_callback()
 
         }
     }
-
-    //print all cam values
-    RCLCPP_INFO(this->get_logger(), "cam_x: %f", cam_x_);
-    RCLCPP_INFO(this->get_logger(), "cam_y: %f", cam_y_);
-    RCLCPP_INFO(this->get_logger(), "cam_velocity: %f", cam_velocity_);
-    RCLCPP_INFO(this->get_logger(), "cam_acceleration: %f", cam_acceleration_);
-    RCLCPP_INFO(this->get_logger(), "cam_yaw: %f", cam_yaw_);
-    RCLCPP_INFO(this->get_logger(), "cam_yaw_rate: %f", cam_yaw_rate_);
-    RCLCPP_INFO(this->get_logger(), "cam_curvature: %f", cam_curvature_);
-
+    
     if(cam_curvature_ <= 0.01 && cam_curvature_ >= -0.01){
         s_ = 0.5*pow(params_.standstill_distance+params_.time_gap*odom_velocity_, 2)*cam_curvature_-0.125*pow(params_.standstill_distance+params_.time_gap*odom_velocity_, 4)*pow(cam_curvature_, 3);
     }
