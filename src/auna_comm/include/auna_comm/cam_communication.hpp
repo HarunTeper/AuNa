@@ -25,6 +25,7 @@ class CamCommunication : public rclcpp::Node
         //callback functions
         void cam_callback(const auna_its_msgs::msg::CAM::SharedPtr msg);
         void timer_callback();
+        void publish_cam_msg();
 
         //filter index variable
         int filter_index_ = 0;
@@ -47,10 +48,17 @@ class CamCommunication : public rclcpp::Node
         float heading_ = 0.0;
         float drive_direction_ = 0.0;
         float speed_ = 0.0;
-        float old_speed_ = 0.0;
         float acceleration_ = 0.0;
         float yaw_rate_ = 0.0;
         float curvature_ = 0.0;
+
+        float old_speed_ = 0.0;
+        float old_heading_ = 0.0;
+        float old_latitude_ = 0.0;
+        float old_longitude_ = 0.0;
+        float old_altitude_ = 0.0;
+
+        rclcpp::Time last_cam_msg_time_;
         
 
 

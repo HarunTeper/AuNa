@@ -16,6 +16,8 @@ CamCommunication::CamCommunication() : Node("cam_communication")
     
     this->pose_subscriber_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("global_pose", 2, [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg){pose_callback(msg);});
     this->odom_subscriber_ = this->create_subscription<nav_msgs::msg::Odometry>("odom", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg){odom_callback(msg);});
+
+    last_cam_msg_time_ = this->now();
 }
 
 void CamCommunication::cam_callback(const auna_its_msgs::msg::CAM::SharedPtr msg)
@@ -27,6 +29,29 @@ void CamCommunication::cam_callback(const auna_its_msgs::msg::CAM::SharedPtr msg
 }
 
 void CamCommunication::timer_callback()
+{
+    if (this->now() - last_cam_msg_time_ >= std::chrono::milliseconds(1000))
+    {
+        publish_cam_msg();
+    }
+    else
+    {
+        if (fabs(this->speed_ - this->old_speed_) > 0.1)
+        {
+            publish_cam_msg();
+        }
+        else if (sqrt(pow(this->latitude_ - this->old_latitude_, 2) + pow(this->longitude_ - this->old_longitude_, 2)) > 0.5)
+        {
+            publish_cam_msg();
+        }
+        else if (fabs(this->heading_ - this->old_heading_) > 4 * M_PI / 180)
+        {
+            publish_cam_msg();
+        }
+    }
+}
+
+void CamCommunication::publish_cam_msg()
 {
     auto msg = auna_its_msgs::msg::CAM();
     msg.robot_name = std::to_string(this->robot_index_);
@@ -44,6 +69,8 @@ void CamCommunication::timer_callback()
 
     //publish message
     cam_publisher_->publish(msg);
+
+    last_cam_msg_time_ = this->now();
 }
 
 void CamCommunication::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
@@ -88,6 +115,11 @@ void CamCommunication::odom_callback(const nav_msgs::msg::Odometry::SharedPtr ms
 
 void CamCommunication::pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
 {
+    this->old_longitude_ = this->longitude_;
+    this->old_latitude_ = this->latitude_;
+    this->old_altitude_ = this->altitude_;
+    this->old_heading_ = this->heading_;
+
     this->longitude_ = msg->pose.position.x;
     this->latitude_ = msg->pose.position.y;
     this->altitude_ = msg->pose.position.z;
