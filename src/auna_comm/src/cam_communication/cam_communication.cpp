@@ -36,15 +36,15 @@ void CamCommunication::timer_callback()
     }
     else
     {
-        if (fabs(this->speed_ - this->old_speed_) > 0.1)
+        if (fabs(this->speed_ - last_cam_msg_.v > 0.1))
         {
             publish_cam_msg();
         }
-        else if (sqrt(pow(this->latitude_ - this->old_latitude_, 2) + pow(this->longitude_ - this->old_longitude_, 2)) > 0.5)
+        else if (sqrt(pow(this->latitude_ - last_cam_msg_.x, 2) + pow(this->longitude_ - last_cam_msg_.y, 2)) > 0.5)
         {
             publish_cam_msg();
         }
-        else if (fabs(this->heading_ - this->old_heading_) > 4 * M_PI / 180)
+        else if (fabs(this->heading_ - last_cam_msg_.theta) > 4 * M_PI / 180)
         {
             publish_cam_msg();
         }
@@ -70,6 +70,7 @@ void CamCommunication::publish_cam_msg()
     //publish message
     cam_publisher_->publish(msg);
 
+    last_cam_msg_ = msg;
     last_cam_msg_time_ = this->now();
 }
 
@@ -115,11 +116,6 @@ void CamCommunication::odom_callback(const nav_msgs::msg::Odometry::SharedPtr ms
 
 void CamCommunication::pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
 {
-    this->old_longitude_ = this->longitude_;
-    this->old_latitude_ = this->latitude_;
-    this->old_altitude_ = this->altitude_;
-    this->old_heading_ = this->heading_;
-
     this->longitude_ = msg->pose.position.x;
     this->latitude_ = msg->pose.position.y;
     this->altitude_ = msg->pose.position.z;
