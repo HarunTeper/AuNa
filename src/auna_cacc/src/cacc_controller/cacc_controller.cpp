@@ -243,7 +243,7 @@ void CaccController::timer_callback()
                 }
             }
 
-            int target_waypoint_index_;
+            int target_waypoint_index_ = closest_waypoint_index;
 
             // Calculate target waypoint index (the waypoint that is closest to the vehicle and within the time gap
 
