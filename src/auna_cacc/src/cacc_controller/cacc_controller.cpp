@@ -16,17 +16,17 @@ CaccController::CaccController() : Node("cacc_controller")
     client_set_target_velocity_ = this->create_service<auna_msgs::srv::SetFloat64>("/cacc/set_target_velocity", [this](const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){this->set_target_velocity(request, response);});
     client_set_extra_distance_ = this->create_service<auna_msgs::srv::SetFloat64>("/cacc/set_extra_distance", [this](const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){this->set_extra_distance(request, response);});
 
-    this->declare_parameter("standstill_distance", 1.5);
-    this->declare_parameter("time_gap", 0.5);
-    this->declare_parameter("kp", 0.5);
-    this->declare_parameter("kd", 0.5);
+    this->declare_parameter("standstill_distance", 1.25);
+    this->declare_parameter("time_gap", 0.25);
+    this->declare_parameter("kp", 1.0);
+    this->declare_parameter("kd", 3.0);
     this->declare_parameter("max_velocity", 1.0);
     this->declare_parameter("frequency", 50);
     this->declare_parameter("use_waypoints", false);
     this->declare_parameter("waypoint_file", "/home/$USER/waypoints.txt");
     this->declare_parameter("target_velocity", 1.0);
     this->declare_parameter("curvature_lookahead", 10);
-    this->declare_parameter("extra_distance", 1.0);
+    this->declare_parameter("extra_distance", 0.0);
 
     //use params_
     params_.standstill_distance = this->get_parameter("standstill_distance").as_double();
@@ -338,7 +338,7 @@ void CaccController::timer_callback()
                 double dy = waypoints_y_[i] - waypoints_y_[closest_waypoint_index];
                 double distance_squared = dx * dx + dy * dy;
 
-                if (distance_squared > params_.extra_distance * params_.extra_distance)
+                if (distance_squared >= params_.extra_distance * params_.extra_distance)
                 {
                     // Stop the loop if the distance is increasing
                     break;
