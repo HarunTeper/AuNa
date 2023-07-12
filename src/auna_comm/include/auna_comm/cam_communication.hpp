@@ -51,13 +51,9 @@ class CamCommunication : public rclcpp::Node
         float acceleration_ = 0.0;
         float yaw_rate_ = 0.0;
         float curvature_ = 0.0;
-
         float old_speed_ = 0.0;
-        float old_heading_ = 0.0;
-        float old_latitude_ = 0.0;
-        float old_longitude_ = 0.0;
-        float old_altitude_ = 0.0;
 
+        auna_its_msgs::msg::CAM last_cam_msg_;
         rclcpp::Time last_cam_msg_time_;
         
 

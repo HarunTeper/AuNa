@@ -16,17 +16,17 @@ CaccController::CaccController() : Node("cacc_controller")
     client_set_target_velocity_ = this->create_service<auna_msgs::srv::SetFloat64>("/cacc/set_target_velocity", [this](const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){this->set_target_velocity(request, response);});
     client_set_extra_distance_ = this->create_service<auna_msgs::srv::SetFloat64>("/cacc/set_extra_distance", [this](const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){this->set_extra_distance(request, response);});
 
-    this->declare_parameter("standstill_distance", 1.5);
-    this->declare_parameter("time_gap", 0.5);
-    this->declare_parameter("kp", 0.5);
-    this->declare_parameter("kd", 0.5);
+    this->declare_parameter("standstill_distance", 1.25);
+    this->declare_parameter("time_gap", 0.25);
+    this->declare_parameter("kp", 1.0);
+    this->declare_parameter("kd", 3.0);
     this->declare_parameter("max_velocity", 1.0);
     this->declare_parameter("frequency", 50);
     this->declare_parameter("use_waypoints", false);
     this->declare_parameter("waypoint_file", "/home/$USER/waypoints.txt");
     this->declare_parameter("target_velocity", 1.0);
     this->declare_parameter("curvature_lookahead", 10);
-    this->declare_parameter("extra_distance", 1.0);
+    this->declare_parameter("extra_distance", 0.0);
 
     //use params_
     params_.standstill_distance = this->get_parameter("standstill_distance").as_double();
@@ -243,7 +243,7 @@ void CaccController::timer_callback()
                 }
             }
 
-            int target_waypoint_index_;
+            int target_waypoint_index_ = closest_waypoint_index;
 
             // Calculate target waypoint index (the waypoint that is closest to the vehicle and within the time gap
 
@@ -279,20 +279,19 @@ void CaccController::timer_callback()
             int next_index = (target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints;
             double next_yaw = waypoints_yaw_[next_index];
 
-            //yaw difference modulo for the case that one is negative and the other positive
+            //yaw difference in the range of -pi to pi
             double yaw_difference;
-            if (next_yaw >= current_yaw) {
-                if (next_yaw - current_yaw <= M_PI) {
-                    yaw_difference = next_yaw - current_yaw;
-                } else {
-                    yaw_difference = -((2 * M_PI) - (next_yaw - current_yaw));
-                }
-            } else {
-                if (current_yaw - next_yaw <= M_PI) {
-                    yaw_difference = -(current_yaw - next_yaw);
-                } else {
-                    yaw_difference = 2 * M_PI - (current_yaw - next_yaw);
-                }
+            if (next_yaw - current_yaw > M_PI)
+            {
+                yaw_difference = next_yaw - current_yaw - 2 * M_PI;
+            }
+            else if (next_yaw - current_yaw < -M_PI)
+            {
+                yaw_difference = next_yaw - current_yaw + 2 * M_PI;
+            }
+            else
+            {
+                yaw_difference = next_yaw - current_yaw;
             }
 
             // Calculate the required time to reach the n-th next waypoint
@@ -333,7 +332,7 @@ void CaccController::timer_callback()
             int target_waypoint_index_ = closest_waypoint_index;
 
             // Find the previous index at which the distance to the closest waypoint is at least params_.extra_distance
-            for (int i = closest_waypoint_index; ; i = (i - 1 + num_waypoints) % num_waypoints)
+            for (int i = closest_waypoint_index; true; i = (i - 1 + num_waypoints) % num_waypoints)
             {
                 double dx = waypoints_x_[i] - waypoints_x_[closest_waypoint_index];
                 double dy = waypoints_y_[i] - waypoints_y_[closest_waypoint_index];
@@ -341,16 +340,11 @@ void CaccController::timer_callback()
 
                 if (distance_squared >= params_.extra_distance * params_.extra_distance)
                 {
-                    target_waypoint_index_ = i;
+                    // Stop the loop if the distance is increasing
                     break;
                 }
 
-                if (i == (closest_waypoint_index - 1 + num_waypoints) % num_waypoints)
-                {
-                    // If the loop has wrapped around without finding a suitable index, set target_waypoint_index_ to closest_waypoint_index
-                    target_waypoint_index_ = closest_waypoint_index;
-                    break;
-                }
+                target_waypoint_index_ = i;
             }
 
             cam_x_ = waypoints_x_[target_waypoint_index_];
@@ -365,18 +359,17 @@ void CaccController::timer_callback()
 
             //yaw difference modulo for the case that one is negative and the other positive
             double yaw_difference;
-            if (next_yaw >= current_yaw) {
-                if (next_yaw - current_yaw <= M_PI) {
-                    yaw_difference = next_yaw - current_yaw;
-                } else {
-                    yaw_difference = -((2 * M_PI) - (next_yaw - current_yaw));
-                }
-            } else {
-                if (current_yaw - next_yaw <= M_PI) {
-                    yaw_difference = -(current_yaw - next_yaw);
-                } else {
-                    yaw_difference = 2 * M_PI - (current_yaw - next_yaw);
-                }
+            if (next_yaw - current_yaw > M_PI)
+            {
+                yaw_difference = next_yaw - current_yaw - 2 * M_PI;
+            }
+            else if (next_yaw - current_yaw < -M_PI)
+            {
+                yaw_difference = next_yaw - current_yaw + 2 * M_PI;
+            }
+            else
+            {
+                yaw_difference = next_yaw - current_yaw;
             }
 
             // Calculate the required time to reach the n-th next waypoint
@@ -462,7 +455,9 @@ void CaccController::set_target_velocity(const std::shared_ptr<auna_msgs::srv::S
         params_.target_velocity += 0.5;
     }
     else if(request->value == 0.0){
-        params_.target_velocity -= 0.5;
+        if(params_.target_velocity >= 1.0){
+            params_.target_velocity -= 0.5;
+        }
     }
     else{
         RCLCPP_ERROR(this->get_logger(), "Invalid value for target velocity");
@@ -479,7 +474,9 @@ void CaccController::set_extra_distance(const std::shared_ptr<auna_msgs::srv::Se
         params_.extra_distance += 0.5;
     }
     else if(request->value == 0.0){
-        params_.extra_distance -= 0.5;
+        if(params_.extra_distance >= 0.5){
+            params_.extra_distance -= 0.5;
+        }
     }
     else{
         RCLCPP_ERROR(this->get_logger(), "Invalid value for extra distance");
