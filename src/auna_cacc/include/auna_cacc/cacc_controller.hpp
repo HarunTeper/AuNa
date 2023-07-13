@@ -42,6 +42,7 @@ class CaccController : public rclcpp::Node
         rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_pose_stamped_;
         rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd_vel;
+        rclcpp::Publisher<auna_its_msgs::msg::CAM>::SharedPtr pub_cam_debug_;
         rclcpp::TimerBase::SharedPtr timer_;
         rclcpp::TimerBase::SharedPtr setup_timer_;
 

@@ -9,6 +9,7 @@ CaccController::CaccController() : Node("cacc_controller")
     pub_cmd_vel = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
     pub_x_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/x", 1);
     pub_y_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/y", 1);
+    pub_cam_debug_ = this->create_publisher<auna_its_msgs::msg::CAM>("cacc/cam_debug", 1);
 
     client_set_standstill_distance_ = this->create_service<auna_msgs::srv::SetFloat64>("cacc/set_standstill_distance", [this](const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){this->set_standstill_distance(request, response);});
     client_set_time_gap_ = this->create_service<auna_msgs::srv::SetFloat64>("cacc/set_time_gap", [this](const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request, std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response){this->set_time_gap(request, response);});
@@ -392,6 +393,18 @@ void CaccController::timer_callback()
 
         }
     }
+
+    //publish cam debug msg
+    auna_its_msgs::msg::CAM cam_debug_msg;
+    cam_debug_msg.x = cam_x_;
+    cam_debug_msg.y = cam_y_;
+    cam_debug_msg.v = cam_velocity_;
+    cam_debug_msg.vdot = cam_acceleration_;
+    cam_debug_msg.theta = cam_yaw_;
+    cam_debug_msg.thetadot = cam_yaw_rate_;
+    cam_debug_msg.curv = cam_curvature_;
+    cam_debug_msg.header.stamp = rclcpp::Clock().now();
+    pub_cam_debug_->publish(cam_debug_msg);
     
     if(cam_curvature_ <= 0.01 && cam_curvature_ >= -0.01){
         s_ = 0.5*pow(params_.standstill_distance+params_.time_gap*odom_velocity_, 2)*cam_curvature_-0.125*pow(params_.standstill_distance+params_.time_gap*odom_velocity_, 4)*pow(cam_curvature_, 3);
