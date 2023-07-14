@@ -32,29 +32,30 @@ void CamCommunication::timer_callback()
 {
     if (this->now() - last_cam_msg_time_ >= std::chrono::milliseconds(1000))
     {
-        publish_cam_msg();
+        publish_cam_msg("timeout");
     }
     else
     {
         if (fabs(this->speed_ - last_cam_msg_.v > 0.1))
         {
-            publish_cam_msg();
+            publish_cam_msg("speed");
         }
         else if (sqrt(pow(this->latitude_ - last_cam_msg_.x, 2) + pow(this->longitude_ - last_cam_msg_.y, 2)) > 0.5)
         {
-            publish_cam_msg();
+            publish_cam_msg("position");
         }
         else if (fabs(this->heading_ - last_cam_msg_.theta) > 4 * M_PI / 180)
         {
-            publish_cam_msg();
+            publish_cam_msg("heading");
         }
     }
 }
 
-void CamCommunication::publish_cam_msg()
+void CamCommunication::publish_cam_msg(std::string frame_id)
 {
     auto msg = auna_its_msgs::msg::CAM();
     msg.header.stamp = this->now();
+    msg.header.frame_id = frame_id;
     msg.robot_name = std::to_string(this->robot_index_);
     msg.x = this->longitude_;
     msg.y = this->latitude_;

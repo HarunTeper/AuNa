@@ -25,7 +25,7 @@ class CamCommunication : public rclcpp::Node
         //callback functions
         void cam_callback(const auna_its_msgs::msg::CAM::SharedPtr msg);
         void timer_callback();
-        void publish_cam_msg();
+        void publish_cam_msg(std::string frame_id);
 
         //filter index variable
         int filter_index_ = 0;
