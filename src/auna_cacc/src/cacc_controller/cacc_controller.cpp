@@ -266,9 +266,6 @@ void CaccController::timer_callback()
             }
             cam_x_= waypoints_x_[target_waypoint_index_];
             cam_y_= waypoints_y_[target_waypoint_index_];
-            cam_velocity_ = params_.target_velocity;
-            cam_acceleration_ = 0;
-
 
             // Calculate yaw difference between previous and next waypoints
             int curr_index = target_waypoint_index_;
@@ -305,8 +302,15 @@ void CaccController::timer_callback()
 
             cam_yaw_rate_ = yaw_difference / required_time;
 
+            //scale the cam_velocity_ between target_velocity and target_velocity/2, inverse proportional to cam_yaw_rate_, whose values are between 0 and 1.25
+
+            cam_velocity_ = params_.target_velocity - (params_.target_velocity/2)*(cam_yaw_rate_/1.25);
+            cam_acceleration_ = (cam_velocity_ - last_cam_velocity_) / dt_;
+            last_cam_velocity_ = cam_velocity_;
+
             //cam curvature depending on auto_mode
             cam_curvature_ = cam_yaw_rate_ / params_.target_velocity;
+
             
         }
         else{
@@ -521,6 +525,7 @@ void CaccController::set_cacc_enable(const std::shared_ptr<auna_msgs::srv::SetBo
     
     if(request->value){
         RCLCPP_INFO(this->get_logger(), "Enabling CACC controller");
+        last_cam_velocity_ = 0;
         timer_->reset();
     }
     else{
