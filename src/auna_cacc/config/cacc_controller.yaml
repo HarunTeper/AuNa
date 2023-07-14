@@ -3,7 +3,7 @@ cacc_controller:
     standstill_distance: 1.25
     time_gap: 0.25
     kp: 1.0
-    kd: 1.0
+    kd: 2.0
     max_velocity: 3.0
     frequency: 50
     use_waypoints: true
