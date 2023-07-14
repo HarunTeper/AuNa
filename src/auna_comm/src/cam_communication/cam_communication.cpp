@@ -40,7 +40,7 @@ void CamCommunication::timer_callback()
         {
             publish_cam_msg("speed");
         }
-        else if (sqrt(pow(this->latitude_ - last_cam_msg_.x, 2) + pow(this->longitude_ - last_cam_msg_.y, 2)) > 0.5)
+        else if (sqrt(pow(this->longitude_ - last_cam_msg_.x, 2) + pow(this->latitude_ - last_cam_msg_.y, 2)) > 0.5)
         {
             publish_cam_msg("position");
         }
