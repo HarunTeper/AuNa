@@ -54,6 +54,7 @@ void CamCommunication::timer_callback()
 void CamCommunication::publish_cam_msg()
 {
     auto msg = auna_its_msgs::msg::CAM();
+    msg.header.stamp = this->now();
     msg.robot_name = std::to_string(this->robot_index_);
     msg.x = this->longitude_;
     msg.y = this->latitude_;
@@ -71,7 +72,7 @@ void CamCommunication::publish_cam_msg()
     cam_publisher_->publish(msg);
 
     last_cam_msg_ = msg;
-    last_cam_msg_time_ = this->now();
+    last_cam_msg_time_ = msg.header.stamp;
 }
 
 void CamCommunication::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
