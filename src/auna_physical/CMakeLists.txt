@@ -16,14 +16,16 @@ find_package(ament_cmake_python REQUIRED)
 
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(std_srvs REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(ackermann_msgs REQUIRED)
-find_package(nav2_msgs REQUIRED)
 
+find_package(ackermann_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(nav2_msgs REQUIRED)
+find_package(rclcpp_action REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
-find_package(tf2_kdl REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 # Include Cpp "include" directory
 include_directories(include)
@@ -41,16 +43,16 @@ add_executable(waypoint_publisher src/waypoint_publisher/waypoint_publisher_main
 add_executable(vesc_start src/vesc_start/vesc_start_main.cpp)
 
 # Target dependencies
-set(cmd_vel_to_ackermann_dependencies rclcpp std_msgs std_srvs geometry_msgs ackermann_msgs)
+set(cmd_vel_to_ackermann_dependencies rclcpp std_srvs geometry_msgs ackermann_msgs)
 ament_target_dependencies(cmd_vel_to_ackermann_node ${cmd_vel_to_ackermann_dependencies})
 ament_target_dependencies(cmd_vel_to_ackermann ${cmd_vel_to_ackermann_dependencies})
-set(vicon_tf_converter_dependencies rclcpp geometry_msgs tf2_kdl tf2_kdl)
+set(vicon_tf_converter_dependencies rclcpp geometry_msgs tf2 tf2_ros)
 ament_target_dependencies(vicon_tf_converter_node ${vicon_tf_converter_dependencies})
 ament_target_dependencies(vicon_tf_converter ${vicon_tf_converter_dependencies})
-set(waypoint_publisher_dependencies rclcpp geometry_msgs nav2_msgs rclcpp_action rclcpp_components tf2_ros)
+set(waypoint_publisher_dependencies rclcpp geometry_msgs nav2_msgs rclcpp_action tf2_ros tf2_geometry_msgs)
 ament_target_dependencies(waypoint_publisher_node ${waypoint_publisher_dependencies})
 ament_target_dependencies(waypoint_publisher ${waypoint_publisher_dependencies})
-set(vesc_start_dependencies rclcpp geometry_msgs nav2_msgs)
+set(vesc_start_dependencies rclcpp geometry_msgs nav_msgs)
 ament_target_dependencies(vesc_start_node ${waypoint_publisher_dependencies})
 ament_target_dependencies(vesc_start ${waypoint_publisher_dependencies})
 

@@ -17,14 +17,10 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 
-find_package(rosidl_default_generators REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(auna_its_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(rclcpp_action REQUIRED)
-find_package(rclcpp_components REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 find_package(PahoMqttCpp REQUIRED)
 link_libraries(${PAHO_MQTT_CPP_LIBRARIES})
@@ -52,7 +48,7 @@ target_compile_definitions(mqtt_waypoint_receiver_node
   PRIVATE "ACTION_TUTORIALS_CPP_BUILDING_DLL")
 
 # Target dependencies
-set(mqtt_waypoint_receiver_dependencies rclcpp geometry_msgs nav2_msgs rclcpp_action rclcpp_components tf2_ros PahoMqttCpp nlohmann_json)
+set(mqtt_waypoint_receiver_dependencies rclcpp nav2_msgs rclcpp_action tf2_ros tf2_geometry_msgs PahoMqttCpp nlohmann_json)
 ament_target_dependencies(mqtt_waypoint_receiver_node ${mqtt_waypoint_receiver_dependencies})
 ament_target_dependencies(mqtt_waypoint_receiver ${mqtt_waypoint_receiver_dependencies})
 set(mqtt_callback_dependencies rclcpp PahoMqttCpp nlohmann_json)

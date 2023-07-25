@@ -15,13 +15,14 @@
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
   
-  <depend>std_msgs</depend>
   <depend>auna_its_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>nav2_msgs</depend>
-  <depend>tf2</depend>
   <depend>nav2_costmap_2d</depend>
+  <depend>nav_msgs</depend>
+  <depend>nav2_util</depend>
   <depend>pluginlib</depend>
+  <depend>std_msgs</depend>
+  <depend>tf2</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
@@ -29,6 +30,5 @@
   <export>
     <build_type>ament_cmake</build_type>
     <costmap_2d plugin="${prefix}/communication_costmap.xml" />
-    <gazebo_ros gazebo_model_path="${prefix}/models"/>
   </export>
 </package>

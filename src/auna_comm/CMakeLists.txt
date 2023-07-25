@@ -17,13 +17,14 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 
-find_package(std_msgs REQUIRED)
 find_package(auna_its_msgs REQUIRED)
-find_package(nav2_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(tf2 REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(nav2_util REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(tf2 REQUIRED)
 
 # Include Cpp "include" directory
 include_directories(include)
@@ -36,10 +37,10 @@ include_directories(include)
 # Create Cpp executable
 add_executable(cam_communication src/cam_communication/cam_communication_main.cpp)
 # Target dependencies
-set(cam_communication_dependencies rclcpp std_msgs auna_its_msgs nav2_msgs geometry_msgs tf2)
+set(cam_communication_dependencies rclcpp std_msgs auna_its_msgs nav_msgs geometry_msgs tf2)
 ament_target_dependencies(cam_communication_node ${cam_communication_dependencies})
 ament_target_dependencies(cam_communication ${cam_communication_dependencies})
-set(communicaton_costmap_dependencies rclcpp std_msgs auna_its_msgs nav2_msgs geometry_msgs tf2 nav2_costmap_2d pluginlib)
+set(communicaton_costmap_dependencies rclcpp std_msgs auna_its_msgs nav_msgs geometry_msgs tf2 nav2_costmap_2d pluginlib nav2_util)
 ament_target_dependencies(communciation_costmap ${communicaton_costmap_dependencies})
 
 # Link libraries

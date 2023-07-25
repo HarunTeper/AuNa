@@ -18,16 +18,15 @@ find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 
 find_package(auna_common REQUIRED)
-
+find_package(auna_its_msgs REQUIRED)
 find_package(auna_msgs REQUIRED)
-find_package(std_msgs REQUIRED)
+find_package(gazebo_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
-find_package(gazebo_msgs REQUIRED)
-find_package(auna_its_msgs REQUIRED)
-
+find_package(std_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
-find_package(tf2_kdl REQUIRED)
 
 # Include Cpp "include" directory
 include_directories(include)
@@ -47,19 +46,19 @@ add_executable(simulation_pose src/transformations/simulation_pose/simulation_po
 add_executable(gazebo_pose src/transformations/gazebo_pose/gazebo_pose_main.cpp)
 
 # Target dependencies
-set(gazebo_models_dependencies rclcpp std_msgs gazebo_msgs auna_msgs)
+set(gazebo_models_dependencies rclcpp gazebo_msgs auna_msgs)
 ament_target_dependencies(gazebo_models_node ${gazebo_models_dependencies})
 ament_target_dependencies(gazebo_models ${gazebo_models_dependencies})
-set(global_tf_dependencies rclcpp gazebo_msgs geometry_msgs tf2_ros tf2_kdl)
+set(global_tf_dependencies rclcpp std_msgs gazebo_msgs geometry_msgs nav_msgs tf2_ros tf2_geometry_msgs)
 ament_target_dependencies(global_tf_node ${global_tf_dependencies})
 ament_target_dependencies(global_tf ${global_tf_dependencies})
-set(localization_pose_dependencies rclcpp std_msgs geometry_msgs nav_msgs tf2_ros tf2_kdl)
+set(localization_pose_dependencies rclcpp std_msgs geometry_msgs nav_msgs tf2_ros tf2_geometry_msgs)
 ament_target_dependencies(localization_pose_node ${localization_pose_dependencies})
 ament_target_dependencies(localization_pose ${localization_pose_dependencies})
-set(simulation_pose_dependencies rclcpp std_msgs geometry_msgs nav_msgs gazebo_msgs auna_its_msgs)
+set(simulation_pose_dependencies rclcpp std_msgs gazebo_msgs auna_its_msgs tf2)
 ament_target_dependencies(simulation_pose_node ${simulation_pose_dependencies})
 ament_target_dependencies(simulation_pose ${simulation_pose_dependencies})
-set(gazebo_pose_dependencies rclcpp std_msgs geometry_msgs nav_msgs tf2_ros tf2_kdl gazebo_msgs)
+set(gazebo_pose_dependencies rclcpp std_msgs geometry_msgs gazebo_msgs tf2 tf2_ros tf2_geometry_msgs)
 ament_target_dependencies(gazebo_pose_node ${gazebo_pose_dependencies})
 ament_target_dependencies(gazebo_pose ${gazebo_pose_dependencies})
 

@@ -1,9 +1,8 @@
 #ifndef AUNA_MQTT_WAYPOINT_RECEIVER_HPP
 #define AUNA_MQTT_WAYPOINT_RECEIVER_HPP
 
-
-#include "rclcpp/rclcpp.hpp"
 #include <vector>
+#include "rclcpp/rclcpp.hpp"
 #include "nav2_msgs/action/navigate_through_poses.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "tf2_ros/transform_listener.h"
