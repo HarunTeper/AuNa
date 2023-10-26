@@ -46,7 +46,7 @@ ament_target_dependencies(communciation_costmap ${communicaton_costmap_dependenc
 # Link libraries
 target_link_libraries(cam_communication cam_communication_node)
 
-install(DIRECTORY 
+install(DIRECTORY
   launch
   DESTINATION share/${PROJECT_NAME}
 )
