@@ -36,7 +36,7 @@ void CamCommunication::timer_callback()
     }
     else
     {
-        if (fabs(this->speed_ - last_cam_msg_.v > 0.05))
+        if (fabs(this->speed_ - last_cam_msg_.v) > 0.05)
         {
             publish_cam_msg("speed");
         }
