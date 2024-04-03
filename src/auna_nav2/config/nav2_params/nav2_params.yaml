@@ -139,12 +139,13 @@ controller_server:
     #   allow_reversing: false
     #   use_cost_regulated_linear_velocity_scaling: false
     FollowPath:
-      plugin: "auna_pure_pursuit_controller::AuNaPurePursuitController"
-      desired_linear_vel: 1.5
-      lookahead_dist: 1.5
-      min_lookahead_dist: 0.5
-      max_lookahead_dist: 5.0
+      plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
+      desired_linear_vel: 0.5
+      lookahead_dist: 2.0
+      min_lookahead_dist: 0.1
+      max_lookahead_dist: 0.5
       lookahead_time: 1.0
+      rotate_to_heading_angular_vel: 1.8
       transform_tolerance: 0.1
       use_velocity_scaled_lookahead_dist: true
       min_approach_linear_velocity: 0.25
