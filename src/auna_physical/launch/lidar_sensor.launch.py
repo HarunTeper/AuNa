@@ -22,10 +22,6 @@ def include_launch_description(context: LaunchContext):
     # File Paths
     config_file_path = os.path.join(get_package_share_directory('auna_physical'),'config','lidar_params.yaml')
 
-    # Read configuration files
-    with open(config_file_path, 'r') as file:
-        config_params = yaml.safe_load(file)['urg_node2']['ros__parameters']
-
     tmp_params_file = yaml_launch.get_yaml(config_file_path)
     tmp_params_file = yaml_launch.insert_namespace(tmp_params_file, context.launch_configurations['namespace'])
     tmp_params_file = yaml_launch.get_temp_file(tmp_params_file)

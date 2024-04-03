@@ -31,6 +31,8 @@ sudo usermod -a -G dialout $USER
 
 sudo apt-get -y install ros-galactic-ackermann-msgs ros-galactic-diagnostic-* ros-galactic-geographic-* ros-galactic-joy* ros-galactic-laser* ros-galactic-realsense2-* ros-galactic-robot-localization* ros-galactic-teleop-twist-joy* ros-galactic-serial-driver ros-galactic-udp-* ros-galactic-asio-cmake-module ros-galactic-io-context ros-galactic-urg-node* 
 
+pip install scipy
+
 # MQTT
 sudo apt-get -y install build-essential gcc make cmake cmake-gui cmake-curses-gui libssl-dev doxygen graphviz
 

@@ -149,7 +149,7 @@
 
   <!--  Chassis  -->
   <joint name="base_link_joint" type="fixed">
-    <origin xyz="${-base_x_origin_to_wheel_origin} 0 0.05" rpy="0 0 0" />
+    <origin xyz="${base_x_origin_to_wheel_origin} 0 0.05" rpy="0 0 0" />
     <parent link="$(arg namespace)base_link" />
     <child link="$(arg namespace)chassis" />
   </joint>

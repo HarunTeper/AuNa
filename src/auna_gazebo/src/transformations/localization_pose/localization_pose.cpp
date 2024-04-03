@@ -3,7 +3,7 @@
 // Create a publisher, subscriber and prefix. Initialize the transform buffer and listener.
 LocalizationPose::LocalizationPose(std::string prefix) : Node("localization_pose_node"),buffer(this->get_clock()), listener(buffer)
 {
-    publisher = this->create_publisher<geometry_msgs::msg::PoseStamped>("localization_pose", 2);
+    publisher = this->create_publisher<geometry_msgs::msg::PoseStamped>("global_pose", 2);
     if(prefix == "")
     {
         this->prefix = prefix;
@@ -19,18 +19,8 @@ void LocalizationPose::timer_callback(){
     geometry_msgs::msg::TransformStamped transformStamped;
     try
     {
-        if(this->buffer.canTransform("map",prefix+"base_link",tf2::TimePointZero))
-        {
-            transformStamped = this->buffer.lookupTransform("map",prefix+"base_link",tf2::TimePointZero);
-        }
-        else if(this->buffer.canTransform(prefix+"odom",prefix+"base_link",tf2::TimePointZero))
-        {
-            transformStamped = this->buffer.lookupTransform(prefix+"odom",prefix+"base_link",tf2::TimePointZero);
-        }
-        else
-        {
-            return;
-        }
+        transformStamped = this->buffer.lookupTransform(prefix+"odom",prefix+"base_link",tf2::TimePointZero);
+        transformStamped = this->buffer.lookupTransform("map",prefix+"base_link",tf2::TimePointZero);
     }
     catch (tf2::TransformException &ex)
     {

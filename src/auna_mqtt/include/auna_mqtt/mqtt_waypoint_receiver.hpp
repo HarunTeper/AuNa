@@ -1,11 +1,16 @@
-#include "rclcpp/rclcpp.hpp"
+#ifndef AUNA_MQTT_WAYPOINT_RECEIVER_HPP
+#define AUNA_MQTT_WAYPOINT_RECEIVER_HPP
+
 #include <vector>
+#include "rclcpp/rclcpp.hpp"
 #include "nav2_msgs/action/navigate_through_poses.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include <nlohmann/json.hpp>
+#include <mqtt/async_client.h>
+#include "auna_mqtt/mqtt_callback.hpp"
 
 
 using NavigateThroughPoses = nav2_msgs::action::NavigateThroughPoses;
@@ -45,4 +50,13 @@ class MQTTWaypointReceiver : public rclcpp::Node
         //create a result callback
         void result_callback(const GoalHandleNavigateThroughPoses::WrappedResult & result);
 
+        //m_mqttClient
+        mqtt::async_client* m_mqttClient;
+
+        //pose vector
+        std::vector<geometry_msgs::msg::PoseStamped> poses_;
+
+
 };
+
+#endif

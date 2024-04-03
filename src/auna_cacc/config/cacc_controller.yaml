@@ -1,0 +1,14 @@
+cacc_controller:
+  ros__parameters:
+    standstill_distance: 1.25
+    time_gap: 0.25
+    kp: 1.0
+    kd: 2.0
+    max_velocity: 3.0
+    frequency: 50
+    use_waypoints: true
+    target_velocity: 1.5
+    curvature_lookahead: 10
+    extra_distance: 0.0
+
+    #TODO IMPLEMENT EXTRA DISTANCE AND SMOOTH CURVATURE, YAW, AND YAW RATE

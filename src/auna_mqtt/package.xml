@@ -15,17 +15,12 @@
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
   
-  <depend>std_msgs</depend>
-  <depend>auna_msgs</depend>
-  <depend>auna_its_msgs</depend>
-  <depend>geometry_msgs</depend>
+  <depend>paho-mqtt-cpp</depend>
   <depend>nav2_msgs</depend>
+  <depend>nlohmann-json-dev</depend>
   <depend>rclcpp_action</depend>
-  <depend>rclcpp_components</depend>
-  <depend>action_msgs</depend>
   <depend>tf2_ros</depend>
-  <depend>paho_mqtt_cpp</depend>
-  <depend>nlohmann_json</depend>
+  <depend>tf2_geometry_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

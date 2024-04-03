@@ -1,4 +1,6 @@
 #include "auna_mqtt/mqtt_callback.hpp"
+#include "auna_mqtt/mqtt_waypoint_receiver.hpp"
+
 
 MqttCallback::MqttCallback(MQTTWaypointReceiver * _obj)
 {

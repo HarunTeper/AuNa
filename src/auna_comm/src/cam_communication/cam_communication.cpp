@@ -14,8 +14,10 @@ CamCommunication::CamCommunication() : Node("cam_communication")
     cam_subscriber_ = this->create_subscription<auna_its_msgs::msg::CAM>("/cam", 2, [this](auna_its_msgs::msg::CAM::SharedPtr msg) -> void { this->cam_callback(msg); });
     timer_ = this->create_wall_timer(std::chrono::milliseconds(100), [this]() -> void { this->timer_callback(); });
     
-    this->pose_subscriber_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("localization_pose", 2, [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg){pose_callback(msg);});
+    this->pose_subscriber_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("global_pose", 2, [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg){pose_callback(msg);});
     this->odom_subscriber_ = this->create_subscription<nav_msgs::msg::Odometry>("odom", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg){odom_callback(msg);});
+
+    last_cam_msg_time_ = this->now();
 }
 
 void CamCommunication::cam_callback(const auna_its_msgs::msg::CAM::SharedPtr msg)
@@ -28,7 +30,32 @@ void CamCommunication::cam_callback(const auna_its_msgs::msg::CAM::SharedPtr msg
 
 void CamCommunication::timer_callback()
 {
+    if (this->now() - last_cam_msg_time_ >= std::chrono::milliseconds(1000))
+    {
+        publish_cam_msg("timeout");
+    }
+    else
+    {
+        if (fabs(this->speed_ - last_cam_msg_.v > 0.05))
+        {
+            publish_cam_msg("speed");
+        }
+        else if (sqrt(pow(this->longitude_ - last_cam_msg_.x, 2) + pow(this->latitude_ - last_cam_msg_.y, 2)) > 0.4)
+        {
+            publish_cam_msg("position");
+        }
+        else if (fabs(this->heading_ - last_cam_msg_.theta) > 4 * M_PI / 180)
+        {
+            publish_cam_msg("heading");
+        }
+    }
+}
+
+void CamCommunication::publish_cam_msg(std::string frame_id)
+{
     auto msg = auna_its_msgs::msg::CAM();
+    msg.header.stamp = this->now();
+    msg.header.frame_id = frame_id;
     msg.robot_name = std::to_string(this->robot_index_);
     msg.x = this->longitude_;
     msg.y = this->latitude_;
@@ -44,6 +71,9 @@ void CamCommunication::timer_callback()
 
     //publish message
     cam_publisher_->publish(msg);
+
+    last_cam_msg_ = msg;
+    last_cam_msg_time_ = msg.header.stamp;
 }
 
 void CamCommunication::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
