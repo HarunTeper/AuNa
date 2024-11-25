@@ -33,7 +33,7 @@ Install Python3.9:
 
     sudo add-apt-repository ppa:deadsnakes/ppa
     sudo apt-get update
-    sudo apt install python3.9 python3.9-venv libpython3.9.so
+    sudo apt install python3.9 python3.9-venv libpython3.9
 
 Create symlinks to the Python3.9 installation:
 

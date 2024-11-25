@@ -1,16 +1,41 @@
+// For format details, see https://aka.ms/devcontainer.json.
 {
-    "name": "AuNa DevContainer",
-    "dockerFile": "../Dockerfile",
-    "settings": {
-        "terminal.integrated.shell.linux": "/bin/bash"
-    },
-    "extensions": [
-        "ms-vscode.cpptools",
-        "ms-python.python",
-        "ms-azuretools.vscode-docker"
-    ],
-    "mounts": [
-        "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
-    ],
-    "workspaceFolder": "/workspace"
+	// Configure container
+	"name": "AuNa",
+	"build": {
+		"context": "..",
+		"dockerfile": "Dockerfile",
+		"args": {
+			"VARIANT": "jammy",
+			"INSTALL_ROS2": "true",
+			"INSTALL_GAZEBO": "true",
+			"INSTALL_ROS2_TRACING": "true"
+		}
+	},
+
+	// Configure container user
+	"remoteUser": "vscode",
+
+	// Configure workspace mount point
+	"workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/workspace,type=bind,consistency=cached",
+	"workspaceFolder": "/home/vscode/workspace",
+
+	// Configure runtime settings
+	"runArgs": ["--network=host", "-e", "DISPLAY"],
+
+	// Configure VS Code extensions
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode.cmake-tools",
+				"llvm-vs-code-extensions.vscode-clangd",
+				"xaver.clang-format",
+				"ms-python.python",
+				"donjayamanne.python-extension-pack",
+				"donjayamanne.python-environment-manager",
+				"ms-azuretools.vscode-docker",
+				"ms-python.autopep8"
+			]
+		}
+	}
 }
