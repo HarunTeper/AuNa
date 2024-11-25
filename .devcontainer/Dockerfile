@@ -56,6 +56,14 @@ RUN if [ "$INSTALL_ROS2_TRACING" = "true" ]; then \
     pip install bokeh jupyter; \
     fi
 
+# --- Install ROS 2 Extensions ---
+
+ARG INSTALL_ROS2=true
+RUN if [ "$INSTALL_ROS2" = "true" ]; then \
+    apt-get update && \
+    apt-get install -y ros-humble-rmw-cyclonedds-cpp; \
+    fi
+
 # --- Install DevTools ---
 
 RUN apt-get update && \
@@ -70,6 +78,8 @@ USER vscode
 # source ROS2 setup file
 RUN if [ "$INSTALL_ROS2" = "true" ]; then \
     echo '. /opt/ros/humble/setup.sh' >> /home/vscode/.bashrc; \
+    RMW_IMPLEMENTATION=rmw_cyclonedds_cpp; \
+    CYCLONEDDS_URI=/home/vscode/workspace/cyclone_dds_config.xml; \
     fi
 
 # source ROS2 tracing setup file
