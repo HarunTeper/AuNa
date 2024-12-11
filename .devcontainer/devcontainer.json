@@ -9,20 +9,22 @@
 			"VARIANT": "jammy",
 			"INSTALL_ROS2": "true",
 			"INSTALL_GAZEBO": "true",
-			"INSTALL_ROS2_TRACING": "true"
+			"INSTALL_ROS2_TRACING": "true",
+			"ROS_DOMAIN_ID": "0",
+			"ROS_LOCALHOST_ONLY": "0"
 		}
 	},
-
 	// Configure container user
 	"remoteUser": "vscode",
-
 	// Configure workspace mount point
 	"workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/workspace,type=bind,consistency=cached",
 	"workspaceFolder": "/home/vscode/workspace",
-
 	// Configure runtime settings
-	"runArgs": ["--network=host", "-e", "DISPLAY"],
-
+	"runArgs": [
+		"--network=host",
+		"-e",
+		"DISPLAY"
+	],
 	// Configure VS Code extensions
 	"customizations": {
 		"vscode": {

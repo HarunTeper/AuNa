@@ -89,8 +89,8 @@ RUN if [ "$INSTALL_ROS2_TRACING" = "true" ]; then \
 
 # configure environment variables
 ENV DISPLAY=${DISPLAY}
-ENV ROS_LOCALHOST_ONLY=0
-ENV ROS_DOMAIN_ID=0
+ENV ROS_LOCALHOST_ONLY=${ROS_LOCALHOST_ONLY:-0}
+ENV ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-0}
 
 # --- Set up entrypoint ---
 
