@@ -36,14 +36,16 @@ add_library(gazebo_models_node SHARED src/gazebo_models/gazebo_models.cpp)
 add_library(global_tf_node SHARED src/transformations/global_tf/global_tf.cpp)
 add_library(localization_pose_node SHARED src/transformations/localization_pose/localization_pose.cpp)
 add_library(simulation_pose_node SHARED src/transformations/simulation_pose/simulation_pose.cpp)
-add_library(gazebo_pose_node SHARED src/transformations/gazebo_pose/gazebo_pose.cpp)
+add_library(ground_truth_localization_node SHARED src/transformations/ground_truth_localization/ground_truth_localization.cpp)
 
 # Create Cpp executable
 add_executable(gazebo_models src/gazebo_models/gazebo_models_main.cpp)
 add_executable(global_tf src/transformations/global_tf/global_tf_main.cpp)
 add_executable(localization_pose src/transformations/localization_pose/localization_pose_main.cpp)
 add_executable(simulation_pose src/transformations/simulation_pose/simulation_pose_main.cpp)
-add_executable(gazebo_pose src/transformations/gazebo_pose/gazebo_pose_main.cpp)
+add_executable(ground_truth_localization 
+  src/transformations/ground_truth_localization/ground_truth_localization.cpp
+  src/transformations/ground_truth_localization/ground_truth_localization_main.cpp)
 
 # Target dependencies
 set(gazebo_models_dependencies rclcpp gazebo_msgs auna_msgs)
@@ -58,16 +60,16 @@ ament_target_dependencies(localization_pose ${localization_pose_dependencies})
 set(simulation_pose_dependencies rclcpp std_msgs gazebo_msgs auna_its_msgs tf2)
 ament_target_dependencies(simulation_pose_node ${simulation_pose_dependencies})
 ament_target_dependencies(simulation_pose ${simulation_pose_dependencies})
-set(gazebo_pose_dependencies rclcpp std_msgs geometry_msgs gazebo_msgs tf2 tf2_ros tf2_geometry_msgs)
-ament_target_dependencies(gazebo_pose_node ${gazebo_pose_dependencies})
-ament_target_dependencies(gazebo_pose ${gazebo_pose_dependencies})
+set(ground_truth_localization_dependencies rclcpp std_msgs geometry_msgs gazebo_msgs tf2 tf2_ros tf2_geometry_msgs)
+ament_target_dependencies(ground_truth_localization_node ${ground_truth_localization_dependencies})
+ament_target_dependencies(ground_truth_localization ${ground_truth_localization_dependencies})
 
 # Link libraries
 target_link_libraries(gazebo_models gazebo_models_node)
 target_link_libraries(global_tf global_tf_node)
 target_link_libraries(localization_pose localization_pose_node)
 target_link_libraries(simulation_pose simulation_pose_node)
-target_link_libraries(gazebo_pose gazebo_pose_node)
+target_link_libraries(ground_truth_localization ground_truth_localization_node)
 
 install(DIRECTORY 
   config
@@ -83,7 +85,7 @@ install(TARGETS
   global_tf
   localization_pose
   simulation_pose
-  gazebo_pose
+  ground_truth_localization
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -92,7 +94,7 @@ install(TARGETS
   global_tf_node
   localization_pose_node
   simulation_pose_node
-  gazebo_pose_node
+  ground_truth_localization
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
