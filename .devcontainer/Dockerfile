@@ -1,5 +1,5 @@
-ARG VARIANT=ubuntu-22.04
-FROM mcr.microsoft.com/devcontainers/base:ubuntu-${VARIANT}
+ARG VARIANT
+FROM mcr.microsoft.com/devcontainers/base:${VARIANT}
 
 # --- Configure environment ---
 
