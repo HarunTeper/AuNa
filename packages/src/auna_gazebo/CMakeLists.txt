@@ -32,14 +32,14 @@ find_package(tf2_ros REQUIRED)
 include_directories(include)
 
 # Add libraries
-add_library(gazebo_models_node SHARED src/gazebo_models/gazebo_models.cpp)
+add_library(robot_name_publisher_node SHARED src/robot_name_publisher/robot_name_publisher.cpp)
 add_library(global_tf_node SHARED src/transformations/global_tf/global_tf.cpp)
 add_library(localization_pose_node SHARED src/transformations/localization_pose/localization_pose.cpp)
 add_library(simulation_pose_node SHARED src/transformations/simulation_pose/simulation_pose.cpp)
 add_library(ground_truth_localization_node SHARED src/transformations/ground_truth_localization/ground_truth_localization.cpp)
 
 # Create Cpp executable
-add_executable(gazebo_models src/gazebo_models/gazebo_models_main.cpp)
+add_executable(robot_name_publisher src/robot_name_publisher/robot_name_publisher_main.cpp)
 add_executable(global_tf src/transformations/global_tf/global_tf_main.cpp)
 add_executable(localization_pose src/transformations/localization_pose/localization_pose_main.cpp)
 add_executable(simulation_pose src/transformations/simulation_pose/simulation_pose_main.cpp)
@@ -48,9 +48,9 @@ add_executable(ground_truth_localization
   src/transformations/ground_truth_localization/ground_truth_localization_main.cpp)
 
 # Target dependencies
-set(gazebo_models_dependencies rclcpp gazebo_msgs auna_msgs)
-ament_target_dependencies(gazebo_models_node ${gazebo_models_dependencies})
-ament_target_dependencies(gazebo_models ${gazebo_models_dependencies})
+set(robot_name_publisher_dependencies rclcpp gazebo_msgs auna_msgs)
+ament_target_dependencies(robot_name_publisher_node ${robot_name_publisher_dependencies})
+ament_target_dependencies(robot_name_publisher ${robot_name_publisher_dependencies})
 set(global_tf_dependencies rclcpp std_msgs gazebo_msgs geometry_msgs nav_msgs tf2_ros tf2_geometry_msgs)
 ament_target_dependencies(global_tf_node ${global_tf_dependencies})
 ament_target_dependencies(global_tf ${global_tf_dependencies})
@@ -65,7 +65,7 @@ ament_target_dependencies(ground_truth_localization_node ${ground_truth_localiza
 ament_target_dependencies(ground_truth_localization ${ground_truth_localization_dependencies})
 
 # Link libraries
-target_link_libraries(gazebo_models gazebo_models_node)
+target_link_libraries(robot_name_publisher robot_name_publisher_node)
 target_link_libraries(global_tf global_tf_node)
 target_link_libraries(localization_pose localization_pose_node)
 target_link_libraries(simulation_pose simulation_pose_node)
@@ -81,7 +81,7 @@ install(DIRECTORY
 
 # Install Cpp executables
 install(TARGETS
-  gazebo_models
+  robot_name_publisher
   global_tf
   localization_pose
   simulation_pose
@@ -90,7 +90,7 @@ install(TARGETS
 )
 
 install(TARGETS 
-  gazebo_models_node
+  robot_name_publisher_node
   global_tf_node
   localization_pose_node
   simulation_pose_node
