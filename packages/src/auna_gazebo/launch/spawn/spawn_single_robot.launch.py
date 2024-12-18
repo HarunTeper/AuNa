@@ -1,30 +1,29 @@
-"""Single car spawn launch file"""
+"""Single robot spawn launch file"""
 
 import os
 from ament_index_python.packages import get_package_share_directory
-from launch_ros.actions import Node
+from launch_ros.actions import Node, PushRosNamespace, SetRemap
 from launch import LaunchDescription
 from launch.substitutions import LaunchConfiguration
-from launch.actions import DeclareLaunchArgument
-from launch.actions import IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.actions import GroupAction
 from launch.conditions import IfCondition
 from launch.substitutions import PythonExpression
-
+from launch.actions import LogInfo, EmitEvent
+from launch.events import Shutdown
 
 
 def generate_launch_description():
     """Return launch description"""
-
     # Package Directories
     pkg_dir = get_package_share_directory('auna_gazebo')
 
     # Paths to folders and files
     launch_file_dir = os.path.join(pkg_dir, 'launch', 'spawn')
-    gazebo_pose_launch_file_dir = os.path.join(pkg_dir, 'launch', 'pose')
+    ground_truth_launch_dir = os.path.join(
+        pkg_dir, 'launch', 'ground_truth_localization')
 
-    # Launch Argument Configurations
+    # Launch Configurations
     name = LaunchConfiguration('name')
     namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
@@ -34,94 +33,119 @@ def generate_launch_description():
     ground_truth = LaunchConfiguration('ground_truth')
 
     # Launch Arguments
-    name_arg = DeclareLaunchArgument(
-        'name',
-        default_value='robot',
-        description='Robot name in Gazebo'
-    )
-    namespace_arg = DeclareLaunchArgument(
-        'namespace',
-        default_value='robot',
-        description='Robot namespace for ROS nodes and topics'
-    )
-    use_sim_time_arg = DeclareLaunchArgument(
-        'use_sim_time',
-        default_value='true',
-        description='Use simulation (Gazebo) clock if true'
-    )
-    x_pose_arg = DeclareLaunchArgument(
-        'x_pose',
-        default_value='0.0',
-        description='Robot spawn x position'
-    )
-    y_pose_arg = DeclareLaunchArgument(
-        'y_pose',
-        default_value='0.0',
-        description='Robot spawn y position'
-    )
-    z_pose_arg = DeclareLaunchArgument(
-        'z_pose',
-        default_value='0.0',
-        description='Robot spawn z position'
-    )
-    ground_truth_arg = DeclareLaunchArgument(
-        'ground_truth',
-        default_value='False',
-        description='Use ground truth pose'
-    )
+    launch_args = [
+        DeclareLaunchArgument(
+            'name',
+            default_value='robot',
+            description='Robot name in Gazebo'
+        ),
+        DeclareLaunchArgument(
+            'namespace',
+            default_value='robot',
+            description='Robot namespace for ROS nodes and topics'
+        ),
+        DeclareLaunchArgument(
+            'use_sim_time',
+            default_value='true',
+            description='Use simulation (Gazebo) clock if true'
+        ),
+        DeclareLaunchArgument(
+            'x_pose',
+            default_value='0.0',
+            description='Robot spawn x position'
+        ),
+        DeclareLaunchArgument(
+            'y_pose',
+            default_value='0.0',
+            description='Robot spawn y position'
+        ),
+        DeclareLaunchArgument(
+            'z_pose',
+            default_value='0.0',
+            description='Robot spawn z position'
+        ),
+        DeclareLaunchArgument(
+            'ground_truth',
+            default_value='False',
+            description='Use ground truth pose'
+        )
+    ]
 
-    # Nodes and other launch files
-    robot_state_publisher_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(launch_file_dir, 'spawn_robot_state_publisher.launch.py')),
-        launch_arguments={'use_sim_time': use_sim_time, 'namespace': namespace}.items()
-    )
-    spawn_car_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(launch_file_dir, 'spawn_car.launch.py')),
-        launch_arguments={'x_pose': x_pose, 'y_pose': y_pose, 'z_pose': z_pose, 'namespace': namespace, 'name': name}.items()
-    )
-    localization_pose_cmd = Node(
-        package='auna_gazebo',
-        executable='localization_pose',
-        name='localization_pose',
-        namespace=namespace,
-        arguments={namespace},
-        output='screen',
-        remappings=[('/tf', 'tf'),
-                    ('/tf_static', 'tf_static')
-        ]
-    )
-    simulation_pose_cmd = Node(
-        package='auna_gazebo',
-        executable='simulation_pose',
-        name='simulation_pose',
-        namespace=namespace,
-        arguments={name},
-        output='screen'
-    )
-    gazebo_pose_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(gazebo_pose_launch_file_dir, 'gazebo_pose.launch.py')),
-        launch_arguments={'namespace': namespace}.items()
-    )
-    gazebo_pose_group_cmd = GroupAction(
-        condition=IfCondition(PythonExpression([ground_truth])),
-        actions=[gazebo_pose_cmd]
-    )
+    # Namespace verification
+    verification_error = LogInfo(
+        msg="ERROR: Namespace must be provided! Please set the 'namespace' launch argument.",
+        condition=IfCondition(PythonExpression(["'", namespace, "' == ''"])))
 
-    # Launch Description
-    launch_description = LaunchDescription()
+    shutdown_on_error = EmitEvent(
+        event=Shutdown(reason="No namespace provided"),
+        condition=IfCondition(PythonExpression(["'", namespace, "' == ''"])))
 
-    launch_description.add_action(name_arg)
-    launch_description.add_action(namespace_arg)
-    launch_description.add_action(use_sim_time_arg)
-    launch_description.add_action(x_pose_arg)
-    launch_description.add_action(y_pose_arg)
-    launch_description.add_action(z_pose_arg)
-    launch_description.add_action(ground_truth_arg)
+    # Main robot launch group with namespace and remappings
+    robot_launch_group = GroupAction([
+        PushRosNamespace(namespace),
+        SetRemap(src='/tf', dst='tf'),
+        SetRemap(src='/tf_static', dst='tf_static'),
 
-    launch_description.add_action(robot_state_publisher_cmd)
-    launch_description.add_action(spawn_car_cmd)
-    launch_description.add_action(localization_pose_cmd)
-    launch_description.add_action(simulation_pose_cmd)
-    launch_description.add_action(gazebo_pose_group_cmd)
+        # Robot state publisher
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(launch_file_dir,
+                             'robot_state_publisher.launch.py')
+            ),
+            launch_arguments={
+                'use_sim_time': use_sim_time,
+                'namespace': namespace
+            }.items()
+        ),
+        # Spawn robot
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(launch_file_dir, 'spawn_robot.launch.py')
+            ),
+            launch_arguments={
+                'x_pose': x_pose,
+                'y_pose': y_pose,
+                'z_pose': z_pose,
+                'namespace': namespace,
+                'name': name
+            }.items()
+        ),
+        # Localization pose publisher
+        Node(
+            package='auna_gazebo',
+            executable='localization_pose_publisher',
+            name='localization_pose_publisher',
+            arguments={namespace},
+            output='screen'
+        ),
+        # Ground truth cam
+        Node(
+            package='auna_gazebo',
+            executable='ground_truth_cam',
+            name='ground_truth_cam',
+            arguments={name},
+            output='screen'
+        )
+    ], condition=IfCondition(PythonExpression(["'", namespace, "' != ''"])))
 
-    return launch_description
+    # Ground truth localization group
+    ground_truth_group = GroupAction([
+        PushRosNamespace(namespace),
+        SetRemap(src='/tf', dst='tf'),
+        SetRemap(src='/tf_static', dst='tf_static'),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(ground_truth_launch_dir,
+                             'ground_truth_localization.launch.py')
+            ),
+            launch_arguments={'namespace': namespace}.items()
+        )
+    ], condition=IfCondition(PythonExpression([ground_truth])))
+
+    return LaunchDescription([
+        *launch_args,
+        verification_error,
+        shutdown_on_error,
+        robot_launch_group,
+        ground_truth_group
+    ])
