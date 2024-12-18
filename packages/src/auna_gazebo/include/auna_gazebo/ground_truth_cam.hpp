@@ -1,6 +1,6 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "auna_its_msgs/msg/cam.hpp"
+#include "etsi_its_msgs/msg/cam.hpp"
 #include "gazebo_msgs/msg/entity_state.hpp"
 #include "gazebo_msgs/msg/model_states.hpp"
 #include "gazebo_msgs/srv/get_entity_state.hpp"
@@ -22,7 +22,7 @@ private:
 
   rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedPtr modelClient_;
   rclcpp::Subscription<gazebo_msgs::msg::ModelStates>::SharedPtr subscription_;
-  rclcpp::Publisher<auna_its_msgs::msg::CAM>::SharedPtr publisher_;
+  rclcpp::Publisher<etsi_its_msgs::msg::CAM>::SharedPtr publisher_;
   rclcpp::TimerBase::SharedPtr service_timer_;
 
   std::string name_;
