@@ -71,15 +71,6 @@ def generate_launch_description():
         )
     ]
 
-    # Namespace verification
-    verification_error = LogInfo(
-        msg="ERROR: Namespace must be provided! Please set the 'namespace' launch argument.",
-        condition=IfCondition(PythonExpression(["'", namespace, "' == ''"])))
-
-    shutdown_on_error = EmitEvent(
-        event=Shutdown(reason="No namespace provided"),
-        condition=IfCondition(PythonExpression(["'", namespace, "' == ''"])))
-
     # Main robot launch group with namespace and remappings
     robot_launch_group = GroupAction([
         PushRosNamespace(namespace),
@@ -125,27 +116,18 @@ def generate_launch_description():
             name='ground_truth_cam',
             arguments={name},
             output='screen'
-        )
-    ], condition=IfCondition(PythonExpression(["'", namespace, "' != ''"])))
-
-    # Ground truth localization group
-    ground_truth_group = GroupAction([
-        PushRosNamespace(namespace),
-        SetRemap(src='/tf', dst='tf'),
-        SetRemap(src='/tf_static', dst='tf_static'),
+        ),
+        # Ground truth localization (conditional)
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(ground_truth_launch_dir,
                              'ground_truth_localization.launch.py')
             ),
-            launch_arguments={'namespace': namespace}.items()
-        )
-    ], condition=IfCondition(PythonExpression([ground_truth])))
+            condition=IfCondition(PythonExpression([ground_truth]))
+        ),
+    ])
 
     return LaunchDescription([
         *launch_args,
-        verification_error,
-        shutdown_on_error,
-        robot_launch_group,
-        ground_truth_group
+        robot_launch_group
     ])

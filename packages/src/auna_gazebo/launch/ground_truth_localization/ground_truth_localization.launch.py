@@ -10,13 +10,6 @@ from launch.substitutions import TextSubstitution
 def generate_launch_description():
     """Return launch description"""
 
-    namespace = LaunchConfiguration('namespace')
-
-    namespace_arg = DeclareLaunchArgument(
-        'namespace',
-        description='ROS2 robot namespace (must not be empty)',
-    )
-
     group_cmd = GroupAction([
         SetRemap(src='/tf', dst='tf'),
         SetRemap(src='/tf_static', dst='tf_static'),
@@ -25,11 +18,10 @@ def generate_launch_description():
             executable='ground_truth_localization',
             name='ground_truth_localization',
             output='screen',
-            arguments=[namespace],
+            # arguments=[namespace],
         )
     ])
 
     return LaunchDescription([
-        namespace_arg,
         group_cmd
     ])

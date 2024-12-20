@@ -19,7 +19,6 @@ def generate_launch_description():
 
     # Launch Configurations
     model = LaunchConfiguration('model')
-    namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
 
     # Launch Arguments
@@ -27,12 +26,6 @@ def generate_launch_description():
         name='model',
         default_value=default_model_path,
         description='Absolute path to robot urdf file'
-    )
-
-    # TODO Namespace entfernbar? Wird bereits in 'oberen' Launch-Dateien definiert
-    namespace_arg = DeclareLaunchArgument(
-        name='namespace',
-        description='Robot namespace (must not be empty)'
     )
 
     use_sim_time_arg = DeclareLaunchArgument(
@@ -65,7 +58,6 @@ def generate_launch_description():
     return LaunchDescription([
         # Launch Arguments
         model_arg,
-        namespace_arg,
         use_sim_time_arg,
         # Nodes
         robot_state_group

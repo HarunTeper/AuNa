@@ -53,7 +53,6 @@ def include_launch_description(context: LaunchContext):
     # Spawn each robot with its own namespace group
     for robot in robots:
         robot_group = GroupAction([
-            PushRosNamespace(robot['namespace']),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     # Renamed from spawn_single_robot
