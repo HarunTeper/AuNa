@@ -1,23 +1,20 @@
-"""Spawn car launch file"""
-
-from launch_ros.actions import Node, SetRemap
+"""Spawn robot launch file"""
+from launch_ros.actions import Node, SetRemap, PushRosNamespace
 from launch.substitutions import LaunchConfiguration
-from launch.actions import DeclareLaunchArgument
-from launch.actions import GroupAction
+from launch.actions import DeclareLaunchArgument, GroupAction
 from launch import LaunchDescription
+from launch.conditions import IfCondition
+from launch.substitutions import TextSubstitution
 
 
 def generate_launch_description():
     """Return launch description"""
 
-    # Launch Argument Configurations
     namespace = LaunchConfiguration('namespace')
 
-    # Launch Arguments
     namespace_arg = DeclareLaunchArgument(
         'namespace',
-        default_value='',
-        description='ROS2 robot namespace'
+        description='ROS2 robot namespace (must not be empty)',
     )
 
     group_cmd = GroupAction([
@@ -27,17 +24,12 @@ def generate_launch_description():
             package='auna_gazebo',
             executable='ground_truth_localization',
             name='ground_truth_localization',
-            namespace=namespace,
             output='screen',
-            arguments={namespace},
+            arguments=[namespace],
         )
     ])
 
-    # Launch Description
-    launch_description = LaunchDescription()
-
-    launch_description.add_action(namespace_arg)
-
-    launch_description.add_action(group_cmd)
-
-    return launch_description
+    return LaunchDescription([
+        namespace_arg,
+        group_cmd
+    ])
