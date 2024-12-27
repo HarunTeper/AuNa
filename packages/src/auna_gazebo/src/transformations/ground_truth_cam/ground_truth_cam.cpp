@@ -4,7 +4,7 @@
 // Create the publisher, timer and service client
 GroundTruthCam::GroundTruthCam(std::string name) : Node("ground_truth_cam_node")
 {
-  publisher_ = this->create_publisher<etsi_its_msgs::msg::CAM>("ground_truth_cam", 2);
+  publisher_ = this->create_publisher<etsi_its_cam_msgs::msg::CAM>("ground_truth_cam", 2);
   modelClient_ = this->create_client<gazebo_msgs::srv::GetEntityState>("/get_entity_state");
   service_timer_ = this->create_wall_timer(
     std::chrono::milliseconds(publish_milliseconds_), [this]() { service_timer_callback(); });
@@ -35,7 +35,7 @@ void GroundTruthCam::model_srv_callback(
   auto result = future.get();
   auto entity = result.get();
 
-  etsi_its_msgs::msg::CAM cam_msg;
+  etsi_its_cam_msgs::msg::CAM cam_msg;
 
   // Basic header
   cam_msg.header.frame_id = this->name_;
