@@ -67,8 +67,17 @@ RUN if [ "$INSTALL_ROS2" = "true" ]; then \
 
 # --- Install DevTools ---
 
+# --- Install DevTools ---
 RUN apt-get update && \
-    apt-get -y install clangd clang-format clang-tidy cppcheck && \
+    apt-get -y install \
+    clangd \
+    clang-format \
+    clang-tidy \
+    cppcheck \
+    build-essential \
+    cmake \
+    libc++-dev \
+    libc++abi-dev && \
     pip install pep8 pylint
 
 # --- Set up user ---
@@ -76,10 +85,12 @@ RUN apt-get update && \
 # set user
 USER vscode
 
-# source ROS2 setup file
+# source ROS2 setup file and workspace
+ARG WORKSPACE
 RUN if [ "$INSTALL_ROS2" = "true" ]; then \
-    echo '. /opt/ros/humble/setup.sh' >> /home/vscode/.bashrc; \
-    RMW_IMPLEMENTATION=rmw_cyclonedds_cpp; \
+    echo '. /opt/ros/humble/setup.sh' >> /home/vscode/.bashrc && \
+    echo "if [ -f ~/workspace/packages/install/setup.bash ]; then source ~/workspace/packages/install/setup.bash; fi" >> /home/vscode/.bashrc && \
+    RMW_IMPLEMENTATION=rmw_cyclonedds_cpp && \
     CYCLONEDDS_URI=/home/vscode/workspace/cyclone_dds_config.xml; \
     fi
 
