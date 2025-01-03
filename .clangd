@@ -1,0 +1,8 @@
+CompileFlags:
+  Add:
+    - "-std=c++17"
+    - "-I/opt/ros/humble/include"
+    - "-I/opt/ros/humble/include/rclcpp"
+    - "-I${workspaceFolder}/packages/install/include"
+Index:
+  Background: Build

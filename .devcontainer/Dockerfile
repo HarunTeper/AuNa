@@ -66,17 +66,17 @@ RUN if [ "$INSTALL_ROS2" = "true" ]; then \
     fi
 
 # --- Install DevTools ---
-
-# --- Install DevTools ---
 RUN apt-get update && \
     apt-get -y install \
     clangd \
+    clang \
     clang-format \
     clang-tidy \
     cppcheck \
     build-essential \
     cmake \
     libc++-dev \
+    libstdc++-12-dev \
     libc++abi-dev && \
     pip install pep8 pylint
 
