@@ -21,9 +21,15 @@ RUN if [ "$INSTALL_ROS2" = "true" ]; then \
     curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null && \
     apt-get update && \
-    apt-get install -y ros-humble-desktop ros-humble-xacro ros-humble-udp-msgs && \
+    apt-get install -y ros-humble-desktop && \
     apt-get install -y libgeographic-dev && \
+    apt-get install -y libunwind-dev && \
     apt-get -y install python3-pip python3-colcon-common-extensions ros-dev-tools; \
+    fi
+
+# --- Install additional ROS2 packages ---
+RUN if [ "$INSTALL_ROS2" = "true" ]; then \
+    apt-get install -y ros-humble-xacro ros-humble-udp-msgs ros-humble-navigation2 ros-humble-nav2-bringup; \
     fi
 
 # --- Install Gazebo ---
