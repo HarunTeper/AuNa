@@ -4,14 +4,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "BuildMessages",
+            "label": "ROS2Build-All",
             "type": "shell",
-            "command": "cd packages && colcon build --packages-up-to etsi_its_messages --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && mv build/compile_commands.json ..",
-        },
-        {
-            "label": "ROS2Build-AunaGazebo",
-            "type": "shell",
-            "command": "cd packages && colcon build --packages-select auna_gazebo auna_common auna_msgs --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && mv build/compile_commands.json ..",
+            "command": "cd packages && colcon build --packages-up-to auna_gazebo auna_common auna_msgs etsi_its_messages --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && mv build/compile_commands.json ..",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
