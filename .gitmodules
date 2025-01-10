@@ -13,6 +13,3 @@
 [submodule "packages/src/physical/ros-g29-force-feedback"]
 	path = packages/src/physical/ros-g29-force-feedback
 	url = https://github.com/kuriatsu/ros-g29-force-feedback.git
-[submodule "packages/src/etsi_its_messages"]
-	path = packages/src/etsi_its_messages
-	url = https://github.com/ika-rwth-aachen/etsi_its_messages
