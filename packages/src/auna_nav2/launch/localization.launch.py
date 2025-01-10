@@ -15,8 +15,8 @@ def generate_launch_description():
     """Launch the localization nodes in the nav2 stack."""
 
     # Get the launch directory
-    pkg_dir = get_package_share_directory('nav2_bringup')
-    bringup_dir = get_package_share_directory('nav2_bringup')
+    pkg_dir = get_package_share_directory('auna_nav2')
+    bringup_dir = get_package_share_directory('auna_nav2')
     config_dir = os.path.join(pkg_dir, 'config', 'nav2_params')
 
     namespace = LaunchConfiguration('namespace')
@@ -49,7 +49,8 @@ def generate_launch_description():
 
         DeclareLaunchArgument(
             'map',
-            default_value=os.path.join(bringup_dir, 'maps', 'racetrack_decorated', 'map.yaml'),
+            default_value=os.path.join(
+                bringup_dir, 'maps', 'racetrack_decorated', 'map.yaml'),
             description='Full path to map yaml file to load'),
 
         DeclareLaunchArgument(

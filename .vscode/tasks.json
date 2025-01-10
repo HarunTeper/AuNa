@@ -4,13 +4,43 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "ROS2Build-All",
+            "label": "ROS2Build-Gazebo",
             "type": "shell",
-            "command": "cd packages && colcon build --packages-up-to auna_gazebo auna_common auna_msgs etsi_its_messages --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && mv build/compile_commands.json ..",
+            "command": "cd packages && colcon build --packages-up-to auna_gazebo auna_common auna_msgs --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && mv build/compile_commands.json ..",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
                 "isDefault": true
+            }
+        },
+        {
+            "label": "ROS2Build-Teleoperation",
+            "type": "shell",
+            "command": "cd packages && colcon build --packages-select auna_teleoperation --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "ROS2Build-Nav2",
+            "type": "shell",
+            "command": "cd packages && colcon build --packages-select auna_nav2 --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "ROS2Build-Scenarios",
+            "type": "shell",
+            "command": "cd packages && colcon build --packages-select auna_scenarios --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
             }
         },
         {
@@ -36,6 +66,12 @@
             "type": "shell",
             "command": "cd packages && source install/setup.bash && ros2 launch auna_gazebo ground_truth_localization.launch.py namespace:=${input:robotNamespace}",
             "problemMatcher": [],
+        },
+        {
+            "label": "LaunchNavigation",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_nav2 navigation_single_robot.launch.py namespace:=${input:robotNamespace} enable_slam:=false enable_localization:=true enable_navigation:=true enable_rviz:=true enable_map_server:=true",
+            "problemMatcher": []
         },
     ],
     "inputs": [

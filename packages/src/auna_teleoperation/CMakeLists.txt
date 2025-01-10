@@ -20,9 +20,15 @@ find_package(rclpy REQUIRED)
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})
 
-# Install Python executables
+# # Install Python executables
+# install(PROGRAMS
+#   scripts/teleoperation/teleop_node.py
+#   DESTINATION lib/${PROJECT_NAME}
+# )
+
+# Install shell scripts
 install(PROGRAMS
-  scripts/teleoperation/teleop_node.py
+  scripts/start_teleop.sh
   DESTINATION lib/${PROJECT_NAME}
 )
 
