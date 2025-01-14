@@ -8,10 +8,10 @@
 		"args": {
 			"VARIANT": "jammy",
 			"INSTALL_ROS2": "true",
-			"INSTALL_GAZEBO": "true",
+			"INSTALL_GAZEBO": "false",
 			"INSTALL_ROS2_TRACING": "true",
 			"ROS_DOMAIN_ID": "0",
-			"ROS_LOCALHOST_ONLY": "0"
+			"ROS_LOCALHOST_ONLY": "1"
 		}
 	},
 	// Configure container user
@@ -21,9 +21,13 @@
 	"workspaceFolder": "/home/vscode/workspace",
 	// Configure runtime settings
 	"runArgs": [
+		"--privileged",
 		"--network=host",
 		"-e",
 		"DISPLAY"
+	],
+	"mounts": [
+		"source=/dev,target=/dev,type=bind"
 	],
 	// Configure VS Code extensions
 	"customizations": {

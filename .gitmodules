@@ -1,6 +1,6 @@
 [submodule "packages/src/physical/vesc"]
 	path = packages/src/physical/vesc
-	url = https://github.com/f1tenth/vesc.git
+	url = https://github.com/f1tenth/vesc
 	branch = ros2
 [submodule "packages/src/physical/costmap_converter"]
 	path = packages/src/physical/costmap_converter
@@ -13,3 +13,4 @@
 [submodule "packages/src/physical/ros-g29-force-feedback"]
 	path = packages/src/physical/ros-g29-force-feedback
 	url = https://github.com/kuriatsu/ros-g29-force-feedback.git
+	

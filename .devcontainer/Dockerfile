@@ -65,7 +65,6 @@ RUN if [ "$INSTALL_ROS2_TRACING" = "true" ]; then \
 
 # --- Install ROS 2 Extensions ---
 
-ARG INSTALL_ROS2=true
 RUN if [ "$INSTALL_ROS2" = "true" ]; then \
     apt-get update && \
     apt-get install -y ros-humble-rmw-cyclonedds-cpp; \
@@ -86,9 +85,15 @@ RUN apt-get update && \
     libc++abi-dev && \
     pip install pep8 pylint
 
+# --- Install ROS 2 packages for F1/10 ---
+RUN if [ "$INSTALL_ROS2" = "true" ]; then \
+    apt-get install -y ros-humble-ackermann-msgs ros-humble-urg-node ros-humble-serial-driver ros-humble-asio-cmake-module; \
+    fi
+
 # --- Set up user ---
 
 # set user
+RUN usermod -a -G dialout vscode
 USER vscode
 
 # source ROS2 setup file and workspace
