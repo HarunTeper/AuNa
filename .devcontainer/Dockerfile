@@ -29,7 +29,7 @@ RUN if [ "$INSTALL_ROS2" = "true" ]; then \
 
 # --- Install additional ROS2 packages ---
 RUN if [ "$INSTALL_ROS2" = "true" ]; then \
-    apt-get install -y ros-humble-xacro ros-humble-udp-msgs ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-etsi-its-messages ros-humble-gazebo-msgs; \
+    apt-get install -y ros-humble-xacro ros-humble-udp-msgs ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-etsi-its-* ros-humble-gazebo-msgs; \
     fi
 
 # --- Install Gazebo ---
@@ -39,7 +39,8 @@ RUN if [ "$INSTALL_GAZEBO" = "true" ]; then \
     wget https://packages.osrfoundation.org/gazebo.key -O - | apt-key add - && \
     apt-get update && \
     apt-get install -y gazebo && \
-    apt-get install -y ros-humble-gazebo-ros-pkgs; \
+    apt-get install -y ros-humble-gazebo-ros-pkgs && \
+    apt-get install -y ros-humble-gazebo-ros; \
     fi
 
 # Expose the Gazebo port

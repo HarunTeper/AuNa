@@ -6,7 +6,7 @@
         {
             "label": "ROS2Build-Gazebo",
             "type": "shell",
-            "command": "cd packages && colcon build --packages-up-to auna_gazebo auna_common auna_msgs --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && mv build/compile_commands.json ..",
+            "command": "cd packages && colcon build --packages-select auna_gazebo auna_common auna_msgs --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && mv build/compile_commands.json ..",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
@@ -60,15 +60,9 @@
             "problemMatcher": []
         },
         {
-            "label": "LaunchSingleRobotSpawn",
-            "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 launch auna_gazebo spawn_single_robot.launch.py namespace:=${input:robotNamespace}",
-            "problemMatcher": [],
-        },
-        {
             "label": "LaunchMultiRobotSpawn",
             "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 launch auna_gazebo spawn_multi_robot.launch.py robot_number:=${input:robotCount}",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_gazebo spawn_multi_robots.launch.py robot_number:=${input:robotCount}",
             "problemMatcher": []
         },
         {
