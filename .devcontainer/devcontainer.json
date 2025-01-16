@@ -8,7 +8,7 @@
 		"args": {
 			"VARIANT": "jammy",
 			"INSTALL_ROS2": "true",
-			"INSTALL_GAZEBO": "false",
+			"INSTALL_GAZEBO": "true",
 			"INSTALL_ROS2_TRACING": "true",
 			"ROS_DOMAIN_ID": "0",
 			"ROS_LOCALHOST_ONLY": "1"
