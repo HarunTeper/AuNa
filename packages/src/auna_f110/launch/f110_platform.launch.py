@@ -13,7 +13,7 @@ def generate_launch_description():
     """Return launch description"""
 
     # Paths to folders and files
-    auna_physical_pkg_dir = get_package_share_directory('auna_physical')
+    auna_physical_pkg_dir = get_package_share_directory('auna_f110')
     auna_physical_launch_file_dir = os.path.join(
         auna_physical_pkg_dir, 'launch')
 
@@ -34,7 +34,7 @@ def generate_launch_description():
 
     # Nodes and other launch files
     cmd_vel_to_ackermann_node = Node(
-        package='auna_physical',
+        package='auna_f110',
         executable='cmd_vel_to_ackermann',
         name='cmd_vel_to_ackermann',
         namespace=namespace,
@@ -52,7 +52,7 @@ def generate_launch_description():
     )
 
     vesc_start_node = Node(
-        package='auna_physical',
+        package='auna_f110',
         executable='vesc_start',
         name='vesc_start',
         namespace=namespace,
