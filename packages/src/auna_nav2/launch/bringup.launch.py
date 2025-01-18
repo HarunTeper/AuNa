@@ -21,6 +21,10 @@ def generate_launch_description():
     config_dir = os.path.join(bringup_dir, 'config', 'nav2_params')
     launch_dir = os.path.join(bringup_dir, 'launch')
 
+    # Get bringup dir from nav2_bringup package to use includes launch files instead of copied ones.
+    nav2_bringup_dir = get_package_share_directory('nav2_bringup')
+    nav2_launch_dir = os.path.join(nav2_bringup_dir, 'launch')
+
     # Create the launch configuration variables
     namespace = LaunchConfiguration('namespace')
     map_yaml_file = LaunchConfiguration('map')
@@ -81,28 +85,27 @@ def generate_launch_description():
         SetRemap('/tf_static', 'tf_static'),
 
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(launch_dir, 'slam.launch.py')),
+            PythonLaunchDescriptionSource(
+                os.path.join(nav2_launch_dir, 'slam_launch.py')),
             condition=IfCondition(enable_slam),
-            launch_arguments={'namespace': namespace,
-                              'use_sim_time': use_sim_time,
+            launch_arguments={'use_sim_time': use_sim_time,
                               'autostart': autostart,
                               'params_file': params_file}.items()),
 
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(launch_dir,
-                                                       'localization.launch.py')),
+            PythonLaunchDescriptionSource(os.path.join(nav2_launch_dir,
+                                                       'localization_launch.py')),
             condition=IfCondition(enable_localization),
-            launch_arguments={'namespace': namespace,
-                              'map': map_yaml_file,
+            launch_arguments={'map': map_yaml_file,
                               'use_sim_time': use_sim_time,
                               'autostart': autostart,
                               'params_file': params_file}.items()),
 
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(launch_dir, 'navigation.launch.py')),
+            PythonLaunchDescriptionSource(os.path.join(
+                nav2_launch_dir, 'navigation_launch.py')),
             condition=IfCondition(enable_navigation),
-            launch_arguments={'namespace': namespace,
-                              'use_sim_time': use_sim_time,
+            launch_arguments={'use_sim_time': use_sim_time,
                               'autostart': autostart,
                               'params_file': params_file,
                               'use_lifecycle_mgr': 'false',

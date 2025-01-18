@@ -1,4 +1,4 @@
-"""Multiple robot spawn launch file"""  # Renamed from 'car' to 'robot' per TODO
+"""Multiple robot spawn launch file"""
 
 import os
 from ament_index_python.packages import get_package_share_directory
@@ -29,13 +29,13 @@ def include_launch_description(context: LaunchContext):
     map_path = os.path.join(
         pkg_dir, "config", "map_params", f"{world_name}.yaml")
 
-    # Create robot configurations
+    namespace = context.launch_configurations['namespace']
     robots = []
     for num in range(robot_number):
-        namespace = f'robot{num}'
+        robot_ns = f'{namespace}{num}'  # Changed from f'robot{num}'
         robots.append({
-            'name': namespace,
-            'namespace': namespace,
+            'name': robot_ns,
+            'namespace': robot_ns,
             'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"]) +
             num *
             yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"]),
@@ -53,11 +53,11 @@ def include_launch_description(context: LaunchContext):
     # Spawn each robot with its own namespace group
     for robot in robots:
         robot_group = GroupAction([
+            PushRosNamespace(robot['namespace']),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
-                    # Renamed from spawn_single_robot
                     os.path.join(launch_file_dir,
-                                 'spawn_single_robot.launch.py')
+                                 '_spawn_individual_robot.launch.py')
                 ),
                 launch_arguments={
                     'use_sim_time': use_sim_time,
@@ -112,12 +112,17 @@ def generate_launch_description():
         description='Whether to use ground_truth_localization for localization'
     )
 
+    namespace_arg = DeclareLaunchArgument(
+        'namespace',
+        default_value='robot',
+        description='Base namespace for robots'
+    )
+
     return LaunchDescription([
-        # Launch arguments
+        namespace_arg,
         robot_number_arg,
         use_sim_time_arg,
         world_name_arg,
         ground_truth_arg,
-        # Launch description generation
         OpaqueFunction(function=include_launch_description)
     ])

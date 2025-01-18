@@ -73,7 +73,6 @@ def generate_launch_description():
 
     # Main robot launch group with namespace and remappings
     robot_launch_group = GroupAction([
-        PushRosNamespace(namespace),
         SetRemap(src='/tf', dst='tf'),
         SetRemap(src='/tf_static', dst='tf_static'),
 
@@ -81,7 +80,7 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(launch_file_dir,
-                             'robot_state_publisher.launch.py')
+                             '_robot_state_publisher.launch.py')
             ),
             launch_arguments={
                 'use_sim_time': use_sim_time,
@@ -91,7 +90,7 @@ def generate_launch_description():
         # Spawn robot
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(launch_file_dir, 'spawn_robot.launch.py')
+                os.path.join(launch_file_dir, '_spawn_robot_entity.launch.py')
             ),
             launch_arguments={
                 'x_pose': x_pose,

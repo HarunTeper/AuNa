@@ -64,27 +64,25 @@ def generate_launch_description():
     )
 
     # Group spawner command with namespace handling
-    spawner_group = GroupAction([
-        Node(
-            package='gazebo_ros',
-            executable='spawn_entity.py',
-            name='spawn_entity',
-            output='screen',
-            arguments=[
-                '-entity', name,
-                '-topic', 'robot_description',
-                '-x', x_pose,
-                '-y', y_pose,
-                '-z', z_pose,
-                '-R', r_orientation,
-                '-P', p_orientation,
-                '-Y', y_orientation,
-                '-robot_namespace', namespace,
-            ],
-            condition=IfCondition(PythonExpression(
-                ["'", namespace, "' != ''"]))
-        )
-    ])
+    spawner_group = Node(
+        package='gazebo_ros',
+        executable='spawn_entity.py',
+        name='spawn_entity',
+        output='screen',
+        arguments=[
+            '-entity', name,
+            '-topic', 'robot_description',
+            '-x', x_pose,
+            '-y', y_pose,
+            '-z', z_pose,
+            '-R', r_orientation,
+            '-P', p_orientation,
+            '-Y', y_orientation,
+            '-robot_namespace', namespace,
+        ],
+        condition=IfCondition(PythonExpression(
+            ["'", namespace, "' != ''"]))
+    )
 
     return LaunchDescription([
         name_arg,

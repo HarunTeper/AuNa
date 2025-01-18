@@ -34,26 +34,24 @@ def generate_launch_description():
         description='Use simulation (Gazebo) clock if true'
     )
 
-    # Define the robot state publisher group
-    robot_state_group = GroupAction([
-        Node(
-            package='robot_state_publisher',
-            executable='robot_state_publisher',
-            name='robot_state_publisher',
-            output='screen',
-            parameters=[{
-                'robot_description': Command([
-                    'xacro ', model
-                ]),
-                'use_sim_time': use_sim_time,
-                'use_tf_static': False
-            }],
-            remappings=[
-                ('/tf', 'tf'),
-                ('/tf_static', 'tf_static')
-            ],
-        )
-    ])
+    # Define the robot state publisher
+    robot_state_group = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='robot_state_publisher',
+        output='screen',
+        parameters=[{
+            'robot_description': Command([
+                'xacro ', model
+            ]),
+            'use_sim_time': use_sim_time,
+            'use_tf_static': False
+        }],
+        remappings=[
+            ('/tf', 'tf'),
+            ('/tf_static', 'tf_static')
+        ],
+    )
 
     return LaunchDescription([
         # Launch Arguments
