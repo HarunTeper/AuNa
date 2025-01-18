@@ -14,7 +14,7 @@ def generate_launch_description():
     """Return launch description"""
 
     # Paths to folders and files
-    physical_pkg_dir = get_package_share_directory('auna_physical')
+    physical_pkg_dir = get_package_share_directory('auna_f110')
     config_file_dir = os.path.join(physical_pkg_dir, 'config')
     joy_config_file_path = os.path.join(config_file_dir, 'teleop_joy.yaml')
 

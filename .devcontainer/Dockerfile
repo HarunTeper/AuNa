@@ -88,7 +88,7 @@ RUN apt-get update && \
 
 # --- Install ROS 2 packages for F1/10 ---
 RUN if [ "$INSTALL_ROS2" = "true" ]; then \
-    apt-get install -y ros-humble-ackermann-msgs ros-humble-urg-node ros-humble-serial-driver ros-humble-asio-cmake-module; \
+    apt-get install -y ros-humble-ackermann-msgs ros-humble-urg-node ros-humble-serial-driver ros-humble-asio-cmake-module ros-humble-joy-teleop; \
     fi
 
 # --- Set up user ---
@@ -112,6 +112,9 @@ RUN if [ "$INSTALL_ROS2_TRACING" = "true" ]; then \
     fi
 
 # configure environment variables
+ARG DISPLAY
+ARG ROS_LOCALHOST_ONLY
+ARG ROS_DOMAIN_ID
 ENV DISPLAY=${DISPLAY}
 ENV ROS_LOCALHOST_ONLY=${ROS_LOCALHOST_ONLY:-0}
 ENV ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-0}

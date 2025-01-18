@@ -8,7 +8,7 @@
 		"args": {
 			"VARIANT": "jammy",
 			"INSTALL_ROS2": "true",
-			"INSTALL_GAZEBO": "false",
+			"INSTALL_GAZEBO": "true",
 			"INSTALL_ROS2_TRACING": "true",
 			"ROS_DOMAIN_ID": "0",
 			"ROS_LOCALHOST_ONLY": "1"
@@ -27,7 +27,8 @@
 		"DISPLAY"
 	],
 	"mounts": [
-		"source=/dev,target=/dev,type=bind"
+		"source=/dev,target=/dev,type=bind",
+		"source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind"
 	],
 	// Configure VS Code extensions
 	"customizations": {
@@ -40,7 +41,9 @@
 				"donjayamanne.python-extension-pack",
 				"donjayamanne.python-environment-manager",
 				"ms-azuretools.vscode-docker",
-				"ms-python.autopep8"
+				"ms-python.autopep8",
+				"GitHub.copilot",
+				"GitHub.copilot-chat"
 			]
 		}
 	}
