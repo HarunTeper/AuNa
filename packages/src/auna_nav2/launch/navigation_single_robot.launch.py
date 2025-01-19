@@ -2,6 +2,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction, GroupAction
+from launch_ros.actions import PushRosNamespace
 from launch.launch_context import LaunchContext
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -33,19 +34,20 @@ def include_launch_description(context: LaunchContext):
     enable_map_server = LaunchConfiguration('enable_map_server')
 
     tmp_params_file = yaml_launch.get_yaml(params_file.perform(context))
-    tmp_params_file = yaml_launch.insert_namespace(tmp_params_file, context.launch_configurations['namespace'])
+    tmp_params_file = yaml_launch.insert_namespace(
+        tmp_params_file, '')
     tmp_params_file = yaml_launch.get_temp_file(tmp_params_file)
 
-    # Nodes and other launch files
-
     cmd_group = GroupAction([
+        PushRosNamespace(namespace),
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(nav_launch_file_dir, 'bringup.launch.py')),
+            PythonLaunchDescriptionSource(os.path.join(
+                nav_launch_file_dir, 'bringup.launch.py')),
+
             launch_arguments={
                 'autostart': autostart,
                 'default_bt_xml_filename': default_bt_xml_filename,
                 'map': map_file,
-                'namespace': namespace,
                 'params_file': tmp_params_file,
                 'use_sim_time': use_sim_time,
                 'enable_slam': enable_slam,
@@ -53,22 +55,23 @@ def include_launch_description(context: LaunchContext):
                 'enable_navigation': enable_navigation,
             }.items(),
         ),
+        # IncludeLaunchDescription(
+        #     PythonLaunchDescriptionSource(os.path.join(
+        #         nav_launch_file_dir, 'map_server.launch.py')),
+        #     condition=IfCondition(enable_map_server),
+        #     launch_arguments={
+        #         'map': map_file,
+        #         'use_sim_time': use_sim_time,
+        #         'autostart': autostart,
+        #     }.items(),
+        # ),
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(nav_launch_file_dir, 'map_server.launch.py')),
-            condition=IfCondition(enable_map_server),
-            launch_arguments={
-                'namespace': namespace,
-                'map': map_file,
-                'use_sim_time': use_sim_time,
-                'autostart': autostart,
-            }.items(),
-        ),
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(nav_launch_file_dir, 'rviz.launch.py')),
+            PythonLaunchDescriptionSource(os.path.join(
+                nav_launch_file_dir, 'rviz.launch.py')),
             condition=IfCondition(enable_rviz),
             launch_arguments={
-                'namespace': namespace,
                 'rviz_config': rviz_config,
+                'namespace': namespace,
             }.items(),
         )
     ])
@@ -88,10 +91,14 @@ def generate_launch_description():
     pkg_dir = get_package_share_directory('auna_nav2')
 
     # Paths to folders and files
-    default_map_file = os.path.join(pkg_dir, 'maps', 'racetrack_decorated', 'map.yaml'),
-    default_params_file = os.path.join(pkg_dir, 'config', 'nav2_params', 'nav2_params.yaml')
-    default_rviz_config_file = os.path.join(pkg_dir, 'rviz', 'config_navigation_namespace.rviz')
-    default_default_bt_xml_filename_file = os.path.join(get_package_share_directory('nav2_bt_navigator'), 'behavior_trees', 'navigate_w_replanning_and_recovery.xml')
+    default_map_file = os.path.join(
+        pkg_dir, 'maps', 'racetrack_decorated', 'map.yaml'),
+    default_params_file = os.path.join(
+        pkg_dir, 'config', 'nav2_params', 'nav2_params.yaml')
+    default_rviz_config_file = os.path.join(
+        pkg_dir, 'rviz', 'config_navigation_namespace.rviz')
+    default_default_bt_xml_filename_file = os.path.join(get_package_share_directory(
+        'nav2_bt_navigator'), 'behavior_trees', 'navigate_w_replanning_and_recovery.xml')
 
     # Launch Arguments
     autostart_arg = DeclareLaunchArgument(
@@ -170,6 +177,7 @@ def generate_launch_description():
     launch_description.add_action(use_enable_rviz_arg)
     launch_description.add_action(use_enable_map_server_arg)
 
-    launch_description.add_action(OpaqueFunction(function=include_launch_description))
+    launch_description.add_action(OpaqueFunction(
+        function=include_launch_description))
 
     return launch_description

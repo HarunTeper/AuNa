@@ -17,7 +17,8 @@ def include_launch_description(context: LaunchContext):
 
     # Paths to folders and files
     nav_launch_file_dir = os.path.join(pkg_dir, 'launch')
-    default_map_file = os.path.join(pkg_dir, 'maps', context.launch_configurations['world_name'], 'map.yaml'),
+    default_map_file = os.path.join(
+        pkg_dir, 'maps', context.launch_configurations['world_name'], 'map.yaml'),
 
     # Launch Argument Configurations
     autostart = LaunchConfiguration('autostart')
@@ -33,18 +34,21 @@ def include_launch_description(context: LaunchContext):
     enable_navigation = LaunchConfiguration('enable_navigation')
     enable_rviz = LaunchConfiguration('enable_rviz')
     enable_map_server = LaunchConfiguration('enable_map_server')
+    namespace = LaunchConfiguration('namespace')
 
     # Names and poses of the robots
-    map_path = os.path.join(gazebo_pkg_dir, "config", "map_params", world_name.perform(context)+".yaml")
+    map_path = os.path.join(gazebo_pkg_dir, "config",
+                            "map_params", world_name.perform(context)+".yaml")
     robots = []
     for num in range(int(robot_number.perform(context))):
+        robot_namespace = f'{namespace.perform(context)}{num}'
         robots.append({
-            'name': 'robot'+str(num),
-            'namespace': 'robot'+str(num),
+            'name': robot_namespace,
+            'namespace': robot_namespace,
             'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"]),
             'y_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"]),
             'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"]),
-            }
+        }
         )
 
     # Create our own temporary YAML files that include substitutions and use them to create the parameter file launch configurations
@@ -55,9 +59,12 @@ def include_launch_description(context: LaunchContext):
             'initial_pose.y': robots[num]['y_pose'],
             'initial_pose.z': robots[num]['z_pose'],
         }
-        tmp_params_file = yaml_launch.get_yaml(os.path.join(pkg_dir, 'config', 'nav2_params', params_file_name.perform(context)+".yaml"))
-        tmp_params_file = yaml_launch.substitute_values(tmp_params_file, param_substitutions)
-        tmp_params_file = yaml_launch.insert_namespace(tmp_params_file, robots[num]['namespace'])
+        tmp_params_file = yaml_launch.get_yaml(os.path.join(
+            pkg_dir, 'config', 'nav2_params', params_file_name.perform(context)+".yaml"))
+        tmp_params_file = yaml_launch.substitute_values(
+            tmp_params_file, param_substitutions)
+        # tmp_params_file = yaml_launch.insert_namespace(
+        #     tmp_params_file, robots[num]['namespace'])
         tmp_params_file = yaml_launch.get_temp_file(tmp_params_file)
         robot_params_file_args.append(tmp_params_file)
 
@@ -65,9 +72,12 @@ def include_launch_description(context: LaunchContext):
     launch_description_content = []
 
     for num in range(int(robot_number.perform(context))):
-        launch_description_content.append(
+        print(
+            f"navigation_multi_robot_launch: Robot {num} namespace: {robots[num]['namespace']}")
+        launch_description_content.extend([
             IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(os.path.join(nav_launch_file_dir, 'navigation_single_robot.launch.py')),
+                PythonLaunchDescriptionSource(os.path.join(
+                    nav_launch_file_dir, 'navigation_single_robot.launch.py')),
                 launch_arguments={
                     'autostart': autostart,
                     'default_bt_xml_filename': default_bt_xml_filename,
@@ -85,7 +95,7 @@ def include_launch_description(context: LaunchContext):
                     'enable_map_server': enable_map_server,
                 }.items(),
             )
-        )
+        ])
 
     return launch_description_content
 
@@ -97,14 +107,21 @@ def generate_launch_description():
     pkg_dir = get_package_share_directory('auna_nav2')
 
     # Paths to folders and files
-    default_rviz_config_file = os.path.join(pkg_dir, 'rviz', 'config_navigation_namespace.rviz')
-    default_bt_xml_filename_file = os.path.join(get_package_share_directory('nav2_bt_navigator'), 'behavior_trees', 'navigate_w_replanning_and_recovery.xml')
+    default_rviz_config_file = os.path.join(
+        pkg_dir, 'rviz', 'config_navigation_namespace.rviz')
+    default_bt_xml_filename_file = os.path.join(get_package_share_directory(
+        'nav2_bt_navigator'), 'behavior_trees', 'navigate_w_replanning_and_recovery.xml')
 
     # Launch Arguments
     autostart_arg = DeclareLaunchArgument(
         'autostart',
         default_value='true',
         description='Automatically startup the stacks'
+    )
+    namespace_arg = DeclareLaunchArgument(
+        'namespace',
+        default_value='robot',
+        description='Namespace prefix for the robots'
     )
     default_bt_xml_filename_arg = DeclareLaunchArgument(
         'default_bt_xml_filename',
@@ -166,6 +183,7 @@ def generate_launch_description():
     launch_description = LaunchDescription()
 
     launch_description.add_action(autostart_arg)
+    launch_description.add_action(namespace_arg)
     launch_description.add_action(default_bt_xml_filename_arg)
     launch_description.add_action(params_file_name_arg)
     launch_description.add_action(robot_number_arg)
@@ -178,6 +196,7 @@ def generate_launch_description():
     launch_description.add_action(enable_rviz_arg)
     launch_description.add_action(enable_map_server_arg)
 
-    launch_description.add_action(OpaqueFunction(function=include_launch_description))
+    launch_description.add_action(OpaqueFunction(
+        function=include_launch_description))
 
     return launch_description
