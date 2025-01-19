@@ -31,10 +31,11 @@ def include_launch_description(context: LaunchContext):
 
     namespace = context.launch_configurations['namespace']
     robots = []
+    print(f"Spawning {robot_number} robots with namespace {namespace}")
     for num in range(robot_number):
-        robot_ns = f'{namespace}{num}'  # Changed from f'robot{num}'
+        robot_ns = f'{namespace}{num}'
         robots.append({
-            'name': robot_ns,
+            'name': 'robot',
             'namespace': robot_ns,
             'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"]) +
             num *
