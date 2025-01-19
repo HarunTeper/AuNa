@@ -10,7 +10,7 @@ from launch.actions import (DeclareLaunchArgument, GroupAction,
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import PushRosNamespace, SetRemap
+from launch_ros.actions import SetRemap
 
 
 def generate_launch_description():
@@ -26,7 +26,7 @@ def generate_launch_description():
     nav2_launch_dir = os.path.join(nav2_bringup_dir, 'launch')
 
     # Create the launch configuration variables
-    namespace = LaunchConfiguration('namespace')
+    # namespace = LaunchConfiguration('namespace')
     map_yaml_file = LaunchConfiguration('map')
     use_sim_time = LaunchConfiguration('use_sim_time')
     params_file = LaunchConfiguration('params_file')
@@ -38,10 +38,10 @@ def generate_launch_description():
     stdout_linebuf_envvar = SetEnvironmentVariable(
         'RCUTILS_LOGGING_BUFFERED_STREAM', '1')
 
-    declare_namespace_cmd = DeclareLaunchArgument(
-        'namespace',
-        default_value='',
-        description='Top-level namespace')
+    # declare_namespace_cmd = DeclareLaunchArgument(
+    #     'namespace',
+    #     default_value='',
+    #     description='Top-level namespace')
 
     declare_slam_cmd = DeclareLaunchArgument(
         'slam',
@@ -80,7 +80,6 @@ def generate_launch_description():
 
     # Specify the actions
     bringup_cmd_group = GroupAction([
-        PushRosNamespace(namespace=namespace),
         SetRemap('/tf', 'tf'),
         SetRemap('/tf_static', 'tf_static'),
 
@@ -101,6 +100,7 @@ def generate_launch_description():
                               'autostart': autostart,
                               'params_file': params_file}.items()),
 
+
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(
                 nav2_launch_dir, 'navigation_launch.py')),
@@ -119,7 +119,7 @@ def generate_launch_description():
     launch_description.add_action(stdout_linebuf_envvar)
 
     # Declare the launch options
-    launch_description.add_action(declare_namespace_cmd)
+    # launch_description.add_action(declare_namespace_cmd)
     launch_description.add_action(declare_slam_cmd)
     launch_description.add_action(declare_map_yaml_cmd)
     launch_description.add_action(declare_use_sim_time_cmd)
