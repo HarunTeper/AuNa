@@ -57,7 +57,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(os.path.join(
             spawn_launch_file_dir, 'spawn_multi_robots.launch.py')),
         launch_arguments={
-            'robot_number': 1,
+            'robot_number': '1',
             'world_name': world_name,
             'namespace': namespace,
             'ground_truth': 'False'
@@ -65,8 +65,9 @@ def generate_launch_description():
     )
     nav_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-            nav_launch_file_dir, 'navigation_multi_robots.launch.py')),
+            nav_launch_file_dir, 'navigation_multi_robot.launch.py')),
         launch_arguments={
+            'robot_number': '1',
             'namespace': namespace,
             'rviz_config': rviz_config,
             'map': map_path,
