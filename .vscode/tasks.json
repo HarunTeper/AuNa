@@ -46,7 +46,7 @@
         {
             "label": "ROS2Build-F110",
             "type": "shell",
-            "command": "cd packages && colcon build --packages-select auna_teleoperation auna_f110 auna_common vesc vesc_ackermann vesc_msgs vesc_driver auna_msgs --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "command": "cd packages && colcon build --packages-select auna_f110 auna_common vesc vesc_ackermann vesc_msgs vesc_driver --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
@@ -74,7 +74,7 @@
         {
             "label": "LaunchNavigation",
             "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 launch auna_nav2 navigation_single_robot.launch.py namespace:=${input:robotNamespace} enable_slam:=false enable_localization:=true enable_navigation:=true enable_rviz:=true enable_map_server:=true",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_nav2 navigation_multi_robot.launch.py namespace:=${input:robotNamespace} robot_number:=${input:robotCount} enable_slam:=false enable_localization:=true enable_navigation:=true enable_rviz:=true enable_map_server:=true",
             "problemMatcher": []
         },
         {
@@ -83,13 +83,19 @@
             "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_single_robot_racetrack.launch.py namespace:=${input:robotNamespace}",
             "problemMatcher": []
         },
+        {
+            "label": "LaunchScenarioMultiRobotRacetrack",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_multi_robot_racetrack.launch.py namespace:=${input:robotNamespace} robot_number:=${input:robotCount}",
+            "problemMatcher": []
+        },
     ],
     "inputs": [
         {
             "id": "robotNamespace",
             "type": "promptString",
             "description": "Enter the robot namespace",
-            "default": "robot1"
+            "default": "robot"
         },
         {
             "id": "robotCount",
