@@ -11,7 +11,8 @@
 			"INSTALL_GAZEBO": "true",
 			"INSTALL_ROS2_TRACING": "true",
 			"ROS_DOMAIN_ID": "0",
-			"ROS_LOCALHOST_ONLY": "1"
+			"ROS_LOCALHOST_ONLY": "1",
+			"DISPLAY": "${localEnv:DISPLAY}"
 		}
 	},
 	// Configure container user
@@ -22,9 +23,7 @@
 	// Configure runtime settings
 	"runArgs": [
 		"--privileged",
-		"--network=host",
-		"-e",
-		"DISPLAY"
+		"--network=host"
 	],
 	"mounts": [
 		"source=/dev,target=/dev,type=bind",

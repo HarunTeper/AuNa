@@ -24,11 +24,6 @@ RUN if [ "$INSTALL_ROS2" = "true" ]; then \
     apt-get install -y ros-humble-desktop libgeographic-dev python3-pip python3-colcon-common-extensions ros-dev-tools; \
     fi
 
-# # --- Install additional ROS2 packages ---
-# RUN if [ "$INSTALL_ROS2" = "true" ]; then \
-#     apt-get install -y ros-humble-xacro ros-humble-udp-msgs ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-etsi-its-* ros-humble-gazebo-msgs; \
-#     fi
-
 # --- Install Gazebo ---
 ARG INSTALL_GAZEBO=true
 RUN if [ "$INSTALL_GAZEBO" = "true" ]; then \
