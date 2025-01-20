@@ -88,7 +88,7 @@
             "type": "shell",
             "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_multi_robot_racetrack.launch.py namespace:=${input:robotNamespace} robot_number:=${input:robotCount}",
             "problemMatcher": []
-        },
+        }
     ],
     "inputs": [
         {
