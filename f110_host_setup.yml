@@ -7,7 +7,7 @@
       file:
         path: /etc/systemd/timesyncd.conf.d
         state: directory
-        mode: '0755'
+        mode: "0755"
 
     - name: Add /etc/systemd/timesyncd.conf.d/irb.conf
       copy:
@@ -15,7 +15,7 @@
         content: |
           [Time]
           NTP=timehost.cs.tu-dortmund.de
-        mode: '0644'
+        mode: "0644"
 
     - name: Get all ethernet connections
       shell: nmcli -t -f NAME,TYPE connection show | grep ':802-3-ethernet$' | cut -d':' -f1
@@ -53,7 +53,7 @@
       file:
         path: /etc/udev/rules.d
         state: directory
-        mode: '0755'
+        mode: "0755"
 
     # - name: Add Hokuyo udev rule
     #   copy:
@@ -65,16 +65,73 @@
       copy:
         content: 'KERNEL=="ttyACM[0-9]*", ACTION=="add", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE="0666", GROUP="dialout", SYMLINK+="sensors/vesc"'
         dest: /etc/udev/rules.d/99-vesc.rules
-        mode: '0644'
+        mode: "0644"
 
     - name: Add PS4 controller udev rule
       copy:
         content: 'KERNEL=="js*", ATTRS{idVendor}=="0bda", ATTRS{idProduct}=="c136", MODE="0666", GROUP="input", SYMLINK+="input/ps4_controller"'
         dest: /etc/udev/rules.d/99-ps4.rules
-        mode: '0644'
+        mode: "0644"
 
     - name: Reload udev rules
       command: udevadm control --reload-rules
 
     - name: Trigger udev rules
       command: udevadm trigger
+
+    - name: Remove old Docker repository configurations
+      ansible.builtin.shell:
+        cmd: rm -f /etc/apt/sources.list.d/docker*.list
+
+    - name: Remove existing Docker repository files
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /etc/apt/sources.list.d/docker.list
+        - /etc/apt/keyrings/docker.gpg
+        - /etc/apt/keyrings/docker.asc
+
+    - name: Install initial packages for Docker
+      apt:
+        name:
+          - ca-certificates
+          - curl
+        state: present
+        update_cache: yes
+
+    - name: Create Docker GPG key directory
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Download Docker's official GPG key
+      get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+        filename: docker
+        update_cache: yes
+
+    - name: Install Docker packages
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: yes
+
+    - name: Add user to docker group
+      user:
+        name: "{{ lookup('env', 'USER') }}"
+        groups: docker
+        append: yes
