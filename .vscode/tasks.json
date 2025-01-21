@@ -46,7 +46,7 @@
         {
             "label": "ROS2Build-F110",
             "type": "shell",
-            "command": "cd packages && colcon build --packages-select auna_f110 auna_common vesc vesc_ackermann vesc_msgs vesc_driver --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "command": "cd packages && colcon build --packages-select auna_msgs auna_f110 auna_common vesc vesc_ackermann vesc_msgs vesc_driver --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
             "problemMatcher": [],
             "group": {
                 "kind": "build",

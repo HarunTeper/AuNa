@@ -1,3 +1,15 @@
+teleop_joy_ps4:
+  ros__parameters:
+    axis_linear: 1
+    scale_linear: 0.7
+    scale_linear_turbo: 1.5
+
+    axis_angular: 0
+    scale_angular: 0.4
+
+    enable_button: 6        # L2 shoulder button
+    enable_turbo_button: 4  # L1 shoulder button
+
 joy_teleop_ps4:
   ros__parameters:
     walk:
@@ -8,8 +20,8 @@ joy_teleop_ps4:
       axis_mappings:
         linear-x:
           axis: 4
-          scale: 3.0
-          offset: 0.0
+          scale: 0.5
+          offset: 0
         angular-z:
           axis: 0
           scale: 1.25

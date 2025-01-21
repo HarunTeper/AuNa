@@ -38,19 +38,19 @@ def generate_launch_description():
     )
 
     teleop_joy_node_ps4 = Node(
-        package='joy_teleop',
-        executable='joy_teleop',
-        name='joy_teleop',
+        package='teleop_twist_joy',
+        executable='teleop_node',
+        name='teleop_node',
         namespace=namespace,
         parameters=[yaml_launch.get_yaml_value(
-            joy_config_file_path, ['joy_teleop_ps4', 'ros__parameters'])],
+            joy_config_file_path, ['teleop_joy_ps4', 'ros__parameters'])],
         condition=IfCondition(use_ps4),
     )
 
     teleop_joy_node_g29 = Node(
-        package='joy_teleop',
-        executable='joy_teleop',
-        name='joy_teleop',
+        package='teleop_twist_joy',
+        executable='teleop_node',
+        name='teleop_node',
         namespace=namespace,
         parameters=[yaml_launch.get_yaml_value(
             joy_config_file_path, ['joy_teleop_g29', 'ros__parameters'])],
