@@ -44,16 +44,6 @@
             }
         },
         {
-            "label": "ROS2Build-F110",
-            "type": "shell",
-            "command": "cd packages && colcon build --packages-select auna_msgs auna_f110 auna_common vesc vesc_ackermann vesc_msgs vesc_driver --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            }
-        },
-        {
             "label": "LaunchGazebo",
             "type": "shell",
             "command": "cd packages && source install/setup.bash && ros2 launch auna_gazebo gazebo_world.launch.py",
@@ -87,6 +77,34 @@
             "label": "LaunchScenarioMultiRobotRacetrack",
             "type": "shell",
             "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_multi_robot_racetrack.launch.py namespace:=${input:robotNamespace} robot_number:=${input:robotCount}",
+            "problemMatcher": []
+        },
+        {
+            "label": "ROS2Build-F110",
+            "type": "shell",
+            "command": "cd packages && colcon build --packages-select auna_msgs auna_f110 auna_common vesc vesc_ackermann vesc_msgs vesc_driver --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "LaunchF110Platform",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_f110 f110_platform.launch.py",
+            "problemMatcher": []
+        },
+        {
+            "label": "LaunchF110Joy",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_f110 joy.launch.py use_ps4:=true",
+            "problemMatcher": []
+        },
+        {
+            "label": "LaunchF110RViz",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_f110 rviz.launch.py",
             "problemMatcher": []
         }
     ],
