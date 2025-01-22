@@ -85,7 +85,7 @@ RUN if [ "$INSTALL_ROS2" = "true" ]; then \
 
 # # --- Install additional ROS2 packages ---
 RUN if [ "$INSTALL_ROS2" = "true" ]; then \
-    apt-get install -y ros-humble-xacro ros-humble-udp-msgs libunwind-dev ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-etsi-its-* ros-humble-gazebo-msgs; \
+    apt-get install -y ros-humble-xacro ros-humble-udp-msgs libunwind-dev ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-etsi-its-* ros-humble-gazebo-msgs ros-humble-joy-linux; \
     fi
 
 # --- Set up user ---
