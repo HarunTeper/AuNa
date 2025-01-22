@@ -29,9 +29,9 @@ def generate_launch_description():
     use_g29 = LaunchConfiguration('use_g29')
 
     joy_node = Node(
-        package='joy',
-        executable='joy_node',
-        name='joy_node',
+        package='joy_linux',
+        executable='joy_linux_node',
+        name='joy_linux_node',
         namespace=namespace,
         parameters=[yaml_launch.get_yaml_value(
             joy_config_file_path, ['joy_node', 'ros__parameters'])],

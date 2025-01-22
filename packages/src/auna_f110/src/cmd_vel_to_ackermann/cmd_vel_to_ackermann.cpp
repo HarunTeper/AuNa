@@ -14,6 +14,10 @@ CmdVelToAckermann::CmdVelToAckermann() : Node("cmd_vel_to_ackermann_node")
   this->get_parameter<bool>("convert_yaw_to_steering_angle", convert_yaw_to_steering_angle_);
   this->get_parameter<double>("wheelbase", wheelbase_);
 
+  //max velocity parameter
+  this->declare_parameter<double>("max_velocity", 1.0);
+  this->get_parameter<double>("max_velocity", max_velocity_);
+
   emergency_stop_active_ = false;
 
   // service server for emergency stop
@@ -70,6 +74,12 @@ void CmdVelToAckermann::cmd_vel_callback(const geometry_msgs::msg::Twist::Shared
   }
 
   ackermann_msg.drive.speed = msg->linear.x;
+  // Limit the speed to max_velocity_
+  if (ackermann_msg.drive.speed > max_velocity_) {
+    ackermann_msg.drive.speed = max_velocity_;
+  } else if (ackermann_msg.drive.speed < -max_velocity_) {
+    ackermann_msg.drive.speed = -max_velocity_;
+  }
 
   if (convert_yaw_to_steering_angle_) {
     if (fabs(msg->linear.x) < 0.001) {

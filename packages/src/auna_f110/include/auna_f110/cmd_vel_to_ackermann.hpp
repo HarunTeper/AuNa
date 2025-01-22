@@ -30,4 +30,5 @@ private:
   bool convert_yaw_to_steering_angle_;
   double wheelbase_;
   bool emergency_stop_active_;
+  double max_velocity_;
 };

@@ -114,3 +114,4 @@ joy_node:
   ros__parameters:
     deadzone: 0.00
     autorepeat_rate: 100.0
+    dev: /dev/input/ps4_controller
