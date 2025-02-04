@@ -83,9 +83,20 @@ RUN if [ "$INSTALL_ROS2" = "true" ]; then \
     apt-get install -y ros-humble-ackermann-msgs ros-humble-urg-node ros-humble-serial-driver ros-humble-asio-cmake-module ros-humble-joy-teleop; \
     fi
 
-# # --- Install additional ROS2 packages ---
+# --- Install additional ROS2 packages ---
 RUN if [ "$INSTALL_ROS2" = "true" ]; then \
-    apt-get install -y ros-humble-xacro ros-humble-udp-msgs libunwind-dev ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-etsi-its-* ros-humble-gazebo-msgs ros-humble-joy-linux; \
+    apt-get update && \
+    apt-get install -y \
+    ros-humble-xacro \
+    ros-humble-udp-msgs \
+    libunwind-dev \
+    ros-humble-navigation2 \
+    ros-humble-nav2-bringup \
+    ros-humble-etsi-its-* \
+    ros-humble-gazebo-msgs \
+    ros-humble-joy-linux \
+    ros-humble-teleop-twist-keyboard \
+    ros-humble-teleop-twist-joy; \
     fi
 
 # --- Set up user ---
