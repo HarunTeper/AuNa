@@ -35,7 +35,7 @@ def include_launch_description(context: LaunchContext):
     for num in range(robot_number):
         robot_ns = f'{namespace}{num}'
         robots.append({
-            'name': 'robot',
+            'name': robot_ns,  # has to be equal to namespace, since global_tf uses it as such
             'namespace': robot_ns,
             'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"]) +
             num *
@@ -53,6 +53,8 @@ def include_launch_description(context: LaunchContext):
 
     # Spawn each robot with its own namespace group
     for robot in robots:
+        print(
+            f'Spawning robot {robot["name"]} with namespace {robot["namespace"]}')
         robot_group = GroupAction([
             PushRosNamespace(robot['namespace']),
             IncludeLaunchDescription(
