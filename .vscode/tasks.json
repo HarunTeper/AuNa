@@ -4,6 +4,82 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "ROS2Build-Gazebo",
+            "type": "shell",
+            "command": "cd packages && colcon build --packages-select auna_gazebo auna_common auna_msgs --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && mv build/compile_commands.json ..",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "ROS2Build-Teleoperation",
+            "type": "shell",
+            "command": "cd packages && colcon build --packages-select auna_teleoperation --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "ROS2Build-Nav2",
+            "type": "shell",
+            "command": "cd packages && colcon build --packages-select auna_nav2 --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "ROS2Build-Scenarios",
+            "type": "shell",
+            "command": "cd packages && colcon build --packages-select auna_scenarios --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "LaunchGazebo",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_gazebo gazebo_world.launch.py",
+            "problemMatcher": []
+        },
+        {
+            "label": "LaunchMultiRobotSpawn",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_gazebo spawn_multi_robots.launch.py robot_number:=${input:robotCount}",
+            "problemMatcher": []
+        },
+        {
+            "label": "LaunchGroundTruthLocalization",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_gazebo ground_truth_localization.launch.py namespace:=${input:robotNamespace}",
+            "problemMatcher": [],
+        },
+        {
+            "label": "LaunchNavigation",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_nav2 navigation_multi_robot.launch.py namespace:=${input:robotNamespace} robot_number:=${input:robotCount} enable_slam:=false enable_localization:=true enable_navigation:=true enable_rviz:=true enable_map_server:=true",
+            "problemMatcher": []
+        },
+        {
+            "label": "LaunchScenarioSingleRobotRacetrack",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_single_robot_racetrack.launch.py namespace:=${input:robotNamespace}",
+            "problemMatcher": []
+        },
+        {
+            "label": "LaunchScenarioMultiRobotRacetrack",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_multi_robot_racetrack.launch.py namespace:=${input:robotNamespace} robot_number:=${input:robotCount}",
+            "problemMatcher": []
+        },
+        {
             "label": "ROS2Build-Wallfollowing",
             "type": "shell",
             "command": "cd packages && colcon build --packages-select fp_wallfollowing --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
@@ -40,7 +116,7 @@
             "type": "shell",
             "command": "cd packages && source install/setup.bash && ros2 launch auna_f110 rviz.launch.py",
             "problemMatcher": []
-        }
+        },
     ],
     "inputs": [
         {
