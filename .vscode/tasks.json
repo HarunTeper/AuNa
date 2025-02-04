@@ -117,6 +117,12 @@
             "command": "cd packages && source install/setup.bash && ros2 launch auna_f110 rviz.launch.py",
             "problemMatcher": []
         },
+        {
+            "label": "LaunchTeleop",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args -r /cmd_vel:=${input:teleopCmdVel} --params-file src/auna_teleoperation/config/key_teleop.yaml",
+            "problemMatcher": []
+        }
     ],
     "inputs": [
         {
@@ -130,6 +136,12 @@
             "type": "promptString",
             "description": "Enter the number of robots to spawn",
             "default": "2"
-        }
+        },
+        {
+            "id": "teleopCmdVel",
+            "type": "promptString",
+            "description": "Enter the cmd_vel topic to remap to (don't forget to inlcude the namespace for the robot that you wish to control eg. 'robot0/cmd_vel')",
+            "default": "cmd_vel"
+        },
     ]
 }

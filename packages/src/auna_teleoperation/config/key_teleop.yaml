@@ -1,0 +1,11 @@
+keyboard_teleop:
+  ros__parameters:
+    twist_stamped_enabled: False
+    robot_base_frame: "base_link"
+    publish_rate: 10.0 # Hz
+    linear_max: 3.0 # m/s
+    angular_max: 2.0 # rad/s
+    linear_speed_multiplier: 0.5
+    angular_speed_multiplier: 0.5
+    step: 0.2 # For key_teleop_incremental only
+    use_sim_time: False

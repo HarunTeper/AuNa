@@ -20,16 +20,23 @@ find_package(rclpy REQUIRED)
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})
 
-# # Install Python executables
-# install(PROGRAMS
-#   scripts/teleoperation/teleop_node.py
-#   DESTINATION lib/${PROJECT_NAME}
-# )
+# Install config files
+install(DIRECTORY
+  config/
+  DESTINATION share/${PROJECT_NAME}/config
+)
 
-# Install shell scripts
+# Install Python executables
 install(PROGRAMS
-  scripts/start_teleop.sh
+  auna_teleoperation/keyboard_teleop_hold.py
   DESTINATION lib/${PROJECT_NAME}
+  RENAME keyboard_teleop_hold
+)
+
+install(PROGRAMS
+  auna_teleoperation/teleop.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME teleop
 )
 
 if(BUILD_TESTING)
