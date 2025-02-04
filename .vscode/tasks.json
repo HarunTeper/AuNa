@@ -52,7 +52,7 @@
         {
             "label": "LaunchMultiRobotSpawn",
             "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 launch auna_gazebo spawn_multi_robots.launch.py robot_number:=${input:robotCount}",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_gazebo spawn_multi_robot.launch.py robot_number:=${input:robotCount}",
             "problemMatcher": []
         },
         {

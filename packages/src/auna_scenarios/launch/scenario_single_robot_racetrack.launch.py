@@ -55,7 +55,7 @@ def generate_launch_description():
     )
     spawn_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-            spawn_launch_file_dir, 'spawn_multi_robots.launch.py')),
+            spawn_launch_file_dir, 'spawn_multi_robot.launch.py')),
         launch_arguments={
             'robot_number': '1',
             'world_name': world_name,
