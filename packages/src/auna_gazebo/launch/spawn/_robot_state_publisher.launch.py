@@ -1,12 +1,10 @@
 """Robot state publisher launch file"""
 import os
 from ament_index_python.packages import get_package_share_directory
-from launch_ros.actions import Node, PushRosNamespace
+from launch_ros.actions import Node
 from launch import LaunchDescription
-from launch.substitutions import LaunchConfiguration, Command, PythonExpression
-from launch.actions import DeclareLaunchArgument, GroupAction
-from launch.conditions import IfCondition
-from launch.substitutions import TextSubstitution
+from launch.substitutions import LaunchConfiguration, Command
+from launch.actions import DeclareLaunchArgument
 
 
 def generate_launch_description():
