@@ -3,10 +3,11 @@
     // for the documentation about the tasks.json format
     "version": "2.0.0",
     "tasks": [
+        // ------------------- BUILD -------------------
         {
             "label": "ROS2Build-Gazebo",
             "type": "shell",
-            "command": "cd packages && colcon build --packages-select auna_gazebo auna_common auna_msgs --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && mv build/compile_commands.json ..",
+            "command": "cd packages && colcon build --packages-select auna_gazebo auna_common auna_msgs auna_its_msgs auna_comm --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && mv build/compile_commands.json ..",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
@@ -44,6 +45,27 @@
             }
         },
         {
+            "label": "ROS2Build-Wallfollowing",
+            "type": "shell",
+            "command": "cd packages && colcon build --packages-select fp_wallfollowing --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "ROS2Build-F110",
+            "type": "shell",
+            "command": "git submodule update --init && cd packages && colcon build --packages-select auna_msgs auna_f110 auna_common vesc vesc_ackermann vesc_msgs vesc_driver --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        // ------------------- LAUNCH -------------------
+        {
             "label": "LaunchGazebo",
             "type": "shell",
             "command": "cd packages && source install/setup.bash && ros2 launch auna_gazebo gazebo_world.launch.py",
@@ -68,38 +90,6 @@
             "problemMatcher": []
         },
         {
-            "label": "LaunchScenarioSingleRobotRacetrack",
-            "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_single_robot_racetrack.launch.py namespace:=${input:robotNamespace}",
-            "problemMatcher": []
-        },
-        {
-            "label": "LaunchScenarioMultiRobotRacetrack",
-            "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_multi_robot_racetrack.launch.py namespace:=${input:robotNamespace} robot_number:=${input:robotCount}",
-            "problemMatcher": []
-        },
-        {
-            "label": "ROS2Build-Wallfollowing",
-            "type": "shell",
-            "command": "cd packages && colcon build --packages-select fp_wallfollowing --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            }
-        },
-        {
-            "label": "ROS2Build-F110",
-            "type": "shell",
-            "command": "git submodule update --init && cd packages && colcon build --packages-select auna_msgs auna_f110 auna_common vesc vesc_ackermann vesc_msgs vesc_driver --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            }
-        },
-        {
             "label": "LaunchF110Platform",
             "type": "shell",
             "command": "cd packages && source install/setup.bash && ros2 launch auna_f110 f110_platform.launch.py",
@@ -122,20 +112,45 @@
             "type": "shell",
             "command": "cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args -r /cmd_vel:=${input:teleopCmdVel} --params-file src/auna_teleoperation/config/key_teleop.yaml",
             "problemMatcher": []
-        }
+        },
+        // ------------------- SCENARIOS -------------------
+        {
+            "label": "LaunchScenarioRobotRacetrackNavigation",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_robot_racetrack_navigation.launch.py namespace:=${input:robotNamespace} robot_number:=${input:robotCount}",
+            "problemMatcher": []
+        },
+        {
+            "label": "LaunchScenarioRobotArenaNavigation",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_robot_arena_navigation.launch.py namespace:=${input:robotNamespace} robot_number:=${input:robotCount}",
+            "problemMatcher": []
+        },
+        {
+            "label": "LaunchScenarioSingleRobotArenaSlam",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_single_robot_arena_slam.launch.py",
+            "problemMatcher": []
+        },
+        {
+            "label": "LaunchScenarioSingleRobotRacetrackSlam",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_single_robot_racetrack_slam.launch.py",
+            "problemMatcher": []
+        },
     ],
     "inputs": [
         {
             "id": "robotNamespace",
             "type": "promptString",
-            "description": "Enter the robot namespace",
+            "description": "Enter the robot namespace. This value will be used as the base to enumerate the actual namespaces of the robots spawned, starting from 0 (eg. 'robot' will spawn robots with namespaces 'robot0', 'robot1', ...)",
             "default": "robot"
         },
         {
             "id": "robotCount",
             "type": "promptString",
             "description": "Enter the number of robots to spawn",
-            "default": "2"
+            "default": "1"
         },
         {
             "id": "teleopCmdVel",
