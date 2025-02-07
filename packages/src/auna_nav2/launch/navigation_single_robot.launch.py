@@ -38,12 +38,15 @@ def include_launch_description(context: LaunchContext):
         tmp_params_file, '')
     tmp_params_file = yaml_launch.get_temp_file(tmp_params_file)
 
-    cmd_group = GroupAction([
-        PushRosNamespace(namespace),
+    ns_value = namespace.perform(context)
+    actions = []
+    print(f"Namespace: {ns_value}")
+    if ns_value != "":
+        actions.append(PushRosNamespace(namespace))
+    actions.append(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(
                 nav_launch_file_dir, 'bringup.launch.py')),
-
             launch_arguments={
                 'autostart': autostart,
                 'default_bt_xml_filename': default_bt_xml_filename,
@@ -54,17 +57,9 @@ def include_launch_description(context: LaunchContext):
                 'enable_localization': enable_localization,
                 'enable_navigation': enable_navigation,
             }.items(),
-        ),
-        # IncludeLaunchDescription(
-        #     PythonLaunchDescriptionSource(os.path.join(
-        #         nav_launch_file_dir, 'map_server.launch.py')),
-        #     condition=IfCondition(enable_map_server),
-        #     launch_arguments={
-        #         'map': map_file,
-        #         'use_sim_time': use_sim_time,
-        #         'autostart': autostart,
-        #     }.items(),
-        # ),
+        )
+    )
+    actions.append(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(
                 nav_launch_file_dir, 'rviz.launch.py')),
@@ -74,7 +69,8 @@ def include_launch_description(context: LaunchContext):
                 'namespace': namespace,
             }.items(),
         )
-    ])
+    )
+    cmd_group = GroupAction(actions)
 
     # Nodes and other launch files
     cmds = []

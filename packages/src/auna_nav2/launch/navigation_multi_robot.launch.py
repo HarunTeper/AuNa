@@ -39,21 +39,34 @@ def include_launch_description(context: LaunchContext):
     # Names and poses of the robots
     map_path = os.path.join(gazebo_pkg_dir, "config",
                             "map_params", world_name.perform(context)+".yaml")
-    robots = []
-    for num in range(int(robot_number.perform(context))):
-        robot_namespace = f'{namespace.perform(context)}{num}'
-        robots.append({
-            'name': robot_namespace,
-            'namespace': robot_namespace,
-            'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"]),
-            'y_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"]),
-            'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"]),
-        }
-        )
+
+    namespace = namespace.perform(context)
+    robot_number = int(robot_number.perform(context))
+    print(
+        f"navigation_multi_robot_launch: Spawning {robot_number} nav nodes with namespace {namespace}")
+    if namespace:
+        robots = []
+        for num in range(robot_number):
+            robot_namespace = f'{namespace}{num}'
+            robots.append({
+                'name': robot_namespace,
+                'namespace': robot_namespace,
+                'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"]),
+                'y_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"]),
+                'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"]),
+            })
+    else:
+        robots = [{
+            'name': '',
+            'namespace': '',
+            'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"]),
+            'y_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"]),
+            'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"]),
+        }]
 
     # Create our own temporary YAML files that include substitutions and use them to create the parameter file launch configurations
     robot_params_file_args = []
-    for num in range(int(robot_number.perform(context))):
+    for num in range(robot_number):
         param_substitutions = {
             'initial_pose.x': robots[num]['x_pose'],
             'initial_pose.y': robots[num]['y_pose'],
@@ -71,9 +84,9 @@ def include_launch_description(context: LaunchContext):
     # Nodes and other launch files
     launch_description_content = []
 
-    for num in range(int(robot_number.perform(context))):
+    for num in range(robot_number):
         print(
-            f"navigation_multi_robot_launch: Robot {num} namespace: {robots[num]['namespace']}")
+            f"navigation_multi_robot_launch: Nav nodes {num} namespace: {robots[num]['namespace']}")
         launch_description_content.extend([
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(os.path.join(
@@ -120,7 +133,6 @@ def generate_launch_description():
     )
     namespace_arg = DeclareLaunchArgument(
         'namespace',
-        default_value='robot',
         description='Namespace prefix for the robots'
     )
     default_bt_xml_filename_arg = DeclareLaunchArgument(
@@ -135,7 +147,6 @@ def generate_launch_description():
     )
     robot_number_arg = DeclareLaunchArgument(
         'robot_number',
-        default_value='2',
         description='Number of spawned robots'
     )
     rviz_config_arg = DeclareLaunchArgument(

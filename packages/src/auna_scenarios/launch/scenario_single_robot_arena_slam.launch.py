@@ -31,7 +31,6 @@ def generate_launch_description():
     rviz_config = LaunchConfiguration(
         'rviz_config', default=default_rviz_config_file)
     world_name = LaunchConfiguration('world_name')
-    namespace = LaunchConfiguration('namespace')
 
     # Launch Arguments
     world_name_arg = DeclareLaunchArgument(
@@ -39,11 +38,6 @@ def generate_launch_description():
         default_value='arena',
         description='Gazebo world file name'
     )
-
-    namespace_arg = DeclareLaunchArgument(
-        'namespace',
-        default_value='robot',
-        description='ROS2 robot namespace (must not be empty)')
 
     # Nodes and other launch files
     world_cmd = IncludeLaunchDescription(
@@ -59,7 +53,7 @@ def generate_launch_description():
         launch_arguments={
             'robot_number': '1',
             'world_name': world_name,
-            'namespace': namespace,
+            'namespace': '',
             'ground_truth': 'False'
         }.items(),
     )
@@ -68,7 +62,7 @@ def generate_launch_description():
             nav_launch_file_dir, 'navigation_multi_robot.launch.py')),
         launch_arguments={
             'robot_number': '1',
-            'namespace': namespace,
+            'namespace': '',
             'rviz_config': rviz_config,
             'map': map_path,
             'params_file': default_params_file,
@@ -84,7 +78,6 @@ def generate_launch_description():
     launch_description = LaunchDescription()
 
     launch_description.add_action(world_name_arg)
-    launch_description.add_action(namespace_arg)
     launch_description.add_action(world_cmd)
     launch_description.add_action(spawn_cmd)
     launch_description.add_action(nav_cmd)

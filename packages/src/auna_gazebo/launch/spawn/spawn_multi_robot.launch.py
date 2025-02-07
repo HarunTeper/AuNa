@@ -7,7 +7,6 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription, GroupAction
 from launch.launch_context import LaunchContext
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, TextSubstitution
 from auna_common import yaml_launch
 
 
@@ -29,34 +28,41 @@ def include_launch_description(context: LaunchContext):
     map_path = os.path.join(
         pkg_dir, "config", "map_params", f"{world_name}.yaml")
 
-    namespace = context.launch_configurations['namespace']
+    namespace = context.launch_configurations.get('namespace', '')
     robots = []
-    print(f"Spawning {robot_number} robots with namespace {namespace}")
-    for num in range(robot_number):
-        robot_ns = f'{namespace}{num}'
+    print(
+        f"spawn_multi_robot.launch: Spawning {robot_number} robots with namespace {namespace}")
+    if namespace:
+        for num in range(robot_number):
+            robot_ns = f'{namespace}{num}'
+            robots.append({
+                'name': robot_ns,  # has to be equal to namespace, since global_tf uses it as such
+                'namespace': robot_ns,
+                'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"]) +
+                num *
+                yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"]),
+                'y_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"]) +
+                num *
+                yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"]),
+                'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"]) +
+                num *
+                yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"]),
+            })
+    else:
         robots.append({
-            'name': robot_ns,  # has to be equal to namespace, since global_tf uses it as such
-            'namespace': robot_ns,
-            'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"]) +
-            num *
-            yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"]),
-            'y_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"]) +
-            num *
-            yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"]),
-            'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"]) +
-            num *
-            yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"]),
+            'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"]),
+            'y_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"]),
+            'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"])
         })
 
-    # Create launch actions for each robot
     launch_actions = []
 
-    # Spawn each robot with its own namespace group
     for robot in robots:
-        print(
-            f'Spawning robot {robot["name"]} with namespace {robot["namespace"]}')
-        robot_group = GroupAction([
-            PushRosNamespace(robot['namespace']),
+        actions = []
+
+        if namespace:
+            actions.append(PushRosNamespace(robot['namespace']))
+        actions.append(
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
                     os.path.join(launch_file_dir,
@@ -67,12 +73,13 @@ def include_launch_description(context: LaunchContext):
                     'x_pose': str(robot['x_pose']),
                     'y_pose': str(robot['y_pose']),
                     'z_pose': str(robot['z_pose']),
-                    'namespace': robot['namespace'],
-                    'name': robot['name'],
+                    'namespace': robot['namespace'] if 'namespace' in robot else '',
+                    'name': robot['name'] if 'name' in robot else 'robot',
                     'ground_truth': ground_truth,
                 }.items()
             )
-        ])
+        )
+        robot_group = GroupAction(actions)
         launch_actions.append(robot_group)
 
     # Add global TF node
@@ -93,7 +100,6 @@ def generate_launch_description():
     # Launch Arguments
     robot_number_arg = DeclareLaunchArgument(
         'robot_number',
-        default_value='2',
         description='Number of spawned robots'
     )
 
@@ -117,7 +123,7 @@ def generate_launch_description():
 
     namespace_arg = DeclareLaunchArgument(
         'namespace',
-        default_value='robot',
+        default_value='',
         description='Base namespace for robots'
     )
 

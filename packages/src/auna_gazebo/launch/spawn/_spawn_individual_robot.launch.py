@@ -39,7 +39,6 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'namespace',
-            default_value='robot',
             description='Robot namespace for ROS nodes and topics'
         ),
         DeclareLaunchArgument(
@@ -82,7 +81,6 @@ def generate_launch_description():
             ),
             launch_arguments={
                 'use_sim_time': use_sim_time,
-                'namespace': namespace
             }.items()
         ),
         # Spawn robot
@@ -103,7 +101,6 @@ def generate_launch_description():
             package='auna_gazebo',
             executable='localization_pose_publisher',
             name='localization_pose_publisher',
-            arguments={namespace},
             output='screen'
         ),
         # Ground truth cam

@@ -80,8 +80,6 @@ def generate_launch_description():
             '-Y', y_orientation,
             '-robot_namespace', namespace,
         ],
-        condition=IfCondition(PythonExpression(
-            ["'", namespace, "' != ''"]))
     )
 
     return LaunchDescription([
