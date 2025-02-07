@@ -5,6 +5,7 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
+
 def generate_launch_description():
     """Return launch description"""
 
@@ -18,14 +19,19 @@ def generate_launch_description():
     nav_launch_file_dir = os.path.join(navigation_pkg_dir, 'launch')
 
     # Paths to folders and files
-    default_rviz_config_file = os.path.join(navigation_pkg_dir, 'rviz','config_navigation_namespace.rviz')
-    default_params_file = os.path.join(navigation_pkg_dir, 'config', 'nav2_params', 'nav2_params.yaml')
+    default_rviz_config_file = os.path.join(
+        navigation_pkg_dir, 'rviz', 'config_navigation_namespace.rviz')
+    default_params_file = os.path.join(
+        navigation_pkg_dir, 'config', 'nav2_params', 'nav2_params.yaml')
     map_path = os.path.join(navigation_pkg_dir, 'maps', 'arena', 'map.yaml')
 
     # Launch Argument Configurations
-    world_name = LaunchConfiguration('world_name', default='racetrack_decorated')
-    rviz_config = LaunchConfiguration('rviz_config', default=default_rviz_config_file)
+    world_name = LaunchConfiguration(
+        'world_name', default='racetrack_decorated')
+    rviz_config = LaunchConfiguration(
+        'rviz_config', default=default_rviz_config_file)
     world_name = LaunchConfiguration('world_name')
+    namespace = LaunchConfiguration('namespace')
 
     # Launch Arguments
     world_name_arg = DeclareLaunchArgument(
@@ -34,25 +40,35 @@ def generate_launch_description():
         description='Gazebo world file name'
     )
 
+    namespace_arg = DeclareLaunchArgument(
+        'namespace',
+        default_value='robot',
+        description='ROS2 robot namespace (must not be empty)')
+
     # Nodes and other launch files
     world_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(gazebo_launch_file_dir, 'gazebo_world.launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(
+            gazebo_launch_file_dir, 'gazebo_world.launch.py')),
         launch_arguments={
             'world_name': world_name
         }.items(),
     )
     spawn_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(spawn_launch_file_dir, 'spawn_single_robot.launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(
+            spawn_launch_file_dir, 'spawn_multi_robot.launch.py')),
         launch_arguments={
+            'robot_number': '1',
             'world_name': world_name,
-            'namespace': '',
+            'namespace': namespace,
             'ground_truth': 'False'
         }.items(),
     )
     nav_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(nav_launch_file_dir, 'navigation_single_robot.launch.py')),
+        PythonLaunchDescriptionSource(os.path.join(
+            nav_launch_file_dir, 'navigation_multi_robot.launch.py')),
         launch_arguments={
-            'namespace': '',
+            'robot_number': '1',
+            'namespace': namespace,
             'rviz_config': rviz_config,
             'map': map_path,
             'params_file': default_params_file,
@@ -68,7 +84,7 @@ def generate_launch_description():
     launch_description = LaunchDescription()
 
     launch_description.add_action(world_name_arg)
-
+    launch_description.add_action(namespace_arg)
     launch_description.add_action(world_cmd)
     launch_description.add_action(spawn_cmd)
     launch_description.add_action(nav_cmd)
