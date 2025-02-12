@@ -13,6 +13,13 @@ CamCommunication::CamCommunication() : Node("cam_communication")
     this->vehicle_length_ = this->get_parameter("vehicle_length").as_double();
     this->vehicle_width_ = this->get_parameter("vehicle_width").as_double();
 
+    // Log all parameters
+    RCLCPP_INFO(this->get_logger(), "Initializing CAM Communication node with parameters:");
+    RCLCPP_INFO(this->get_logger(), "  - filter_index: %d", this->filter_index_);
+    RCLCPP_INFO(this->get_logger(), "  - robot_index: %d", this->robot_index_);
+    RCLCPP_INFO(this->get_logger(), "  - vehicle_length: %.2f", this->vehicle_length_);
+    RCLCPP_INFO(this->get_logger(), "  - vehicle_width: %.2f", this->vehicle_width_);
+
     cam_filtered_publisher_ = this->create_publisher<auna_its_msgs::msg::CAM>("cam_filtered", 2);
     cam_publisher_ = this->create_publisher<auna_its_msgs::msg::CAM>("/cam", 2);
     cam_subscriber_ = this->create_subscription<auna_its_msgs::msg::CAM>("/cam", 2, [this](auna_its_msgs::msg::CAM::SharedPtr msg) -> void { this->cam_callback(msg); });
