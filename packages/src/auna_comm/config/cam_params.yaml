@@ -1,0 +1,7 @@
+
+cam_communication:
+  ros__parameters:
+    vehicle_length: 0.4
+    vehicle_width: 0.2
+    filter_index: 0
+    robot_index: 0

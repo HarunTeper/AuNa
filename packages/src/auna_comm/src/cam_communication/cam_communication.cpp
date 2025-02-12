@@ -5,9 +5,13 @@ CamCommunication::CamCommunication() : Node("cam_communication")
 {
     this->declare_parameter("filter_index", 0);
     this->declare_parameter("robot_index", 0);
+    this->declare_parameter("vehicle_length", 0.4);
+    this->declare_parameter("vehicle_width", 0.2);
 
     this->filter_index_ = this->get_parameter("filter_index").as_int();
     this->robot_index_ = this->get_parameter("robot_index").as_int();
+    this->vehicle_length_ = this->get_parameter("vehicle_length").as_double();
+    this->vehicle_width_ = this->get_parameter("vehicle_width").as_double();
 
     cam_filtered_publisher_ = this->create_publisher<auna_its_msgs::msg::CAM>("cam_filtered", 2);
     cam_publisher_ = this->create_publisher<auna_its_msgs::msg::CAM>("/cam", 2);
@@ -66,8 +70,8 @@ void CamCommunication::publish_cam_msg(std::string frame_id)
     msg.v = this->speed_;
     msg.vdot = this->acceleration_;
     msg.curv = this->curvature_;
-    msg.vehicle_length = 0.4;
-    msg.vehicle_width = 0.2;
+    msg.vehicle_length = this->vehicle_length_;
+    msg.vehicle_width = this->vehicle_width_;
 
     //publish message
     cam_publisher_->publish(msg);

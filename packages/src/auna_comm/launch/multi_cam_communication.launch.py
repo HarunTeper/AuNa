@@ -20,6 +20,7 @@ def include_launch_description(context: LaunchContext):
 
     # Launch Argument Configurations
     robot_number = LaunchConfiguration('robot_number', default='2')
+    config_file = LaunchConfiguration('config_file')
 
     # Nodes and other launch files
     launch_description_content = []
@@ -27,11 +28,13 @@ def include_launch_description(context: LaunchContext):
     for num in range(int(robot_number.perform(context))):
         launch_description_content.append(
             IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(os.path.join(omnet_launch_file_dir, 'cam_communication.launch.py')),
+                PythonLaunchDescriptionSource(os.path.join(
+                    omnet_launch_file_dir, 'cam_communication.launch.py')),
                 launch_arguments={
                     'namespace': "robot"+str(num),
                     'robot_index': str(num),
-                    'filter_index': str(num-1)
+                    'filter_index': str(num-1),
+                    'config_file': config_file
                 }.items(),
             )
         )
@@ -42,6 +45,12 @@ def include_launch_description(context: LaunchContext):
 def generate_launch_description():
     """Return launch description"""
 
+    default_config = os.path.join(
+        get_package_share_directory('auna_comm'),
+        'config',
+        'cam_params.yaml'
+    )
+
     # Launch Arguments
     robot_number_arg = DeclareLaunchArgument(
         'robot_number',
@@ -49,11 +58,18 @@ def generate_launch_description():
         description='Number of spawned robots'
     )
 
+    config_file_arg = DeclareLaunchArgument(
+        'config_file',
+        default_value=default_config,
+        description='Path to the config file'
+    )
+
     # Launch Description
     launch_description = LaunchDescription()
 
     launch_description.add_action(robot_number_arg)
-
-    launch_description.add_action(OpaqueFunction(function=include_launch_description))
+    launch_description.add_action(config_file_arg)
+    launch_description.add_action(OpaqueFunction(
+        function=include_launch_description))
 
     return launch_description

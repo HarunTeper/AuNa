@@ -56,6 +56,6 @@ class CamCommunication : public rclcpp::Node
         auna_its_msgs::msg::CAM last_cam_msg_;
         rclcpp::Time last_cam_msg_time_;
         
-
-
+        double vehicle_length_;
+        double vehicle_width_;
 };
