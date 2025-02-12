@@ -64,6 +64,16 @@
                 "isDefault": false
             }
         },
+        {
+            "label": "ROS2Build-Comm",
+            "type": "shell",
+            "command": "cd packages && colcon build --packages-select auna_comm --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
         // ------------------- LAUNCH -------------------
         {
             "label": "LaunchGazebo",
@@ -111,6 +121,12 @@
             "label": "LaunchTeleop",
             "type": "shell",
             "command": "cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args -r /cmd_vel:=${input:teleopCmdVel} --params-file src/auna_teleoperation/config/key_teleop.yaml",
+            "problemMatcher": []
+        },
+        {
+            "label": "LaunchCamCommunication",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_comm multi_cam_communication.launch.py robot_number:=${input:robotCount}",
             "problemMatcher": []
         },
         // ------------------- SCENARIOS -------------------
