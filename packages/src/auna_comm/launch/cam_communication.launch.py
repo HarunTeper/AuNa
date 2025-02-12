@@ -24,6 +24,7 @@ def generate_launch_description():
     namespace = LaunchConfiguration('namespace')
     robot_index = LaunchConfiguration('robot_index')
     filter_index = LaunchConfiguration('filter_index')
+    log_level = LaunchConfiguration('log_level')
 
     # Launch Arguments
     config_file_arg = DeclareLaunchArgument(
@@ -46,6 +47,11 @@ def generate_launch_description():
         default_value='0',
         description='Robot cam filter index'
     )
+    log_level_arg = DeclareLaunchArgument(
+        'log_level',
+        default_value='debug',
+        description='Logging level'
+    )
 
     cam_communication_cmd = Node(
         package='auna_comm',
@@ -56,6 +62,7 @@ def generate_launch_description():
             {'filter_index': filter_index},
             {'robot_index': robot_index}
         ],
+        arguments=['--ros-args', '--log-level', log_level],
         output='screen'
     )
 
@@ -73,6 +80,7 @@ def generate_launch_description():
     launch_description.add_action(namespace_arg)
     launch_description.add_action(robot_index_arg)
     launch_description.add_action(filter_index_arg)
+    launch_description.add_action(log_level_arg)
 
     launch_description.add_action(cam_communication_with_namespace)
     return launch_description
