@@ -51,6 +51,12 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}
 )
 
+# Add config directory installation
+install(DIRECTORY
+  config
+  DESTINATION share/${PROJECT_NAME}
+)
+
 # Install Cpp executables
 install(TARGETS
   cam_communication
