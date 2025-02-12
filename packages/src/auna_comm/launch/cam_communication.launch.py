@@ -5,6 +5,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction
 from launch.substitutions import LaunchConfiguration
 from ament_index_python.packages import get_package_share_directory
+from launch_ros.parameter_descriptions import ParameterFile
 import os
 
 
@@ -51,9 +52,9 @@ def generate_launch_description():
         executable='cam_communication',
         name='cam_communication',
         parameters=[
-                config_file,
-                {'filter_index': filter_index},
-                {'robot_index': robot_index}
+            config_file,
+            {'filter_index': filter_index},
+            {'robot_index': robot_index}
         ],
         output='screen'
     )

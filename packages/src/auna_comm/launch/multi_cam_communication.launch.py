@@ -34,7 +34,7 @@ def include_launch_description(context: LaunchContext):
                     'namespace': "robot"+str(num),
                     'robot_index': str(num),
                     'filter_index': str(num-1),
-                    'config_file': config_file
+                    'config_file': config_file,
                 }.items(),
             )
         )
