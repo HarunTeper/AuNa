@@ -1,5 +1,7 @@
 #include "auna_comm/cam_communication.hpp"
-#include "auna_its_msgs/msg/cam.hpp"
+#include <etsi_its_cam_msgs/msg/cam.hpp>
+#include <etsi_its_msgs_utils/cam_access.hpp>
+#include <cmath>
 
 CamCommunication::CamCommunication() : Node("cam_communication")
 {
@@ -9,7 +11,7 @@ CamCommunication::CamCommunication() : Node("cam_communication")
     this->declare_parameter("vehicle_width", 0.2);
 
     this->filter_index_ = this->get_parameter("filter_index").as_int();
-    this->robot_index_ = this->get_parameter("robot_index").as_int();
+    this->robot_index_ = this->get_parameter("robot_index")./*  */as_int();
     this->vehicle_length_ = this->get_parameter("vehicle_length").as_double();
     this->vehicle_width_ = this->get_parameter("vehicle_width").as_double();
 
@@ -20,71 +22,132 @@ CamCommunication::CamCommunication() : Node("cam_communication")
     RCLCPP_INFO(this->get_logger(), "  - vehicle_length: %.2f", this->vehicle_length_);
     RCLCPP_INFO(this->get_logger(), "  - vehicle_width: %.2f", this->vehicle_width_);
 
-    cam_filtered_publisher_ = this->create_publisher<auna_its_msgs::msg::CAM>("cam_filtered", 2);
-    cam_publisher_ = this->create_publisher<auna_its_msgs::msg::CAM>("/cam", 2);
-    cam_subscriber_ = this->create_subscription<auna_its_msgs::msg::CAM>("/cam", 2, [this](auna_its_msgs::msg::CAM::SharedPtr msg) -> void { this->cam_callback(msg); });
+    // Use etsi_its_cam_msgs::msg::CAM for publishers and subscribers
+    cam_filtered_publisher_ = this->create_publisher<etsi_its_cam_msgs::msg::CAM>("cam_filtered", 2);
+    cam_publisher_ = this->create_publisher<etsi_its_cam_msgs::msg::CAM>("/cam", 2);
+    cam_subscriber_ = this->create_subscription<etsi_its_cam_msgs::msg::CAM>("/cam", 2, [this](etsi_its_cam_msgs::msg::CAM::SharedPtr msg) -> void { this->cam_callback(msg); });
     timer_ = this->create_wall_timer(std::chrono::milliseconds(100), [this]() -> void { this->timer_callback(); });
-    
+
     this->pose_subscriber_ = this->create_subscription<geometry_msgs::msg::PoseStamped>("global_pose", 2, [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg){pose_callback(msg);});
     this->odom_subscriber_ = this->create_subscription<nav_msgs::msg::Odometry>("odom", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg){odom_callback(msg);});
 
-    last_cam_msg_time_ = this->now();
+    last_cam_msg_time_ = this->now(); // Initialize for time comparisons
 }
 
-void CamCommunication::cam_callback(const auna_its_msgs::msg::CAM::SharedPtr msg)
-{   
-    if (msg->robot_name == std::to_string(this->filter_index_))
+void CamCommunication::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg)
+{
+    // Filter incoming CAM messages based on station ID.
+    if (static_cast<int>(etsi_its_cam_msgs::access::getStationID(msg->header)) == this->filter_index_)
     {
-        cam_filtered_publisher_->publish(*msg);
+        // Create a *new* message to publish, don't forward directly.
+        etsi_its_cam_msgs::msg::CAM filtered_msg;
+
+        //Only copy the header to save resources
+        filtered_msg.header = msg->header;
+
+        cam_filtered_publisher_->publish(filtered_msg);
     }
 }
 
 void CamCommunication::timer_callback()
 {
-    if (this->now() - last_cam_msg_time_ >= std::chrono::milliseconds(1000))
+    // Calculate time since last CAM message using ROS time, as before.  No ETSI conversion needed here.
+    rclcpp::Duration elapsed_time = this->now() - last_cam_msg_time_;
+
+    if (elapsed_time >= std::chrono::milliseconds(1000))
     {
         publish_cam_msg("timeout");
     }
     else
     {
-        if (fabs(this->speed_ - last_cam_msg_.v) > 0.05)
+        // Use access functions and *correct units* for comparisons.
+        if (fabs(this->speed_ - last_cam_msg_speed_) > 0.05)
         {
             publish_cam_msg("speed");
         }
-        else if (sqrt(pow(this->longitude_ - last_cam_msg_.x, 2) + pow(this->latitude_ - last_cam_msg_.y, 2)) > 0.4)
+        else if (sqrt(pow(this->longitude_ - last_cam_msg_longitude_, 2) + pow(this->latitude_ - last_cam_msg_latitude_, 2)) > 0.4)  // This is still in meters.  Consider converting to microdegrees if needed.
         {
             publish_cam_msg("position");
         }
-        else if (fabs(this->heading_ - last_cam_msg_.theta) > 4 * M_PI / 180)
+        else if (fabs(this->heading_ - last_cam_msg_heading_) > 4 * M_PI / 180)
         {
             publish_cam_msg("heading");
         }
     }
 }
 
+
 void CamCommunication::publish_cam_msg(std::string frame_id)
 {
-    auto msg = auna_its_msgs::msg::CAM();
-    msg.header.stamp = this->now();
-    msg.header.frame_id = frame_id;
-    msg.robot_name = std::to_string(this->robot_index_);
-    msg.x = this->longitude_;
-    msg.y = this->latitude_;
-    msg.z = this->altitude_;
-    msg.theta = this->heading_;
-    msg.thetadot = this->yaw_rate_;
-    msg.drive_direction = this->drive_direction_;
-    msg.v = this->speed_;
-    msg.vdot = this->acceleration_;
-    msg.curv = this->curvature_;
-    msg.vehicle_length = this->vehicle_length_;
-    msg.vehicle_width = this->vehicle_width_;
+    etsi_its_cam_msgs::msg::CAM msg;
 
-    //publish message
+    // --- ItsPduHeader ---
+     etsi_its_cam_msgs::access::setItsPduHeader(msg, etsi_its_cam_msgs::msg::ItsPduHeader::MESSAGE_ID_CAM, this->robot_index_);
+
+    // --- CoopAwareness ---
+    etsi_its_cam_msgs::access::setGenerationDeltaTime(msg, this->now().nanoseconds(), etsi_its_msgs::getLeapSecondInsertionsSince2004(this->now().seconds()));
+
+    // --- CamParameters -> BasicContainer ---
+    etsi_its_cam_msgs::access::setStationType(msg, etsi_its_cam_msgs::msg::StationType::PASSENGER_CAR);
+    etsi_its_cam_msgs::access::setReferencePosition(msg, this->latitude_ ,this->longitude_ , this->altitude_ );
+
+    // --- CamParameters -> HighFrequencyContainer ---
+    etsi_its_cam_msgs::msg::BasicVehicleContainerHighFrequency high_freq_container;
+
+    // Heading
+    etsi_its_cam_msgs::access::setHeading(high_freq_container.heading, this->heading_ * 180.0 / M_PI); // Corrected: Pass the heading *field*
+    high_freq_container.heading.heading_confidence.value = etsi_its_cam_msgs::msg::HeadingConfidence::UNAVAILABLE;
+    // Speed
+    etsi_its_cam_msgs::access::setSpeed(high_freq_container.speed, this->speed_); // Corrected: Pass the speed *field*
+    high_freq_container.speed.speed_confidence.value = etsi_its_cam_msgs::msg::SpeedConfidence::UNAVAILABLE;
+   
+    // Drive Direction
+    if (this->drive_direction_ == 1) {
+      high_freq_container.drive_direction.value = etsi_its_cam_msgs::msg::DriveDirection::FORWARD;
+    } else if (this->drive_direction_ == -1) {
+      high_freq_container.drive_direction.value = etsi_its_cam_msgs::msg::DriveDirection::BACKWARD;
+    } else {
+      high_freq_container.drive_direction.value = etsi_its_cam_msgs::msg::DriveDirection::UNAVAILABLE;
+    }
+
+    // Vehicle Length and Width (in 10 cm units)
+    etsi_its_cam_msgs::access::setVehicleLength(high_freq_container.vehicle_length, this->vehicle_length_); // Corrected
+    high_freq_container.vehicle_length.vehicle_length_confidence_indication.value = etsi_its_cam_msgs::msg::VehicleLengthConfidenceIndication::UNAVAILABLE;
+    etsi_its_cam_msgs::access::setVehicleWidth(high_freq_container.vehicle_width, this->vehicle_width_); // Corrected
+
+    // Longitudinal Acceleration (in 0.1 m/s^2)
+    etsi_its_cam_msgs::access::setLongitudinalAcceleration(high_freq_container.longitudinal_acceleration, this->acceleration_); // Corrected
+    high_freq_container.longitudinal_acceleration.longitudinal_acceleration_confidence.value = etsi_its_cam_msgs::msg::AccelerationConfidence::UNAVAILABLE;
+
+    // Curvature  and CurvatureCalculationMode, no access function in etsi_its_cam_msgs::access
+    high_freq_container.curvature.curvature_value.value = static_cast<int16_t>(std::round(this->curvature_ * 10000.0)); // Scale by 10000
+    high_freq_container.curvature.curvature_confidence.value = etsi_its_cam_msgs::msg::CurvatureConfidence::UNAVAILABLE;
+    high_freq_container.curvature_calculation_mode.value = etsi_its_cam_msgs::msg::CurvatureCalculationMode::YAW_RATE_USED;
+
+    // Yaw Rate no access function in etsi_its_cam_msgs::access
+    // Convert rad/s to 0.01 degrees/s, and handle the special UNAVAILABLE case.
+    constexpr int16_t UNAVAILABLE_YAW_RATE = 32767;
+    if (std::isnan(this->yaw_rate_)) {
+        high_freq_container.yaw_rate.yaw_rate_value.value = UNAVAILABLE_YAW_RATE;
+    } else {
+        high_freq_container.yaw_rate.yaw_rate_value.value = static_cast<int16_t>(std::round(this->yaw_rate_ * 180.0 / M_PI * 100.0)); // rad/s to 0.01 deg/s
+    }
+
+     high_freq_container.yaw_rate.yaw_rate_confidence.value = etsi_its_cam_msgs::msg::YawRateConfidence::UNAVAILABLE; //Set confidence
+
+    // Set the CHOICE in the HighFrequencyContainer *after* populating the struct
+    msg.cam.cam_parameters.high_frequency_container.choice = etsi_its_cam_msgs::msg::HighFrequencyContainer::CHOICE_BASIC_VEHICLE_CONTAINER_HIGH_FREQUENCY;
+    msg.cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency = high_freq_container;  // Assign the populated struct
+
+    // --- Publish the message ---
     cam_publisher_->publish(msg);
 
-    last_cam_msg_ = msg;
-    last_cam_msg_time_ = msg.header.stamp;
+    // --- Update last message information for delta calculations ---
+    last_cam_msg_time_ = this->now();
+    last_cam_msg_speed_ = this->speed_;
+    last_cam_msg_latitude_ = this->latitude_;
+    last_cam_msg_longitude_ = this->longitude_;
+    last_cam_msg_heading_ = this->heading_;
 }
 
 void CamCommunication::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
@@ -134,10 +197,10 @@ void CamCommunication::pose_callback(const geometry_msgs::msg::PoseStamped::Shar
     this->altitude_ = msg->pose.position.z;
 
     tf2::Quaternion quat(
-        msg->pose.orientation.x,
-        msg->pose.orientation.y,
-        msg->pose.orientation.z,
-        msg->pose.orientation.w
+    msg->pose.orientation.x,
+    msg->pose.orientation.y,
+    msg->pose.orientation.z,
+    msg->pose.orientation.w
     );
     quat.normalize();
     tf2::Matrix3x3 matrix(quat);

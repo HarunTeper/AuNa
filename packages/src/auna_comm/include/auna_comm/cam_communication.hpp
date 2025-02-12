@@ -1,6 +1,9 @@
+#ifndef CAM_COMMUNICATION_HPP_
+#define CAM_COMMUNICATION_HPP_
+
 #include "rclcpp/rclcpp.hpp"
 
-#include "auna_its_msgs/msg/cam.hpp"
+#include <etsi_its_cam_msgs/msg/cam.hpp>
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
@@ -14,16 +17,16 @@ class CamCommunication : public rclcpp::Node
         CamCommunication();
     private:
         //subscriber and publisher, timer for cam messages
-        rclcpp::Subscription<auna_its_msgs::msg::CAM>::SharedPtr cam_subscriber_;
-        rclcpp::Publisher<auna_its_msgs::msg::CAM>::SharedPtr cam_filtered_publisher_;
-        rclcpp::Publisher<auna_its_msgs::msg::CAM>::SharedPtr cam_publisher_;
+        rclcpp::Subscription<etsi_its_cam_msgs::msg::CAM>::SharedPtr cam_subscriber_;
+        rclcpp::Publisher<etsi_its_cam_msgs::msg::CAM>::SharedPtr cam_filtered_publisher_;
+        rclcpp::Publisher<etsi_its_cam_msgs::msg::CAM>::SharedPtr cam_publisher_;
         rclcpp::TimerBase::SharedPtr timer_;
         //subscriber for pose and odom messages
         rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_subscriber_;
         rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscriber_;
 
         //callback functions
-        void cam_callback(const auna_its_msgs::msg::CAM::SharedPtr msg);
+        void cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg);
         void timer_callback();
         void publish_cam_msg(std::string frame_id);
 
@@ -53,9 +56,15 @@ class CamCommunication : public rclcpp::Node
         float curvature_ = 0.0;
         float old_speed_ = 0.0;
 
-        auna_its_msgs::msg::CAM last_cam_msg_;
+        // etsi_its_cam_ts_msgs::msg::CAM last_cam_msg_; // No longer needed, publish new message every time.
         rclcpp::Time last_cam_msg_time_;
-        
+        //Variables to store the last values, to check if a new message has to be sent
+        float last_cam_msg_speed_ = 0.0;
+        float last_cam_msg_latitude_ = 0.0;
+        float last_cam_msg_longitude_ = 0.0;
+        float last_cam_msg_heading_ = 0.0;
+
         double vehicle_length_;
         double vehicle_width_;
 };
+#endif  // CAM_COMMUNICATION_HPP_
