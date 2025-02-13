@@ -99,6 +99,11 @@ RUN if [ "$INSTALL_ROS2" = "true" ]; then \
     ros-humble-teleop-twist-joy; \
     fi
 
+# --- Install python package for teleop
+RUN if [ "$INSTALL_ROS2" = "true" ]; then \
+    pip install pynput; \
+    fi
+
 # --- Set up user ---
 
 # set user
