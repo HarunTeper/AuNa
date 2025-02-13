@@ -21,6 +21,7 @@ def include_launch_description(context: LaunchContext):
     # Launch Argument Configurations
     robot_number = LaunchConfiguration('robot_number', default='2')
     config_file = LaunchConfiguration('config_file')
+    namespace = LaunchConfiguration('namespace')
 
     # Nodes and other launch files
     launch_description_content = []
@@ -31,7 +32,7 @@ def include_launch_description(context: LaunchContext):
                 PythonLaunchDescriptionSource(os.path.join(
                     omnet_launch_file_dir, 'cam_communication.launch.py')),
                 launch_arguments={
-                    'namespace': "robot"+str(num),
+                    'namespace': str(namespace)+str(num),
                     'robot_index': str(num),
                     'filter_index': str(num-1),
                     'config_file': config_file,
@@ -64,11 +65,18 @@ def generate_launch_description():
         description='Path to the config file'
     )
 
+    namespace_arg = DeclareLaunchArgument(
+        'namespace',
+        default_value='',
+        description='Namespace'
+    )
+
     # Launch Description
     launch_description = LaunchDescription()
 
     launch_description.add_action(robot_number_arg)
     launch_description.add_action(config_file_arg)
+    launch_description.add_action(namespace_arg)
     launch_description.add_action(OpaqueFunction(
         function=include_launch_description))
 
