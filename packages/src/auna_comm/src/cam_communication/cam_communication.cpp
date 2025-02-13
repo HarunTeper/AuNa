@@ -50,7 +50,6 @@ CamCommunication::CamCommunication() : Node("cam_communication")
         : std::string("following Robot" + std::to_string(this->robot_index_ - 1)).c_str());
   }
 
-  // Use etsi_its_cam_msgs::msg::CAM for publishers and subscribers
   cam_publisher_ = this->create_publisher<etsi_its_cam_msgs::msg::CAM>("/cam", 2);
   cam_subscriber_ = this->create_subscription<etsi_its_cam_msgs::msg::CAM>(
     "/cam", 2,
@@ -138,7 +137,7 @@ void CamCommunication::publish_cam_msg(std::string frame_id)
 
   // --- ItsPduHeader ---
   etsi_its_cam_msgs::access::setItsPduHeader(
-    msg, etsi_its_cam_msgs::msg::ItsPduHeader::MESSAGE_ID_CAM, this->robot_index_);
+    msg.header, etsi_its_cam_msgs::msg::ItsPduHeader::MESSAGE_ID_CAM, this->robot_index_);
 
   // --- CoopAwareness ---
   etsi_its_cam_msgs::access::setGenerationDeltaTime(
@@ -155,14 +154,11 @@ void CamCommunication::publish_cam_msg(std::string frame_id)
   etsi_its_cam_msgs::msg::BasicVehicleContainerHighFrequency high_freq_container;
 
   // Heading
-  etsi_its_cam_msgs::access::setHeading(
-    high_freq_container.heading,
-    this->heading_ * 180.0 / M_PI);  // Corrected: Pass the heading *field*
+  etsi_its_cam_msgs::access::setHeading(high_freq_container.heading, this->heading_ * 180.0 / M_PI);
   high_freq_container.heading.heading_confidence.value =
     etsi_its_cam_msgs::msg::HeadingConfidence::UNAVAILABLE;
   // Speed
-  etsi_its_cam_msgs::access::setSpeed(
-    high_freq_container.speed, this->speed_);  // Corrected: Pass the speed *field*
+  etsi_its_cam_msgs::access::setSpeed(high_freq_container.speed, this->speed_);
   high_freq_container.speed.speed_confidence.value =
     etsi_its_cam_msgs::msg::SpeedConfidence::UNAVAILABLE;
 
@@ -177,15 +173,15 @@ void CamCommunication::publish_cam_msg(std::string frame_id)
 
   // Vehicle Length and Width (in 10 cm units)
   etsi_its_cam_msgs::access::setVehicleLength(
-    high_freq_container.vehicle_length, this->vehicle_length_);  // Corrected
+    high_freq_container.vehicle_length, this->vehicle_length_);
   high_freq_container.vehicle_length.vehicle_length_confidence_indication.value =
     etsi_its_cam_msgs::msg::VehicleLengthConfidenceIndication::UNAVAILABLE;
   etsi_its_cam_msgs::access::setVehicleWidth(
-    high_freq_container.vehicle_width, this->vehicle_width_);  // Corrected
+    high_freq_container.vehicle_width, this->vehicle_width_);
 
   // Longitudinal Acceleration (in 0.1 m/s^2)
   etsi_its_cam_msgs::access::setLongitudinalAcceleration(
-    high_freq_container.longitudinal_acceleration, this->acceleration_);  // Corrected
+    high_freq_container.longitudinal_acceleration, this->acceleration_);
   high_freq_container.longitudinal_acceleration.longitudinal_acceleration_confidence.value =
     etsi_its_cam_msgs::msg::AccelerationConfidence::UNAVAILABLE;
 
@@ -216,7 +212,6 @@ void CamCommunication::publish_cam_msg(std::string frame_id)
   msg.cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency =
     high_freq_container;  // Assign the populated struct
 
-  // --- Publish the message ---
   cam_publisher_->publish(msg);
   RCLCPP_INFO(this->get_logger(), "CAM message published successfully");
 
