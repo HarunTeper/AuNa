@@ -126,7 +126,7 @@
         {
             "label": "LaunchCamCommunication",
             "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 launch auna_comm multi_cam_communication.launch.py robot_number:=${input:robotCount}",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_comm multi_cam_communication.launch.py robot_number:=${input:robotCount} namespace:=${input:robotNamespace}",
             "problemMatcher": []
         },
         // ------------------- SCENARIOS -------------------
