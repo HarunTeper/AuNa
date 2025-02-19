@@ -2,9 +2,9 @@
 
 import os
 from ament_index_python.packages import get_package_share_directory
-from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription
-from launch.launch_context import LaunchContext
+from launch import LaunchDescription, LaunchContext
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription, GroupAction
+from launch_ros.actions import PushRosNamespace
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
@@ -26,12 +26,15 @@ def include_launch_description(context: LaunchContext):
 
     for num in range(int(robot_number.perform(context))):
         launch_description_content.append(
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(os.path.join(omnet_launch_file_dir, 'omnet_single_robot_modules.launch.py')),
-                launch_arguments={
-                    'namespace': "robot"+str(num)
-                }.items(),
-            )
+            GroupAction([
+                PushRosNamespace(f'robot{num}'),
+                IncludeLaunchDescription(
+                    PythonLaunchDescriptionSource(
+                        os.path.join(omnet_launch_file_dir,
+                                     'omnet_single_robot_modules.launch.py')
+                    )
+                )
+            ])
         )
 
     return launch_description_content
@@ -52,6 +55,7 @@ def generate_launch_description():
 
     launch_description.add_action(robot_number_arg)
 
-    launch_description.add_action(OpaqueFunction(function=include_launch_description))
+    launch_description.add_action(OpaqueFunction(
+        function=include_launch_description))
 
     return launch_description
