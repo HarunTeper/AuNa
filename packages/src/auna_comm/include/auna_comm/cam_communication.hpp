@@ -15,6 +15,9 @@ class CamCommunication : public rclcpp::Node
 {
 public:
   CamCommunication();
+  static constexpr std::chrono::milliseconds T_GenCamMin{100};    // 100ms = 10Hz max
+  static constexpr std::chrono::milliseconds T_GenCamMax{1000};   // 1000ms = 1Hz min
+  static constexpr std::chrono::milliseconds T_CheckCamGen{100};  // Check interval
 
 private:
   // subscriber and publisher, timer for cam messages
@@ -28,7 +31,7 @@ private:
   // callback functions
   void cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg);
   void timer_callback();
-  void publish_cam_msg(std::string frame_id);
+  void publish_cam_msg(const std::string & trigger);
 
   // filter index variable
   int filter_index_ = 0;
