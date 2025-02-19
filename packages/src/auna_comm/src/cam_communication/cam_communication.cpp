@@ -18,36 +18,20 @@ CamCommunication::CamCommunication() : Node("cam_communication")
   this->vehicle_length_ = this->get_parameter("vehicle_length").as_double();
   this->vehicle_width_ = this->get_parameter("vehicle_width").as_double();
 
-  // Enhanced parameter logging and validation for chain following
-  RCLCPP_INFO(this->get_logger(), "Initializing CAM Communication node with parameters:");
+  // Reduce initialization logging to essentials
   RCLCPP_INFO(
-    this->get_logger(), "  - robot_index: %d (This node will send CAMs with stationID=%d)",
-    this->robot_index_, this->robot_index_);
-  RCLCPP_INFO(
-    this->get_logger(), "  - filter_index: %d (This node will process CAMs from stationID=%d)",
-    this->filter_index_, this->filter_index_);
-  RCLCPP_INFO(this->get_logger(), "  - vehicle_length: %.2f", this->vehicle_length_);
-  RCLCPP_INFO(this->get_logger(), "  - vehicle_width: %.2f", this->vehicle_width_);
+    this->get_logger(), "Initializing CAM Communication - Robot%d %s", this->robot_index_,
+    this->robot_index_ == 0 ? "(leader)" : "(follower)");
 
-  // Validate chain following configuration
+  // Only warn about incorrect configurations
   if (this->robot_index_ == 0 && this->filter_index_ != -1) {
     RCLCPP_WARN(
-      this->get_logger(),
-      "Robot0 (leader) is configured to receive CAMs (filter_index=%d). "
-      "The leader should not process incoming CAMs.",
+      this->get_logger(), "Robot0 (leader) should not process incoming CAMs (filter_index=%d)",
       this->filter_index_);
   } else if (this->robot_index_ > 0 && this->filter_index_ != (this->robot_index_ - 1)) {
     RCLCPP_WARN(
-      this->get_logger(),
-      "Robot%d (follower) is configured to receive CAMs from stationID=%d. "
-      "In chain following, it should receive from Robot%d (stationID=%d).",
-      this->robot_index_, this->filter_index_, this->robot_index_ - 1, this->robot_index_ - 1);
-  } else {
-    RCLCPP_INFO(
-      this->get_logger(), "Chain following configuration correct: Robot%d %s", this->robot_index_,
-      this->robot_index_ == 0
-        ? "(leader)"
-        : std::string("following Robot" + std::to_string(this->robot_index_ - 1)).c_str());
+      this->get_logger(), "Robot%d should receive from Robot%d, not Robot%d", this->robot_index_,
+      this->robot_index_ - 1, this->filter_index_);
   }
 
   cam_publisher_ = this->create_publisher<etsi_its_cam_msgs::msg::CAM>("/cam", 2);
@@ -69,14 +53,13 @@ CamCommunication::CamCommunication() : Node("cam_communication")
 void CamCommunication::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg)
 {
   int received_station_id = static_cast<int>(etsi_its_cam_msgs::access::getStationID(msg->header));
-  RCLCPP_INFO(
-    this->get_logger(), "Received CAM message from Robot%d (my index=%d, following Robot%d)",
+  RCLCPP_DEBUG(  // Changed from INFO to DEBUG
+    this->get_logger(), "Received CAM from Robot%d (my index=%d, following Robot%d)",
     received_station_id, this->robot_index_, this->filter_index_);
 
   if (received_station_id == this->filter_index_) {
-    RCLCPP_INFO(
-      this->get_logger(), "Processing CAM message from matching filter_index: %d",
-      this->filter_index_);
+    RCLCPP_DEBUG(  // Changed from INFO to DEBUG
+      this->get_logger(), "Processing CAM from Robot%d", this->filter_index_);
   }
 }
 
@@ -88,7 +71,7 @@ void CamCommunication::timer_callback()
     elapsed_time.seconds());
 
   if (elapsed_time >= std::chrono::milliseconds(1000)) {
-    RCLCPP_INFO(this->get_logger(), "Publishing CAM due to timeout (>1s since last message)");
+    RCLCPP_DEBUG(this->get_logger(), "Publishing CAM due to timeout");
     publish_cam_msg("timeout");
   } else {
     double speed_diff = fabs(this->speed_ - last_cam_msg_speed_);
@@ -103,17 +86,15 @@ void CamCommunication::timer_callback()
     RCLCPP_DEBUG(this->get_logger(), "  Heading diff: %.3f degrees (threshold: 4.0)", heading_diff);
 
     if (speed_diff > 0.05) {
-      RCLCPP_INFO(
-        this->get_logger(), "Publishing CAM due to speed change (%.2f -> %.2f m/s)",
-        last_cam_msg_speed_, this->speed_);
+      RCLCPP_DEBUG(
+        this->get_logger(), "Publishing CAM: speed change %.2f -> %.2f m/s", last_cam_msg_speed_,
+        this->speed_);
       publish_cam_msg("speed");
     } else if (position_diff > 0.4) {
-      RCLCPP_INFO(
-        this->get_logger(), "Publishing CAM due to position change (%.2f m)", position_diff);
+      RCLCPP_DEBUG(this->get_logger(), "Publishing CAM: position change %.2f m", position_diff);
       publish_cam_msg("position");
     } else if (heading_diff > 4.0) {
-      RCLCPP_INFO(
-        this->get_logger(), "Publishing CAM due to heading change (%.2f degrees)", heading_diff);
+      RCLCPP_DEBUG(this->get_logger(), "Publishing CAM: heading change %.2f deg", heading_diff);
       publish_cam_msg("heading");
     }
   }
@@ -121,17 +102,7 @@ void CamCommunication::timer_callback()
 
 void CamCommunication::publish_cam_msg(std::string frame_id)
 {
-  RCLCPP_INFO(this->get_logger(), "Publishing CAM message (trigger: %s)", frame_id.c_str());
-  RCLCPP_DEBUG(this->get_logger(), "Vehicle state:");
-  RCLCPP_DEBUG(
-    this->get_logger(), "  Position: (%.6f, %.6f, %.2f)", this->latitude_, this->longitude_,
-    this->altitude_);
-  RCLCPP_DEBUG(this->get_logger(), "  Speed: %.2f m/s", this->speed_);
-  RCLCPP_DEBUG(this->get_logger(), "  Heading: %.2f deg", this->heading_ * 180.0 / M_PI);
-  RCLCPP_DEBUG(this->get_logger(), "  Acceleration: %.2f m/s²", this->acceleration_);
-  RCLCPP_DEBUG(this->get_logger(), "  Yaw rate: %.2f rad/s", this->yaw_rate_);
-  RCLCPP_DEBUG(this->get_logger(), "  Curvature: %.4f", this->curvature_);
-  RCLCPP_DEBUG(this->get_logger(), "  Drive direction: %.0f", this->drive_direction_);
+  RCLCPP_DEBUG(this->get_logger(), "Publishing CAM (trigger: %s)", frame_id.c_str());
 
   etsi_its_cam_msgs::msg::CAM msg;
 
@@ -213,7 +184,7 @@ void CamCommunication::publish_cam_msg(std::string frame_id)
     high_freq_container;  // Assign the populated struct
 
   cam_publisher_->publish(msg);
-  RCLCPP_INFO(this->get_logger(), "CAM message published successfully");
+  RCLCPP_DEBUG(this->get_logger(), "CAM published");
 
   // --- Update last message information for delta calculations ---
   last_cam_msg_time_ = this->now();

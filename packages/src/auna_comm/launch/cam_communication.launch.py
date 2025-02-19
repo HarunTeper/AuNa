@@ -43,7 +43,7 @@ def generate_launch_description():
     )
     log_level_arg = DeclareLaunchArgument(
         'log_level',
-        default_value='debug',
+        default_value='info',
         description='Logging level'
     )
 
