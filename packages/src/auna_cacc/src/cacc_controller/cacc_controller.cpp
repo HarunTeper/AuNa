@@ -1,5 +1,7 @@
 #include "auna_cacc/cacc_controller.hpp"
 
+#include <etsi_its_msgs_utils/impl/cam/cam_getters_common.h>
+
 CaccController::CaccController() : Node("cacc_controller")
 {
   sub_cam_ = this->create_subscription<etsi_its_cam_msgs::msg::CAM>(
@@ -169,29 +171,41 @@ void CaccController::setup_timer_callback()
 
 void CaccController::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg)
 {
-  cam_x_ = msg->x;
-  cam_y_ = msg->y;
-  cam_velocity_ = msg->v;
+  cam_x_ = msg->cam.cam_parameters.basic_container.reference_position.longitude.value;
+  cam_y_ = msg->cam.cam_parameters.basic_container.reference_position.latitude.value;
+  cam_velocity_ = msg->cam.cam_parameters.high_frequency_container
+                    .basic_vehicle_container_high_frequency.speed.speed_value.value /
+                  100.0;  // Convert from 0.01 m/s to m/s
 
+  // Calculate acceleration
   if (last_cam_msg_ == nullptr) {
     cam_acceleration_ = 0.0;
   } else {
-    double dt = msg->cam..sec - last_cam_msg_->header.stamp.sec +
-                (msg->header.stamp.nanosec - last_cam_msg_->header.stamp.nanosec) / 1e9;
+    // Use generationDeltaTime for time difference
+    double dt =
+      (msg->cam.generation_delta_time.value - last_cam_msg_->cam.generation_delta_time.value) /
+      1000.0;  // Convert from milliseconds to seconds
     dt = std::min(dt, 0.1);
+
     if (dt == 0) {
       cam_acceleration_ = 0.0;
     } else {
       cam_acceleration_ = (cam_velocity_ - last_cam_velocity_) / dt;
     }
   }
-
   last_cam_msg_ = msg;
 
   last_cam_velocity_ = cam_velocity_;
 
-  cam_yaw_ = msg->theta;
-  cam_yaw_rate_ = msg->thetadot;
+  // Get heading from high frequency container
+  cam_yaw_ = msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency
+               .heading.heading_value.value /
+             10.0;  // Convert from 0.1 degrees to degrees
+
+  // Get yaw rate from high frequency container
+  cam_yaw_rate_ = msg->cam.cam_parameters.high_frequency_container
+                    .basic_vehicle_container_high_frequency.yaw_rate.yaw_rate_value.value /
+                  100.0;  // Convert from 0.01 degrees/s to degrees/s
 
   if (cam_velocity_ == 0) {
     cam_curvature_ = 0;
@@ -405,16 +419,7 @@ void CaccController::timer_callback()
   }
 
   // publish cam debug msg
-  etsi_its_cam_msgs::msg::CAM cam_debug_msg;
-  cam_debug_msg.x = cam_x_;
-  cam_debug_msg.y = cam_y_;
-  cam_debug_msg.v = cam_velocity_;
-  cam_debug_msg.vdot = cam_acceleration_;
-  cam_debug_msg.theta = cam_yaw_;
-  cam_debug_msg.thetadot = cam_yaw_rate_;
-  cam_debug_msg.curv = cam_curvature_;
-  cam_debug_msg.header.stamp = rclcpp::Clock().now();
-  pub_cam_debug_->publish(cam_debug_msg);
+  pub_cam_debug_->publish(create_cam_debug_message());
 
   if (cam_curvature_ <= 0.01 && cam_curvature_ >= -0.01) {
     s_ = 0.5 * pow(params_.standstill_distance + params_.time_gap * odom_velocity_, 2) *
@@ -489,6 +494,49 @@ void CaccController::timer_callback()
   twist_msg.angular.z = w_;
 
   pub_cmd_vel->publish(twist_msg);
+}
+
+etsi_its_cam_msgs::msg::CAM CaccController::create_cam_debug_message()
+{
+  etsi_its_cam_msgs::msg::CAM cam_debug_msg;
+
+  // Set header and generation time
+  cam_debug_msg.cam.generation_delta_time.value =
+    static_cast<uint16_t>((rclcpp::Clock().now().nanoseconds() / 1000000) % 65536);
+
+  // Fill basic container
+  cam_debug_msg.cam.cam_parameters.basic_container.station_type.value = 5;  // passenger car
+  cam_debug_msg.cam.cam_parameters.basic_container.reference_position.longitude.value =
+    static_cast<int32_t>(cam_x_ * 10000000);
+  cam_debug_msg.cam.cam_parameters.basic_container.reference_position.latitude.value =
+    static_cast<int32_t>(cam_y_ * 10000000);
+
+  // Fill high frequency container
+  auto & hf_container = cam_debug_msg.cam.cam_parameters.high_frequency_container
+                          .basic_vehicle_container_high_frequency;
+
+  // Speed
+  hf_container.speed.speed_value.value = static_cast<uint16_t>(std::max(0.0, cam_velocity_ * 100));
+  hf_container.speed.speed_confidence.value = 1;
+
+  // Longitudinal Acceleration
+  hf_container.longitudinal_acceleration.longitudinal_acceleration_value.value =
+    static_cast<int16_t>(cam_acceleration_ * 10);
+  hf_container.longitudinal_acceleration.longitudinal_acceleration_confidence.value = 1;
+
+  // Heading
+  hf_container.heading.heading_value.value = static_cast<uint16_t>(cam_yaw_ * 10);
+  hf_container.heading.heading_confidence.value = 1;
+
+  // YawRate
+  hf_container.yaw_rate.yaw_rate_value.value = static_cast<int16_t>(cam_yaw_rate_ * 100);
+  hf_container.yaw_rate.yaw_rate_confidence.value = 1;
+
+  // Curvature
+  hf_container.curvature.curvature_value.value = static_cast<int16_t>(cam_curvature_ * 10000);
+  hf_container.curvature.curvature_confidence.value = 1;
+
+  return cam_debug_msg;
 }
 
 void CaccController::set_target_velocity(

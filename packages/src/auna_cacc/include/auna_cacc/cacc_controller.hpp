@@ -1,5 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 
+#include <etsi_its_msgs_utils/cam_access.hpp>
+
 #include "auna_msgs/srv/set_bool.hpp"
 #include "auna_msgs/srv/set_float64.hpp"
 #include "etsi_its_cam_msgs/msg/cam.hpp"
@@ -36,6 +38,8 @@ public:
   CaccController();
 
 private:
+  etsi_its_cam_msgs::msg::CAM create_cam_debug_message();
+
   // node variables
   rclcpp::Subscription<etsi_its_cam_msgs::msg::CAM>::SharedPtr sub_cam_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
