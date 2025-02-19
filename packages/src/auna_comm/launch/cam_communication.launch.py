@@ -21,7 +21,6 @@ def generate_launch_description():
 
     # Launch Argument Configurations
     config_file = LaunchConfiguration('config_file')
-    namespace = LaunchConfiguration('namespace')
     robot_index = LaunchConfiguration('robot_index')
     filter_index = LaunchConfiguration('filter_index')
     log_level = LaunchConfiguration('log_level')
@@ -31,11 +30,6 @@ def generate_launch_description():
         'config_file',
         default_value=default_config,
         description='Path to the config file'
-    )
-    namespace_arg = DeclareLaunchArgument(
-        'namespace',
-        default_value='robot',
-        description='Robot namespace for ROS nodes and topics'
     )
     robot_index_arg = DeclareLaunchArgument(
         'robot_index',
@@ -66,21 +60,12 @@ def generate_launch_description():
         output='screen'
     )
 
-    cam_communication_with_namespace = GroupAction(
-        actions=[
-            PushRosNamespace(namespace),
-            cam_communication_cmd
-        ]
-    )
-
-    # Launch Description
+    # Remove GroupAction and return Node directly
     launch_description = LaunchDescription()
-
     launch_description.add_action(config_file_arg)
-    launch_description.add_action(namespace_arg)
     launch_description.add_action(robot_index_arg)
     launch_description.add_action(filter_index_arg)
     launch_description.add_action(log_level_arg)
+    launch_description.add_action(cam_communication_cmd)
 
-    launch_description.add_action(cam_communication_with_namespace)
     return launch_description

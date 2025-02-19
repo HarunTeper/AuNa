@@ -3,10 +3,12 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription, GroupAction
 from launch.launch_context import LaunchContext
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
+
+from launch_ros.actions import PushRosNamespace
 
 
 def include_launch_description(context: LaunchContext):
@@ -28,16 +30,18 @@ def include_launch_description(context: LaunchContext):
 
     for num in range(int(robot_number.perform(context))):
         launch_description_content.append(
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(os.path.join(
-                    omnet_launch_file_dir, 'cam_communication.launch.py')),
-                launch_arguments={
-                    'namespace': str(namespace)+str(num),
-                    'robot_index': str(num),
-                    'filter_index': str(num-1),
-                    'config_file': config_file,
-                }.items(),
-            )
+            GroupAction([
+                PushRosNamespace(f'robot{num}'),
+                IncludeLaunchDescription(
+                    PythonLaunchDescriptionSource(os.path.join(
+                        omnet_launch_file_dir, 'cam_communication.launch.py')),
+                    launch_arguments={
+                        'robot_index': str(num),
+                        'filter_index': str(num-1),
+                        'config_file': config_file,
+                    }.items(),
+                )
+            ])
         )
 
     return launch_description_content
