@@ -13,7 +13,8 @@
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
 
-  <depend>auna_its_msgs</depend>
+  <depend>etsi_its_cam_msgs</depend>
+  <depend>etsi_its_msgs_utils</depend>
   <depend>auna_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
