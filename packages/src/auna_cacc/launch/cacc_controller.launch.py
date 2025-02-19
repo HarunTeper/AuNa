@@ -13,16 +13,17 @@ def include_launch_description(context: LaunchContext):
 
     # Launch Argument Configurations
     robot_number = LaunchConfiguration('robot_number', default='2')
-    
+    namespace = LaunchConfiguration('namespace', default='robot')
+
     launch_description_content = []
 
-    for num in range(int(robot_number.perform(context))-1):
+    for num in range(int(robot_number.perform(context))):
         launch_description_content.append(
             Node(
                 package='auna_cacc',
                 executable='cacc_controller',
                 name='cacc_controller',
-                namespace="robot"+str(num+1),
+                namespace=namespace+str(num),
                 output='screen'
             )
         )
@@ -40,11 +41,19 @@ def generate_launch_description():
         description='Number of spawned robots'
     )
 
+    namespace_arg = DeclareLaunchArgument(
+        'namespace',
+        default_value='robot',
+        description='Namespace for spawned robots'
+    )
+
     # Launch Description
     launch_description = LaunchDescription()
 
     launch_description.add_action(robot_number_arg)
+    launch_description.add_action(namespace_arg)
 
-    launch_description.add_action(OpaqueFunction(function=include_launch_description))
+    launch_description.add_action(OpaqueFunction(
+        function=include_launch_description))
 
     return launch_description
