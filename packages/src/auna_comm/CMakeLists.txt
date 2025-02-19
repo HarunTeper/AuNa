@@ -17,7 +17,9 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 
-find_package(auna_its_msgs REQUIRED)
+# Replace auna_its_msgs with etsi_its_cam_msgs and etsi_its_msgs_utils
+find_package(etsi_its_cam_msgs REQUIRED)
+find_package(etsi_its_msgs_utils REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
 find_package(nav_msgs REQUIRED)
@@ -31,17 +33,21 @@ include_directories(include)
 
 # Add libraries
 add_library(cam_communication_node SHARED src/cam_communication/cam_communication.cpp)
-add_library(communciation_costmap SHARED src/communication_costmap/communication_costmap.cpp)
+# Removed communication costmap
+# add_library(communciation_costmap SHARED src/communication_costmap/communication_costmap.cpp)
 include_directories(include)
 
 # Create Cpp executable
 add_executable(cam_communication src/cam_communication/cam_communication_main.cpp)
 # Target dependencies
-set(cam_communication_dependencies rclcpp std_msgs auna_its_msgs nav_msgs geometry_msgs tf2)
+# Updated dependencies to include etsi_its_cam_msgs and etsi_its_msgs_utils
+set(cam_communication_dependencies rclcpp std_msgs etsi_its_cam_msgs etsi_its_msgs_utils nav_msgs geometry_msgs tf2)
 ament_target_dependencies(cam_communication_node ${cam_communication_dependencies})
 ament_target_dependencies(cam_communication ${cam_communication_dependencies})
-set(communicaton_costmap_dependencies rclcpp std_msgs auna_its_msgs nav_msgs geometry_msgs tf2 nav2_costmap_2d pluginlib nav2_util)
-ament_target_dependencies(communciation_costmap ${communicaton_costmap_dependencies})
+
+# Removed communication costmap
+#set(communicaton_costmap_dependencies rclcpp std_msgs auna_its_msgs nav_msgs geometry_msgs tf2 nav2_costmap_2d pluginlib nav2_util)
+#ament_target_dependencies(communciation_costmap ${communicaton_costmap_dependencies})
 
 # Link libraries
 target_link_libraries(cam_communication cam_communication_node)
@@ -51,15 +57,22 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}
 )
 
+# Add config directory installation
+install(DIRECTORY
+  config
+  DESTINATION share/${PROJECT_NAME}
+)
+
 # Install Cpp executables
 install(TARGETS
   cam_communication
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(TARGETS 
+install(TARGETS
   cam_communication_node
-  communciation_costmap
+  # Removed communication costmap
+  #communciation_costmap
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -68,12 +81,12 @@ install(TARGETS
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})
 
-pluginlib_export_plugin_description_file(nav2_costmap_2d communication_costmap.xml)
+# Removed communication costmap
+#pluginlib_export_plugin_description_file(nav2_costmap_2d communication_costmap.xml)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 endif()
-
 
 ament_package()

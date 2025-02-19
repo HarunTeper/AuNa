@@ -434,12 +434,12 @@ void CaccController::timer_callback()
     z_3_ = cam_velocity_ * cos(cam_yaw_) - odom_velocity_ * cos(pose_yaw_ + alpha_);
     z_4_ = cam_velocity_ * sin(cam_yaw_) - odom_velocity_ * sin(pose_yaw_ + alpha_);
 
-    invGam_Det_ = (params_.standstill_distance+params_.time_gap*odom_velocity_)*(params_.time_gap-params_.time_gap*sin(s_)*sin(cam_yaw_-pose_yaw_));
+    invGam_Det_ = (params_.standstill_distance+params_.time_gap*odom_velocity_)*(params_.time_gap-params_.time_gap*sin(alpha_)*sin(cam_yaw_-pose_yaw_));
 
     invGam_1_ = ((params_.standstill_distance+params_.time_gap*odom_velocity_)*cos(pose_yaw_))/invGam_Det_;
     invGam_2_ = ((params_.standstill_distance+params_.time_gap*odom_velocity_)*sin(pose_yaw_))/invGam_Det_;
-    invGam_3_ = (-params_.time_gap*sin(pose_yaw_)-params_.time_gap*sin(s_)*cos(cam_yaw_))/invGam_Det_;
-    invGam_4_ = (params_.time_gap*cos(pose_yaw_)-params_.time_gap*sin(s_)*sin(cam_yaw_))/invGam_Det_;
+    invGam_3_ = (-params_.time_gap*sin(pose_yaw_)-params_.time_gap*sin(alpha_)*cos(cam_yaw_))/invGam_Det_;
+    invGam_4_ = (params_.time_gap*cos(pose_yaw_)-params_.time_gap*sin(alpha_)*sin(cam_yaw_))/invGam_Det_;
 
     inP_1_ = (z_1_ * params_.kp) + ( cos(alpha_)*z_3_+sin(alpha_)*z_4_ ) + ( (1-cos(alpha_))*cam_velocity_*cos(cam_yaw_)-sin(alpha_)*cam_velocity_*sin(cam_yaw_) ) + ( cos(cam_yaw_)*s_*cam_yaw_rate_ );
     inP_2_ = (z_2_ * params_.kd) + ( sin(alpha_)*z_3_+cos(alpha_)*z_4_ ) + ( sin(alpha_)*cam_velocity_*cos(cam_yaw_)+(1-cos(alpha_))*cam_velocity_*sin(cam_yaw_) ) + ( sin(cam_yaw_)*s_*cam_yaw_rate_ );

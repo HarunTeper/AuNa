@@ -1,0 +1,5 @@
+# Since the nodes are namespaced dynamically, we need to use the wildcard to match all nodes
+/**:
+  ros__parameters:
+    vehicle_length: 0.4
+    vehicle_width: 0.2

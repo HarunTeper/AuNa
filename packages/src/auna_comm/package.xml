@@ -15,7 +15,9 @@
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
   
-  <depend>auna_its_msgs</depend>
+  <!-- Replace auna_its_msgs with etsi_its_cam_msgs and etsi_its_msgs_utils -->
+  <depend>etsi_its_cam_msgs</depend>
+  <depend>etsi_its_msgs_utils</depend>
   <depend>geometry_msgs</depend>
   <depend>nav2_costmap_2d</depend>
   <depend>nav_msgs</depend>
@@ -29,6 +31,8 @@
   
   <export>
     <build_type>ament_cmake</build_type>
+    <!-- Removed communication costmap
     <costmap_2d plugin="${prefix}/communication_costmap.xml" />
+    -->
   </export>
 </package>
