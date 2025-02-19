@@ -36,7 +36,7 @@ add_library(cacc_controller_node SHARED src/cacc_controller/cacc_controller.cpp)
 add_executable(cacc_controller src/cacc_controller/cacc_controller_main.cpp)
 
 # Target dependencies
-set(cacc_controller_dependencies rclcpp std_msgs geometry_msgs nav_msgs etsi_its_cam_msgs auna_msgs rcl_interfaces tf2)
+set(cacc_controller_dependencies rclcpp std_msgs geometry_msgs nav_msgs etsi_its_cam_msgs etsi_its_msgs_utils auna_msgs rcl_interfaces tf2)
 ament_target_dependencies(cacc_controller_node ${cacc_controller_dependencies})
 ament_target_dependencies(cacc_controller ${cacc_controller_dependencies})
 
