@@ -33,17 +33,20 @@ include_directories(include)
 
 # Add libraries
 add_library(cam_communication_node SHARED src/cam_communication/cam_communication.cpp)
+add_library(cam_receiver_node SHARED src/cam_receiver/cam_receiver.cpp)
 # Removed communication costmap
 # add_library(communciation_costmap SHARED src/communication_costmap/communication_costmap.cpp)
 include_directories(include)
-
 # Create Cpp executable
 add_executable(cam_communication src/cam_communication/cam_communication_main.cpp)
+add_executable(cam_receiver src/cam_receiver/cam_receiver_main.cpp)
 # Target dependencies
 # Updated dependencies to include etsi_its_cam_msgs and etsi_its_msgs_utils
 set(cam_communication_dependencies rclcpp std_msgs etsi_its_cam_msgs etsi_its_msgs_utils nav_msgs geometry_msgs tf2)
 ament_target_dependencies(cam_communication_node ${cam_communication_dependencies})
 ament_target_dependencies(cam_communication ${cam_communication_dependencies})
+ament_target_dependencies(cam_receiver_node ${cam_communication_dependencies})
+ament_target_dependencies(cam_receiver ${cam_communication_dependencies})
 
 # Removed communication costmap
 #set(communicaton_costmap_dependencies rclcpp std_msgs auna_its_msgs nav_msgs geometry_msgs tf2 nav2_costmap_2d pluginlib nav2_util)
@@ -51,6 +54,7 @@ ament_target_dependencies(cam_communication ${cam_communication_dependencies})
 
 # Link libraries
 target_link_libraries(cam_communication cam_communication_node)
+target_link_libraries(cam_receiver cam_receiver_node)
 
 install(DIRECTORY
   launch
@@ -66,11 +70,13 @@ install(DIRECTORY
 # Install Cpp executables
 install(TARGETS
   cam_communication
+  cam_receiver
   DESTINATION lib/${PROJECT_NAME}
 )
 
 install(TARGETS
   cam_communication_node
+  cam_receiver_node
   # Removed communication costmap
   #communciation_costmap
   ARCHIVE DESTINATION lib
