@@ -96,11 +96,12 @@ def generate_launch_description():
                 'name': name
             }.items()
         ),
-        # Localization pose publisher
+        # Localization pose publisher - pass namespace as prefix parameter
         Node(
             package='auna_gazebo',
             executable='localization_pose_publisher',
             name='localization_pose_publisher',
+            parameters=[{'prefix': namespace}],
             output='screen'
         ),
         # Ground truth cam
