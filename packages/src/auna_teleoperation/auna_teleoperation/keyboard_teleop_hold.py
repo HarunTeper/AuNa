@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import signal
+import threading
 
 import rclpy
 from pynput.keyboard import Key, Listener
@@ -12,10 +13,11 @@ class HoldKeyTeleop(Teleop):
     def __init__(self):
         super().__init__()
         self.SPEED_STEP = 0.1
+        self.lock = threading.Lock()  # Add a lock for thread safety
         self.key_listener = Listener(
             on_press=self.update_twist,
             on_release=self.on_release,
-            suppress=True  # Add this line to suppress keyboard echo
+            daemon=True
         )
         self.key_listener.start()
         self.keys_bindings = {
@@ -31,6 +33,7 @@ class HoldKeyTeleop(Teleop):
             Key.right: (0.0, -self.ANGULAR_MAX),
         }
         self.pressed_keys = set()  # Track currently pressed keys
+        self.running = True  # Flag to indicate if node is running
         self.get_logger().info(
             f"""
 This node takes keypresses from the keyboard and publishes them 
@@ -56,125 +59,157 @@ Max Angular Speed: +/-{self.ANGULAR_MAX} rad/s
 """
         )
 
-    def __del__(self):
-        # Add destructor to clean up the keyboard listener
+    def close(self):
+        """Properly clean up resources"""
+        self.running = False
         if hasattr(self, 'key_listener'):
-            self.key_listener.stop()
+            if self.key_listener.is_alive():
+                self.key_listener.stop()
+                self.key_listener.join(timeout=1)  # Wait for thread to finish
+        # Make sure the robot stops when shutting down
+        self.write_twist(0.0, 0.0)
 
     def compute_current_twist(self):
-        linear = 0.0
-        angular = 0.0
+        with self.lock:
+            linear = 0.0
+            angular = 0.0
 
-        # Check if we're moving backwards
-        moving_backwards = 's' in self.pressed_keys or Key.down in self.pressed_keys
+            # Check if we're moving backwards
+            moving_backwards = 's' in self.pressed_keys or Key.down in self.pressed_keys
 
-        # Check normal keys
-        if 'w' in self.pressed_keys:
-            linear = self.LINEAR_MAX * self.linear_speed_multiplier
-        elif 's' in self.pressed_keys:
-            linear = -self.LINEAR_MAX * self.linear_speed_multiplier
-        if 'a' in self.pressed_keys:
-            angular = self.ANGULAR_MAX * self.angular_speed_multiplier
-            if moving_backwards:
-                angular = -angular
-        elif 'd' in self.pressed_keys:
-            angular = -self.ANGULAR_MAX * self.angular_speed_multiplier
-            if moving_backwards:
-                angular = -angular
+            # Check normal keys
+            if 'w' in self.pressed_keys:
+                linear = self.LINEAR_MAX * self.linear_speed_multiplier
+            elif 's' in self.pressed_keys:
+                linear = -self.LINEAR_MAX * self.linear_speed_multiplier
+            if 'a' in self.pressed_keys:
+                angular = self.ANGULAR_MAX * self.angular_speed_multiplier
+                if moving_backwards:
+                    angular = -angular
+            elif 'd' in self.pressed_keys:
+                angular = -self.ANGULAR_MAX * self.angular_speed_multiplier
+                if moving_backwards:
+                    angular = -angular
 
-        # Check special keys
-        if Key.up in self.pressed_keys:
-            linear = self.LINEAR_MAX * self.linear_speed_multiplier
-        elif Key.down in self.pressed_keys:
-            linear = -self.LINEAR_MAX * self.linear_speed_multiplier
-        if Key.left in self.pressed_keys:
-            angular = self.ANGULAR_MAX * self.angular_speed_multiplier
-            if moving_backwards:
-                angular = -angular
-        elif Key.right in self.pressed_keys:
-            angular = -self.ANGULAR_MAX * self.angular_speed_multiplier
-            if moving_backwards:
-                angular = -angular
+            # Check special keys
+            if Key.up in self.pressed_keys:
+                linear = self.LINEAR_MAX * self.linear_speed_multiplier
+            elif Key.down in self.pressed_keys:
+                linear = -self.LINEAR_MAX * self.linear_speed_multiplier
+            if Key.left in self.pressed_keys:
+                angular = self.ANGULAR_MAX * self.angular_speed_multiplier
+                if moving_backwards:
+                    angular = -angular
+            elif Key.right in self.pressed_keys:
+                angular = -self.ANGULAR_MAX * self.angular_speed_multiplier
+                if moving_backwards:
+                    angular = -angular
 
-        return linear, angular
+            return linear, angular
 
     def on_release(self, key):
-        if self._is_special_key(key):
-            if key in self.special_keys_bindings:
-                self.pressed_keys.discard(key)
-        else:
-            key = key.char
-            if key in self.keys_bindings:
-                self.pressed_keys.discard(key)
+        try:
+            with self.lock:
+                if self._is_special_key(key):
+                    if key in self.special_keys_bindings:
+                        self.pressed_keys.discard(key)
+                else:
+                    try:
+                        key_char = key.char
+                        if key_char in self.keys_bindings:
+                            self.pressed_keys.discard(key_char)
+                    except AttributeError:
+                        pass  # Key doesn't have a char attribute
 
-        # Update twist based on remaining pressed keys
-        linear, angular = self.compute_current_twist()
-        self.write_twist(linear, angular)
+            # Update twist based on remaining pressed keys
+            linear, angular = self.compute_current_twist()
+            self.write_twist(linear, angular)
+        except Exception as e:
+            self.get_logger().error(f"Error in on_release: {str(e)}")
+            self.write_twist(0.0, 0.0)  # Safety stop on error
 
     def update_twist(self, key):
-        if self._is_special_key(key):
-            if key in self.special_keys_bindings:
-                self.pressed_keys.add(key)
+        try:
+            if not self.running:
+                return
+
+            if self._is_special_key(key):
+                with self.lock:
+                    if key in self.special_keys_bindings:
+                        self.pressed_keys.add(key)
                 linear, angular = self.compute_current_twist()
                 self.write_twist(linear, angular)
             else:
-                self.write_twist(0.0, 0.0)
-        else:
-            if key.char == "q":
-                os.kill(os.getpid(), signal.SIGINT)
-            elif key.char == "i":
-                self.linear_speed_multiplier = min(
-                    1.0, self.linear_speed_multiplier + self.SPEED_STEP)
-                self.get_logger().info(
-                    f"Linear speed multiplier: {self.linear_speed_multiplier:.1f}")
-                linear, angular = self.compute_current_twist()
-                self.write_twist(linear, angular)
-            elif key.char == "k":
-                self.linear_speed_multiplier = max(
-                    0.1, self.linear_speed_multiplier - self.SPEED_STEP)
-                self.get_logger().info(
-                    f"Linear speed multiplier: {self.linear_speed_multiplier:.1f}")
-                linear, angular = self.compute_current_twist()
-                self.write_twist(linear, angular)
-            elif key.char == "u":
-                self.angular_speed_multiplier = min(
-                    1.0, self.angular_speed_multiplier + self.SPEED_STEP)
-                self.get_logger().info(
-                    f"Angular speed multiplier: {self.angular_speed_multiplier:.1f}")
-                linear, angular = self.compute_current_twist()
-                self.write_twist(linear, angular)
-            elif key.char == "j":
-                self.angular_speed_multiplier = max(
-                    0.1, self.angular_speed_multiplier - self.SPEED_STEP)
-                self.get_logger().info(
-                    f"Angular speed multiplier: {self.angular_speed_multiplier:.1f}")
-                linear, angular = self.compute_current_twist()
-                self.write_twist(linear, angular)
-            elif key.char in self.keys_bindings:
-                self.pressed_keys.add(key.char)
-                linear, angular = self.compute_current_twist()
-                self.write_twist(linear, angular)
-            else:
-                self.write_twist(0.0, 0.0)
+                try:
+                    key_char = key.char
+                    if key_char == "q":
+                        os.kill(os.getpid(), signal.SIGINT)
+                    elif key_char == "i":
+                        with self.lock:
+                            self.linear_speed_multiplier = min(
+                                1.0, self.linear_speed_multiplier + self.SPEED_STEP)
+                        self.get_logger().info(
+                            f"Linear speed multiplier: {self.linear_speed_multiplier:.1f}")
+                        linear, angular = self.compute_current_twist()
+                        self.write_twist(linear, angular)
+                    elif key_char == "k":
+                        with self.lock:
+                            self.linear_speed_multiplier = max(
+                                0.1, self.linear_speed_multiplier - self.SPEED_STEP)
+                        self.get_logger().info(
+                            f"Linear speed multiplier: {self.linear_speed_multiplier:.1f}")
+                        linear, angular = self.compute_current_twist()
+                        self.write_twist(linear, angular)
+                    elif key_char == "u":
+                        with self.lock:
+                            self.angular_speed_multiplier = min(
+                                1.0, self.angular_speed_multiplier + self.SPEED_STEP)
+                        self.get_logger().info(
+                            f"Angular speed multiplier: {self.angular_speed_multiplier:.1f}")
+                        linear, angular = self.compute_current_twist()
+                        self.write_twist(linear, angular)
+                    elif key_char == "j":
+                        with self.lock:
+                            self.angular_speed_multiplier = max(
+                                0.1, self.angular_speed_multiplier - self.SPEED_STEP)
+                        self.get_logger().info(
+                            f"Angular speed multiplier: {self.angular_speed_multiplier:.1f}")
+                        linear, angular = self.compute_current_twist()
+                        self.write_twist(linear, angular)
+                    elif key_char in self.keys_bindings:
+                        with self.lock:
+                            self.pressed_keys.add(key_char)
+                        linear, angular = self.compute_current_twist()
+                        self.write_twist(linear, angular)
+                except (AttributeError, TypeError):
+                    pass  # Handle case where key.char doesn't exist
+        except Exception as e:
+            self.get_logger().error(f"Error in update_twist: {str(e)}")
+            self.write_twist(0.0, 0.0)  # Safety stop on error
 
     def _is_special_key(self, key):
         try:
             key.char
             return False
-        except AttributeError:
+        except (AttributeError, TypeError):
             return True
 
 
 def main():
+    rclpy.init()
+    node = None
     try:
-        rclpy.init()
         node = HoldKeyTeleop()
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
+    except Exception as e:
+        if node:
+            node.get_logger().error(f"Exception in main: {str(e)}")
     finally:
         # Clean up the node properly
-        if 'node' in locals():
+        if node:
+            node.close()
             node.destroy_node()
         rclpy.shutdown()
 

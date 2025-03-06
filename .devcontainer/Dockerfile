@@ -101,7 +101,7 @@ RUN if [ "$INSTALL_ROS2" = "true" ]; then \
 
 # --- Install python package for teleop
 RUN if [ "$INSTALL_ROS2" = "true" ]; then \
-    pip install pynput; \
+    pip install pynput=='1.7.8'; \
     fi
 
 # --- Set up user ---
