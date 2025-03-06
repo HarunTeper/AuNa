@@ -108,13 +108,20 @@ private:
   // auto mode
   bool auto_mode_;
   bool auto_mode_ready_;
+  bool cacc_ready_;
   double target_velocity_;
 
   // ros2 service server for auto_mode
   rclcpp::Service<auna_msgs::srv::SetBool>::SharedPtr client_set_auto_mode_;
 
+  // Flags to track first message reception
+  bool first_cam_received_;
+  bool first_odom_received_;
+  bool first_pose_received_;
+
   // general functions
   void read_waypoints_from_csv();
+  void update_waypoint_following();
 
   // callback functions
   void cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg);

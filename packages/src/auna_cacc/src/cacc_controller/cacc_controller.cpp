@@ -4,16 +4,45 @@
 
 CaccController::CaccController() : Node("cacc_controller")
 {
+  // Add startup logging
+  RCLCPP_INFO(this->get_logger(), "Starting CACC controller, waiting for required messages");
+
+  // Track if first messages have been received
+  first_cam_received_ = false;
+  first_odom_received_ = false;
+  first_pose_received_ = false;
+
+  // Add topic name debug info
+  RCLCPP_INFO(this->get_logger(), "Subscribing to topics: cam_filtered, odom, global_pose");
+
   sub_cam_ = this->create_subscription<etsi_its_cam_msgs::msg::CAM>(
-    "cam_filtered", 2,
-    [this](const etsi_its_cam_msgs::msg::CAM::SharedPtr msg) { this->cam_callback(msg); });
+    "cam_filtered", 2, [this](const etsi_its_cam_msgs::msg::CAM::SharedPtr msg) {
+      if (!first_cam_received_) {
+        RCLCPP_INFO(this->get_logger(), "Received first CAM message");
+        first_cam_received_ = true;
+      }
+      this->cam_callback(msg);
+    });
   sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    "odom", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg) { this->odom_callback(msg); });
+    "odom", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg) {
+      if (!first_odom_received_) {
+        RCLCPP_INFO(this->get_logger(), "Received first odom message");
+        first_odom_received_ = true;
+      }
+      this->odom_callback(msg);
+    });
   sub_pose_stamped_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-    "global_pose", 2,
-    [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) { this->pose_callback(msg); });
+    "global_pose", 2, [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
+      if (!first_pose_received_) {
+        RCLCPP_INFO(this->get_logger(), "Received first global_pose message");
+        first_pose_received_ = true;
+      }
+      this->pose_callback(msg);
+    });
 
   pub_cmd_vel = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 1);
+  RCLCPP_INFO(
+    this->get_logger(), "Created cmd_vel publisher on topic: %s", pub_cmd_vel->get_topic_name());
   pub_x_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/x", 1);
   pub_y_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/y", 1);
   pub_cam_debug_ = this->create_publisher<etsi_its_cam_msgs::msg::CAM>("cacc/cam_debug", 1);
@@ -80,6 +109,8 @@ CaccController::CaccController() : Node("cacc_controller")
   dt_ = 1.0 / params_.frequency;
   auto_mode_ = false;
   auto_mode_ready_ = false;
+  cacc_ready_ = false;
+
   client_set_auto_mode_ = this->create_service<auna_msgs::srv::SetBool>(
     "cacc/set_auto_mode", [this](
                             const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
@@ -90,7 +121,16 @@ CaccController::CaccController() : Node("cacc_controller")
   timer_ = this->create_wall_timer(
     std::chrono::milliseconds(1000 / params_.frequency), [this]() { this->timer_callback(); });
   setup_timer_ = this->create_wall_timer(
-    std::chrono::milliseconds(250), [this]() { this->setup_timer_callback(); });
+    std::chrono::milliseconds(1000),  // Changed from 250ms to 1000ms for more frequent logs
+    [this]() {
+      this->setup_timer_callback();
+      // Add debug log to show we're still waiting
+      RCLCPP_INFO(
+        this->get_logger(), "Waiting for messages - CAM: %s, Odom: %s, Pose: %s",
+        (last_cam_msg_ != nullptr ? "received" : "waiting"),
+        (last_odom_msg_ != nullptr ? "received" : "waiting"),
+        (last_pose_msg_ != nullptr ? "received" : "waiting"));
+    });
   timer_->cancel();
 
   if (params_.use_waypoints) {
@@ -160,6 +200,7 @@ void CaccController::setup_timer_callback()
   if (last_cam_msg_ != nullptr && last_odom_msg_ != nullptr && last_pose_msg_ != nullptr) {
     RCLCPP_INFO(this->get_logger(), "CACC controller ready");
     setup_timer_->cancel();
+    cacc_ready_ = true;
   }
   if (last_odom_msg_ != nullptr && last_pose_msg_ != nullptr) {
     if (!auto_mode_ready_) {
@@ -255,167 +296,172 @@ void CaccController::pose_callback(const geometry_msgs::msg::PoseStamped::Shared
   last_pose_msg_ = msg;
 }
 
+void CaccController::update_waypoint_following()
+{
+  if (auto_mode_) {
+    double closest_distance_squared = std::numeric_limits<double>::max();
+    int num_waypoints = waypoints_x_.size();
+
+    int closest_waypoint_index;
+
+    for (int i = 0; i < num_waypoints; ++i) {
+      double dx = waypoints_x_[i] - pose_x_;
+      double dy = waypoints_y_[i] - pose_y_;
+      double distance_squared = dx * dx + dy * dy;
+
+      if (distance_squared < closest_distance_squared) {
+        closest_distance_squared = distance_squared;
+        closest_waypoint_index = i;
+      }
+    }
+
+    int target_waypoint_index_ = closest_waypoint_index;
+
+    // Calculate target waypoint index (the waypoint that is closest to the vehicle and within the
+    // time gap
+
+    double target_distance =
+      params_.standstill_distance + params_.time_gap * params_.target_velocity;
+
+    for (int i = closest_waypoint_index; true; i = (i + 1) % num_waypoints) {
+      double dx = waypoints_x_[i] - pose_x_;
+      double dy = waypoints_y_[i] - pose_y_;
+      double distance_squared = dx * dx + dy * dy;
+
+      if (distance_squared > target_distance * target_distance) {
+        // Stop the loop if the distance is increasing
+        break;
+      }
+
+      target_waypoint_index_ = i;
+    }
+    cam_x_ = waypoints_x_[target_waypoint_index_];
+    cam_y_ = waypoints_y_[target_waypoint_index_];
+
+    // Calculate yaw difference between previous and next waypoints
+    int curr_index = target_waypoint_index_;
+    cam_yaw_ = waypoints_yaw_[curr_index];
+
+    // Calculate cam_yaw_rate_ and cam_curvature_
+    double current_yaw = waypoints_yaw_[curr_index];
+
+    int next_index = (target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints;
+    double next_yaw = waypoints_yaw_[next_index];
+
+    // yaw difference in the range of -pi to pi
+    double yaw_difference;
+    if (next_yaw - current_yaw > M_PI) {
+      yaw_difference = next_yaw - current_yaw - 2 * M_PI;
+    } else if (next_yaw - current_yaw < -M_PI) {
+      yaw_difference = next_yaw - current_yaw + 2 * M_PI;
+    } else {
+      yaw_difference = next_yaw - current_yaw;
+    }
+
+    // Calculate the required time to reach the n-th next waypoint
+    double dx = waypoints_x_[(curr_index + params_.curvature_lookahead) % num_waypoints] -
+                waypoints_x_[curr_index];
+    double dy = waypoints_y_[(curr_index + params_.curvature_lookahead) % num_waypoints] -
+                waypoints_y_[curr_index];
+    double distance = std::hypot(dx, dy);
+
+    // calculate the required time by dividing distance through cam_velocity_
+    double required_time = distance / params_.target_velocity;
+
+    cam_yaw_rate_ = yaw_difference / required_time;
+
+    // scale the cam_velocity_ between target_velocity and target_velocity/2, inverse proportional
+    // to cam_yaw_rate_, whose values are between 0 and 1.25
+
+    cam_velocity_ =
+      params_.target_velocity - (params_.target_velocity / 2) * (cam_yaw_rate_ / 1.25);
+    cam_acceleration_ = (cam_velocity_ - last_cam_velocity_) / dt_;
+    last_cam_velocity_ = cam_velocity_;
+
+    // cam curvature depending on auto_mode
+    cam_curvature_ = cam_yaw_rate_ / params_.target_velocity;
+
+  } else {
+    double closest_distance_squared = std::numeric_limits<double>::max();
+    int num_waypoints = waypoints_x_.size();
+
+    int closest_waypoint_index;
+
+    for (int i = 0; i < num_waypoints; ++i) {
+      double dx = waypoints_x_[i] - cam_x_;
+      double dy = waypoints_y_[i] - cam_y_;
+      double distance_squared = dx * dx + dy * dy;
+
+      if (distance_squared < closest_distance_squared) {
+        closest_distance_squared = distance_squared;
+        closest_waypoint_index = i;
+      }
+    }
+
+    int target_waypoint_index_ = closest_waypoint_index;
+
+    // Find the previous index at which the distance to the closest waypoint is at least
+    // params_.extra_distance
+    for (int i = closest_waypoint_index; true; i = (i - 1 + num_waypoints) % num_waypoints) {
+      double dx = waypoints_x_[i] - waypoints_x_[closest_waypoint_index];
+      double dy = waypoints_y_[i] - waypoints_y_[closest_waypoint_index];
+      double distance_squared = dx * dx + dy * dy;
+
+      if (distance_squared >= params_.extra_distance * params_.extra_distance) {
+        // Stop the loop if the distance is increasing
+        break;
+      }
+
+      target_waypoint_index_ = i;
+    }
+
+    cam_x_ = waypoints_x_[target_waypoint_index_];
+    cam_y_ = waypoints_y_[target_waypoint_index_];
+    cam_yaw_ = waypoints_yaw_[target_waypoint_index_];
+
+    // Calculate cam_yaw_rate_ and cam_curvature_
+    double current_yaw = waypoints_yaw_[target_waypoint_index_];
+
+    int next_index = (target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints;
+    double next_yaw = waypoints_yaw_[next_index];
+
+    // yaw difference modulo for the case that one is negative and the other positive
+    double yaw_difference;
+    if (next_yaw - current_yaw > M_PI) {
+      yaw_difference = next_yaw - current_yaw - 2 * M_PI;
+    } else if (next_yaw - current_yaw < -M_PI) {
+      yaw_difference = next_yaw - current_yaw + 2 * M_PI;
+    } else {
+      yaw_difference = next_yaw - current_yaw;
+    }
+
+    // Calculate the required time to reach the n-th next waypoint
+    double dx =
+      waypoints_x_[(target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints] -
+      waypoints_x_[target_waypoint_index_];
+    double dy =
+      waypoints_y_[(target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints] -
+      waypoints_y_[target_waypoint_index_];
+    double distance = std::hypot(dx, dy);
+
+    // calculate the required time by dividing distance through cam_velocity_
+    double required_time = distance / cam_velocity_;
+
+    cam_yaw_rate_ = yaw_difference / required_time;
+
+    // cam curvature depending on auto_mode
+    if (cam_velocity_ == 0) {
+      cam_curvature_ = 0;
+    } else {
+      cam_curvature_ = cam_yaw_rate_ / cam_velocity_;
+    }
+  }
+}
+
 void CaccController::timer_callback()
 {
   if (params_.use_waypoints) {
-    if (auto_mode_) {
-      double closest_distance_squared = std::numeric_limits<double>::max();
-      int num_waypoints = waypoints_x_.size();
-
-      int closest_waypoint_index;
-
-      for (int i = 0; i < num_waypoints; ++i) {
-        double dx = waypoints_x_[i] - pose_x_;
-        double dy = waypoints_y_[i] - pose_y_;
-        double distance_squared = dx * dx + dy * dy;
-
-        if (distance_squared < closest_distance_squared) {
-          closest_distance_squared = distance_squared;
-          closest_waypoint_index = i;
-        }
-      }
-
-      int target_waypoint_index_ = closest_waypoint_index;
-
-      // Calculate target waypoint index (the waypoint that is closest to the vehicle and within the
-      // time gap
-
-      double target_distance =
-        params_.standstill_distance + params_.time_gap * params_.target_velocity;
-
-      for (int i = closest_waypoint_index; true; i = (i + 1) % num_waypoints) {
-        double dx = waypoints_x_[i] - pose_x_;
-        double dy = waypoints_y_[i] - pose_y_;
-        double distance_squared = dx * dx + dy * dy;
-
-        if (distance_squared > target_distance * target_distance) {
-          // Stop the loop if the distance is increasing
-          break;
-        }
-
-        target_waypoint_index_ = i;
-      }
-      cam_x_ = waypoints_x_[target_waypoint_index_];
-      cam_y_ = waypoints_y_[target_waypoint_index_];
-
-      // Calculate yaw difference between previous and next waypoints
-      int curr_index = target_waypoint_index_;
-      cam_yaw_ = waypoints_yaw_[curr_index];
-
-      // Calculate cam_yaw_rate_ and cam_curvature_
-      double current_yaw = waypoints_yaw_[curr_index];
-
-      int next_index = (target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints;
-      double next_yaw = waypoints_yaw_[next_index];
-
-      // yaw difference in the range of -pi to pi
-      double yaw_difference;
-      if (next_yaw - current_yaw > M_PI) {
-        yaw_difference = next_yaw - current_yaw - 2 * M_PI;
-      } else if (next_yaw - current_yaw < -M_PI) {
-        yaw_difference = next_yaw - current_yaw + 2 * M_PI;
-      } else {
-        yaw_difference = next_yaw - current_yaw;
-      }
-
-      // Calculate the required time to reach the n-th next waypoint
-      double dx = waypoints_x_[(curr_index + params_.curvature_lookahead) % num_waypoints] -
-                  waypoints_x_[curr_index];
-      double dy = waypoints_y_[(curr_index + params_.curvature_lookahead) % num_waypoints] -
-                  waypoints_y_[curr_index];
-      double distance = std::hypot(dx, dy);
-
-      // calculate the required time by dividing distance through cam_velocity_
-      double required_time = distance / params_.target_velocity;
-
-      cam_yaw_rate_ = yaw_difference / required_time;
-
-      // scale the cam_velocity_ between target_velocity and target_velocity/2, inverse proportional
-      // to cam_yaw_rate_, whose values are between 0 and 1.25
-
-      cam_velocity_ =
-        params_.target_velocity - (params_.target_velocity / 2) * (cam_yaw_rate_ / 1.25);
-      cam_acceleration_ = (cam_velocity_ - last_cam_velocity_) / dt_;
-      last_cam_velocity_ = cam_velocity_;
-
-      // cam curvature depending on auto_mode
-      cam_curvature_ = cam_yaw_rate_ / params_.target_velocity;
-
-    } else {
-      double closest_distance_squared = std::numeric_limits<double>::max();
-      int num_waypoints = waypoints_x_.size();
-
-      int closest_waypoint_index;
-
-      for (int i = 0; i < num_waypoints; ++i) {
-        double dx = waypoints_x_[i] - cam_x_;
-        double dy = waypoints_y_[i] - cam_y_;
-        double distance_squared = dx * dx + dy * dy;
-
-        if (distance_squared < closest_distance_squared) {
-          closest_distance_squared = distance_squared;
-          closest_waypoint_index = i;
-        }
-      }
-
-      int target_waypoint_index_ = closest_waypoint_index;
-
-      // Find the previous index at which the distance to the closest waypoint is at least
-      // params_.extra_distance
-      for (int i = closest_waypoint_index; true; i = (i - 1 + num_waypoints) % num_waypoints) {
-        double dx = waypoints_x_[i] - waypoints_x_[closest_waypoint_index];
-        double dy = waypoints_y_[i] - waypoints_y_[closest_waypoint_index];
-        double distance_squared = dx * dx + dy * dy;
-
-        if (distance_squared >= params_.extra_distance * params_.extra_distance) {
-          // Stop the loop if the distance is increasing
-          break;
-        }
-
-        target_waypoint_index_ = i;
-      }
-
-      cam_x_ = waypoints_x_[target_waypoint_index_];
-      cam_y_ = waypoints_y_[target_waypoint_index_];
-      cam_yaw_ = waypoints_yaw_[target_waypoint_index_];
-
-      // Calculate cam_yaw_rate_ and cam_curvature_
-      double current_yaw = waypoints_yaw_[target_waypoint_index_];
-
-      int next_index = (target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints;
-      double next_yaw = waypoints_yaw_[next_index];
-
-      // yaw difference modulo for the case that one is negative and the other positive
-      double yaw_difference;
-      if (next_yaw - current_yaw > M_PI) {
-        yaw_difference = next_yaw - current_yaw - 2 * M_PI;
-      } else if (next_yaw - current_yaw < -M_PI) {
-        yaw_difference = next_yaw - current_yaw + 2 * M_PI;
-      } else {
-        yaw_difference = next_yaw - current_yaw;
-      }
-
-      // Calculate the required time to reach the n-th next waypoint
-      double dx =
-        waypoints_x_[(target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints] -
-        waypoints_x_[target_waypoint_index_];
-      double dy =
-        waypoints_y_[(target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints] -
-        waypoints_y_[target_waypoint_index_];
-      double distance = std::hypot(dx, dy);
-
-      // calculate the required time by dividing distance through cam_velocity_
-      double required_time = distance / cam_velocity_;
-
-      cam_yaw_rate_ = yaw_difference / required_time;
-
-      // cam curvature depending on auto_mode
-      if (cam_velocity_ == 0) {
-        cam_curvature_ = 0;
-      } else {
-        cam_curvature_ = cam_yaw_rate_ / cam_velocity_;
-      }
-    }
+    update_waypoint_following();
   }
 
   // publish cam debug msg
@@ -492,7 +538,23 @@ void CaccController::timer_callback()
 
   twist_msg.linear.x = v_;
   twist_msg.angular.z = w_;
+  // Log the velocity and steering commands being published
+  RCLCPP_INFO(
+    this->get_logger(), "Publishing cmd_vel: linear.x=%.2f, angular.z=%.2f to topic: %s",
+    twist_msg.linear.x, twist_msg.angular.z, pub_cmd_vel->get_topic_name());
 
+  // Log lookahead point info
+  RCLCPP_DEBUG(
+    this->get_logger(), "Publishing lookahead points: x=%.2f, y=%.2f", x_lookahead_point_,
+    y_lookahead_point_);
+
+  // Log CACC state info periodically (every 10 cycles to avoid too much logging)
+  static int log_counter = 0;
+  if (++log_counter % 10 == 0) {
+    RCLCPP_INFO(
+      this->get_logger(), "CACC state: distance=%.2f, time_gap=%.2f, target_v=%.2f, lead_v=%.2f",
+      params_.standstill_distance, params_.time_gap, params_.target_velocity, cam_velocity_);
+  }
   pub_cmd_vel->publish(twist_msg);
 }
 
@@ -599,9 +661,8 @@ void CaccController::set_cacc_enable(
   const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
   std::shared_ptr<auna_msgs::srv::SetBool::Response> response)
 {
-  // if cam message pointer is not null
-  if (last_cam_msg_ == nullptr) {
-    RCLCPP_ERROR(this->get_logger(), "No cam message received yet");
+  if (!cacc_ready_) {
+    RCLCPP_ERROR(this->get_logger(), "CACC controller not ready yet. Missing required messages.");
     response->success = false;
     return;
   }
@@ -630,20 +691,26 @@ void CaccController::set_auto_mode(
   const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
   std::shared_ptr<auna_msgs::srv::SetBool::Response> response)
 {
-  // return if there is a cam message
+  // Check if an actual CAM message is received - cannot be in auto mode if real CAMs are being
+  // received
   if (last_cam_msg_ != nullptr) {
-    RCLCPP_ERROR(this->get_logger(), "CACC controller is already running");
+    RCLCPP_ERROR(this->get_logger(), "CACC controller is already running with real CAM messages");
+    response->success = false;
+    return;
+  }
+
+  // Check if both odom and pose are ready
+  if (!auto_mode_ready_) {
+    RCLCPP_ERROR(this->get_logger(), "Auto mode not ready yet. Missing required messages.");
     response->success = false;
     return;
   }
 
   if (request->value) {
-    if (auto_mode_ready_) {
-      RCLCPP_INFO(this->get_logger(), "Enabling auto mode");
-      auto_mode_ = true;
-      timer_->reset();
-      setup_timer_->cancel();
-    }
+    RCLCPP_INFO(this->get_logger(), "Enabling auto mode");
+    auto_mode_ = true;
+    timer_->reset();
+    setup_timer_->cancel();
   } else {
     RCLCPP_INFO(this->get_logger(), "Disabling auto mode");
 
