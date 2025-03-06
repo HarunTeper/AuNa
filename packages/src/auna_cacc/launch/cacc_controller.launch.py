@@ -2,9 +2,9 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription, LogInfo
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, LogInfo, GroupAction
+from launch_ros.actions import PushRosNamespace
 from launch.launch_context import LaunchContext
-from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
 
@@ -52,14 +52,17 @@ def include_launch_description(context: LaunchContext):
                 msg=f"Starting CACC controller for {robot_ns} (follower robot)")
         )
 
+        # Use PushRosNamespace within a GroupAction to properly namespace the node
         launch_description_content.append(
-            Node(
-                package='auna_cacc',
-                executable='cacc_controller',
-                name='cacc_controller',
-                namespace=robot_ns,
-                output='screen'
-            )
+            GroupAction([
+                PushRosNamespace(robot_ns),
+                Node(
+                    package='auna_cacc',
+                    executable='cacc_controller',
+                    name='cacc_controller',
+                    output='screen'
+                )
+            ])
         )
 
     # Log that we're not starting a controller for the lead robot
