@@ -45,7 +45,6 @@ private:
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_pose_stamped_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd_vel;
-  rclcpp::Publisher<etsi_its_cam_msgs::msg::CAM>::SharedPtr pub_cam_debug_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::TimerBase::SharedPtr setup_timer_;
 
@@ -150,13 +149,11 @@ private:
     const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
     std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response);
 
-  // dynamic parameters
   rcl_interfaces::msg::SetParametersResult dynamicParametersCallback(
     std::vector<rclcpp::Parameter> parameters);
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr dyn_params_handler_;
   Parameters params_;
 
-  // controller function variables
   double s_ = 0;
   double alpha_ = 0;
   double x_lookahead_point_ = 0;

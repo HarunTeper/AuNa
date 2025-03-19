@@ -2,6 +2,8 @@
 
 #include <etsi_its_msgs_utils/impl/cam/cam_getters_common.h>
 
+#include <cmath>
+
 CaccController::CaccController() : Node("cacc_controller")
 {
   // Add startup logging
@@ -45,7 +47,6 @@ CaccController::CaccController() : Node("cacc_controller")
     this->get_logger(), "Created cmd_vel publisher on topic: %s", pub_cmd_vel->get_topic_name());
   pub_x_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/x", 1);
   pub_y_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/y", 1);
-  pub_cam_debug_ = this->create_publisher<etsi_its_cam_msgs::msg::CAM>("cacc/cam_debug", 1);
 
   client_set_standstill_distance_ = this->create_service<auna_msgs::srv::SetFloat64>(
     "cacc/set_standstill_distance",
@@ -96,8 +97,9 @@ CaccController::CaccController() : Node("cacc_controller")
   // use params_
   params_.standstill_distance = this->get_parameter("standstill_distance").as_double();
   params_.time_gap = this->get_parameter("time_gap").as_double();
-  params_.kp = this->get_parameter("kp").as_double();
-  params_.kd = this->get_parameter("kd").as_double();
+  params_.kp = 0.8;  // this->get_parameter("kp").as_double();
+  params_.kd =
+    3.3;  // this->get_parameter("kd").as_double(); // Increased slightly to reduce oversteering.
   params_.max_velocity = this->get_parameter("max_velocity").as_double();
   params_.frequency = this->get_parameter("frequency").as_int();
   params_.use_waypoints = this->get_parameter("use_waypoints").as_bool();
@@ -212,8 +214,11 @@ void CaccController::setup_timer_callback()
 
 void CaccController::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg)
 {
-  cam_x_ = msg->cam.cam_parameters.basic_container.reference_position.longitude.value;
-  cam_y_ = msg->cam.cam_parameters.basic_container.reference_position.latitude.value;
+  RCLCPP_INFO(
+    this->get_logger(), "cam_callback - Generation Delta Time: %u",
+    msg->cam.generation_delta_time.value);
+  cam_x_ = msg->cam.cam_parameters.basic_container.reference_position.longitude.value / 10000000.0;
+  cam_y_ = msg->cam.cam_parameters.basic_container.reference_position.latitude.value / 10000000.0;
   cam_velocity_ = msg->cam.cam_parameters.high_frequency_container
                     .basic_vehicle_container_high_frequency.speed.speed_value.value /
                   100.0;  // Convert from 0.01 m/s to m/s
@@ -236,22 +241,31 @@ void CaccController::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr m
   }
   last_cam_msg_ = msg;
 
+  RCLCPP_INFO(
+    this->get_logger(),
+    "Received CAM - Speed: %.2f m/s, Accel: %.2f m/s², Yaw Rate: %.2f deg/s, Curvature: %.4f, "
+    "Station ID: %d",
+    cam_velocity_, cam_acceleration_, cam_yaw_rate_ * 180 / M_PI, cam_curvature_,
+    msg->header.station_id.value);
   last_cam_velocity_ = cam_velocity_;
 
-  // Get heading from high frequency container
   cam_yaw_ = msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency
                .heading.heading_value.value /
-             10.0;  // Convert from 0.1 degrees to degrees
+             10.0 * (M_PI / 180.0);  // Convert from 0.1 degrees to radians
 
-  // Get yaw rate from high frequency container
-  cam_yaw_rate_ = msg->cam.cam_parameters.high_frequency_container
-                    .basic_vehicle_container_high_frequency.yaw_rate.yaw_rate_value.value /
-                  100.0;  // Convert from 0.01 degrees/s to degrees/s
-
-  if (cam_velocity_ == 0) {
-    cam_curvature_ = 0;
-  } else {
+  if (
+    msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency.yaw_rate
+        .yaw_rate_value.value != etsi_its_cam_msgs::msg::YawRateValue::UNAVAILABLE &&
+    cam_velocity_ > 0.1) {
+    double raw_yaw = msg->cam.cam_parameters.high_frequency_container
+                       .basic_vehicle_container_high_frequency.yaw_rate.yaw_rate_value.value;
+    cam_yaw_rate_ = (raw_yaw / 100.0) * (M_PI / 180.0);  // Convert from 0.01 degrees/s to radians/s
+    RCLCPP_DEBUG(
+      this->get_logger(), "Yaw rate conversion: raw=%.2f → %.4f rad/s", raw_yaw, cam_yaw_rate_);
     cam_curvature_ = cam_yaw_rate_ / cam_velocity_;
+  } else {
+    cam_yaw_rate_ = 0.0;
+    cam_curvature_ = 0.0;
   }
 }
 
@@ -464,9 +478,6 @@ void CaccController::timer_callback()
     update_waypoint_following();
   }
 
-  // publish cam debug msg
-  pub_cam_debug_->publish(create_cam_debug_message());
-
   if (cam_curvature_ <= 0.01 && cam_curvature_ >= -0.01) {
     s_ = 0.5 * pow(params_.standstill_distance + params_.time_gap * odom_velocity_, 2) *
            cam_curvature_ -
@@ -498,8 +509,27 @@ void CaccController::timer_callback()
   z_3_ = cam_velocity_ * cos(cam_yaw_) - odom_velocity_ * cos(pose_yaw_ + alpha_);
   z_4_ = cam_velocity_ * sin(cam_yaw_) - odom_velocity_ * sin(pose_yaw_ + alpha_);
 
+  // Calculate denominator with safety checks
   invGam_Det_ = (params_.standstill_distance + params_.time_gap * odom_velocity_) *
                 (params_.time_gap - params_.time_gap * sin(alpha_) * sin(cam_yaw_ - pose_yaw_));
+
+  // Prevent division by zero with minimum threshold
+  const double MIN_DENOMINATOR = 0.001;
+  if (std::abs(invGam_Det_) < MIN_DENOMINATOR) {
+    invGam_Det_ = std::copysign(MIN_DENOMINATOR, invGam_Det_);
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), 1000,
+      "Low denominator detected: %.4f, using safety threshold", invGam_Det_);
+  }
+
+  RCLCPP_INFO(this->get_logger(), "  Before invGam calculations:");
+  RCLCPP_INFO(
+    this->get_logger(), "    params_.standstill_distance: %.4f", params_.standstill_distance);
+  RCLCPP_INFO(this->get_logger(), "    params_.time_gap: %.4f", params_.time_gap);
+  RCLCPP_INFO(this->get_logger(), "    odom_velocity_: %.4f", odom_velocity_);
+  RCLCPP_INFO(this->get_logger(), "    pose_yaw_: %.4f", pose_yaw_);
+  RCLCPP_INFO(this->get_logger(), "    alpha_: %.4f", alpha_);
+  RCLCPP_INFO(this->get_logger(), "    cam_yaw_: %.4f", cam_yaw_);
 
   invGam_1_ = ((params_.standstill_distance + params_.time_gap * odom_velocity_) * cos(pose_yaw_)) /
               invGam_Det_;
@@ -538,67 +568,46 @@ void CaccController::timer_callback()
 
   twist_msg.linear.x = v_;
   twist_msg.angular.z = w_;
-  // Log the velocity and steering commands being published
-  RCLCPP_INFO(
-    this->get_logger(), "Publishing cmd_vel: linear.x=%.2f, angular.z=%.2f to topic: %s",
-    twist_msg.linear.x, twist_msg.angular.z, pub_cmd_vel->get_topic_name());
 
-  // Log lookahead point info
-  RCLCPP_DEBUG(
-    this->get_logger(), "Publishing lookahead points: x=%.2f, y=%.2f", x_lookahead_point_,
-    y_lookahead_point_);
+  // Detailed logging for debugging steering issues, throttled to 1Hz
+  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "--- CACC Timer Callback ---");
+  RCLCPP_INFO_THROTTLE(
+    this->get_logger(), *this->get_clock(), 1000, "  cam_x: %.4f, cam_y: %.4f, cam_yaw: %.4f",
+    cam_x_, cam_y_, cam_yaw_);
+  RCLCPP_INFO_THROTTLE(
+    this->get_logger(), *this->get_clock(), 1000, "  pose_x: %.4f, pose_y: %.4f, pose_yaw: %.4f",
+    pose_x_, pose_y_, pose_yaw_);
+  RCLCPP_INFO_THROTTLE(
+    this->get_logger(), *this->get_clock(), 1000, "  cam_velocity: %.4f, odom_velocity: %.4f",
+    cam_velocity_, odom_velocity_);
+  RCLCPP_INFO_THROTTLE(
+    this->get_logger(), *this->get_clock(), 1000, "  cam_curvature: %.4f, cam_yaw_rate: %.4f",
+    cam_curvature_, cam_yaw_rate_);
+  RCLCPP_INFO_THROTTLE(
+    this->get_logger(), *this->get_clock(), 1000, "  standstill_distance: %.4f, time_gap: %.4f",
+    params_.standstill_distance, params_.time_gap);
 
-  // Log CACC state info periodically (every 10 cycles to avoid too much logging)
-  static int log_counter = 0;
-  if (++log_counter % 10 == 0) {
-    RCLCPP_INFO(
-      this->get_logger(), "CACC state: distance=%.2f, time_gap=%.2f, target_v=%.2f, lead_v=%.2f",
-      params_.standstill_distance, params_.time_gap, params_.target_velocity, cam_velocity_);
-  }
+  RCLCPP_INFO_THROTTLE(
+    this->get_logger(), *this->get_clock(), 1000, "  s: %.4f, alpha: %.4f", s_, alpha_);
+  RCLCPP_INFO_THROTTLE(
+    this->get_logger(), *this->get_clock(), 1000, "  z1: %.4f, z2: %.4f, z3: %.4f, z4: %.4f", z_1_,
+    z_2_, z_3_, z_4_);
+  RCLCPP_INFO_THROTTLE(
+    this->get_logger(), *this->get_clock(), 1000, "  invGam_Det: %.4f", invGam_Det_);
+  RCLCPP_INFO_THROTTLE(
+    this->get_logger(), *this->get_clock(), 1000,
+    "  invGam_1: %.4f, invGam_2: %.4f, invGam_3: %.4f, invGam_4: %.4f", invGam_1_, invGam_2_,
+    invGam_3_, invGam_4_);
+  RCLCPP_INFO_THROTTLE(
+    this->get_logger(), *this->get_clock(), 1000, "  inP_1: %.4f, inP_2: %.4f", inP_1_, inP_2_);
+  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "  a: %.4f, w: %.4f", a_, w_);
+  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "  v: %.4f", v_);
+  RCLCPP_INFO_THROTTLE(
+    this->get_logger(), *this->get_clock(), 1000,
+    "  twist_msg.linear.x: %.4f, twist_msg.angular.z: %.4f", twist_msg.linear.x,
+    twist_msg.angular.z);
+
   pub_cmd_vel->publish(twist_msg);
-}
-
-etsi_its_cam_msgs::msg::CAM CaccController::create_cam_debug_message()
-{
-  etsi_its_cam_msgs::msg::CAM cam_debug_msg;
-
-  // Set header and generation time
-  cam_debug_msg.cam.generation_delta_time.value =
-    static_cast<uint16_t>((rclcpp::Clock().now().nanoseconds() / 1000000) % 65536);
-
-  // Fill basic container
-  cam_debug_msg.cam.cam_parameters.basic_container.station_type.value = 5;  // passenger car
-  cam_debug_msg.cam.cam_parameters.basic_container.reference_position.longitude.value =
-    static_cast<int32_t>(cam_x_ * 10000000);
-  cam_debug_msg.cam.cam_parameters.basic_container.reference_position.latitude.value =
-    static_cast<int32_t>(cam_y_ * 10000000);
-
-  // Fill high frequency container
-  auto & hf_container = cam_debug_msg.cam.cam_parameters.high_frequency_container
-                          .basic_vehicle_container_high_frequency;
-
-  // Speed
-  hf_container.speed.speed_value.value = static_cast<uint16_t>(std::max(0.0, cam_velocity_ * 100));
-  hf_container.speed.speed_confidence.value = 1;
-
-  // Longitudinal Acceleration
-  hf_container.longitudinal_acceleration.longitudinal_acceleration_value.value =
-    static_cast<int16_t>(cam_acceleration_ * 10);
-  hf_container.longitudinal_acceleration.longitudinal_acceleration_confidence.value = 1;
-
-  // Heading
-  hf_container.heading.heading_value.value = static_cast<uint16_t>(cam_yaw_ * 10);
-  hf_container.heading.heading_confidence.value = 1;
-
-  // YawRate
-  hf_container.yaw_rate.yaw_rate_value.value = static_cast<int16_t>(cam_yaw_rate_ * 100);
-  hf_container.yaw_rate.yaw_rate_confidence.value = 1;
-
-  // Curvature
-  hf_container.curvature.curvature_value.value = static_cast<int16_t>(cam_curvature_ * 10000);
-  hf_container.curvature.curvature_confidence.value = 1;
-
-  return cam_debug_msg;
 }
 
 void CaccController::set_target_velocity(

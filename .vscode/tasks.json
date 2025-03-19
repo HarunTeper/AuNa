@@ -151,6 +151,19 @@
             "command": "cd packages && source install/setup.bash && ros2 launch auna_cacc single_cacc_controller.launch.py robot_number:=${input:robotCount} namespace:=${input:robotNamespace}",
             "problemMatcher": []
         },
+        {
+            "label": "LaunchMultiCacc",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_cacc multi_cacc_controller.launch.py robot_number:=2 namespace:=robot",
+            "problemMatcher": []
+        },
+        // New CACC toggle task - corrected service path
+        {
+            "label": "ToggleCaccController",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 service call /cacc/set_cacc_enable auna_msgs/srv/SetBool \"{value: ${input:caccEnable}}\"",
+            "problemMatcher": []
+        },
         // ------------------- SCENARIOS -------------------
         {
             "label": "LaunchScenarioRobotRacetrackNavigation",
@@ -196,5 +209,22 @@
             "description": "Enter the cmd_vel topic to remap to (don't forget to inlcude the namespace for the robot that you wish to control eg. 'robot0/cmd_vel')",
             "default": "cmd_vel"
         },
+        // New inputs for CACC toggle
+        {
+            "id": "robotIndex",
+            "type": "promptString",
+            "description": "Enter the robot index (e.g., 0, 1, 2, etc.)",
+            "default": "0"
+        },
+        {
+            "id": "caccEnable",
+            "type": "pickString",
+            "description": "Enable or disable CACC controller",
+            "options": [
+                "true",
+                "false"
+            ],
+            "default": "true"
+        }
     ]
 }

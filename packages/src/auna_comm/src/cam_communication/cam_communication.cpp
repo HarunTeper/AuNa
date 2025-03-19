@@ -221,10 +221,13 @@ void CamCommunication::publish_cam_msg(const std::string & trigger)
 
   // Yaw Rate (Section B.33)
   // 0.01 degrees per second precision
-  if (std::isnan(this->yaw_rate_)) {
+  // Use small epsilon to account for floating point precision
+  if (std::abs(this->speed_) < 0.001 || std::isnan(this->yaw_rate_)) {
     vhf.yaw_rate.yaw_rate_value.value = etsi_its_cam_msgs::msg::YawRateValue::UNAVAILABLE;
   } else {
-    vhf.yaw_rate.yaw_rate_value.value = static_cast<int16_t>(this->yaw_rate_ * 180.0 / M_PI * 100);
+    // Convert rad/s to 0.01 deg/s units (value * 100 = centi-degrees/s)
+    vhf.yaw_rate.yaw_rate_value.value =
+      static_cast<int16_t>(this->yaw_rate_ * (180.0 / M_PI) * 100);
   }
   vhf.yaw_rate.yaw_rate_confidence.value = etsi_its_cam_msgs::msg::YawRateConfidence::UNAVAILABLE;
 
@@ -232,8 +235,22 @@ void CamCommunication::publish_cam_msg(const std::string & trigger)
   // Not including in this implementation as it's optional
   // Would contain vehicle role, exterior lights, and path history
 
+  // Log the pose and odom data used to construct this CAM message
+  RCLCPP_INFO(
+    this->get_logger(), "CAM data source - Position: (%.6f, %.6f, %.2f), Heading: %.2f deg",
+    this->longitude_, this->latitude_, this->altitude_, this->heading_ * 180.0 / M_PI);
+  RCLCPP_INFO(
+    this->get_logger(), "Published CAM from Robot%d to station_id=%d", robot_index_,
+    msg.header.station_id.value);
   cam_publisher_->publish(msg);
-  RCLCPP_DEBUG(this->get_logger(), "CAM published");
+  RCLCPP_INFO(
+    this->get_logger(),
+    "Published CAM - Speed: %.2f m/s, Accel: %.2f m/s², Yaw Rate: %.2f rad/s, Curvature: %.4f",
+    this->speed_, this->acceleration_, this->yaw_rate_, this->curvature_);
+  RCLCPP_DEBUG(
+    this->get_logger(),
+    "CAM published details - Latitude: %.6f, Longitude: %.6f, Heading: %.2f deg", this->latitude_,
+    this->longitude_, this->heading_ * 180.0 / M_PI);
 
   // Update last message information for trigger condition checking
   last_cam_msg_time_ = this->now();
@@ -261,7 +278,7 @@ void CamCommunication::odom_callback(const nav_msgs::msg::Odometry::SharedPtr ms
   }
   this->yaw_rate_ = msg->twist.twist.angular.z;
 
-  if (this->speed_ == 0) {
+  if (std::abs(this->speed_) < 0.01) {  // Use threshold instead of exact comparison
     this->curvature_ = 0;
   } else {
     this->curvature_ = this->yaw_rate_ / this->speed_;

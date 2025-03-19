@@ -30,6 +30,9 @@ CamReceiver::CamReceiver() : Node("cam_receiver")
       }
       if (msg->header.station_id.value == this->get_parameter("filter_index").as_int()) {
         publisher_->publish(*msg);
+      } else {
+        RCLCPP_INFO(
+          this->get_logger(), "Filtered CAM from station ID: %d", msg->header.station_id.value);
       }
     });
 }
