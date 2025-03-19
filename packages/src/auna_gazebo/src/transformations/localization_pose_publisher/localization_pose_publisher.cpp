@@ -52,9 +52,8 @@ LocalizationPosePublisher::LocalizationPosePublisher(std::string prefix)
 void LocalizationPosePublisher::timer_callback()
 {
   geometry_msgs::msg::TransformStamped transformStamped;
-  // Use frame IDs without namespace prefixes
-  std::string odom_frame = "odom";       // No prefix!
-  std::string base_frame = "base_link";  // No prefix!
+  std::string odom_frame = "odom";
+  std::string base_frame = "base_link";
   std::string map_frame = "map";
 
   RCLCPP_DEBUG(

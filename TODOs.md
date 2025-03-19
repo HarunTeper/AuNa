@@ -26,3 +26,10 @@
 ### auna_common
 - Utility-Script für Namespace-Parameter validieren
 - Navigation-Parameterdateien überprüfen
+
+
+19.03.2024
+- fix bug in generation delta time difference
+- add delta to exceeded time check, so that it properly triggers after 1 sek and not 1.1 sek
+- modify kp and kd values for better control
+- ros2 run rqt_reconfigure rqt_reconfigure

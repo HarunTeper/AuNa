@@ -1,5 +1,7 @@
 #include "auna_cacc/cacc_controller.hpp"
 
+#include <rclcpp/logging.hpp>
+
 #include <etsi_its_msgs_utils/impl/cam/cam_getters_common.h>
 
 #include <cmath>
@@ -97,9 +99,8 @@ CaccController::CaccController() : Node("cacc_controller")
   // use params_
   params_.standstill_distance = this->get_parameter("standstill_distance").as_double();
   params_.time_gap = this->get_parameter("time_gap").as_double();
-  params_.kp = 0.8;  // this->get_parameter("kp").as_double();
-  params_.kd =
-    3.3;  // this->get_parameter("kd").as_double(); // Increased slightly to reduce oversteering.
+  params_.kp = this->get_parameter("kp").as_double();
+  params_.kd = this->get_parameter("kd").as_double();  // Increased slightly to reduce oversteering.
   params_.max_velocity = this->get_parameter("max_velocity").as_double();
   params_.frequency = this->get_parameter("frequency").as_int();
   params_.use_waypoints = this->get_parameter("use_waypoints").as_bool();
@@ -227,13 +228,25 @@ void CaccController::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr m
   if (last_cam_msg_ == nullptr) {
     cam_acceleration_ = 0.0;
   } else {
-    // Use generationDeltaTime for time difference
-    double dt =
-      (msg->cam.generation_delta_time.value - last_cam_msg_->cam.generation_delta_time.value) /
-      1000.0;  // Convert from milliseconds to seconds
+    // Use generationDeltaTime for time difference with proper wraparound handling
+    uint16_t current_time = msg->cam.generation_delta_time.value;
+    uint16_t previous_time = last_cam_msg_->cam.generation_delta_time.value;
+
+    double dt;
+    if (current_time < previous_time) {
+      dt = (65536 + current_time - previous_time) / 1000.0;
+      RCLCPP_DEBUG(
+        this->get_logger(), "Generation Delta Time wraparound detected: %u → %u", previous_time,
+        current_time);
+    } else {
+      dt = (current_time - previous_time) / 1000.0;
+    }
+
+    RCLCPP_INFO(this->get_logger(), "Generation Delta Time difference: %.4f", dt);
+
     dt = std::min(dt, 0.1);
 
-    if (dt == 0) {
+    if (dt < 0.001) {
       cam_acceleration_ = 0.0;
     } else {
       cam_acceleration_ = (cam_velocity_ - last_cam_velocity_) / dt;
@@ -247,6 +260,12 @@ void CaccController::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr m
     "Station ID: %d",
     cam_velocity_, cam_acceleration_, cam_yaw_rate_ * 180 / M_PI, cam_curvature_,
     msg->header.station_id.value);
+
+  RCLCPP_INFO(
+    this->get_logger(), "Heading: %.2f",
+    msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency.heading
+        .heading_value.value /
+      10.0);
   last_cam_velocity_ = cam_velocity_;
 
   cam_yaw_ = msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency
