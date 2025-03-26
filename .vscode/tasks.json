@@ -157,7 +157,6 @@
             "command": "cd packages && source install/setup.bash && ros2 launch auna_cacc multi_cacc_controller.launch.py robot_number:=2 namespace:=robot",
             "problemMatcher": []
         },
-        // New CACC toggle task - corrected service path
         {
             "label": "ToggleCaccController",
             "type": "shell",
