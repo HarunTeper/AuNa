@@ -73,13 +73,13 @@ def generate_launch_description():
             'enable_map_server': 'True',
         }.items(),
     )
-    comm_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(
-            comm_launch_file_dir, 'multi_cam_communication.launch.py')),
-        launch_arguments={
-            'robot_number': robot_number
-        }.items(),
-    )
+    # comm_cmd = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource(os.path.join(
+    #         comm_launch_file_dir, 'multi_cam_communication.launch.py')),
+    #     launch_arguments={
+    #         'robot_number': robot_number
+    #     }.items(),
+    # )
 
     # Launch Description
     launch_description = LaunchDescription()
@@ -90,6 +90,6 @@ def generate_launch_description():
     launch_description.add_action(world_cmd)
     launch_description.add_action(spawn_cmd)
     launch_description.add_action(nav_cmd)
-    launch_description.add_action(comm_cmd)
+    # launch_description.add_action(comm_cmd)
 
     return launch_description
