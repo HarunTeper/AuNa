@@ -27,9 +27,9 @@
 - Utility-Script für Namespace-Parameter validieren
 - Navigation-Parameterdateien überprüfen
 
-
-19.03.2024
+19.03.2025
 - fix bug in generation delta time difference
-- add delta to exceeded time check, so that it properly triggers after 1 sek and not 1.1 sek
+- add delta to exceeded time check, so that it properly triggers after 1 sec and not 1.1 sec
 - modify kp and kd values for better control
 - ros2 run rqt_reconfigure rqt_reconfigure
+ros2 run auna_cacc cacc_controller --ros-args -p enable_data_logging:=true -p log_file_path:=/home/vscode/workspace/cacc_log.csv

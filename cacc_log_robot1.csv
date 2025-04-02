@@ -1,0 +1,1 @@
+timestamp,leader_x,leader_y,leader_velocity,leader_acceleration,leader_curvature,follower_x,follower_y,follower_velocity,follower_acceleration,desired_distance,actual_distance,distance_error,z1,z2,z3,z4,commanded_accel,commanded_velocity,commanded_angular

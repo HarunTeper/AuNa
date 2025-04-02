@@ -24,6 +24,9 @@ def include_launch_description(context: LaunchContext):
     enable_logging_value = context.perform_substitution(enable_logging)
     log_file_path_value = context.perform_substitution(log_file_path)
 
+    # Convert string to boolean for enable_logging parameter
+    enable_logging_bool = enable_logging_value.lower() == 'true'
+
     launch_description_content = []
 
     # Explicitly log the number of robots detected
@@ -71,7 +74,7 @@ def include_launch_description(context: LaunchContext):
                     name='cacc_controller',
                     output='screen',
                     parameters=[{
-                        'enable_data_logging': enable_logging_value,
+                        'enable_data_logging': enable_logging_bool,  # Pass as boolean not string
                         'log_file_path': robot_log_file
                     }]
                 )

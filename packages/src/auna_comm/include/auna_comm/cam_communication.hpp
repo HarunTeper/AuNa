@@ -10,6 +10,8 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Scalar.h>
+#include <fstream>
+#include <iomanip>
 
 class CamCommunication : public rclcpp::Node
 {
@@ -70,5 +72,10 @@ private:
 
   double vehicle_length_;
   double vehicle_width_;
+
+  // CAM message logging
+  bool enable_cam_logging_;
+  std::string cam_log_file_path_;
+  std::ofstream cam_log_file_;
 };
 #endif  // CAM_COMMUNICATION_HPP_

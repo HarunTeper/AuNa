@@ -6,5 +6,6 @@
         "editor.formatOnSave": true,
     },
     "cmake.ignoreCMakeListsMissing": true,
-    "clangd.path": "/usr/bin/clangd"
+    "clangd.path": "/usr/bin/clangd",
+    "editor.fontSize": 16
 }

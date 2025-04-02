@@ -140,6 +140,18 @@
             "problemMatcher": []
         },
         {
+            "label": "LaunchCamCommunicationWithLogging",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_comm multi_cam_communication.launch.py robot_number:=${input:robotCount} namespace:=${input:robotNamespace} enable_cam_logging:=true",
+            "problemMatcher": []
+        },
+        {
+            "label": "LaunchSingleCamWithLogging",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 run auna_comm cam_communication --ros-args -r __ns:=/${input:robotNamespace}${input:robotIndex} -p robot_index:=${input:robotIndex} -p filter_index:=${input:filterIndex} -p enable_cam_logging:=true",
+            "problemMatcher": []
+        },
+        {
             "label": "LaunchCacc",
             "type": "shell",
             "command": "cd packages && source install/setup.bash && ros2 launch auna_cacc cacc_controller.launch.py robot_number:=${input:robotCount} namespace:=${input:robotNamespace}",
@@ -224,6 +236,12 @@
                 "false"
             ],
             "default": "true"
+        },
+        {
+            "id": "filterIndex",
+            "type": "promptString",
+            "description": "Enter the index of the robot to filter CAM messages from (e.g., for follower robot1 to listen to leader robot0, enter 0)",
+            "default": "0"
         }
     ]
 }
