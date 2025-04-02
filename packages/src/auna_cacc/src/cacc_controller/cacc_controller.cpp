@@ -254,6 +254,20 @@ void CaccController::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr m
   }
   last_cam_msg_ = msg;
 
+  // Properly handle the heading value with bounds checking
+  uint16_t heading_value = msg->cam.cam_parameters.high_frequency_container
+                             .basic_vehicle_container_high_frequency.heading.heading_value.value;
+
+  if (heading_value == etsi_its_cam_msgs::msg::HeadingValue::UNAVAILABLE) {
+    RCLCPP_WARN(this->get_logger(), "Heading value is UNAVAILABLE");
+    cam_yaw_ = 0.0;  // Default to 0 when unavailable
+  } else {
+    // Make sure heading is within 0-3600 range (0-360 degrees)
+    heading_value = heading_value % 3600;
+    double heading_degrees = heading_value / 10.0;  // Convert from 0.1 degrees to degrees
+    cam_yaw_ = heading_degrees * (M_PI / 180.0);    // Convert from degrees to radians
+  }
+
   RCLCPP_INFO(
     this->get_logger(),
     "Received CAM - Speed: %.2f m/s, Accel: %.2f m/s², Yaw Rate: %.2f deg/s, Curvature: %.4f, "
@@ -262,15 +276,9 @@ void CaccController::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr m
     msg->header.station_id.value);
 
   RCLCPP_INFO(
-    this->get_logger(), "Heading: %.2f",
-    msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency.heading
-        .heading_value.value /
-      10.0);
-  last_cam_velocity_ = cam_velocity_;
+    this->get_logger(), "Heading: %.2f degrees (%.2f radians)", heading_value / 10.0, cam_yaw_);
 
-  cam_yaw_ = msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency
-               .heading.heading_value.value /
-             10.0 * (M_PI / 180.0);  // Convert from 0.1 degrees to radians
+  last_cam_velocity_ = cam_velocity_;
 
   if (
     msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency.yaw_rate
@@ -506,6 +514,10 @@ void CaccController::timer_callback()
     odom_velocity_);
   RCLCPP_INFO(this->get_logger(), "    cam_curvature_: %.4f", cam_curvature_);
 
+  // Log control gains
+  RCLCPP_INFO(this->get_logger(), "  Control gains:");
+  RCLCPP_INFO(this->get_logger(), "    kp: %.4f, kd: %.4f", params_.kp, params_.kd);
+
   // Log calculation of s_
   RCLCPP_INFO(this->get_logger(), "  Calculating s_:");
   double distance_term = params_.standstill_distance + params_.time_gap * odom_velocity_;
@@ -541,7 +553,7 @@ void CaccController::timer_callback()
   RCLCPP_INFO(
     this->get_logger(), "  Lookahead point: (%.4f, %.4f)", x_lookahead_point_, y_lookahead_point_);
 
-  // Log calculation of z values
+  // Log calculation of z values with gain information
   RCLCPP_INFO(this->get_logger(), "  Calculating z values:");
   RCLCPP_INFO(this->get_logger(), "    cam_x_ - pose_x_ = %.4f", cam_x_ - pose_x_);
   RCLCPP_INFO(this->get_logger(), "    s_ * sin(cam_yaw_) = %.4f", s_ * sin(cam_yaw_));
@@ -558,6 +570,8 @@ void CaccController::timer_callback()
   RCLCPP_INFO(this->get_logger(), "    z_2_ = %.4f", z_2_);
   RCLCPP_INFO(this->get_logger(), "    z_3_ = %.4f", z_3_);
   RCLCPP_INFO(this->get_logger(), "    z_4_ = %.4f", z_4_);
+  RCLCPP_INFO(this->get_logger(), "    z_1_ * kp = %.4f", z_1_ * params_.kp);
+  RCLCPP_INFO(this->get_logger(), "    z_2_ * kd = %.4f", z_2_ * params_.kd);
 
   // Calculate denominator with safety checks
   RCLCPP_INFO(this->get_logger(), "  --- InvGam Calculation Details ---");
@@ -642,7 +656,8 @@ void CaccController::timer_callback()
     (1 - cos(alpha_)) * cam_velocity_ * cos(cam_yaw_) - sin(alpha_) * cam_velocity_ * sin(cam_yaw_);
   double inP1_term4 = cos(cam_yaw_) * s_ * cam_yaw_rate_;
 
-  RCLCPP_INFO(this->get_logger(), "    z_1_ * params_.kp = %.4f", inP1_term1);
+  RCLCPP_INFO(
+    this->get_logger(), "    z_1_ * params_.kp = %.4f (gain: %.4f)", inP1_term1, params_.kp);
   RCLCPP_INFO(this->get_logger(), "    cos(alpha_) * z_3_ + sin(alpha_) * z_4_ = %.4f", inP1_term2);
   RCLCPP_INFO(
     this->get_logger(),
@@ -661,7 +676,8 @@ void CaccController::timer_callback()
     sin(alpha_) * cam_velocity_ * cos(cam_yaw_) + (1 - cos(alpha_)) * cam_velocity_ * sin(cam_yaw_);
   double inP2_term4 = sin(cam_yaw_) * s_ * cam_yaw_rate_;
 
-  RCLCPP_INFO(this->get_logger(), "    z_2_ * params_.kd = %.4f", inP2_term1);
+  RCLCPP_INFO(
+    this->get_logger(), "    z_2_ * params_.kd = %.4f (gain: %.4f)", inP2_term1, params_.kd);
   RCLCPP_INFO(this->get_logger(), "    sin(alpha_) * z_3_ + cos(alpha_) * z_4_ = %.4f", inP2_term2);
   RCLCPP_INFO(
     this->get_logger(),
@@ -757,6 +773,12 @@ void CaccController::timer_callback()
     this->get_logger(), *this->get_clock(), 1000,
     "  twist_msg.linear.x: %.4f, twist_msg.angular.z: %.4f", twist_msg.linear.x,
     twist_msg.angular.z);
+  RCLCPP_INFO_THROTTLE(
+    this->get_logger(), *this->get_clock(), 1000, "  Control gains: kp=%.4f, kd=%.4f", params_.kp,
+    params_.kd);
+  RCLCPP_INFO_THROTTLE(
+    this->get_logger(), *this->get_clock(), 1000, "  z1*kp=%.4f, z2*kd=%.4f", z_1_ * params_.kp,
+    z_2_ * params_.kd);
 
   pub_cmd_vel->publish(twist_msg);
 }

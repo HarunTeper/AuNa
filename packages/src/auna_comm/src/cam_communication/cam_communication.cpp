@@ -91,16 +91,28 @@ void CamCommunication::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr
     received_station_id == this->filter_index_ ? "PROCESSING" : "IGNORING");
 
   if (received_station_id == this->filter_index_) {
+    // Get heading value and properly handle potential out-of-range values
+    uint16_t raw_heading = msg->cam.cam_parameters.high_frequency_container
+                             .basic_vehicle_container_high_frequency.heading.heading_value.value;
+
+    double heading_degrees;
+    if (raw_heading == etsi_its_cam_msgs::msg::HeadingValue::UNAVAILABLE) {
+      heading_degrees = 0.0;  // Default when unavailable
+    } else {
+      // Ensure the heading is in valid range (0-3600) before converting to degrees
+      raw_heading = raw_heading % 3600;
+      heading_degrees = raw_heading / 10.0;
+    }
+
     // Additional debug information about received message
     RCLCPP_DEBUG(
       this->get_logger(),
-      "[Robot%d] CAM details | Position: (%.6f, %.6f) | Heading: %.2f° | Yaw rate: %.2f°/s",
+      "[Robot%d] CAM details | Position: (%.6f, %.6f) | Heading: %.2f° (raw: %u) | Yaw rate: "
+      "%.2f°/s",
       robot_index_,
       msg->cam.cam_parameters.basic_container.reference_position.longitude.value / 10000000.0,
       msg->cam.cam_parameters.basic_container.reference_position.latitude.value / 10000000.0,
-      msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency
-          .heading.heading_value.value /
-        10.0,
+      heading_degrees, raw_heading,
       msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency
           .yaw_rate.yaw_rate_value.value /
         100.0);
@@ -197,8 +209,16 @@ void CamCommunication::publish_cam_msg(const std::string & trigger)
 
   // Heading (Section B.21)
   // WGS84 north (0°), east (90°), south (180°), west (270°). 0.1° step
-  vhf.heading.heading_value.value = static_cast<uint16_t>(this->heading_ * 180.0 / M_PI * 10);
+  // Convert heading from radians to 0.1 degree units and ensure it's in the valid range (0-3600)
+  uint16_t heading_value =
+    static_cast<uint16_t>(fmod(this->heading_ * 180.0 / M_PI * 10 + 3600, 3600));
+  vhf.heading.heading_value.value = heading_value;
   vhf.heading.heading_confidence.value = etsi_its_cam_msgs::msg::HeadingConfidence::UNAVAILABLE;
+
+  // Log the actual heading value being sent for debugging
+  RCLCPP_DEBUG(
+    this->get_logger(), "[Robot%d] Setting heading to %.1f degrees (%.4f radians), encoded as %u",
+    robot_index_, heading_value / 10.0, this->heading_, heading_value);
 
   // Speed (Section B.22)
   // 0.01 m/s precision
