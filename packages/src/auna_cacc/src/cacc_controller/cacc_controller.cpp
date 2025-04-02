@@ -5,6 +5,7 @@
 #include <etsi_its_msgs_utils/impl/cam/cam_getters_common.h>
 
 #include <cmath>
+#include <fstream>  // Added for file logging
 
 CaccController::CaccController() : Node("cacc_controller")
 {
@@ -15,6 +16,30 @@ CaccController::CaccController() : Node("cacc_controller")
   first_cam_received_ = false;
   first_odom_received_ = false;
   first_pose_received_ = false;
+
+  // Initialize data logging
+  this->declare_parameter("enable_data_logging", true);
+  this->declare_parameter("log_file_path", "/home/vscode/workspace/cacc_log.csv");
+
+  enable_data_logging_ = this->get_parameter("enable_data_logging").as_bool();
+  log_file_path_ = this->get_parameter("log_file_path").as_string();
+
+  if (enable_data_logging_) {
+    RCLCPP_INFO(this->get_logger(), "Data logging enabled. Writing to: %s", log_file_path_.c_str());
+    log_file_.open(log_file_path_, std::ios::out | std::ios::trunc);
+    if (log_file_.is_open()) {
+      // Write CSV header
+      log_file_
+        << "timestamp,leader_x,leader_y,leader_velocity,leader_acceleration,leader_curvature,"
+        << "follower_x,follower_y,follower_velocity,follower_acceleration,"
+        << "desired_distance,actual_distance,distance_error,"
+        << "z1,z2,z3,z4,commanded_accel,commanded_velocity,commanded_angular" << std::endl;
+      log_file_.flush();
+    } else {
+      RCLCPP_ERROR(this->get_logger(), "Failed to open log file: %s", log_file_path_.c_str());
+      enable_data_logging_ = false;
+    }
+  }
 
   // Add topic name debug info
   RCLCPP_INFO(this->get_logger(), "Subscribing to topics: cam_filtered, odom, global_pose");
@@ -87,7 +112,7 @@ CaccController::CaccController() : Node("cacc_controller")
   this->declare_parameter("standstill_distance", 1.25);
   this->declare_parameter("time_gap", 0.25);
   this->declare_parameter("kp", 1.0);
-  this->declare_parameter("kd", 3.0);
+  this->declare_parameter("kd", 1.0);
   this->declare_parameter("max_velocity", 1.0);
   this->declare_parameter("frequency", 50);
   this->declare_parameter("use_waypoints", false);
@@ -144,6 +169,14 @@ CaccController::CaccController() : Node("cacc_controller")
     [this](std::vector<rclcpp::Parameter> parameters) -> rcl_interfaces::msg::SetParametersResult {
       return this->dynamicParametersCallback(parameters);
     });
+
+  // Add cleanup for file logging
+  rclcpp::on_shutdown([this]() {
+    if (enable_data_logging_ && log_file_.is_open()) {
+      RCLCPP_INFO(this->get_logger(), "Closing log file");
+      log_file_.close();
+    }
+  });
 }
 
 void CaccController::read_waypoints_from_csv()
@@ -505,140 +538,92 @@ void CaccController::timer_callback()
     update_waypoint_following();
   }
 
-  RCLCPP_INFO(this->get_logger(), "=== Beginning of CACC calculations ===");
-  RCLCPP_INFO(this->get_logger(), "  Initial conditions:");
-  RCLCPP_INFO(this->get_logger(), "    cam_x_: %.4f, cam_y_: %.4f", cam_x_, cam_y_);
-  RCLCPP_INFO(this->get_logger(), "    cam_yaw_: %.4f, pose_yaw_: %.4f", cam_yaw_, pose_yaw_);
+  RCLCPP_INFO(this->get_logger(), "=== CACC Following Status ===");
+
+  // Log vehicle states - key information about both vehicles
+  RCLCPP_INFO(this->get_logger(), "Vehicle States:");
   RCLCPP_INFO(
-    this->get_logger(), "    cam_velocity_: %.4f, odom_velocity_: %.4f", cam_velocity_,
-    odom_velocity_);
-  RCLCPP_INFO(this->get_logger(), "    cam_curvature_: %.4f", cam_curvature_);
+    this->get_logger(), "  Leader: velocity=%.2f m/s, acceleration=%.2f m/s², curvature=%.4f 1/m",
+    cam_velocity_, cam_acceleration_, cam_curvature_);
+  RCLCPP_INFO(
+    this->get_logger(), "  Follower: velocity=%.2f m/s, acceleration=%.2f m/s²", odom_velocity_,
+    odom_acceleration_);
 
-  // Log control gains
-  RCLCPP_INFO(this->get_logger(), "  Control gains:");
-  RCLCPP_INFO(this->get_logger(), "    kp: %.4f, kd: %.4f", params_.kp, params_.kd);
-
-  // Log calculation of s_
-  RCLCPP_INFO(this->get_logger(), "  Calculating s_:");
+  // Log distance parameters
   double distance_term = params_.standstill_distance + params_.time_gap * odom_velocity_;
-  RCLCPP_INFO(this->get_logger(), "    distance_term = %.4f", distance_term);
+  RCLCPP_INFO(this->get_logger(), "Distance Parameters:");
+  RCLCPP_INFO(
+    this->get_logger(),
+    "  Desired spacing: %.2f m (standstill=%.2f + time_gap=%.2f * velocity=%.2f)", distance_term,
+    params_.standstill_distance, params_.time_gap, odom_velocity_);
 
+  // Calculate actual distance between vehicles
+  double dx = cam_x_ - pose_x_;
+  double dy = cam_y_ - pose_y_;
+  double actual_distance = std::hypot(dx, dy);
+  RCLCPP_INFO(
+    this->get_logger(), "  Actual distance: %.2f m (error: %.2f m)", actual_distance,
+    actual_distance - distance_term);
+
+  // Calculate s_ (distance along curved path)
   if (cam_curvature_ <= 0.01 && cam_curvature_ >= -0.01) {
-    RCLCPP_INFO(this->get_logger(), "    Using small curvature formula for s_");
     double term1_s = 0.5 * pow(distance_term, 2) * cam_curvature_;
     double term2_s = 0.125 * pow(distance_term, 4) * pow(cam_curvature_, 3);
-    RCLCPP_INFO(this->get_logger(), "    term1_s = %.4f, term2_s = %.4f", term1_s, term2_s);
     s_ = term1_s - term2_s;
   } else {
-    RCLCPP_INFO(this->get_logger(), "    Using regular curvature formula for s_");
     double inner_term = 1 + pow(cam_curvature_, 2) * pow(distance_term, 2);
-    RCLCPP_INFO(
-      this->get_logger(), "    inner_term = %.4f, sqrt(inner_term) = %.4f", inner_term,
-      sqrt(inner_term));
     s_ = (-1 + sqrt(inner_term)) / cam_curvature_;
   }
-  RCLCPP_INFO(this->get_logger(), "    Final s_ = %.4f", s_);
 
-  // Log calculation of alpha_
-  RCLCPP_INFO(this->get_logger(), "  Calculating alpha_:");
-  RCLCPP_INFO(
-    this->get_logger(), "    cam_curvature_ * distance_term = %.4f",
-    cam_curvature_ * distance_term);
+  // Calculate alpha_ (angle adjustment for curved path)
   alpha_ = atan(cam_curvature_ * distance_term);
-  RCLCPP_INFO(this->get_logger(), "    alpha_ = %.4f", alpha_);
+
+  RCLCPP_INFO(this->get_logger(), "Curved Path Adjustment:");
+  RCLCPP_INFO(
+    this->get_logger(), "  Path curvature: %.4f 1/m, s: %.2f m, alpha: %.2f rad", cam_curvature_,
+    s_, alpha_);
 
   x_lookahead_point_ = cam_x_ + s_ * sin(cam_yaw_);
   y_lookahead_point_ = cam_y_ - s_ * cos(cam_yaw_);
 
-  RCLCPP_INFO(
-    this->get_logger(), "  Lookahead point: (%.4f, %.4f)", x_lookahead_point_, y_lookahead_point_);
-
-  // Log calculation of z values with gain information
-  RCLCPP_INFO(this->get_logger(), "  Calculating z values:");
-  RCLCPP_INFO(this->get_logger(), "    cam_x_ - pose_x_ = %.4f", cam_x_ - pose_x_);
-  RCLCPP_INFO(this->get_logger(), "    s_ * sin(cam_yaw_) = %.4f", s_ * sin(cam_yaw_));
-  RCLCPP_INFO(
-    this->get_logger(), "    distance_term * cos(pose_yaw_) = %.4f",
-    distance_term * cos(pose_yaw_));
-
+  // Calculate error states
   z_1_ = cam_x_ - pose_x_ + s_ * sin(cam_yaw_) - distance_term * cos(pose_yaw_);
   z_2_ = cam_y_ - pose_y_ - s_ * cos(cam_yaw_) - distance_term * sin(pose_yaw_);
   z_3_ = cam_velocity_ * cos(cam_yaw_) - odom_velocity_ * cos(pose_yaw_ + alpha_);
   z_4_ = cam_velocity_ * sin(cam_yaw_) - odom_velocity_ * sin(pose_yaw_ + alpha_);
 
-  RCLCPP_INFO(this->get_logger(), "    z_1_ = %.4f", z_1_);
-  RCLCPP_INFO(this->get_logger(), "    z_2_ = %.4f", z_2_);
-  RCLCPP_INFO(this->get_logger(), "    z_3_ = %.4f", z_3_);
-  RCLCPP_INFO(this->get_logger(), "    z_4_ = %.4f", z_4_);
-  RCLCPP_INFO(this->get_logger(), "    z_1_ * kp = %.4f", z_1_ * params_.kp);
-  RCLCPP_INFO(this->get_logger(), "    z_2_ * kd = %.4f", z_2_ * params_.kd);
+  RCLCPP_INFO(this->get_logger(), "Error States:");
+  RCLCPP_INFO(
+    this->get_logger(), "  Position errors - longitudinal: %.2f m, lateral: %.2f m", z_1_, z_2_);
+  RCLCPP_INFO(
+    this->get_logger(), "  Velocity errors - longitudinal: %.2f m/s, lateral: %.2f m/s", z_3_,
+    z_4_);
 
-  // Calculate denominator with safety checks
-  RCLCPP_INFO(this->get_logger(), "  --- InvGam Calculation Details ---");
-  RCLCPP_INFO(this->get_logger(), "  Input values:");
-  RCLCPP_INFO(this->get_logger(), "    standstill_distance: %.4f", params_.standstill_distance);
-  RCLCPP_INFO(this->get_logger(), "    time_gap: %.4f", params_.time_gap);
-  RCLCPP_INFO(this->get_logger(), "    odom_velocity: %.4f", odom_velocity_);
-  RCLCPP_INFO(this->get_logger(), "    cam_yaw - pose_yaw: %.4f", cam_yaw_ - pose_yaw_);
-  RCLCPP_INFO(this->get_logger(), "    sin(alpha): %.4f", sin(alpha_));
-  RCLCPP_INFO(this->get_logger(), "    sin(cam_yaw_ - pose_yaw_): %.4f", sin(cam_yaw_ - pose_yaw_));
-
-  // Log intermediate calculation components
+  // Calculate control matrix inverse (invGam calculations)
   double term1 = params_.standstill_distance + params_.time_gap * odom_velocity_;
   double term2 = params_.time_gap - params_.time_gap * sin(alpha_) * sin(cam_yaw_ - pose_yaw_);
-  RCLCPP_INFO(this->get_logger(), "  Intermediate calculations:");
-  RCLCPP_INFO(
-    this->get_logger(), "    term1 = standstill_distance + time_gap * odom_velocity = %.4f", term1);
-  RCLCPP_INFO(
-    this->get_logger(),
-    "    term2 = time_gap - time_gap * sin(alpha) * sin(cam_yaw - pose_yaw) = %.4f", term2);
-
   invGam_Det_ = term1 * term2;
 
   // Prevent division by zero with minimum threshold
   const double MIN_DENOMINATOR = 0.001;
   if (std::abs(invGam_Det_) < MIN_DENOMINATOR) {
     RCLCPP_WARN(
-      this->get_logger(), "  Small denominator detected! Before adjustment: %.6f", invGam_Det_);
+      this->get_logger(), "Small denominator detected in control matrix: %.6f", invGam_Det_);
     invGam_Det_ = std::copysign(MIN_DENOMINATOR, invGam_Det_);
-    RCLCPP_WARN(
-      this->get_logger(), "  Low denominator detected: %.4f, using safety threshold instead",
-      invGam_Det_);
   }
 
-  RCLCPP_INFO(this->get_logger(), "  Before invGam calculations:");
-  RCLCPP_INFO(
-    this->get_logger(), "    params_.standstill_distance: %.4f", params_.standstill_distance);
-  RCLCPP_INFO(this->get_logger(), "    params_.time_gap: %.4f", params_.time_gap);
-  RCLCPP_INFO(this->get_logger(), "    odom_velocity_: %.4f", odom_velocity_);
-  RCLCPP_INFO(this->get_logger(), "    pose_yaw_: %.4f", pose_yaw_);
-  RCLCPP_INFO(this->get_logger(), "    alpha_: %.4f", alpha_);
-  RCLCPP_INFO(this->get_logger(), "    cam_yaw_: %.4f", cam_yaw_);
-  RCLCPP_INFO(this->get_logger(), "    final invGam_Det_: %.4f", invGam_Det_);
-
-  // Log numerator calculations for each invGam component
+  // Calculate invGam components (condensing this section since it's internal math)
   double num1 = (params_.standstill_distance + params_.time_gap * odom_velocity_) * cos(pose_yaw_);
   double num2 = (params_.standstill_distance + params_.time_gap * odom_velocity_) * sin(pose_yaw_);
   double num3 = -params_.time_gap * sin(pose_yaw_) - params_.time_gap * sin(alpha_) * cos(cam_yaw_);
   double num4 = params_.time_gap * cos(pose_yaw_) - params_.time_gap * sin(alpha_) * sin(cam_yaw_);
-
-  RCLCPP_INFO(this->get_logger(), "  invGam numerators:");
-  RCLCPP_INFO(this->get_logger(), "    num1 = %.4f", num1);
-  RCLCPP_INFO(this->get_logger(), "    num2 = %.4f", num2);
-  RCLCPP_INFO(this->get_logger(), "    num3 = %.4f", num3);
-  RCLCPP_INFO(this->get_logger(), "    num4 = %.4f", num4);
 
   invGam_1_ = num1 / invGam_Det_;
   invGam_2_ = num2 / invGam_Det_;
   invGam_3_ = num3 / invGam_Det_;
   invGam_4_ = num4 / invGam_Det_;
 
-  RCLCPP_INFO(this->get_logger(), "  Final invGam values:");
-  RCLCPP_INFO(this->get_logger(), "    invGam_1_ = %.4f", invGam_1_);
-  RCLCPP_INFO(this->get_logger(), "    invGam_2_ = %.4f", invGam_2_);
-  RCLCPP_INFO(this->get_logger(), "    invGam_3_ = %.4f", invGam_3_);
-  RCLCPP_INFO(this->get_logger(), "    invGam_4_ = %.4f", invGam_4_);
-
+  // Calculate inP terms (control inputs before transformation)
   inP_1_ = (z_1_ * params_.kp) + (cos(alpha_) * z_3_ + sin(alpha_) * z_4_) +
            ((1 - cos(alpha_)) * cam_velocity_ * cos(cam_yaw_) -
             sin(alpha_) * cam_velocity_ * sin(cam_yaw_)) +
@@ -648,137 +633,79 @@ void CaccController::timer_callback()
             (1 - cos(alpha_)) * cam_velocity_ * sin(cam_yaw_)) +
            (sin(cam_yaw_) * s_ * cam_yaw_rate_);
 
-  RCLCPP_INFO(this->get_logger(), "  --- inP Calculation Details ---");
-  RCLCPP_INFO(this->get_logger(), "  inP_1 components:");
-  double inP1_term1 = z_1_ * params_.kp;
-  double inP1_term2 = cos(alpha_) * z_3_ + sin(alpha_) * z_4_;
-  double inP1_term3 =
-    (1 - cos(alpha_)) * cam_velocity_ * cos(cam_yaw_) - sin(alpha_) * cam_velocity_ * sin(cam_yaw_);
-  double inP1_term4 = cos(cam_yaw_) * s_ * cam_yaw_rate_;
+  // Calculate final control outputs
+  a_ = invGam_1_ * inP_1_ + invGam_2_ * inP_2_;
+  w_ = invGam_3_ * inP_1_ + invGam_4_ * inP_2_;
 
+  RCLCPP_INFO(this->get_logger(), "Control Contributions:");
   RCLCPP_INFO(
-    this->get_logger(), "    z_1_ * params_.kp = %.4f (gain: %.4f)", inP1_term1, params_.kp);
-  RCLCPP_INFO(this->get_logger(), "    cos(alpha_) * z_3_ + sin(alpha_) * z_4_ = %.4f", inP1_term2);
+    this->get_logger(), "  Position error contribution: %.2f m/s² (gain kp=%.2f)",
+    z_1_ * params_.kp, params_.kp);
   RCLCPP_INFO(
-    this->get_logger(),
-    "    (1-cos(alpha_))*cam_velocity_*cos(cam_yaw_) - sin(alpha_)*cam_velocity_*sin(cam_yaw_) = "
-    "%.4f",
-    inP1_term3);
-  RCLCPP_INFO(this->get_logger(), "    cos(cam_yaw_) * s_ * cam_yaw_rate_ = %.4f", inP1_term4);
+    this->get_logger(), "  Velocity error contribution: %.2f m/s² (z3=%.2f, z4=%.2f)",
+    cos(alpha_) * z_3_ + sin(alpha_) * z_4_, z_3_, z_4_);
 
-  inP_1_ = inP1_term1 + inP1_term2 + inP1_term3 + inP1_term4;
-  RCLCPP_INFO(this->get_logger(), "    Final inP_1_ = %.4f", inP_1_);
-
-  RCLCPP_INFO(this->get_logger(), "  inP_2 components:");
-  double inP2_term1 = z_2_ * params_.kd;
-  double inP2_term2 = sin(alpha_) * z_3_ + cos(alpha_) * z_4_;
-  double inP2_term3 =
-    sin(alpha_) * cam_velocity_ * cos(cam_yaw_) + (1 - cos(alpha_)) * cam_velocity_ * sin(cam_yaw_);
-  double inP2_term4 = sin(cam_yaw_) * s_ * cam_yaw_rate_;
-
-  RCLCPP_INFO(
-    this->get_logger(), "    z_2_ * params_.kd = %.4f (gain: %.4f)", inP2_term1, params_.kd);
-  RCLCPP_INFO(this->get_logger(), "    sin(alpha_) * z_3_ + cos(alpha_) * z_4_ = %.4f", inP2_term2);
-  RCLCPP_INFO(
-    this->get_logger(),
-    "    sin(alpha_)*cam_velocity_*cos(cam_yaw_) + (1-cos(alpha_))*cam_velocity_*sin(cam_yaw_) = "
-    "%.4f",
-    inP2_term3);
-  RCLCPP_INFO(this->get_logger(), "    sin(cam_yaw_) * s_ * cam_yaw_rate_ = %.4f", inP2_term4);
-
-  inP_2_ = inP2_term1 + inP2_term2 + inP2_term3 + inP2_term4;
-  RCLCPP_INFO(this->get_logger(), "    Final inP_2_ = %.4f", inP_2_);
-
-  // Detailed logging for final a_ and w_ calculations
-  RCLCPP_INFO(this->get_logger(), "  Final control calculations:");
-  double a_term1 = invGam_1_ * inP_1_;
-  double a_term2 = invGam_2_ * inP_2_;
-  RCLCPP_INFO(
-    this->get_logger(), "    a_term1 = invGam_1_ * inP_1_ = %.4f * %.4f = %.4f", invGam_1_, inP_1_,
-    a_term1);
-  RCLCPP_INFO(
-    this->get_logger(), "    a_term2 = invGam_2_ * inP_2_ = %.4f * %.4f = %.4f", invGam_2_, inP_2_,
-    a_term2);
-
-  a_ = a_term1 + a_term2;
-  RCLCPP_INFO(this->get_logger(), "    a_ = %.4f", a_);
-
-  double w_term1 = invGam_3_ * inP_1_;
-  double w_term2 = invGam_4_ * inP_2_;
-  RCLCPP_INFO(
-    this->get_logger(), "    w_term1 = invGam_3_ * inP_1_ = %.4f * %.4f = %.4f", invGam_3_, inP_1_,
-    w_term1);
-  RCLCPP_INFO(
-    this->get_logger(), "    w_term2 = invGam_4_ * inP_2_ = %.4f * %.4f = %.4f", invGam_4_, inP_2_,
-    w_term2);
-
-  w_ = w_term1 + w_term2;
-  RCLCPP_INFO(this->get_logger(), "    w_ = %.4f", w_);
+  // Additional diagnostic logs for turns
+  if (std::abs(cam_curvature_) > 0.01) {
+    RCLCPP_INFO(this->get_logger(), "Sharp Turn Detected:");
+    RCLCPP_INFO(
+      this->get_logger(), "  Leader yaw rate: %.2f rad/s, Leader velocity: %.2f m/s", cam_yaw_rate_,
+      cam_velocity_);
+    RCLCPP_INFO(
+      this->get_logger(), "  Curvature effect on acceleration: %.2f m/s²",
+      (cos(cam_yaw_) * s_ * cam_yaw_rate_));
+  }
 
   last_time_ = rclcpp::Clock().now();
 
-  // Velocity calculations with logging
-  RCLCPP_INFO(this->get_logger(), "  Velocity adjustment:");
-  RCLCPP_INFO(this->get_logger(), "    last_velocity_ = %.4f", last_velocity_);
-  RCLCPP_INFO(this->get_logger(), "    a_ * dt_ = %.4f * %.4f = %.4f", a_, dt_, a_ * dt_);
+  // Update velocity
   v_ = last_velocity_ + a_ * dt_;
-  RCLCPP_INFO(this->get_logger(), "    v_ before limits = %.4f", v_);
+
+  // Check if we're reversing and log specifically about that
+  if (v_ < 0 || a_ < -0.5) {
+    RCLCPP_WARN(
+      this->get_logger(), "Negative velocity/deceleration detected: v=%.2f m/s, a=%.2f m/s²", v_,
+      a_);
+    RCLCPP_WARN(
+      this->get_logger(), "  Leader-follower velocity difference: %.2f m/s",
+      cam_velocity_ - odom_velocity_);
+  }
 
   if (v_ > params_.max_velocity) {
-    RCLCPP_INFO(this->get_logger(), "    Limiting v_ to max_velocity: %.4f", params_.max_velocity);
     v_ = params_.max_velocity;
   }
-  RCLCPP_INFO(this->get_logger(), "    Final v_ = %.4f", v_);
+
   last_velocity_ = v_;
 
   geometry_msgs::msg::Twist twist_msg;
-
   twist_msg.linear.x = v_;
   twist_msg.angular.z = w_;
 
-  // Detailed logging for debugging steering issues, throttled to 1Hz
-  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "--- CACC Timer Callback ---");
-  RCLCPP_INFO_THROTTLE(
-    this->get_logger(), *this->get_clock(), 1000, "  cam_x: %.4f, cam_y: %.4f, cam_yaw: %.4f",
-    cam_x_, cam_y_, cam_yaw_);
-  RCLCPP_INFO_THROTTLE(
-    this->get_logger(), *this->get_clock(), 1000, "  pose_x: %.4f, pose_y: %.4f, pose_yaw: %.4f",
-    pose_x_, pose_y_, pose_yaw_);
-  RCLCPP_INFO_THROTTLE(
-    this->get_logger(), *this->get_clock(), 1000, "  cam_velocity: %.4f, odom_velocity: %.4f",
-    cam_velocity_, odom_velocity_);
-  RCLCPP_INFO_THROTTLE(
-    this->get_logger(), *this->get_clock(), 1000, "  cam_curvature: %.4f, cam_yaw_rate: %.4f",
-    cam_curvature_, cam_yaw_rate_);
-  RCLCPP_INFO_THROTTLE(
-    this->get_logger(), *this->get_clock(), 1000, "  standstill_distance: %.4f, time_gap: %.4f",
-    params_.standstill_distance, params_.time_gap);
+  RCLCPP_INFO(this->get_logger(), "Final Controls:");
+  RCLCPP_INFO(
+    this->get_logger(), "  Acceleration: %.2f m/s², Angular velocity: %.2f rad/s", a_, w_);
+  RCLCPP_INFO(this->get_logger(), "  Commanded velocity: %.2f m/s (dt=%.3fs)", v_, dt_);
+  RCLCPP_INFO(this->get_logger(), "===========================");
 
-  RCLCPP_INFO_THROTTLE(
-    this->get_logger(), *this->get_clock(), 1000, "  s: %.4f, alpha: %.4f", s_, alpha_);
-  RCLCPP_INFO_THROTTLE(
-    this->get_logger(), *this->get_clock(), 1000, "  z1: %.4f, z2: %.4f, z3: %.4f, z4: %.4f", z_1_,
-    z_2_, z_3_, z_4_);
-  RCLCPP_INFO_THROTTLE(
-    this->get_logger(), *this->get_clock(), 1000, "  invGam_Det: %.4f", invGam_Det_);
-  RCLCPP_INFO_THROTTLE(
-    this->get_logger(), *this->get_clock(), 1000,
-    "  invGam_1: %.4f, invGam_2: %.4f, invGam_3: %.4f, invGam_4: %.4f", invGam_1_, invGam_2_,
-    invGam_3_, invGam_4_);
-  RCLCPP_INFO_THROTTLE(
-    this->get_logger(), *this->get_clock(), 1000, "  inP_1: %.4f, inP_2: %.4f", inP_1_, inP_2_);
-  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "  a: %.4f, w: %.4f", a_, w_);
-  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "  v: %.4f", v_);
-  RCLCPP_INFO_THROTTLE(
-    this->get_logger(), *this->get_clock(), 1000,
-    "  twist_msg.linear.x: %.4f, twist_msg.angular.z: %.4f", twist_msg.linear.x,
-    twist_msg.angular.z);
-  RCLCPP_INFO_THROTTLE(
-    this->get_logger(), *this->get_clock(), 1000, "  Control gains: kp=%.4f, kd=%.4f", params_.kp,
-    params_.kd);
-  RCLCPP_INFO_THROTTLE(
-    this->get_logger(), *this->get_clock(), 1000, "  z1*kp=%.4f, z2*kd=%.4f", z_1_ * params_.kp,
-    z_2_ * params_.kd);
+  // Log data to file if enabled
+  if (enable_data_logging_ && log_file_.is_open()) {
+    // Get current timestamp
+    auto now = this->get_clock()->now();
+    double timestamp = now.seconds() + now.nanoseconds() * 1e-9;
+
+    // Write all data to CSV
+    log_file_ << std::fixed << std::setprecision(6) << timestamp << "," << cam_x_ << "," << cam_y_
+              << "," << cam_velocity_ << "," << cam_acceleration_ << "," << cam_curvature_ << ","
+              << pose_x_ << "," << pose_y_ << "," << odom_velocity_ << "," << odom_acceleration_
+              << "," << distance_term << "," << actual_distance << ","
+              << (actual_distance - distance_term) << "," << z_1_ << "," << z_2_ << "," << z_3_
+              << "," << z_4_ << "," << a_ << "," << v_ << "," << w_ << std::endl;
+
+    // Flush periodically to ensure data is written even if program crashes
+    if (log_counter_++ % 10 == 0) {
+      log_file_.flush();
+    }
+  }
 
   pub_cmd_vel->publish(twist_msg);
 }

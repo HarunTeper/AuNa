@@ -11,6 +11,7 @@
 #include "std_msgs/msg/float64.hpp"
 
 #include <fstream>
+#include <iomanip>  // for std::setprecision
 
 // includes for tf matrix
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
@@ -175,4 +176,10 @@ private:
   rclcpp::Time last_time_;
   double v_ = 0;
   double last_velocity_ = 0;
+
+  // Data logging
+  bool enable_data_logging_;
+  std::string log_file_path_;
+  std::ofstream log_file_;
+  int log_counter_ = 0;
 };

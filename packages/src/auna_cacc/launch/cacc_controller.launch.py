@@ -14,10 +14,15 @@ def include_launch_description(context: LaunchContext):
     # Launch Argument Configurations
     robot_number = LaunchConfiguration('robot_number', default='2')
     namespace = LaunchConfiguration('namespace', default='robot')
+    enable_logging = LaunchConfiguration('enable_logging', default='true')
+    log_file_path = LaunchConfiguration(
+        'log_file_path', default='/home/vscode/workspace/cacc_log.csv')
 
     # Get resolved values
     ns_value = context.perform_substitution(namespace)
     robot_number_value = int(context.perform_substitution(robot_number))
+    enable_logging_value = context.perform_substitution(enable_logging)
+    log_file_path_value = context.perform_substitution(log_file_path)
 
     launch_description_content = []
 
@@ -46,6 +51,10 @@ def include_launch_description(context: LaunchContext):
         # Create namespace string properly by concatenating the resolved namespace value
         robot_ns = f"{ns_value}{num}"
 
+        # Create unique log file path for each robot if logging is enabled
+        robot_log_file = log_file_path_value.replace(
+            '.csv', f'_{robot_ns}.csv')
+
         # Log explicitly which robot we're starting a controller for
         launch_description_content.append(
             LogInfo(
@@ -60,7 +69,11 @@ def include_launch_description(context: LaunchContext):
                     package='auna_cacc',
                     executable='cacc_controller',
                     name='cacc_controller',
-                    output='screen'
+                    output='screen',
+                    parameters=[{
+                        'enable_data_logging': enable_logging_value,
+                        'log_file_path': robot_log_file
+                    }]
                 )
             ])
         )
@@ -94,12 +107,26 @@ def generate_launch_description():
         description='Namespace for spawned robots'
     )
 
+    enable_logging_arg = DeclareLaunchArgument(
+        'enable_logging',
+        default_value='true',
+        description='Enable data logging for CACC controllers'
+    )
+
+    log_file_path_arg = DeclareLaunchArgument(
+        'log_file_path',
+        default_value='/home/vscode/workspace/cacc_log.csv',
+        description='Base path for log files'
+    )
+
     # Launch Description
     launch_description = LaunchDescription()
 
     launch_description.add_action(initial_log)
     launch_description.add_action(robot_number_arg)
     launch_description.add_action(namespace_arg)
+    launch_description.add_action(enable_logging_arg)
+    launch_description.add_action(log_file_path_arg)
 
     launch_description.add_action(OpaqueFunction(
         function=include_launch_description))
