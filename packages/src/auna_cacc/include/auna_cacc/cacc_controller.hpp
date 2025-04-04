@@ -177,6 +177,22 @@ private:
   double v_ = 0;
   double last_velocity_ = 0;
 
+  // Intermediate calculation values for logging/debugging
+  double dbg_alpha_ = 0;
+  double dbg_s_ = 0;
+  double dbg_invGam_1_ = 0;
+  double dbg_invGam_2_ = 0;
+  double dbg_invGam_3_ = 0;
+  double dbg_invGam_4_ = 0;
+  double dbg_inP1_pos_err_ = 0;
+  double dbg_inP1_vel_err_ = 0;
+  double dbg_inP1_geom_vel_ = 0;
+  double dbg_inP1_yaw_rate_ = 0;
+  double dbg_inP2_pos_err_ = 0;
+  double dbg_inP2_vel_err_ = 0;
+  double dbg_inP2_geom_vel_ = 0;
+  double dbg_inP2_yaw_rate_ = 0;
+
   // Data logging
   bool enable_data_logging_;
   std::string log_file_path_;

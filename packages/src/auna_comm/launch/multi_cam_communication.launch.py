@@ -70,7 +70,8 @@ def include_launch_description(context: LaunchContext):
                     'robot_index': str(num),
                     'filter_index': filter_idx,
                     'config_file': config_file,
-                    'enable_cam_logging': enable_cam_logging_bool,
+                    # Pass the original string value ('true'/'false')
+                    'enable_cam_logging': enable_cam_logging_value,
                     'cam_log_file_path': robot_log_file,
                 }.items(),
             )

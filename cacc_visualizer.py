@@ -68,17 +68,12 @@ class CACCVisualizer:
         # Determine if we're showing only CACC or integrated data
         has_cam_data = self.cam_data is not None and len(self.cam_data) > 0
 
-        if has_cam_data:
-            # Create figure with more subplots for integrated data
-            fig = plt.figure(figsize=(18, 14))
-            fig.suptitle(
-                'Integrated CACC & CAM Data Visualization', fontsize=16)
-            gs = gridspec.GridSpec(4, 2)
-        else:
-            # Original CACC-only layout
-            fig = plt.figure(figsize=(16, 12))
-            fig.suptitle('CACC Controller Performance', fontsize=16)
-            gs = gridspec.GridSpec(3, 2)
+        # Assume debug columns exist - Expanded layout for debug plots
+        print("Adding debug plots (assuming columns exist in log)...")
+        fig = plt.figure(figsize=(18, 20))  # Increased height
+        fig.suptitle(
+            'CACC Controller Performance with Debug Info', fontsize=16)
+        gs = gridspec.GridSpec(6, 2)  # Increased rows
 
         # 1. Velocities plot (common for both layouts)
         ax1 = fig.add_subplot(gs[0, 0])
@@ -150,8 +145,9 @@ class CACCVisualizer:
         ax6.grid(True)
 
         # Only add xlabel if this is the bottom row
-        if not has_cam_data:
-            ax6.set_xlabel('Time (s)')
+        # Don't add xlabel here, it will be added to the bottom debug plots
+        # if not has_cam_data:
+        #     ax6.set_xlabel('Time (s)')
 
         # Add CAM-specific plots if we have CAM data
         if has_cam_data:
@@ -208,8 +204,77 @@ class CACCVisualizer:
             except Exception as e:
                 print(f"Error creating CAM plots: {e}")
 
+        # Add Debug Plots (assuming columns exist)
+        try:
+            # 7. Geometry Debug Plot (alpha, s)
+            ax_geom = fig.add_subplot(gs[3, 0])
+            ax_geom.plot(
+                self.cacc_data['rel_time'], self.cacc_data['alpha'], 'm-', label='alpha (rad)')
+            ax_geom.set_title('Geometric Adjustments')
+            ax_geom.set_ylabel('Angle (rad)')
+            ax_geom.legend(loc='upper left')
+            ax_geom.grid(True)
+
+            ax_geom_s = ax_geom.twinx()  # Share x-axis
+            ax_geom_s.plot(self.cacc_data['rel_time'],
+                           self.cacc_data['s'], 'c-', label='s (m)')
+            ax_geom_s.set_ylabel('Distance (m)')
+            ax_geom_s.legend(loc='upper right')
+
+            # 8. Inverse Gamma Matrix Components
+            ax_invgam = fig.add_subplot(gs[3, 1])
+            ax_invgam.plot(
+                self.cacc_data['rel_time'], self.cacc_data['invGam1'], label='invGam1')
+            ax_invgam.plot(
+                self.cacc_data['rel_time'], self.cacc_data['invGam2'], label='invGam2')
+            ax_invgam.plot(
+                self.cacc_data['rel_time'], self.cacc_data['invGam3'], label='invGam3')
+            ax_invgam.plot(
+                self.cacc_data['rel_time'], self.cacc_data['invGam4'], label='invGam4')
+            ax_invgam.set_title('Inverse Gamma Matrix Components')
+            ax_invgam.set_ylabel('Value')
+            ax_invgam.legend()
+            ax_invgam.grid(True)
+
+            # 9. Input P1 Components
+            ax_inp1 = fig.add_subplot(gs[4, 0])
+            ax_inp1.plot(
+                self.cacc_data['rel_time'], self.cacc_data['inP1_pos_err'], label='Pos Err (kp*z1)')
+            ax_inp1.plot(
+                self.cacc_data['rel_time'], self.cacc_data['inP1_vel_err'], label='Vel Err')
+            ax_inp1.plot(
+                self.cacc_data['rel_time'], self.cacc_data['inP1_geom_vel'], label='Geom Vel')
+            ax_inp1.plot(
+                self.cacc_data['rel_time'], self.cacc_data['inP1_yaw_rate'], label='Yaw Rate')
+            ax_inp1.set_title('Input P1 Components')
+            ax_inp1.set_ylabel('Contribution')
+            ax_inp1.legend()
+            ax_inp1.grid(True)
+
+            # 10. Input P2 Components
+            ax_inp2 = fig.add_subplot(gs[4, 1])
+            ax_inp2.plot(
+                self.cacc_data['rel_time'], self.cacc_data['inP2_pos_err'], label='Pos Err (kd*z2)')
+            ax_inp2.plot(
+                self.cacc_data['rel_time'], self.cacc_data['inP2_vel_err'], label='Vel Err')
+            ax_inp2.plot(
+                self.cacc_data['rel_time'], self.cacc_data['inP2_geom_vel'], label='Geom Vel')
+            ax_inp2.plot(
+                self.cacc_data['rel_time'], self.cacc_data['inP2_yaw_rate'], label='Yaw Rate')
+            ax_inp2.set_title('Input P2 Components')
+            ax_inp2.set_ylabel('Contribution')
+            ax_inp2.legend()
+            ax_inp2.grid(True)
+
+            # Add x-label to the bottom plots
+            ax_inp1.set_xlabel('Time (s)')
+            ax_inp2.set_xlabel('Time (s)')
+
+        except Exception as e:
+            print(f"An unexpected error occurred during debug plotting: {e}")
+
         plt.tight_layout()
-        plt.subplots_adjust(top=0.92)
+        plt.subplots_adjust(top=0.95)  # Adjust top slightly for new title
         plt.show()
 
     def create_vehicle_animation(self):

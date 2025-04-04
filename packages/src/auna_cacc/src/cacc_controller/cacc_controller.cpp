@@ -28,12 +28,17 @@ CaccController::CaccController() : Node("cacc_controller")
     RCLCPP_INFO(this->get_logger(), "Data logging enabled. Writing to: %s", log_file_path_.c_str());
     log_file_.open(log_file_path_, std::ios::out | std::ios::trunc);
     if (log_file_.is_open()) {
-      // Write CSV header
+      // Write CSV header (including new debug columns)
       log_file_
         << "timestamp,leader_x,leader_y,leader_velocity,leader_acceleration,leader_curvature,"
         << "follower_x,follower_y,follower_velocity,follower_acceleration,"
         << "desired_distance,actual_distance,distance_error,"
-        << "z1,z2,z3,z4,commanded_accel,commanded_velocity,commanded_angular" << std::endl;
+        << "z1,z2,z3,z4,"
+        << "alpha,s,"  // Debug values start here
+        << "invGam1,invGam2,invGam3,invGam4,"
+        << "inP1_pos_err,inP1_vel_err,inP1_geom_vel,inP1_yaw_rate,"
+        << "inP2_pos_err,inP2_vel_err,inP2_geom_vel,inP2_yaw_rate,"
+        << "commanded_accel,commanded_velocity,commanded_angular" << std::endl;
       log_file_.flush();
     } else {
       RCLCPP_ERROR(this->get_logger(), "Failed to open log file: %s", log_file_path_.c_str());
@@ -575,13 +580,15 @@ void CaccController::timer_callback()
     s_ = (-1 + sqrt(inner_term)) / cam_curvature_;
   }
 
-  // Calculate alpha_ (angle adjustment for curved path)
+  // Calculate alpha_ (angle adjustment for curved path) and store for debugging
   alpha_ = atan(cam_curvature_ * distance_term);
+  dbg_alpha_ = alpha_;  // Store for logging
+  dbg_s_ = s_;          // Store for logging
 
   RCLCPP_INFO(this->get_logger(), "Curved Path Adjustment:");
   RCLCPP_INFO(
     this->get_logger(), "  Path curvature: %.4f 1/m, s: %.2f m, alpha: %.2f rad", cam_curvature_,
-    s_, alpha_);
+    dbg_s_, dbg_alpha_);
 
   x_lookahead_point_ = cam_x_ + s_ * sin(cam_yaw_);
   y_lookahead_point_ = cam_y_ - s_ * cos(cam_yaw_);
@@ -618,20 +625,29 @@ void CaccController::timer_callback()
   double num3 = -params_.time_gap * sin(pose_yaw_) - params_.time_gap * sin(alpha_) * cos(cam_yaw_);
   double num4 = params_.time_gap * cos(pose_yaw_) - params_.time_gap * sin(alpha_) * sin(cam_yaw_);
 
-  invGam_1_ = num1 / invGam_Det_;
-  invGam_2_ = num2 / invGam_Det_;
-  invGam_3_ = num3 / invGam_Det_;
-  invGam_4_ = num4 / invGam_Det_;
+  // Store invGam components for logging
+  dbg_invGam_1_ = num1 / invGam_Det_;
+  dbg_invGam_2_ = num2 / invGam_Det_;
+  dbg_invGam_3_ = num3 / invGam_Det_;
+  dbg_invGam_4_ = num4 / invGam_Det_;
+  invGam_1_ = dbg_invGam_1_;
+  invGam_2_ = dbg_invGam_2_;
+  invGam_3_ = dbg_invGam_3_;
+  invGam_4_ = dbg_invGam_4_;
 
-  // Calculate inP terms (control inputs before transformation)
-  inP_1_ = (z_1_ * params_.kp) + (cos(alpha_) * z_3_ + sin(alpha_) * z_4_) +
-           ((1 - cos(alpha_)) * cam_velocity_ * cos(cam_yaw_) -
-            sin(alpha_) * cam_velocity_ * sin(cam_yaw_)) +
-           (cos(cam_yaw_) * s_ * cam_yaw_rate_);
-  inP_2_ = (z_2_ * params_.kd) + (sin(alpha_) * z_3_ + cos(alpha_) * z_4_) +
-           (sin(alpha_) * cam_velocity_ * cos(cam_yaw_) +
-            (1 - cos(alpha_)) * cam_velocity_ * sin(cam_yaw_)) +
-           (sin(cam_yaw_) * s_ * cam_yaw_rate_);
+  // Calculate inP terms (control inputs before transformation) and store components for logging
+  dbg_inP1_pos_err_ = z_1_ * params_.kp;
+  dbg_inP1_vel_err_ = cos(alpha_) * z_3_ + sin(alpha_) * z_4_;
+  dbg_inP1_geom_vel_ =
+    (1 - cos(alpha_)) * cam_velocity_ * cos(cam_yaw_) - sin(alpha_) * cam_velocity_ * sin(cam_yaw_);
+  dbg_inP1_yaw_rate_ = cos(cam_yaw_) * s_ * cam_yaw_rate_;
+  inP_1_ = dbg_inP1_pos_err_ + dbg_inP1_vel_err_ + dbg_inP1_geom_vel_ + dbg_inP1_yaw_rate_;
+  dbg_inP2_pos_err_ = z_2_ * params_.kd;
+  dbg_inP2_vel_err_ = sin(alpha_) * z_3_ + cos(alpha_) * z_4_;
+  dbg_inP2_geom_vel_ =
+    sin(alpha_) * cam_velocity_ * cos(cam_yaw_) + (1 - cos(alpha_)) * cam_velocity_ * sin(cam_yaw_);
+  dbg_inP2_yaw_rate_ = sin(cam_yaw_) * s_ * cam_yaw_rate_;
+  inP_2_ = dbg_inP2_pos_err_ + dbg_inP2_vel_err_ + dbg_inP2_geom_vel_ + dbg_inP2_yaw_rate_;
 
   // Calculate final control outputs
   a_ = invGam_1_ * inP_1_ + invGam_2_ * inP_2_;
@@ -693,13 +709,24 @@ void CaccController::timer_callback()
     auto now = this->get_clock()->now();
     double timestamp = now.seconds() + now.nanoseconds() * 1e-9;
 
-    // Write all data to CSV
+    // Write all data to CSV, including new debug values
     log_file_ << std::fixed << std::setprecision(6) << timestamp << "," << cam_x_ << "," << cam_y_
-              << "," << cam_velocity_ << "," << cam_acceleration_ << "," << cam_curvature_ << ","
+              << "," << cam_velocity_ << "," << cam_acceleration_ << "," << cam_curvature_
+              << ","  // Leader state
               << pose_x_ << "," << pose_y_ << "," << odom_velocity_ << "," << odom_acceleration_
-              << "," << distance_term << "," << actual_distance << ","
-              << (actual_distance - distance_term) << "," << z_1_ << "," << z_2_ << "," << z_3_
-              << "," << z_4_ << "," << a_ << "," << v_ << "," << w_ << std::endl;
+              << ","  // Follower state
+              << distance_term << "," << actual_distance << "," << (actual_distance - distance_term)
+              << ","                                                       // Distances
+              << z_1_ << "," << z_2_ << "," << z_3_ << "," << z_4_ << ","  // Error states
+              << dbg_alpha_ << "," << dbg_s_ << ","                        // Debug: Geometry
+              << dbg_invGam_1_ << "," << dbg_invGam_2_ << "," << dbg_invGam_3_ << ","
+              << dbg_invGam_4_ << ","  // Debug: InvGamma
+              << dbg_inP1_pos_err_ << "," << dbg_inP1_vel_err_ << "," << dbg_inP1_geom_vel_ << ","
+              << dbg_inP1_yaw_rate_ << ","  // Debug: inP1 terms
+              << dbg_inP2_pos_err_ << "," << dbg_inP2_vel_err_ << "," << dbg_inP2_geom_vel_ << ","
+              << dbg_inP2_yaw_rate_ << ","     // Debug: inP2 terms
+              << a_ << "," << v_ << "," << w_  // Final commands
+              << std::endl;
 
     // Flush periodically to ensure data is written even if program crashes
     if (log_counter_++ % 10 == 0) {

@@ -24,7 +24,8 @@ def generate_launch_description():
     robot_index = LaunchConfiguration('robot_index')
     filter_index = LaunchConfiguration('filter_index')
     log_level = LaunchConfiguration('log_level')
-
+    enable_cam_logging = LaunchConfiguration('enable_cam_logging')  # Added
+    cam_log_file_path = LaunchConfiguration('cam_log_file_path')  # Added
     # Launch Arguments
     config_file_arg = DeclareLaunchArgument(
         'config_file',
@@ -46,6 +47,19 @@ def generate_launch_description():
         default_value='info',
         description='Logging level'
     )
+    # Added declaration for enable_cam_logging
+    enable_cam_logging_arg = DeclareLaunchArgument(
+        'enable_cam_logging',
+        default_value='false',  # Default value if launched standalone
+        description='Enable CAM message logging'
+    )
+    # Added declaration for cam_log_file_path
+    cam_log_file_path_arg = DeclareLaunchArgument(
+        'cam_log_file_path',
+        # Default value if launched standalone
+        default_value='/home/vscode/workspace/cam_messages.log',
+        description='Path for CAM message log file'
+    )
 
     cam_communication_cmd = Node(
         package='auna_comm',
@@ -54,7 +68,10 @@ def generate_launch_description():
         parameters=[
             config_file,
             {'filter_index': filter_index},
-            {'robot_index': robot_index}
+            {'robot_index': robot_index},
+            # Pass logging parameters from LaunchConfigurations to the C++ node
+            {'enable_cam_logging': enable_cam_logging},
+            {'cam_log_file_path': cam_log_file_path}
         ],
         arguments=['--ros-args', '--log-level', log_level],
         output='screen'
@@ -66,6 +83,10 @@ def generate_launch_description():
     launch_description.add_action(robot_index_arg)
     launch_description.add_action(filter_index_arg)
     launch_description.add_action(log_level_arg)
+    launch_description.add_action(
+        enable_cam_logging_arg)  # Add action for new arg
+    launch_description.add_action(
+        cam_log_file_path_arg)  # Add action for new arg
     launch_description.add_action(cam_communication_cmd)
 
     return launch_description
