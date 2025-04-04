@@ -67,15 +67,16 @@ void LocalizationPosePublisher::timer_callback()
     transformStamped = this->buffer.lookupTransform(map_frame, base_frame, tf2::TimePointZero);
     RCLCPP_DEBUG(this->get_logger(), "Successfully found map->base_link transform");
   } catch (tf2::TransformException & ex) {
-    RCLCPP_ERROR(this->get_logger(), "Failed to get transform: %s", ex.what());
+    // RCLCPP_ERROR(this->get_logger(), "Failed to get transform: %s", ex.what()); // Commented out
+    // to suppress error when map frame is missing
 
     // List available frames to help diagnose the issue
-    std::vector<std::string> frames;
-    buffer._getFrameStrings(frames);
-    RCLCPP_INFO(this->get_logger(), "Available frames in TF tree (%zu):", frames.size());
-    for (const auto & frame : frames) {
-      RCLCPP_INFO(this->get_logger(), " - %s", frame.c_str());
-    }
+    // std::vector<std::string> frames;
+    // buffer._getFrameStrings(frames);
+    // RCLCPP_INFO(this->get_logger(), "Available frames in TF tree (%zu):", frames.size());
+    // for (const auto & frame : frames) {
+    //   RCLCPP_INFO(this->get_logger(), " - %s", frame.c_str());
+    // }
     return;
   }
 
