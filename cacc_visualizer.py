@@ -7,6 +7,9 @@ import numpy as np
 from matplotlib.animation import FuncAnimation
 import matplotlib.gridspec as gridspec
 import os
+import matplotlib.patches as patches
+import seaborn as sns
+from scipy import stats
 
 
 class CACCVisualizer:
@@ -15,30 +18,105 @@ class CACCVisualizer:
         self.cam_log_file = cam_log_file
         self.cacc_data = None
         self.cam_data = None
+
+        # Set consistent color scheme for better visual identity
+        self.colors = {
+            'leader': '#1f77b4',      # blue
+            'follower': '#d62728',    # red
+            'commanded': '#2ca02c',   # green
+            'desired': '#ff7f0e',     # orange
+            'background': '#f9f9f9',  # light grey
+            'grid': '#e0e0e0',        # medium grey
+            'cam_tx': '#9467bd',      # purple
+            'cam_rx': '#8c564b',      # brown
+            'error_pos': '#c44e52',   # red for position errors
+            'error_vel': '#4c72b0',   # blue for velocity errors
+        }
+
+        # Set default plot style
+        plt.style.use('ggplot')
+        plt.rcParams.update({
+            'figure.facecolor': self.colors['background'],
+            'axes.facecolor': 'white',
+            'font.size': 9,
+            'axes.titlesize': 11,
+            'axes.labelsize': 10,
+            'lines.linewidth': 2
+        })
+
         self.load_data()
 
     def load_data(self):
-        """Load data from CSV file(s)"""
+        """Load data from CSV file(s) with improved error handling and data preprocessing"""
         print(f"Loading CACC data from {self.cacc_log_file}...")
         try:
             self.cacc_data = pd.read_csv(self.cacc_log_file)
-            # Convert timestamp to relative time
+
+            # Convert timestamp to relative time and add more useful time metrics
             if 'timestamp' in self.cacc_data.columns:
                 self.cacc_data['rel_time'] = self.cacc_data['timestamp'] - \
                     self.cacc_data['timestamp'].iloc[0]
+                # Add minutes for longer runs
+                self.cacc_data['time_min'] = self.cacc_data['rel_time'] / 60
+
+            # Calculate additional metrics for analysis
+            if 'distance_error' in self.cacc_data.columns:
+                # Calculate rolling statistics for distance error
+                # Adaptive window based on data size
+                window_size = min(20, len(self.cacc_data) // 10)
+                self.cacc_data['error_ma'] = self.cacc_data['distance_error'].rolling(
+                    window=window_size, center=True).mean()
+                self.cacc_data['error_std'] = self.cacc_data['distance_error'].rolling(
+                    window=window_size, center=True).std()
+
+                # Calculate RMSE for distance error
+                self.distance_error_rmse = np.sqrt(
+                    np.mean(self.cacc_data['distance_error']**2))
+
+            # Add acceleration derivatives for jerk analysis if needed
+            if 'follower_acceleration' in self.cacc_data.columns and len(self.cacc_data) > 2:
+                # Calculate time differences for proper derivatives
+                self.cacc_data['dt'] = self.cacc_data['rel_time'].diff()
+                # Replace zero dt with small value to avoid division by zero
+                self.cacc_data['dt'].replace(0, np.nan, inplace=True)
+                self.cacc_data['dt'].fillna(
+                    self.cacc_data['dt'].mean(), inplace=True)
+
+                # Calculate jerk (rate of change of acceleration)
+                self.cacc_data['jerk'] = self.cacc_data['follower_acceleration'].diff(
+                ) / self.cacc_data['dt']
+                # Remove extreme values (could be due to measurement noise)
+                jerk_std = self.cacc_data['jerk'].std()
+                self.cacc_data['jerk'] = self.cacc_data['jerk'].clip(
+                    -3*jerk_std, 3*jerk_std)
+
             print(f"Loaded {len(self.cacc_data)} CACC data points")
+
+            # Calculate basic stats for key metrics
+            print("\nCACC Data Summary Statistics:")
+            key_metrics = ['leader_velocity', 'follower_velocity',
+                           'actual_distance', 'distance_error']
+            for metric in key_metrics:
+                if metric in self.cacc_data.columns:
+                    mean = self.cacc_data[metric].mean()
+                    std = self.cacc_data[metric].std()
+                    min_val = self.cacc_data[metric].min()
+                    max_val = self.cacc_data[metric].max()
+                    print(
+                        f"  {metric}: mean={mean:.2f}, std={std:.2f}, min={min_val:.2f}, max={max_val:.2f}")
 
             # Load CAM data if file path is provided
             if self.cam_log_file and os.path.exists(self.cam_log_file):
                 print(f"Loading CAM data from {self.cam_log_file}...")
                 try:
-                    # Skip the first line (header description) and use the second line as column names
+                    # Skip the first line (header description) if it's a comment
                     with open(self.cam_log_file, 'r') as f:
-                        first_line = f.readline()  # Skip the first descriptive line
+                        first_line = f.readline()
                         if '===' in first_line:  # This is our header comment
                             self.cam_data = pd.read_csv(
                                 self.cam_log_file, skiprows=1)
                         else:  # No header comment, read normally
+                            f.seek(0)
                             self.cam_data = pd.read_csv(self.cam_log_file)
 
                     # Convert timestamp to relative time aligned with CACC data
@@ -48,7 +126,25 @@ class CACCVisualizer:
                             0] if 'timestamp' in self.cacc_data.columns else self.cam_data['Timestamp'].iloc[0]
                         self.cam_data['rel_time'] = self.cam_data['Timestamp'] - start_time
 
-                    print(f"Loaded {len(self.cam_data)} CAM data points")
+                    # Calculate some CAM metrics
+                    if 'Action' in self.cam_data.columns:
+                        tx_data = self.cam_data[self.cam_data['Action'] == 'TX']
+                        rx_data = self.cam_data[self.cam_data['Action'] == 'RX']
+
+                        if len(tx_data) > 1:
+                            tx_data['interval'] = tx_data['rel_time'].diff().dropna()
+                            self.tx_interval_mean = tx_data['interval'].mean()
+                            self.tx_interval_std = tx_data['interval'].std()
+                            print(
+                                f"  CAM TX: count={len(tx_data)}, interval={self.tx_interval_mean:.3f}±{self.tx_interval_std:.3f}s")
+
+                        if len(rx_data) > 1:
+                            rx_data['interval'] = rx_data['rel_time'].diff().dropna()
+                            self.rx_interval_mean = rx_data['interval'].mean()
+                            self.rx_interval_std = rx_data['interval'].std()
+                            print(
+                                f"  CAM RX: count={len(rx_data)}, interval={self.rx_interval_mean:.3f}±{self.rx_interval_std:.3f}s")
+
                 except Exception as e:
                     print(f"Error loading CAM data: {e}")
                     self.cam_data = None
@@ -60,236 +156,331 @@ class CACCVisualizer:
             exit(1)
 
     def create_static_plots(self):
-        """Create static plots of the CACC and CAM data"""
+        """Create focused static plots showing only the most relevant metrics"""
         if self.cacc_data is None or len(self.cacc_data) == 0:
             print("No CACC data to visualize")
             return
 
-        # Determine if we're showing only CACC or integrated data
-        has_cam_data = self.cam_data is not None and len(self.cam_data) > 0
+        # Create a figure with optimal layout
+        fig = plt.figure(figsize=(14, 16))
+        gs = gridspec.GridSpec(5, 2, height_ratios=[1, 1, 1, 1, 1.2])
 
-        # Assume debug columns exist - Expanded layout for debug plots
-        print("Adding debug plots (assuming columns exist in log)...")
-        fig = plt.figure(figsize=(18, 20))  # Increased height
-        fig.suptitle(
-            'CACC Controller Performance with Debug Info', fontsize=16)
-        gs = gridspec.GridSpec(6, 2)  # Increased rows
+        # Main title with file information
+        fig.suptitle('CACC Controller Performance Analysis',
+                     fontsize=14, fontweight='bold')
 
-        # 1. Velocities plot (common for both layouts)
-        ax1 = fig.add_subplot(gs[0, 0])
-        ax1.plot(self.cacc_data['rel_time'],
-                 self.cacc_data['leader_velocity'], 'b-', label='Leader')
-        ax1.plot(self.cacc_data['rel_time'],
-                 self.cacc_data['follower_velocity'], 'r-', label='Follower')
-        ax1.plot(self.cacc_data['rel_time'],
-                 self.cacc_data['commanded_velocity'], 'g--', label='Commanded')
-        ax1.set_title('Velocities')
-        ax1.set_ylabel('Velocity (m/s)')
-        ax1.legend()
-        ax1.grid(True)
+        # 1. Velocities plot (top left)
+        ax_vel = fig.add_subplot(gs[0, 0])
+        ax_vel.plot(self.cacc_data['rel_time'], self.cacc_data['leader_velocity'],
+                    color=self.colors['leader'], label='Leader')
+        ax_vel.plot(self.cacc_data['rel_time'], self.cacc_data['follower_velocity'],
+                    color=self.colors['follower'], label='Follower')
+        ax_vel.plot(self.cacc_data['rel_time'], self.cacc_data['commanded_velocity'],
+                    color=self.colors['commanded'], linestyle='--', label='Commanded')
 
-        # 2. Accelerations plot (common for both layouts)
-        ax2 = fig.add_subplot(gs[0, 1])
-        ax2.plot(self.cacc_data['rel_time'],
-                 self.cacc_data['leader_acceleration'], 'b-', label='Leader')
-        ax2.plot(self.cacc_data['rel_time'],
-                 self.cacc_data['follower_acceleration'], 'r-', label='Follower')
-        ax2.plot(self.cacc_data['rel_time'],
-                 self.cacc_data['commanded_accel'], 'g--', label='Commanded')
-        ax2.set_title('Accelerations')
-        ax2.set_ylabel('Acceleration (m/s²)')
-        ax2.legend()
-        ax2.grid(True)
+        # Add statistical annotations
+        leader_mean = self.cacc_data['leader_velocity'].mean()
+        follower_mean = self.cacc_data['follower_velocity'].mean()
+        ax_vel.axhline(
+            y=leader_mean, color=self.colors['leader'], linestyle=':', alpha=0.7)
+        ax_vel.axhline(y=follower_mean,
+                       color=self.colors['follower'], linestyle=':', alpha=0.7)
 
-        # 3. Distance and errors plot (common for both layouts)
-        ax3 = fig.add_subplot(gs[1, 0])
-        ax3.plot(self.cacc_data['rel_time'],
-                 self.cacc_data['desired_distance'], 'b--', label='Desired')
-        ax3.plot(self.cacc_data['rel_time'],
-                 self.cacc_data['actual_distance'], 'r-', label='Actual')
-        ax3.set_title('Following Distance')
-        ax3.set_ylabel('Distance (m)')
-        ax3.legend()
-        ax3.grid(True)
+        # Add velocity stats text
+        vel_stats = f"Avg: Leader={leader_mean:.2f}, Follower={follower_mean:.2f} m/s\n" \
+                    f"Max: Leader={self.cacc_data['leader_velocity'].max():.2f}, " \
+                    f"Follower={self.cacc_data['follower_velocity'].max():.2f} m/s"
+        ax_vel.text(0.02, 0.02, vel_stats, transform=ax_vel.transAxes, fontsize=8,
+                    bbox=dict(facecolor='white', alpha=0.8, boxstyle='round'))
 
-        ax4 = fig.add_subplot(gs[1, 1])
-        ax4.plot(self.cacc_data['rel_time'],
-                 self.cacc_data['distance_error'], 'r-')
-        ax4.set_title('Distance Error')
-        ax4.set_ylabel('Error (m)')
-        ax4.grid(True)
+        ax_vel.set_title('Vehicle Velocities')
+        ax_vel.set_ylabel('Velocity (m/s)')
+        ax_vel.legend(loc='upper right')
+        ax_vel.grid(True, alpha=0.3)
 
-        # 4. Error state plots (common for both layouts)
-        ax5 = fig.add_subplot(gs[2, 0])
-        ax5.plot(self.cacc_data['rel_time'], self.cacc_data['z1'],
-                 'r-', label='z1 (longitudinal pos)')
-        ax5.plot(self.cacc_data['rel_time'], self.cacc_data['z2'],
-                 'b-', label='z2 (lateral pos)')
-        ax5.set_title('Position Error States')
-        ax5.set_ylabel('Error (m)')
-        ax5.legend()
-        ax5.grid(True)
+        # 2. Distance and errors (top right)
+        ax_dist = fig.add_subplot(gs[0, 1])
+        ax_dist.plot(self.cacc_data['rel_time'], self.cacc_data['desired_distance'],
+                     color=self.colors['desired'], linestyle='--', label='Desired')
+        ax_dist.plot(self.cacc_data['rel_time'], self.cacc_data['actual_distance'],
+                     color=self.colors['follower'], label='Actual')
 
-        # Only add xlabel if this is the bottom row
-        if not has_cam_data:
-            ax5.set_xlabel('Time (s)')
+        # Add error regions
+        ax_dist.fill_between(self.cacc_data['rel_time'],
+                             self.cacc_data['desired_distance'],
+                             self.cacc_data['actual_distance'],
+                             where=self.cacc_data['actual_distance'] > self.cacc_data['desired_distance'],
+                             color='red', alpha=0.2, label='Too Far')
+        ax_dist.fill_between(self.cacc_data['rel_time'],
+                             self.cacc_data['desired_distance'],
+                             self.cacc_data['actual_distance'],
+                             where=self.cacc_data['actual_distance'] < self.cacc_data['desired_distance'],
+                             color='blue', alpha=0.2, label='Too Close')
 
-        ax6 = fig.add_subplot(gs[2, 1])
-        ax6.plot(self.cacc_data['rel_time'], self.cacc_data['z3'],
-                 'r-', label='z3 (longitudinal vel)')
-        ax6.plot(self.cacc_data['rel_time'], self.cacc_data['z4'],
-                 'b-', label='z4 (lateral vel)')
-        ax6.set_title('Velocity Error States')
-        ax6.set_ylabel('Error (m/s)')
-        ax6.legend()
-        ax6.grid(True)
+        # Add RMSE annotation
+        ax_dist.text(0.02, 0.02, f"RMSE: {self.distance_error_rmse:.3f} m",
+                     transform=ax_dist.transAxes, fontsize=9, fontweight='bold',
+                     bbox=dict(facecolor='white', alpha=0.8, boxstyle='round'))
 
-        # Only add xlabel if this is the bottom row
-        # Don't add xlabel here, it will be added to the bottom debug plots
-        # if not has_cam_data:
-        #     ax6.set_xlabel('Time (s)')
+        ax_dist.set_title('Following Distance')
+        ax_dist.set_ylabel('Distance (m)')
+        ax_dist.legend(loc='upper right')
+        ax_dist.grid(True, alpha=0.3)
 
-        # Add CAM-specific plots if we have CAM data
-        if has_cam_data:
-            try:
-                # Filter TX and RX actions to plot separately
-                cam_tx = self.cam_data[self.cam_data['Action'] == 'TX']
-                cam_rx = self.cam_data[self.cam_data['Action'] == 'RX']
+        # 3. Combined error state plot (row 2, left)
+        ax_err = fig.add_subplot(gs[1, 0])
+        # z1, z2 are position errors (longitudinal, lateral)
+        ax_err.plot(self.cacc_data['rel_time'], self.cacc_data['z1'],
+                    color=self.colors['error_pos'], label='z₁: Long. Position Error')
+        ax_err.plot(self.cacc_data['rel_time'], self.cacc_data['z2'],
+                    color=self.colors['error_vel'], label='z₂: Lat. Position Error')
 
-                # 5. CAM Message Frequency
-                ax7 = fig.add_subplot(gs[3, 0])
+        # Add zero line and shade error regions
+        ax_err.axhline(y=0, color='black', linestyle='-', linewidth=0.5)
 
-                # Group by 1-second windows and count messages
-                if not cam_tx.empty:
-                    # Use histogram to show distribution of messages over time
-                    ax7.hist(cam_tx['rel_time'], bins=min(50, int(max(cam_tx['rel_time']))+1),
-                             alpha=0.5, label='TX', color='green')
+        # Get max absolute error for z1, z2 for symmetric y-axis
+        max_error = max(abs(self.cacc_data['z1'].max()), abs(self.cacc_data['z1'].min()),
+                        abs(self.cacc_data['z2'].max()), abs(self.cacc_data['z2'].min()))
+        ax_err.set_ylim(-max_error*1.1, max_error*1.1)
 
-                if not cam_rx.empty:
-                    ax7.hist(cam_rx['rel_time'], bins=min(50, int(max(cam_rx['rel_time']))+1),
-                             alpha=0.5, label='RX', color='blue')
+        # Calculate RMS errors
+        z1_rmse = np.sqrt(np.mean(self.cacc_data['z1']**2))
+        z2_rmse = np.sqrt(np.mean(self.cacc_data['z2']**2))
+        error_stats = f"Long. RMSE: {z1_rmse:.3f} m\nLat. RMSE: {z2_rmse:.3f} m"
+        ax_err.text(0.02, 0.95, error_stats, transform=ax_err.transAxes, fontsize=8,
+                    va='top', bbox=dict(facecolor='white', alpha=0.8, boxstyle='round'))
 
-                ax7.set_title('CAM Message Distribution')
-                ax7.set_xlabel('Time (s)')
-                ax7.set_ylabel('Message Count')
-                ax7.legend()
-                ax7.grid(True)
+        ax_err.set_title('Position Error States')
+        ax_err.set_ylabel('Error (m)')
+        ax_err.legend(loc='upper right')
+        ax_err.grid(True, alpha=0.3)
 
-                # 6. CAM Message Content - Plot some key fields
-                ax8 = fig.add_subplot(gs[3, 1])
+        # 4. Acceleration and control inputs (row 2, right)
+        ax_acc = fig.add_subplot(gs[1, 1])
+        ax_acc.plot(self.cacc_data['rel_time'], self.cacc_data['leader_acceleration'],
+                    color=self.colors['leader'], label='Leader Accel.')
+        ax_acc.plot(self.cacc_data['rel_time'], self.cacc_data['follower_acceleration'],
+                    color=self.colors['follower'], label='Follower Accel.')
+        ax_acc.plot(self.cacc_data['rel_time'], self.cacc_data['commanded_accel'],
+                    color=self.colors['commanded'], linestyle='--', label='Cmd Accel.')
 
-                # Plot curvature from CAM messages over time
-                if 'Curvature' in self.cam_data.columns and not cam_tx.empty:
-                    # For numeric curvature values
-                    tx_curvature = cam_tx[cam_tx['Curvature'] != 'UNAVAILABLE']
-                    if not tx_curvature.empty:
-                        try:
-                            tx_curvature['Curvature'] = tx_curvature['Curvature'].astype(
-                                float)
-                            ax8.plot(tx_curvature['rel_time'], tx_curvature['Curvature'],
-                                     'g.-', label='TX Curvature')
-                        except:
-                            print("Warning: Could not convert Curvature to float")
+        # Add zero line
+        ax_acc.axhline(y=0, color='black', linestyle='-', linewidth=0.5)
 
-                # Compare with CACC curvature data
-                ax8.plot(self.cacc_data['rel_time'], self.cacc_data['leader_curvature'],
-                         'b--', label='Leader Curvature (CACC)')
+        # Add acceleration stats
+        accel_stats = (f"Max decel: {self.cacc_data['follower_acceleration'].min():.2f} m/s²\n"
+                       f"Max accel: {self.cacc_data['follower_acceleration'].max():.2f} m/s²")
+        ax_acc.text(0.02, 0.02, accel_stats, transform=ax_acc.transAxes, fontsize=8,
+                    bbox=dict(facecolor='white', alpha=0.8, boxstyle='round'))
 
-                ax8.set_title('Curvature Comparison')
-                ax8.set_xlabel('Time (s)')
-                ax8.set_ylabel('Curvature (1/m)')
-                ax8.legend()
-                ax8.grid(True)
+        ax_acc.set_title('Vehicle Accelerations')
+        ax_acc.set_ylabel('Acceleration (m/s²)')
+        ax_acc.legend(loc='upper right')
+        ax_acc.grid(True, alpha=0.3)
 
-            except Exception as e:
-                print(f"Error creating CAM plots: {e}")
+        # 5. Velocity errors and control (row 3, left)
+        ax_vel_err = fig.add_subplot(gs[2, 0])
+        # z3, z4 are velocity errors (longitudinal, lateral)
+        ax_vel_err.plot(self.cacc_data['rel_time'], self.cacc_data['z3'],
+                        color=self.colors['error_pos'], label='z₃: Long. Velocity Error')
+        ax_vel_err.plot(self.cacc_data['rel_time'], self.cacc_data['z4'],
+                        color=self.colors['error_vel'], label='z₄: Lat. Velocity Error')
 
-        # Add Debug Plots (assuming columns exist)
-        try:
-            # 7. Geometry Debug Plot (alpha, s)
-            ax_geom = fig.add_subplot(gs[3, 0])
-            ax_geom.plot(
-                self.cacc_data['rel_time'], self.cacc_data['alpha'], 'm-', label='alpha (rad)')
-            ax_geom.set_title('Geometric Adjustments')
-            ax_geom.set_ylabel('Angle (rad)')
-            ax_geom.legend(loc='upper left')
-            ax_geom.grid(True)
+        # Add zero line
+        ax_vel_err.axhline(y=0, color='black', linestyle='-', linewidth=0.5)
 
-            ax_geom_s = ax_geom.twinx()  # Share x-axis
-            ax_geom_s.plot(self.cacc_data['rel_time'],
-                           self.cacc_data['s'], 'c-', label='s (m)')
-            ax_geom_s.set_ylabel('Distance (m)')
-            ax_geom_s.legend(loc='upper right')
+        # Calculate RMS errors
+        z3_rmse = np.sqrt(np.mean(self.cacc_data['z3']**2))
+        z4_rmse = np.sqrt(np.mean(self.cacc_data['z4']**2))
+        vel_error_stats = f"Long. RMSE: {z3_rmse:.3f} m/s\nLat. RMSE: {z4_rmse:.3f} m/s"
+        ax_vel_err.text(0.02, 0.95, vel_error_stats, transform=ax_vel_err.transAxes, fontsize=8,
+                        va='top', bbox=dict(facecolor='white', alpha=0.8, boxstyle='round'))
 
-            # 8. Inverse Gamma Matrix Components
-            ax_invgam = fig.add_subplot(gs[3, 1])
-            ax_invgam.plot(
-                self.cacc_data['rel_time'], self.cacc_data['invGam1'], label='invGam1')
-            ax_invgam.plot(
-                self.cacc_data['rel_time'], self.cacc_data['invGam2'], label='invGam2')
-            ax_invgam.plot(
-                self.cacc_data['rel_time'], self.cacc_data['invGam3'], label='invGam3')
-            ax_invgam.plot(
-                self.cacc_data['rel_time'], self.cacc_data['invGam4'], label='invGam4')
-            ax_invgam.set_title('Inverse Gamma Matrix Components')
-            ax_invgam.set_ylabel('Value')
-            ax_invgam.legend()
-            ax_invgam.grid(True)
+        ax_vel_err.set_title('Velocity Error States')
+        ax_vel_err.set_ylabel('Error (m/s)')
+        ax_vel_err.legend(loc='upper right')
+        ax_vel_err.grid(True, alpha=0.3)
 
-            # 9. Input P1 Components
-            ax_inp1 = fig.add_subplot(gs[4, 0])
-            ax_inp1.plot(
-                self.cacc_data['rel_time'], self.cacc_data['inP1_pos_err'], label='Pos Err (kp*z1)')
-            ax_inp1.plot(
-                self.cacc_data['rel_time'], self.cacc_data['inP1_vel_err'], label='Vel Err')
-            ax_inp1.plot(
-                self.cacc_data['rel_time'], self.cacc_data['inP1_geom_vel'], label='Geom Vel')
-            ax_inp1.plot(
-                self.cacc_data['rel_time'], self.cacc_data['inP1_yaw_rate'], label='Yaw Rate')
-            ax_inp1.set_title('Input P1 Components')
-            ax_inp1.set_ylabel('Contribution')
-            ax_inp1.legend()
-            ax_inp1.grid(True)
+        # 6. Angular control and curvature (row 3, right)
+        ax_ang = fig.add_subplot(gs[2, 1])
+        ax_ang.plot(self.cacc_data['rel_time'], self.cacc_data['commanded_angular'],
+                    color=self.colors['commanded'], label='Cmd Angular')
 
-            # 10. Input P2 Components
-            ax_inp2 = fig.add_subplot(gs[4, 1])
-            ax_inp2.plot(
-                self.cacc_data['rel_time'], self.cacc_data['inP2_pos_err'], label='Pos Err (kd*z2)')
-            ax_inp2.plot(
-                self.cacc_data['rel_time'], self.cacc_data['inP2_vel_err'], label='Vel Err')
-            ax_inp2.plot(
-                self.cacc_data['rel_time'], self.cacc_data['inP2_geom_vel'], label='Geom Vel')
-            ax_inp2.plot(
-                self.cacc_data['rel_time'], self.cacc_data['inP2_yaw_rate'], label='Yaw Rate')
-            ax_inp2.set_title('Input P2 Components')
-            ax_inp2.set_ylabel('Contribution')
-            ax_inp2.legend()
-            ax_inp2.grid(True)
+        # Add curvature on secondary axis if available
+        ax_curv = ax_ang.twinx()
+        if 'leader_curvature' in self.cacc_data.columns:
+            ax_curv.plot(self.cacc_data['rel_time'], self.cacc_data['leader_curvature'],
+                         color='purple', alpha=0.7, linestyle='--', label='Leader Curvature')
+            ax_curv.set_ylabel('Curvature (1/m)', color='purple')
 
-            # Add x-label to the bottom plots
-            ax_inp1.set_xlabel('Time (s)')
-            ax_inp2.set_xlabel('Time (s)')
+        ax_ang.set_title('Angular Control & Curvature')
+        ax_ang.set_ylabel('Angular Velocity (rad/s)')
 
-        except Exception as e:
-            print(f"An unexpected error occurred during debug plotting: {e}")
+        # Add legends for both axes
+        lines1, labels1 = ax_ang.get_legend_handles_labels()
+        lines2, labels2 = ax_curv.get_legend_handles_labels()
+        ax_ang.legend(lines1 + lines2, labels1 + labels2, loc='upper right')
+        ax_ang.grid(True, alpha=0.3)
+
+        # 7. Path visualization (row 4)
+        ax_path = fig.add_subplot(gs[3, :])
+        ax_path.plot(self.cacc_data['leader_x'], self.cacc_data['leader_y'],
+                     color=self.colors['leader'], label='Leader Path')
+        ax_path.plot(self.cacc_data['follower_x'], self.cacc_data['follower_y'],
+                     color=self.colors['follower'], label='Follower Path')
+
+        # Mark start and end positions
+        ax_path.scatter(self.cacc_data['leader_x'].iloc[0], self.cacc_data['leader_y'].iloc[0],
+                        color='green', s=100, marker='o', label='Start')
+        ax_path.scatter(self.cacc_data['leader_x'].iloc[-1], self.cacc_data['leader_y'].iloc[-1],
+                        color='red', s=100, marker='x', label='End')
+
+        # Add trajectory distance info
+        leader_distance = np.sum(np.sqrt(np.diff(self.cacc_data['leader_x'])**2 +
+                                         np.diff(self.cacc_data['leader_y'])**2))
+        follower_distance = np.sum(np.sqrt(np.diff(self.cacc_data['follower_x'])**2 +
+                                           np.diff(self.cacc_data['follower_y'])**2))
+
+        path_info = f"Leader path: {leader_distance:.1f}m\nFollower path: {follower_distance:.1f}m"
+        ax_path.text(0.02, 0.02, path_info, transform=ax_path.transAxes,
+                     bbox=dict(facecolor='white', alpha=0.8, boxstyle='round'))
+
+        ax_path.set_title('Vehicle Trajectories')
+        ax_path.set_xlabel('X Position (m)')
+        ax_path.set_ylabel('Y Position (m)')
+        ax_path.legend(loc='upper right')
+        ax_path.grid(True, alpha=0.3)
+        ax_path.set_aspect('equal')
+
+        # 8. CAM message analysis (if available) or Controller input analysis (row 5, full width)
+        if self.cam_data is not None and len(self.cam_data) > 0:
+            # CAM Message visualization combined with controller response
+            ax_cam = fig.add_subplot(gs[4, :])
+
+            # Plot follower acceleration
+            ax_cam.plot(self.cacc_data['rel_time'], self.cacc_data['commanded_accel'],
+                        color=self.colors['commanded'], label='Cmd Accel')
+
+            # Mark CAM message events
+            tx_data = self.cam_data[self.cam_data['Action'] == 'TX']
+            rx_data = self.cam_data[self.cam_data['Action'] == 'RX']
+
+            # Create markers at the bottom of the plot for CAM events
+            for tx_time in tx_data['rel_time']:
+                ax_cam.axvline(
+                    x=tx_time, color=self.colors['cam_tx'], alpha=0.5, linestyle='--', lw=0.8)
+
+            for rx_time in rx_data['rel_time']:
+                ax_cam.axvline(
+                    x=rx_time, color=self.colors['cam_rx'], alpha=0.5, linestyle='--', lw=0.8)
+
+            # Add CAM message stats
+            if len(tx_data) > 1 and len(rx_data) > 1:
+                cam_stats = (f"TX: {len(tx_data)} msgs, {self.tx_interval_mean:.3f}±{self.tx_interval_std:.3f}s\n"
+                             f"RX: {len(rx_data)} msgs, {self.rx_interval_mean:.3f}±{self.rx_interval_std:.3f}s")
+                ax_cam.text(0.02, 0.95, cam_stats, transform=ax_cam.transAxes, va='top',
+                            bbox=dict(facecolor='white', alpha=0.8, boxstyle='round'))
+
+            # Create legend with proper entries
+            from matplotlib.lines import Line2D
+            custom_lines = [
+                Line2D([0], [0], color=self.colors['commanded'], lw=2),
+                Line2D([0], [0], color=self.colors['cam_tx'], linestyle='--'),
+                Line2D([0], [0], color=self.colors['cam_rx'], linestyle='--')
+            ]
+            ax_cam.legend(
+                custom_lines, ['Commanded Accel', 'CAM TX', 'CAM RX'], loc='upper right')
+
+            ax_cam.set_title('CAM Messages & Controller Response')
+            ax_cam.set_xlabel('Time (s)')
+            ax_cam.set_ylabel('Acceleration (m/s²)')
+            ax_cam.grid(True, alpha=0.3)
+        else:
+            # Controller input analysis - show contributions to control decisions
+            ax_ctrl = fig.add_subplot(gs[4, :])
+
+            if all(col in self.cacc_data.columns for col in
+                   ['inP1_pos_err', 'inP1_vel_err', 'inP1_geom_vel', 'inP1_yaw_rate']):
+                # Plot contribution components
+                ax_ctrl.plot(self.cacc_data['rel_time'], self.cacc_data['inP1_pos_err'],
+                             label='Position Error', color='#e377c2')
+                ax_ctrl.plot(self.cacc_data['rel_time'], self.cacc_data['inP1_vel_err'],
+                             label='Velocity Error', color='#7f7f7f')
+                ax_ctrl.plot(self.cacc_data['rel_time'], self.cacc_data['inP1_geom_vel'],
+                             label='Geometric Velocity', color='#bcbd22')
+                ax_ctrl.plot(self.cacc_data['rel_time'], self.cacc_data['inP1_yaw_rate'],
+                             label='Yaw Rate', color='#17becf')
+
+                # Add the sum (inP_1) and commanded acceleration for comparison
+                ax_ctrl.plot(self.cacc_data['rel_time'], self.cacc_data['commanded_accel'],
+                             color=self.colors['commanded'], linestyle='--', lw=3,
+                             label='Commanded Accel')
+
+                ax_ctrl.set_title('Control Input Components')
+                ax_ctrl.set_xlabel('Time (s)')
+                ax_ctrl.set_ylabel('Contribution')
+                ax_ctrl.legend(loc='upper right')
+                ax_ctrl.grid(True, alpha=0.3)
+            else:
+                # If control components are not available, show a correlation heatmap
+                corr_cols = ['leader_velocity', 'follower_velocity', 'actual_distance',
+                             'distance_error', 'z1', 'z2', 'z3', 'z4', 'commanded_accel',
+                             'commanded_angular']
+
+                # Only include columns that actually exist
+                corr_cols = [
+                    col for col in corr_cols if col in self.cacc_data.columns]
+
+                # Calculate correlation matrix
+                corr_matrix = self.cacc_data[corr_cols].corr()
+
+                # Create heatmap
+                sns.heatmap(corr_matrix, annot=True, fmt=".2f", cmap='coolwarm',
+                            ax=ax_ctrl, vmin=-1, vmax=1)
+
+                ax_ctrl.set_title('Correlation Matrix of Key CACC Variables')
+
+        # Set common x-labels for time-based plots
+        for ax in [ax_vel, ax_dist, ax_err, ax_acc, ax_vel_err, ax_ang]:
+            ax.set_xlabel('Time (s)')
 
         plt.tight_layout()
-        plt.subplots_adjust(top=0.95)  # Adjust top slightly for new title
+        plt.subplots_adjust(top=0.95, hspace=0.3, wspace=0.25)
+
+        # Save plot
+        save_path = os.path.splitext(self.cacc_log_file)[0] + "_analysis.png"
+        plt.savefig(save_path, dpi=150, bbox_inches='tight')
+        print(f"Saved analysis plot to {save_path}")
+
         plt.show()
 
     def create_vehicle_animation(self):
-        """Create animation of vehicle positions"""
+        """Create enhanced animation with more informative visuals"""
         if self.cacc_data is None or len(self.cacc_data) == 0:
             print("No data to visualize")
             return
 
-        # Setup the figure
-        fig, ax = plt.subplots(figsize=(12, 9))
-        ax.set_title('Vehicle Positions with CAM Messages')
-        ax.set_xlabel('X Position (m)')
-        ax.set_ylabel('Y Position (m)')
+        # Create figure with subplot grid for animation plus telemetry
+        fig = plt.figure(figsize=(12, 9))
+        gs = gridspec.GridSpec(3, 2, height_ratios=[3, 1, 1])
 
-        # Get max and min values for x and y to set proper limits
+        # Main plot for vehicle positions
+        ax_main = fig.add_subplot(gs[0, :])
+        ax_main.set_title('Vehicle Positions with CACC Control')
+        ax_main.set_xlabel('X Position (m)')
+        ax_main.set_ylabel('Y Position (m)')
+
+        # Bottom plots for telemetry
+        ax_vel = fig.add_subplot(gs[1, :])  # For velocities
+        ax_dist = fig.add_subplot(gs[2, :])  # For distances
+
+        # Set background colors
+        fig.patch.set_facecolor(self.colors['background'])
+        ax_main.set_facecolor('white')
+        ax_vel.set_facecolor('white')
+        ax_dist.set_facecolor('white')
+
+        # Get min/max values for plot limits with margin
         min_x = min(self.cacc_data['leader_x'].min(),
                     self.cacc_data['follower_x'].min())
         max_x = max(self.cacc_data['leader_x'].max(),
@@ -299,349 +490,358 @@ class CACCVisualizer:
         max_y = max(self.cacc_data['leader_y'].max(),
                     self.cacc_data['follower_y'].max())
 
-        # Add some margin
+        # Add margin
         margin = max(max_x - min_x, max_y - min_y) * 0.1
-        ax.set_xlim(min_x - margin, max_x + margin)
-        ax.set_ylim(min_y - margin, max_y + margin)
+        ax_main.set_xlim(min_x - margin, max_x + margin)
+        ax_main.set_ylim(min_y - margin, max_y + margin)
+        ax_main.set_aspect('equal')
 
-        # Create path lines
-        leader_path, = ax.plot([], [], 'b-', alpha=0.3, label='Leader path')
-        follower_path, = ax.plot(
-            [], [], 'r-', alpha=0.3, label='Follower path')
+        # Create empty objects for animation
+        leader_path, = ax_main.plot([], [], '-', color=self.colors['leader'], alpha=0.5,
+                                    linewidth=2, label='Leader Path')
+        follower_path, = ax_main.plot([], [], '-', color=self.colors['follower'], alpha=0.5,
+                                      linewidth=2, label='Follower Path')
 
-        # Create markers for vehicles
-        leader_pos, = ax.plot([], [], 'bo', markersize=8, label='Leader')
-        follower_pos, = ax.plot([], [], 'ro', markersize=8, label='Follower')
+        # Use actual vehicle shapes instead of simple dots
+        vehicle_length = 0.6
+        vehicle_width = 0.3
 
-        # Add CAM message indicators if we have CAM data
+        leader_vehicle = patches.Rectangle((0, 0), vehicle_length, vehicle_width,
+                                           color=self.colors['leader'],
+                                           alpha=0.8, angle=0)
+        follower_vehicle = patches.Rectangle((0, 0), vehicle_length, vehicle_width,
+                                             color=self.colors['follower'],
+                                             alpha=0.8, angle=0)
+
+        ax_main.add_patch(leader_vehicle)
+        ax_main.add_patch(follower_vehicle)
+
+        # Line connecting vehicles
+        connect_line, = ax_main.plot([], [], 'k--', alpha=0.7, linewidth=1.5)
+
+        # Status text display
+        status_text = ax_main.text(0.02, 0.98, '', transform=ax_main.transAxes,
+                                   va='top', ha='left', fontsize=9,
+                                   bbox=dict(facecolor='white', alpha=0.7))
+
+        # Create empty plots for velocity subplot
+        leader_vel_line, = ax_vel.plot([], [], '-', color=self.colors['leader'],
+                                       label='Leader')
+        follower_vel_line, = ax_vel.plot([], [], '-', color=self.colors['follower'],
+                                         label='Follower')
+        commanded_vel_line, = ax_vel.plot([], [], '--', color=self.colors['commanded'],
+                                          label='Commanded')
+        current_time_vel = ax_vel.axvline(
+            x=0, color='k', linestyle='-', alpha=0.7)
+
+        ax_vel.set_title('Vehicle Velocities')
+        ax_vel.set_xlabel('Time (s)')
+        ax_vel.set_ylabel('Velocity (m/s)')
+        ax_vel.grid(True, alpha=0.3)
+        ax_vel.legend(loc='upper right')
+
+        # Create empty plots for distance subplot
+        actual_dist_line, = ax_dist.plot([], [], '-', color=self.colors['follower'],
+                                         label='Actual')
+        desired_dist_line, = ax_dist.plot([], [], '--', color=self.colors['desired'],
+                                          label='Desired')
+        current_time_dist = ax_dist.axvline(
+            x=0, color='k', linestyle='-', alpha=0.7)
+
+        ax_dist.set_title('Following Distance')
+        ax_dist.set_xlabel('Time (s)')
+        ax_dist.set_ylabel('Distance (m)')
+        ax_dist.grid(True, alpha=0.3)
+        ax_dist.legend(loc='upper right')
+
+        # Set y-axis limits for velocity and distance plots based on data
+        ax_vel.set_ylim(
+            min(self.cacc_data['leader_velocity'].min(),
+                self.cacc_data['follower_velocity'].min()) - 0.5,
+            max(self.cacc_data['leader_velocity'].max(),
+                self.cacc_data['follower_velocity'].max()) + 0.5
+        )
+
+        ax_dist.set_ylim(
+            min(self.cacc_data['desired_distance'].min(),
+                self.cacc_data['actual_distance'].min()) - 0.5,
+            max(self.cacc_data['desired_distance'].max(),
+                self.cacc_data['actual_distance'].max()) + 0.5
+        )
+
+        # Set x-axis limits for both plots
+        ax_vel.set_xlim(0, self.cacc_data['rel_time'].max())
+        ax_dist.set_xlim(0, self.cacc_data['rel_time'].max())
+
+        # Time window for velocity and distance plots
+        # 30 seconds or max time if shorter
+        time_window = min(30.0, self.cacc_data['rel_time'].max())
+
+        # Add CAM message markers if available
         has_cam_data = self.cam_data is not None and len(self.cam_data) > 0
         cam_tx_markers = None
         cam_rx_markers = None
 
         if has_cam_data:
-            # Filter TX messages only
-            cam_tx = self.cam_data[self.cam_data['Action'] == 'TX']
-            # Create empty scatter plot for CAM TX markers
-            cam_tx_markers = ax.scatter([], [], c='g', s=80, marker='*',
-                                        alpha=0.7, label='CAM TX')
+            cam_tx_markers = ax_main.scatter([], [], color=self.colors['cam_tx'],
+                                             s=80, marker='*', alpha=0.8, label='CAM TX')
+            cam_rx_markers = ax_main.scatter([], [], color=self.colors['cam_rx'],
+                                             s=80, marker='*', alpha=0.8, label='CAM RX')
 
-            # Filter RX messages
-            cam_rx = self.cam_data[self.cam_data['Action'] == 'RX']
-            # Create empty scatter plot for CAM RX markers
-            cam_rx_markers = ax.scatter([], [], c='c', s=80, marker='*',
-                                        alpha=0.7, label='CAM RX')
-
-        # Create a status text
-        status_text = ax.text(0.02, 0.95, '', transform=ax.transAxes)
-
-        ax.grid(True)
-        ax.legend(loc='upper right')
-
-        # Downsample data for animation to make it smoother
-        step = max(1, len(self.cacc_data) // 300)
-        downsampled_data = self.cacc_data.iloc[::step]
-
+        # Initialize the animation
         def init():
             leader_path.set_data([], [])
             follower_path.set_data([], [])
-            leader_pos.set_data([], [])
-            follower_pos.set_data([], [])
+            connect_line.set_data([], [])
             status_text.set_text('')
+
+            leader_vehicle.set_xy([0, 0])
+            follower_vehicle.set_xy([0, 0])
+
+            leader_vel_line.set_data([], [])
+            follower_vel_line.set_data([], [])
+            commanded_vel_line.set_data([], [])
+            current_time_vel.set_xdata([0])
+
+            actual_dist_line.set_data([], [])
+            desired_dist_line.set_data([], [])
+            current_time_dist.set_xdata([0])
 
             if has_cam_data:
                 cam_tx_markers.set_offsets(np.empty((0, 2)))
                 cam_rx_markers.set_offsets(np.empty((0, 2)))
-                return leader_path, follower_path, leader_pos, follower_pos, cam_tx_markers, cam_rx_markers, status_text
+                return (leader_path, follower_path, leader_vehicle, follower_vehicle,
+                        connect_line, status_text, leader_vel_line, follower_vel_line,
+                        commanded_vel_line, current_time_vel, actual_dist_line, desired_dist_line,
+                        current_time_dist, cam_tx_markers, cam_rx_markers)
             else:
-                return leader_path, follower_path, leader_pos, follower_pos, status_text
+                return (leader_path, follower_path, leader_vehicle, follower_vehicle,
+                        connect_line, status_text, leader_vel_line, follower_vel_line,
+                        commanded_vel_line, current_time_vel, actual_dist_line, desired_dist_line,
+                        current_time_dist)
 
+        # Update function for animation
         def update(frame):
+            # Get current data
             idx = frame
-            current_time = downsampled_data['rel_time'].iloc[idx]
+            current_time = self.cacc_data['rel_time'].iloc[idx]
 
             # Update paths
             leader_path.set_data(
-                downsampled_data['leader_x'][:idx], downsampled_data['leader_y'][:idx])
+                self.cacc_data['leader_x'][:idx+1],
+                self.cacc_data['leader_y'][:idx+1]
+            )
             follower_path.set_data(
-                downsampled_data['follower_x'][:idx], downsampled_data['follower_y'][:idx])
+                self.cacc_data['follower_x'][:idx+1],
+                self.cacc_data['follower_y'][:idx+1]
+            )
 
-            # Update current positions
-            leader_x = downsampled_data['leader_x'][idx]
-            leader_y = downsampled_data['leader_y'][idx]
-            leader_pos.set_data(leader_x, leader_y)
+            # Update vehicle positions and orientations
+            lx = self.cacc_data['leader_x'].iloc[idx]
+            ly = self.cacc_data['leader_y'].iloc[idx]
+            fx = self.cacc_data['follower_x'].iloc[idx]
+            fy = self.cacc_data['follower_y'].iloc[idx]
 
-            follower_x = downsampled_data['follower_x'][idx]
-            follower_y = downsampled_data['follower_y'][idx]
-            follower_pos.set_data(follower_x, follower_y)
+            # Calculate orientation from positions or use yaw if available
+            if idx > 0:
+                ldx = self.cacc_data['leader_x'].iloc[idx] - \
+                    self.cacc_data['leader_x'].iloc[idx-1]
+                ldy = self.cacc_data['leader_y'].iloc[idx] - \
+                    self.cacc_data['leader_y'].iloc[idx-1]
+                leader_angle = np.degrees(np.arctan2(ldy, ldx)) if (
+                    ldx != 0 or ldy != 0) else 0
 
-            # Update CAM markers if we have CAM data
-            cam_status = ""
+                fdx = self.cacc_data['follower_x'].iloc[idx] - \
+                    self.cacc_data['follower_x'].iloc[idx-1]
+                fdy = self.cacc_data['follower_y'].iloc[idx] - \
+                    self.cacc_data['follower_y'].iloc[idx-1]
+                follower_angle = np.degrees(np.arctan2(fdy, fdx)) if (
+                    fdx != 0 or fdy != 0) else 0
+            else:
+                leader_angle = 0
+                follower_angle = 0
+
+            # Use pose_yaw and cam_yaw if available
+            if 'pose_yaw' in self.cacc_data.columns and 'cam_yaw' in self.cacc_data.columns:
+                leader_angle = np.degrees(self.cacc_data['cam_yaw'].iloc[idx])
+                follower_angle = np.degrees(
+                    self.cacc_data['pose_yaw'].iloc[idx])
+
+            # Calculate corners with orientation
+            leader_vehicle._angle = leader_angle
+            leader_vehicle.set_xy(
+                [lx - vehicle_length/2, ly - vehicle_width/2])
+
+            follower_vehicle._angle = follower_angle
+            follower_vehicle.set_xy(
+                [fx - vehicle_length/2, fy - vehicle_width/2])
+
+            # Update connection line between vehicles
+            connect_line.set_data([lx, fx], [ly, fy])
+
+            # Update velocity subplot
+            time_array = self.cacc_data['rel_time'].values
+            # Find indices for the time window
+            start_idx = max(0, np.searchsorted(
+                time_array, current_time - time_window))
+
+            # Update velocity lines
+            leader_vel_line.set_data(
+                time_array[start_idx:idx+1],
+                self.cacc_data['leader_velocity'].iloc[start_idx:idx+1]
+            )
+            follower_vel_line.set_data(
+                time_array[start_idx:idx+1],
+                self.cacc_data['follower_velocity'].iloc[start_idx:idx+1]
+            )
+            commanded_vel_line.set_data(
+                time_array[start_idx:idx+1],
+                self.cacc_data['commanded_velocity'].iloc[start_idx:idx+1]
+            )
+
+            # Update time marker
+            current_time_vel.set_xdata([current_time])
+
+            # Set visible window for velocity plot
+            if current_time > time_window:
+                ax_vel.set_xlim(current_time - time_window, current_time)
+
+            # Update distance subplot
+            actual_dist_line.set_data(
+                time_array[start_idx:idx+1],
+                self.cacc_data['actual_distance'].iloc[start_idx:idx+1]
+            )
+            desired_dist_line.set_data(
+                time_array[start_idx:idx+1],
+                self.cacc_data['desired_distance'].iloc[start_idx+1]
+            )
+
+            # Update time marker
+            current_time_dist.set_xdata([current_time])
+
+            # Set visible window for distance plot
+            if current_time > time_window:
+                ax_dist.set_xlim(current_time - time_window, current_time)
+
+            # Update status text with current metrics
+            status = (
+                f"Time: {current_time:.2f}s\n"
+                f"Velocities: L={self.cacc_data['leader_velocity'].iloc[idx]:.2f}, "
+                f"F={self.cacc_data['follower_velocity'].iloc[idx]:.2f} m/s\n"
+                f"Distance: {self.cacc_data['actual_distance'].iloc[idx]:.2f}m "
+                f"(desired: {self.cacc_data['desired_distance'].iloc[idx]:.2f}m)\n"
+                f"Error: {self.cacc_data['distance_error'].iloc[idx]:.2f}m"
+            )
+            status_text.set_text(status)
+
+            # Update CAM message markers if available
             if has_cam_data:
-                # Show all CAM TX messages up to the current time
-                tx_visible = self.cam_data[(self.cam_data['Action'] == 'TX') &
-                                           (self.cam_data['rel_time'] <= current_time)]
+                # Show CAM messages for current visible time window
+                if current_time > time_window:
+                    window_start = current_time - time_window
+                else:
+                    window_start = 0
 
-                if len(tx_visible) > 0:
-                    # Get the coordinates for TX messages (leader position when sent)
-                    tx_x = []
-                    tx_y = []
-                    for _, row in tx_visible.iterrows():
-                        # Use the nearest leader position from CACC data for each CAM timestamp
-                        nearest_idx = (
-                            self.cacc_data['rel_time'] - row['rel_time']).abs().idxmin()
-                        tx_x.append(
-                            self.cacc_data.iloc[nearest_idx]['leader_x'])
-                        tx_y.append(
-                            self.cacc_data.iloc[nearest_idx]['leader_y'])
+                # Filter TX messages in the visible window
+                visible_tx = self.cam_data[(self.cam_data['Action'] == 'TX') &
+                                           (self.cam_data['rel_time'] <= current_time) &
+                                           (self.cam_data['rel_time'] >= window_start)]
 
-                    cam_tx_markers.set_offsets(np.column_stack([tx_x, tx_y]))
+                if len(visible_tx) > 0:
+                    # Use the leader position at the message time
+                    tx_pos = []
+                    for _, row in visible_tx.iterrows():
+                        # Find nearest CACC data point
+                        nearest_idx = np.argmin(
+                            np.abs(self.cacc_data['rel_time'] - row['rel_time']))
+                        tx_pos.append([
+                            self.cacc_data['leader_x'].iloc[nearest_idx],
+                            self.cacc_data['leader_y'].iloc[nearest_idx]
+                        ])
 
-                    # Add the most recent TX info to status
-                    latest_tx = tx_visible.iloc[-1]
-                    cam_status += f"Latest TX: t={latest_tx['rel_time']:.2f}s\n"
+                    cam_tx_markers.set_offsets(tx_pos)
                 else:
                     cam_tx_markers.set_offsets(np.empty((0, 2)))
 
-                # Show all CAM RX messages up to the current time
-                rx_visible = self.cam_data[(self.cam_data['Action'] == 'RX') &
-                                           (self.cam_data['rel_time'] <= current_time)]
+                # Filter RX messages in the visible window
+                visible_rx = self.cam_data[(self.cam_data['Action'] == 'RX') &
+                                           (self.cam_data['rel_time'] <= current_time) &
+                                           (self.cam_data['rel_time'] >= window_start)]
 
-                if len(rx_visible) > 0:
-                    # Get the coordinates for RX messages (follower position when received)
-                    rx_x = []
-                    rx_y = []
-                    for _, row in rx_visible.iterrows():
-                        # Use the nearest follower position from CACC data for each CAM timestamp
-                        nearest_idx = (
-                            self.cacc_data['rel_time'] - row['rel_time']).abs().idxmin()
-                        rx_x.append(
-                            self.cacc_data.iloc[nearest_idx]['follower_x'])
-                        rx_y.append(
-                            self.cacc_data.iloc[nearest_idx]['follower_y'])
+                if len(visible_rx) > 0:
+                    # Use the follower position at the message time
+                    rx_pos = []
+                    for _, row in visible_rx.iterrows():
+                        # Find nearest CACC data point
+                        nearest_idx = np.argmin(
+                            np.abs(self.cacc_data['rel_time'] - row['rel_time']))
+                        rx_pos.append([
+                            self.cacc_data['follower_x'].iloc[nearest_idx],
+                            self.cacc_data['follower_y'].iloc[nearest_idx]
+                        ])
 
-                    cam_rx_markers.set_offsets(np.column_stack([rx_x, rx_y]))
-
-                    # Add the most recent RX info to status
-                    latest_rx = rx_visible.iloc[-1]
-                    cam_status += f"Latest RX: t={latest_rx['rel_time']:.2f}s"
+                    cam_rx_markers.set_offsets(rx_pos)
                 else:
                     cam_rx_markers.set_offsets(np.empty((0, 2)))
 
-            # Update status text
-            time_str = f"Time: {current_time:.2f}s"
-            vel_str = f"Velocities - L: {downsampled_data['leader_velocity'].iloc[idx]:.2f}, F: {downsampled_data['follower_velocity'].iloc[idx]:.2f} m/s"
-            dist_str = f"Distance: {downsampled_data['actual_distance'].iloc[idx]:.2f}m (error: {downsampled_data['distance_error'].iloc[idx]:.2f}m)"
-
-            status_text.set_text(
-                f"{time_str}\n{vel_str}\n{dist_str}\n{cam_status}")
-
-            if has_cam_data:
-                return leader_path, follower_path, leader_pos, follower_pos, cam_tx_markers, cam_rx_markers, status_text
+                return (leader_path, follower_path, leader_vehicle, follower_vehicle,
+                        connect_line, status_text, leader_vel_line, follower_vel_line,
+                        commanded_vel_line, current_time_vel, actual_dist_line, desired_dist_line,
+                        current_time_dist, cam_tx_markers, cam_rx_markers)
             else:
-                return leader_path, follower_path, leader_pos, follower_pos, status_text
+                return (leader_path, follower_path, leader_vehicle, follower_vehicle,
+                        connect_line, status_text, leader_vel_line, follower_vel_line,
+                        commanded_vel_line, current_time_vel, actual_dist_line, desired_dist_line,
+                        current_time_dist)
+
+        # Create animation with down-sampling for smoother playback
+        # Determine appropriate sampling rate
+        frame_count = len(self.cacc_data)
+        max_frames = 500  # Limit to reasonable number of frames
+        step = max(1, frame_count // max_frames)
+
+        frame_indices = range(0, frame_count, step)
 
         ani = FuncAnimation(
-            fig, update, frames=len(downsampled_data),
+            fig, update, frames=frame_indices,
             init_func=init, blit=True, interval=50, repeat=True
         )
 
+        # Add legend
+        ax_main.legend(loc='upper right')
+
+        # Add play/pause functionality with keyboard shortcuts
         plt.tight_layout()
-        plt.show()
 
-    def create_cam_timing_analysis(self):
-        """Create a focused analysis of CAM message timing and effects"""
-        if self.cam_data is None or len(self.cam_data) == 0:
-            print("No CAM data available for timing analysis")
-            return
-
-        # Create figure for CAM analysis
-        fig = plt.figure(figsize=(16, 12))
-        fig.suptitle('CAM Message Timing Analysis', fontsize=16)
-        gs = gridspec.GridSpec(3, 2)
-
-        # 1. CAM message intervals (time between messages)
-        ax1 = fig.add_subplot(gs[0, 0])
-
-        # Calculate intervals between consecutive TX messages
-        tx_data = self.cam_data[self.cam_data['Action'] == 'TX'].copy()
-        if len(tx_data) > 1:
-            tx_data['interval'] = tx_data['rel_time'].diff()
-            # Filter out the first row which has NaN interval
-            tx_intervals = tx_data['interval'].dropna()
-
-            # Plot histogram of intervals
-            ax1.hist(tx_intervals, bins=20, alpha=0.7)
-            ax1.set_title('CAM TX Message Intervals')
-            ax1.set_xlabel('Time between messages (s)')
-            ax1.set_ylabel('Frequency')
-            ax1.axvline(x=0.1, color='r', linestyle='--',
-                        label='Min interval (100ms)')
-            ax1.axvline(x=1.0, color='g', linestyle='--',
-                        label='Max interval (1s)')
-            ax1.legend()
-            ax1.grid(True)
-
-        # 2. CAM message generation trigger types
-        ax2 = fig.add_subplot(gs[0, 1])
-
-        # Extract trigger information from Details column if available
-        if 'Details' in self.cam_data.columns:
-            tx_triggers = []
-            for _, row in tx_data.iterrows():
-                if isinstance(row['Details'], str) and 'Trigger:' in row['Details']:
-                    trigger = row['Details'].split('Trigger:')[1].strip()
-                    tx_triggers.append(trigger)
-                else:
-                    tx_triggers.append('unknown')
-
-            # Count trigger types
-            trigger_counts = pd.Series(tx_triggers).value_counts()
-            ax2.bar(trigger_counts.index, trigger_counts.values)
-            ax2.set_title('CAM Generation Triggers')
-            ax2.set_xlabel('Trigger Type')
-            ax2.set_ylabel('Count')
-            plt.setp(ax2.get_xticklabels(), rotation=45, ha='right')
-            ax2.grid(True, axis='y')
-
-        # 3. Message latency (if we can calculate it)
-        ax3 = fig.add_subplot(gs[1, 0])
-
-        # Try to match TX and RX pairs using StationID and GenDeltaTime
-        if 'StationID' in self.cam_data.columns and 'GenDeltaTime' in self.cam_data.columns:
-            latencies = []
-            times = []
-
-            rx_data = self.cam_data[self.cam_data['Action'] == 'RX'].copy()
-
-            # For each RX message, find matching TX message with same StationID and GenDeltaTime
-            for _, rx_row in rx_data.iterrows():
-                matching_tx = tx_data[(tx_data['StationID'] == rx_row['StationID']) &
-                                      (tx_data['GenDeltaTime'] == rx_row['GenDeltaTime'])]
-
-                if len(matching_tx) == 1:
-                    latency = rx_row['rel_time'] - \
-                        matching_tx['rel_time'].values[0]
-                    if latency >= 0:  # Sanity check
-                        latencies.append(latency)
-                        times.append(rx_row['rel_time'])
-
-            if latencies:
-                ax3.plot(times, latencies, 'b.-')
-                ax3.set_title('CAM Message Latency')
-                ax3.set_xlabel('Time (s)')
-                ax3.set_ylabel('Latency (s)')
-                ax3.grid(True)
-
-        # 4. CACC controller response to CAM messages
-        ax4 = fig.add_subplot(gs[1, 1])
-
-        # If we have CACC data, try to correlate CAM reception with acceleration changes
-        if self.cacc_data is not None:
-            # Plot follower acceleration
-            ax4.plot(self.cacc_data['rel_time'], self.cacc_data['commanded_accel'],
-                     'g-', label='Commanded acceleration')
-
-            # Mark points where CAM messages were received
-            rx_times = self.cam_data[self.cam_data['Action']
-                                     == 'RX']['rel_time'].values
-
-            for rx_time in rx_times:
-                ax4.axvline(x=rx_time, color='r', alpha=0.3, linestyle='--')
-
-            ax4.set_title('CACC Response to CAM Messages')
-            ax4.set_xlabel('Time (s)')
-            ax4.set_ylabel('Acceleration (m/s²)')
-            ax4.grid(True)
-            # Add legend with custom entry for CAM RX markers
-            from matplotlib.lines import Line2D
-            custom_lines = [Line2D([0], [0], color='r', lw=2, linestyle='--')]
-            ax4.legend(['Commanded acceleration', 'CAM RX'])
-
-        # 5. CAM fields over time
-        ax5 = fig.add_subplot(gs[2, 0])
-
-        # Plot CAM speed values from TX messages
-        if 'Speed' in self.cam_data.columns:
-            speed_data = tx_data[['rel_time', 'Speed']].copy()
-            speed_data['Speed'] = pd.to_numeric(
-                speed_data['Speed'], errors='coerce')
-            ax5.plot(speed_data['rel_time'], speed_data['Speed'],
-                     'g.-', label='CAM Speed')
-
-            # If we have CACC data, overlay leader speed for comparison
-            if self.cacc_data is not None:
-                ax5.plot(self.cacc_data['rel_time'], self.cacc_data['leader_velocity'],
-                         'b-', alpha=0.7, label='CACC Leader Speed')
-
-            ax5.set_title('CAM Speed vs CACC Speed')
-            ax5.set_xlabel('Time (s)')
-            ax5.set_ylabel('Speed (m/s)')
-            ax5.legend()
-            ax5.grid(True)
-
-        # 6. CAM curvature vs CACC curvature
-        ax6 = fig.add_subplot(gs[2, 1])
-
-        # Plot CAM curvature values from TX messages
-        if 'Curvature' in self.cam_data.columns:
-            # Convert string values to numeric, coercing errors to NaN
-            tx_data['Curvature_numeric'] = pd.to_numeric(
-                tx_data['Curvature'], errors='coerce')
-
-            # Drop rows with NaN (where conversion failed)
-            valid_curvature = tx_data.dropna(subset=['Curvature_numeric'])
-
-            if len(valid_curvature) > 0:
-                ax6.plot(valid_curvature['rel_time'], valid_curvature['Curvature_numeric'],
-                         'g.-', label='CAM Curvature')
-
-                # If we have CACC data, overlay leader curvature for comparison
-                if self.cacc_data is not None:
-                    ax6.plot(self.cacc_data['rel_time'], self.cacc_data['leader_curvature'],
-                             'b-', alpha=0.7, label='CACC Leader Curvature')
-
-                ax6.set_title('CAM Curvature vs CACC Curvature')
-                ax6.set_xlabel('Time (s)')
-                ax6.set_ylabel('Curvature (1/m)')
-                ax6.legend()
-                ax6.grid(True)
-
-        plt.tight_layout()
-        plt.subplots_adjust(top=0.92)
+        # Show plot
+        print("Animation controls: Space=Play/Pause, Left/Right=Step, Home=Restart")
         plt.show()
 
 
 def main():
-    parser = argparse.ArgumentParser(description='CACC & CAM Data Visualizer')
+    parser = argparse.ArgumentParser(
+        description='Enhanced CACC & CAM Data Visualizer')
     parser.add_argument(
         'cacc_log_file', help='Path to the CACC controller log CSV file')
-    parser.add_argument(
-        '--cam-log', help='Path to the CAM message log file (required for integrated analysis)')
+    parser.add_argument('--cam-log', help='Path to the CAM message log file')
     parser.add_argument('--static', action='store_true',
                         help='Generate static plots only')
     parser.add_argument('--animation', action='store_true',
-                        help='Generate animation plot only')
-    parser.add_argument('--cam-analysis', action='store_true',
-                        help='Generate detailed CAM timing analysis')
+                        help='Generate animation only')
 
     args = parser.parse_args()
 
     visualizer = CACCVisualizer(args.cacc_log_file, args.cam_log)
 
     # Default: show both if no specific option is selected
-    show_static = args.static or (not args.animation and not args.cam_analysis)
-    show_animation = args.animation or (
-        not args.static and not args.cam_analysis)
-    show_cam_analysis = args.cam_analysis
+    show_static = args.static or (not args.animation)
+    show_animation = args.animation or (not args.static)
 
     if show_static:
         visualizer.create_static_plots()
 
     if show_animation:
         visualizer.create_vehicle_animation()
-
-    if show_cam_analysis:
-        visualizer.create_cam_timing_analysis()
 
 
 if __name__ == "__main__":
