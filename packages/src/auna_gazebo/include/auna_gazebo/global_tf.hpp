@@ -1,4 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
+#include "tf2_ros/static_transform_broadcaster.h"
 #include "tf2_ros/transform_broadcaster.h"
 
 #include "gazebo_msgs/srv/get_model_list.hpp"
@@ -17,11 +18,13 @@ public:
   void service_timer_callback();
   void model_srv_callback(
     const rclcpp::Client<gazebo_msgs::srv::GetModelList>::SharedFuture future);
-  void tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg);
+  void tf_callback(
+    const tf2_msgs::msg::TFMessage::SharedPtr msg, const std::string & robot_name, bool is_static);
 
 private:
   // TF Broadcaster
   tf2_ros::TransformBroadcaster tf_broadcaster_;
+  tf2_ros::StaticTransformBroadcaster static_tf_broadcaster_;
 
   // Timer and Service Client
   rclcpp::TimerBase::SharedPtr service_timer_;

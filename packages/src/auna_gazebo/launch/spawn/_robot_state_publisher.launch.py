@@ -42,8 +42,7 @@ def generate_launch_description():
             'robot_description': Command([
                 'xacro ', model
             ]),
-            'use_sim_time': use_sim_time,
-            'use_tf_static': False
+            'use_sim_time': use_sim_time
         }],
         remappings=[
             ('/tf', 'tf'),
