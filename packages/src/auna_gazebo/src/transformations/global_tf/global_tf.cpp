@@ -61,10 +61,10 @@ void GlobalTF::tf_callback(
 {
   for (const geometry_msgs::msg::TransformStamped & message : msg->transforms) {
     // Create a modified transform with robot namespace
-    RCLCPP_INFO(
-      this->get_logger(), "Original transform from %s (static: %s): %s -> %s", robot_name.c_str(),
-      is_static ? "true" : "false", message.header.frame_id.c_str(),
-      message.child_frame_id.c_str());
+    // RCLCPP_INFO(
+    //   this->get_logger(), "Original transform from %s (static: %s): %s -> %s",
+    //   robot_name.c_str(), is_static ? "true" : "false", message.header.frame_id.c_str(),
+    //   message.child_frame_id.c_str());
 
     geometry_msgs::msg::TransformStamped modified = message;
 
@@ -98,10 +98,10 @@ void GlobalTF::tf_callback(
     }
 
     // Log the transform we're republishing
-    RCLCPP_INFO(
-      this->get_logger(), "Republishing transform (static: %s): %s -> %s (from robot %s)",
-      is_static ? "true" : "false", modified.header.frame_id.c_str(),
-      modified.child_frame_id.c_str(), robot_name.c_str());
+    // RCLCPP_INFO(
+    //   this->get_logger(), "Republishing transform (static: %s): %s -> %s (from robot %s)",
+    //   is_static ? "true" : "false", modified.header.frame_id.c_str(),
+    //   modified.child_frame_id.c_str(), robot_name.c_str());
 
     // Send the modified transform using the appropriate broadcaster
     if (is_static) {
