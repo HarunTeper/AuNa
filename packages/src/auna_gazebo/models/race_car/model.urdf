@@ -13,6 +13,11 @@
   <xacro:property name="hokuyoSize" value="0.1"/>
   <xacro:property name="hokuyoMass" value="0.1"/>
 
+  <xacro:property name="gpsSizeL" value="0.05"/>
+  <xacro:property name="gpsSizeB" value="0.05"/>
+  <xacro:property name="gpsSizeH" value="0.05"/>
+  <xacro:property name="gpsMass" value="0.05"/>
+
   <xacro:property name="bodySizeL" value="0.49"/>
   <xacro:property name="bodySizeB" value="0.18"/>
   <xacro:property name="bodySizeH" value="0.1"/>
@@ -277,6 +282,38 @@
     <child link="$(arg namespace)laser"/>
   </joint>
 
+  <!-- GPS Link -->
+  <link name="$(arg namespace)gps_link">
+    <inertial>
+      <mass value="${gpsMass}" />
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <xacro:box_inertia m="${gpsMass}" l="${gpsSizeL}" b="${gpsSizeB}" h="${gpsSizeH}" />
+    </inertial>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${gpsSizeL} ${gpsSizeB} ${gpsSizeH}"/>
+      </geometry>
+    </collision>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="${gpsSizeL} ${gpsSizeB} ${gpsSizeH}"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0.0 0.0 0.0 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <joint name="gps_joint" type="fixed">
+    <origin xyz="-0.1 0 0.15" rpy="0 0 0"/>
+    <parent link="$(arg namespace)chassis"/>
+    <child link="$(arg namespace)gps_link"/>
+  </joint>
+
   <!-- IMU -->
   <link name="$(arg namespace)imu_link" />
 
@@ -404,6 +441,36 @@
     </sensor>
   </gazebo>
   
+  <!-- GPS Gazebo plugin -->
+  <gazebo reference="$(arg namespace)gps_link">
+    <sensor name="gps_sensor" type="gps">
+      <always_on>true</always_on>
+      <update_rate>10</update_rate>
+      <gps>
+        <position_sensing>
+          <horizontal>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.01</stddev>
+            </noise>
+          </horizontal>
+          <vertical>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.01</stddev>
+            </noise>
+          </vertical>
+        </position_sensing>
+      </gps>
+      <plugin name="gps_plugin" filename="libgazebo_ros_gps_sensor.so">
+        <ros>
+          <remapping>~/out:=gps/fix</remapping>
+        </ros>
+        <frame_name>gps_link</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+
   <!-- Camera -->
   <gazebo reference="$(arg namespace)camera">
     <sensor name="camera" type="camera" >
