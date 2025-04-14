@@ -15,8 +15,6 @@ def include_launch_description(context: LaunchContext):
     # Package Directories
     pkg_dir = get_package_share_directory('auna_gazebo')
     launch_file_dir = os.path.join(pkg_dir, 'launch', 'spawn')
-    robot_description_file_dir = os.path.join(
-        pkg_dir, 'launch', 'robot_description')
 
     # Get configurations from context
     robot_number = int(context.launch_configurations['robot_number'])

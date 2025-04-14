@@ -11,17 +11,17 @@
 class LocalizationPosePublisher : public rclcpp::Node
 {
 public:
-  LocalizationPosePublisher(std::string prefix);
+  LocalizationPosePublisher();
 
 private:
   void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg) const;
 
-  tf2_ros::Buffer buffer;
-  tf2_ros::TransformListener listener;
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr publisher;
+  tf2_ros::Buffer buffer_;
+  tf2_ros::TransformListener listener_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr publisher_;
 
   rclcpp::TimerBase::SharedPtr timer_;
   void timer_callback();
 
-  std::string prefix;
+  std::string prefix_;
 };

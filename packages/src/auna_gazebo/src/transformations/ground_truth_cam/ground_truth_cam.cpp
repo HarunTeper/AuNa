@@ -4,13 +4,18 @@
 #include <etsi_its_cam_msgs/msg/detail/high_frequency_container__struct.hpp>
 
 // Create the publisher, timer and service client
-GroundTruthCam::GroundTruthCam(std::string name) : Node("ground_truth_cam_node")
+GroundTruthCam::GroundTruthCam() : Node("ground_truth_cam_node")
 {
   publisher_ = this->create_publisher<etsi_its_cam_msgs::msg::CAM>("ground_truth_cam", 2);
   modelClient_ = this->create_client<gazebo_msgs::srv::GetEntityState>("/get_entity_state");
   service_timer_ = this->create_wall_timer(
     std::chrono::milliseconds(publish_milliseconds_), [this]() { service_timer_callback(); });
-  this->name_ = name;
+  std::string ns = this->get_namespace();
+  if (!ns.empty()) {
+    this->name_ = ns.substr(1);  // Remove the first character (typically a slash)
+  } else {
+    this->name_ = ns;  // Keep it empty if namespace is empty
+  }
 }
 
 // Timer callback remains the same
@@ -34,8 +39,11 @@ void GroundTruthCam::service_timer_callback()
 void GroundTruthCam::model_srv_callback(
   const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture future)
 {
-  auto result = future.get();
-  auto entity = result.get();
+  auto entity = future.get();
+  if (!entity->success) {
+    RCLCPP_WARN(this->get_logger(), "Entity '%s' not found in the simulation", name_.c_str());
+    return;
+  }
   etsi_its_cam_msgs::msg::CAM cam_msg;
 
   // Determine yaw from orientation quaternion
@@ -51,7 +59,7 @@ void GroundTruthCam::model_srv_callback(
 
   // Calculate theta and thetadot from yaw and angular velocity in degrees
   double heading = yaw * 180 / M_PI - 360 * floor(yaw * 180 / M_PI / 360);
-  double thetadot = entity->state.twist.angular.z * 180 / M_PI;
+  // double thetadot = entity->state.twist.angular.z * 180 / M_PI;
 
   // Set heading in CAM message
   etsi_its_cam_msgs::access::setHeading(cam_msg, heading);
@@ -69,7 +77,8 @@ void GroundTruthCam::model_srv_callback(
   // Calculate speed and acceleration
   this->speed_ = sqrt(pow(entity->state.twist.linear.x, 2) + pow(entity->state.twist.linear.y, 2)) *
                  scale_factor_;
-  float vdot = (this->speed_ - old_speed) / ((double)publish_milliseconds_ / 1000) * scale_factor_;
+  // float vdot = (this->speed_ - old_speed) / ((double)publish_milliseconds_ / 1000) *
+  // scale_factor_;
 
   // Set speed in CAM message
   etsi_its_cam_msgs::access::setSpeed(cam_msg, this->speed_);

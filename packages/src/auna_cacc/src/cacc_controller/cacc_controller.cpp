@@ -339,7 +339,7 @@ void CaccController::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
   odom_velocity_ = sqrt(pow(msg->twist.twist.linear.x, 2) + pow(msg->twist.twist.linear.y, 2)) *
                    ((msg->twist.twist.linear.x < 0) ? -1 : 1);
   if (last_odom_msg_ == nullptr) {
-    odom_acceleration_ = odom_velocity_;
+    odom_acceleration_ = 0.0;
   } else {
     double dt = msg->header.stamp.sec - last_odom_msg_->header.stamp.sec +
                 (msg->header.stamp.nanosec - last_odom_msg_->header.stamp.nanosec) / 1e9;

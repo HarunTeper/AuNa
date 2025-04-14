@@ -1,7 +1,7 @@
 #include "auna_gazebo/ground_truth_localization.hpp"
 
 // Create the publisher, timer and service client
-GroundTruthLocalization::GroundTruthLocalization(std::string name)
+GroundTruthLocalization::GroundTruthLocalization()
 : Node("ground_truth_localization_node"),
   buffer_(this->get_clock()),
   listener_(buffer_),
@@ -10,7 +10,16 @@ GroundTruthLocalization::GroundTruthLocalization(std::string name)
   modelClient_ = this->create_client<gazebo_msgs::srv::GetEntityState>("/get_entity_state");
   service_timer_ = this->create_wall_timer(
     std::chrono::milliseconds(publish_milliseconds_), [this]() { service_timer_callback(); });
-  this->name_ = name;
+  std::string ns = this->get_namespace();
+  if (!ns.empty()) {
+    this->name_ = ns.substr(1);  // Remove the first character (typically a slash)
+  } else {
+    this->name_ = ns;  // Keep it empty if namespace is empty
+  }
+
+  RCLCPP_INFO(
+    this->get_logger(), "Ground truth localization node initialized with namespace: %s",
+    name_.c_str());
 }
 
 // Timer callback to periodically call a service request for the model state

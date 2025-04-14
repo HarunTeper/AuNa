@@ -15,7 +15,7 @@
 class GroundTruthCam : public rclcpp::Node
 {
 public:
-  GroundTruthCam(std::string name);
+  GroundTruthCam();
 
 private:
   void service_timer_callback();

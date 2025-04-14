@@ -87,6 +87,7 @@ def generate_launch_description():
 
     launch_description.add_action(robot_number_arg)
     launch_description.add_action(world_name_arg)
+    launch_description.add_action(namespace_arg)
 
     launch_description.add_action(world_cmd)
     launch_description.add_action(spawn_cmd)

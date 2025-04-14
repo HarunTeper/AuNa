@@ -12,26 +12,13 @@ import os
 def generate_launch_description():
     """Return launch description"""
 
-    # Get the default config file path
-    default_config = os.path.join(
-        get_package_share_directory('auna_comm'),
-        'config',
-        'cam_params.yaml'
-    )
-
     # Launch Argument Configurations
-    config_file = LaunchConfiguration('config_file')
     robot_index = LaunchConfiguration('robot_index')
     filter_index = LaunchConfiguration('filter_index')
     log_level = LaunchConfiguration('log_level')
     enable_cam_logging = LaunchConfiguration('enable_cam_logging')  # Added
     cam_log_file_path = LaunchConfiguration('cam_log_file_path')  # Added
     # Launch Arguments
-    config_file_arg = DeclareLaunchArgument(
-        'config_file',
-        default_value=default_config,
-        description='Path to the config file'
-    )
     robot_index_arg = DeclareLaunchArgument(
         'robot_index',
         default_value='0',
@@ -66,7 +53,6 @@ def generate_launch_description():
         executable='cam_communication',
         name='cam_communication',
         parameters=[
-            config_file,
             {'filter_index': filter_index},
             {'robot_index': robot_index},
             # Pass logging parameters from LaunchConfigurations to the C++ node
@@ -79,7 +65,6 @@ def generate_launch_description():
 
     # Remove GroupAction and return Node directly
     launch_description = LaunchDescription()
-    launch_description.add_action(config_file_arg)
     launch_description.add_action(robot_index_arg)
     launch_description.add_action(filter_index_arg)
     launch_description.add_action(log_level_arg)

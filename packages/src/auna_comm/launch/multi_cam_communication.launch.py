@@ -22,7 +22,6 @@ def include_launch_description(context: LaunchContext):
 
     # Launch Argument Configurations
     robot_number = LaunchConfiguration('robot_number', default='2')
-    config_file = LaunchConfiguration('config_file')
     namespace = LaunchConfiguration('namespace')
     enable_cam_logging = LaunchConfiguration(
         'enable_cam_logging', default='false')
@@ -69,7 +68,6 @@ def include_launch_description(context: LaunchContext):
                 launch_arguments={
                     'robot_index': str(num),
                     'filter_index': filter_idx,
-                    'config_file': config_file,
                     # Pass the original string value ('true'/'false')
                     'enable_cam_logging': enable_cam_logging_value,
                     'cam_log_file_path': robot_log_file,
@@ -100,23 +98,11 @@ def include_launch_description(context: LaunchContext):
 def generate_launch_description():
     """Return launch description"""
 
-    default_config = os.path.join(
-        get_package_share_directory('auna_comm'),
-        'config',
-        'cam_params.yaml'
-    )
-
     # Launch Arguments
     robot_number_arg = DeclareLaunchArgument(
         'robot_number',
         default_value='2',
         description='Number of spawned robots'
-    )
-
-    config_file_arg = DeclareLaunchArgument(
-        'config_file',
-        default_value=default_config,
-        description='Path to the config file'
     )
 
     namespace_arg = DeclareLaunchArgument(
@@ -141,7 +127,6 @@ def generate_launch_description():
     launch_description = LaunchDescription()
 
     launch_description.add_action(robot_number_arg)
-    launch_description.add_action(config_file_arg)
     launch_description.add_action(namespace_arg)
     launch_description.add_action(enable_cam_logging_arg)
     launch_description.add_action(cam_log_file_path_arg)
