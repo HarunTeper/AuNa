@@ -5,6 +5,16 @@
     "tasks": [
         // ------------------- BUILD -------------------
         {
+            "label": "ROS2Build-All",
+            "type": "shell",
+            "command": "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
             "label": "ROS2Build-Gazebo",
             "type": "shell",
             "command": "cd packages && colcon build --packages-select auna_gazebo auna_common auna_msgs auna_its_msgs auna_comm --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
@@ -88,7 +98,7 @@
         {
             "label": "LaunchGazebo",
             "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 launch auna_gazebo gazebo_world.launch.py",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_gazebo gazebo_world.launch.py world_name:=${input:gazeboWorld}",
             "problemMatcher": []
         },
         {
@@ -242,6 +252,16 @@
             "type": "promptString",
             "description": "Enter the index of the robot to filter CAM messages from (e.g., for follower robot1 to listen to leader robot0, enter 0)",
             "default": "0"
+        },
+        {
+            "id": "gazeboWorld",
+            "type": "pickString",
+            "description": "Select the Gazebo world to load",
+            "options": [
+                "racetrack_decorated",
+                "arena"
+            ],
+            "default": "racetrack"
         }
     ]
 }
