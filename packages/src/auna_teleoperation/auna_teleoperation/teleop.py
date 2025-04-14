@@ -33,12 +33,12 @@ class Teleop(Node, ABC):
 
         if self.get_parameter("twist_stamped_enabled").value:
             self.publisher_ = self.create_publisher(
-                TwistStamped, "cmd_vel", qos_profile_system_default
+                TwistStamped, "cmd_vel_teleop", qos_profile_system_default  # Changed topic name
             )
             self._make_twist = self._make_twist_stamped
         else:
             self.publisher_ = self.create_publisher(
-                Twist, "cmd_vel", qos_profile_system_default
+                Twist, "cmd_vel_teleop", qos_profile_system_default  # Changed topic name
             )
             self._make_twist = self._make_twist_unstamped
         rate = 1 / self.get_parameter("publish_rate").value

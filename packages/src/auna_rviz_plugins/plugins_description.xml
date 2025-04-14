@@ -1,8 +1,22 @@
+<!-- Note: The library path might need adjustment depending on CMake install structure,
+     but typically points to the library containing the plugin implementations.
+     Since both plugins are in the same package, referencing the package
+     or one of the built libraries should work if installed correctly. -->
 <library path="auna_rviz_plugins">
-    <class  name="auna_rviz_plugins/ControlPanel"
-            type="auna_rviz_plugins::ControlPanel"
+
+    <!-- CmdVel Multiplexer Panel -->
+    <class  name="auna_rviz_plugins/CmdVelMuxPanel"
+            type="auna_rviz_plugins::CmdVelMuxPanel"
             base_class_type="rviz_common::Panel">
-        <description>AuNa Rviz Control Panel</description>
+        <description>Panel to select command velocity source (CACC, Teleop, Nav2, Off) for a specific robot namespace.</description>
     </class>
+
+    <!-- Global Emergency Stop Panel -->
+    <class  name="auna_rviz_plugins/GlobalEmergencyStopPanel"
+            type="auna_rviz_plugins::GlobalEmergencyStopPanel"
+            base_class_type="rviz_common::Panel">
+        <description>Panel with a button to send an emergency stop (zero velocity) command to multiple specified robot namespaces.</description>
+    </class>
+
 </library>
 

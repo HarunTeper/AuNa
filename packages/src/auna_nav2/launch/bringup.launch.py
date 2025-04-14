@@ -79,7 +79,8 @@ def generate_launch_description():
         description='Enable Navigation')
 
     # Specify the actions
-    bringup_cmd_group = GroupAction([
+    # Group for SLAM, Localization, and common remappings
+    bringup_cmd_group_common = GroupAction([
         SetRemap('/tf', 'tf'),
         SetRemap('/tf_static', 'tf_static'),
 
@@ -99,18 +100,25 @@ def generate_launch_description():
                               'use_sim_time': use_sim_time,
                               'autostart': autostart,
                               'params_file': params_file}.items()),
-
-
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(
-                nav2_launch_dir, 'navigation_launch.py')),
-            condition=IfCondition(enable_navigation),
-            launch_arguments={'use_sim_time': use_sim_time,
-                              'autostart': autostart,
-                              'params_file': params_file,
-                              'use_lifecycle_mgr': 'false',
-                              'map_subscribe_transient_local': 'true'}.items()),
     ])
+
+    # Separate Group for Navigation stack to apply specific remapping
+    navigation_cmd_group = GroupAction(
+        actions=[
+            # Remap the controller server's output topic
+            SetRemap('cmd_vel', 'cmd_vel_nav2'),
+
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(os.path.join(
+                    nav2_launch_dir, 'navigation_launch.py')),
+                condition=IfCondition(enable_navigation),
+                launch_arguments={'use_sim_time': use_sim_time,
+                                  'autostart': autostart,
+                                  'params_file': params_file,
+                                  'use_lifecycle_mgr': 'false',
+                                  'map_subscribe_transient_local': 'true'}.items()),
+        ]
+    )
 
     # Create the launch description and populate
     launch_description = LaunchDescription()
@@ -130,6 +138,7 @@ def generate_launch_description():
     launch_description.add_action(declare_enable_navigation_cmd)
 
     # Add the actions to launch all of the navigation nodes
-    launch_description.add_action(bringup_cmd_group)
+    launch_description.add_action(bringup_cmd_group_common)
+    launch_description.add_action(navigation_cmd_group)
 
     return launch_description
