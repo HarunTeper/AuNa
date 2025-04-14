@@ -1,7 +1,9 @@
 <CycloneDDS>
    <Domain>
-     <General>
-        <NetworkInterfaceAddress>lo</NetworkInterfaceAddress>
-    </General>
+      <General>
+         <Interfaces>
+            <NetworkInterface autodetermine="true" priority="default" multicast="default" />
+         </Interfaces>
+      </General>
    </Domain>
 </CycloneDDS>
