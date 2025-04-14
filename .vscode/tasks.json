@@ -7,7 +7,7 @@
         {
             "label": "ROS2Build-Gazebo",
             "type": "shell",
-            "command": "cd packages && colcon build --packages-select auna_gazebo auna_common auna_msgs auna_its_msgs auna_comm --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && mv build/compile_commands.json ..",
+            "command": "cd packages && colcon build --packages-select auna_gazebo auna_common auna_msgs auna_its_msgs auna_comm --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
             "problemMatcher": [],
             "group": {
                 "kind": "build",

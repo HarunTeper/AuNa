@@ -1,4 +1,4 @@
-ARG VARIANT
+ARG VARIANT="jammy"
 FROM mcr.microsoft.com/devcontainers/base:${VARIANT}
 
 # --- Configure environment ---
@@ -113,10 +113,7 @@ USER vscode
 # source ROS2 setup file and workspace
 ARG WORKSPACE
 RUN if [ "$INSTALL_ROS2" = "true" ]; then \
-    echo '. /opt/ros/humble/setup.sh' >> /home/vscode/.bashrc && \
-    echo "if [ -f ~/workspace/packages/install/setup.bash ]; then source ~/workspace/packages/install/setup.bash; fi" >> /home/vscode/.bashrc && \
-    RMW_IMPLEMENTATION=rmw_cyclonedds_cpp && \
-    CYCLONEDDS_URI=/home/vscode/workspace/cyclone_dds_config.xml; \
+    echo '. /opt/ros/humble/setup.sh' >> /home/vscode/.bashrc; \
     fi
 
 # source ROS2 tracing setup file
@@ -131,6 +128,8 @@ ARG ROS_DOMAIN_ID
 ENV DISPLAY=${DISPLAY}
 ENV ROS_LOCALHOST_ONLY=${ROS_LOCALHOST_ONLY:-0}
 ENV ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-0}
+ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+ENV CYCLONEDDS_URI=/home/vscode/workspace/cyclone_dds_config.xml
 
 # --- Set up entrypoint ---
 

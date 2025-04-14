@@ -4,5 +4,6 @@ CompileFlags:
     - "-I/opt/ros/humble/include"
     - "-I/opt/ros/humble/include/rclcpp"
     - "-I${workspaceFolder}/packages/install/include"
+  CompilationDatabase: "packages/build"
 Index:
   Background: Build
