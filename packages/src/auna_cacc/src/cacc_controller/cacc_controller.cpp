@@ -74,8 +74,7 @@ CaccController::CaccController() : Node("cacc_controller")
       this->pose_callback(msg);
     });
 
-  pub_cmd_vel =
-    this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel_cacc", 1);  // Changed topic name
+  pub_cmd_vel = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel_cacc", 1);
   RCLCPP_INFO(
     this->get_logger(), "Created cmd_vel publisher on topic: %s", pub_cmd_vel->get_topic_name());
   pub_x_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/x", 1);
