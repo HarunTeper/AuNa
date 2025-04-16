@@ -18,7 +18,7 @@
 class GroundTruthLocalization : public rclcpp::Node
 {
 public:
-  GroundTruthLocalization(std::string name);
+  GroundTruthLocalization();
 
 private:
   void service_timer_callback();

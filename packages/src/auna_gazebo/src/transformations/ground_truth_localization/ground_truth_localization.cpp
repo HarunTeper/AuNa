@@ -1,7 +1,7 @@
 #include "auna_gazebo/ground_truth_localization.hpp"
 
 // Create the publisher, timer and service client
-GroundTruthLocalization::GroundTruthLocalization(std::string name)
+GroundTruthLocalization::GroundTruthLocalization()
 : Node("ground_truth_localization_node"),
   buffer_(this->get_clock()),
   listener_(buffer_),
@@ -10,7 +10,16 @@ GroundTruthLocalization::GroundTruthLocalization(std::string name)
   modelClient_ = this->create_client<gazebo_msgs::srv::GetEntityState>("/get_entity_state");
   service_timer_ = this->create_wall_timer(
     std::chrono::milliseconds(publish_milliseconds_), [this]() { service_timer_callback(); });
-  this->name_ = name;
+  std::string ns = this->get_namespace();
+  if (!ns.empty()) {
+    this->name_ = ns.substr(1);  // Remove the first character (typically a slash)
+  } else {
+    this->name_ = ns;  // Keep it empty if namespace is empty
+  }
+
+  RCLCPP_INFO(
+    this->get_logger(), "Ground truth localization node initialized with namespace: %s",
+    name_.c_str());
 }
 
 // Timer callback to periodically call a service request for the model state
@@ -47,13 +56,10 @@ void GroundTruthLocalization::model_srv_callback(
 
   geometry_msgs::msg::TransformStamped odom_to_base_link_lookup;
   try {
-    if (name_ == "") {
-      odom_to_base_link_lookup = buffer_.lookupTransform("odom", "base_link", tf2::TimePointZero);
-    } else {
-      odom_to_base_link_lookup =
-        buffer_.lookupTransform(name_ + "/odom", name_ + "/base_link", tf2::TimePointZero);
-    }
+    odom_to_base_link_lookup = buffer_.lookupTransform("odom", "base_link", tf2::TimePointZero);
   } catch (tf2::TransformException & ex) {
+    RCLCPP_INFO(
+      this->get_logger(), "Could not find transform from odom to base_link: %s", ex.what());
     return;
   }
   tf2::Quaternion q_ob(
@@ -76,11 +82,7 @@ void GroundTruthLocalization::model_srv_callback(
   map_to_odom_transform_msg.transform.rotation.z = map_to_odom.getRotation().getZ();
   map_to_odom_transform_msg.transform.rotation.w = map_to_odom.getRotation().getW();
   map_to_odom_transform_msg.header.frame_id = "map";
-  if (name_ == "") {
-    map_to_odom_transform_msg.child_frame_id = "odom";
-  } else {
-    map_to_odom_transform_msg.child_frame_id = name_ + "/odom";
-  }
+  map_to_odom_transform_msg.child_frame_id = "odom";
   auto stamp = tf2_ros::fromMsg(entity->header.stamp);
   map_to_odom_transform_msg.header.stamp = tf2_ros::toMsg(stamp + tf2::durationFromSec(1.0));
   broadcaster_.sendTransform(map_to_odom_transform_msg);

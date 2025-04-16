@@ -96,27 +96,24 @@ def generate_launch_description():
                 'name': name
             }.items()
         ),
-        # Localization pose publisher - pass namespace as prefix parameter
-        Node(
-            package='auna_gazebo',
-            executable='localization_pose_publisher',
-            name='localization_pose_publisher',
-            parameters=[{'prefix': namespace}],
-            output='screen'
+        # Localization pose publisher
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(launch_file_dir,
+                             '_localization_pose_publisher.launch.py')
+            )
         ),
         # Ground truth cam
-        Node(
-            package='auna_gazebo',
-            executable='ground_truth_cam',
-            name='ground_truth_cam',
-            arguments={name},
-            output='screen'
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(launch_file_dir, '_ground_truth_cam.launch.py')
+            )
         ),
         # Ground truth localization (conditional)
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(ground_truth_launch_dir,
-                             'ground_truth_localization.launch.py')
+                os.path.join(launch_file_dir,
+                             '_ground_truth_localization.launch.py')
             ),
             condition=IfCondition(PythonExpression([ground_truth]))
         ),

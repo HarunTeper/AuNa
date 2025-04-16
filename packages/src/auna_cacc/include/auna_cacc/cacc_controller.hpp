@@ -5,6 +5,7 @@
 #include "auna_msgs/srv/set_bool.hpp"
 #include "auna_msgs/srv/set_float64.hpp"
 #include "etsi_its_cam_msgs/msg/cam.hpp"
+#include "geometry_msgs/msg/pose_array.hpp"  // Added include for PoseArray
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -198,4 +199,7 @@ private:
   std::string log_file_path_;
   std::ofstream log_file_;
   int log_counter_ = 0;
+
+  rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr
+    pub_waypoints_pose_array_;  // Added publisher
 };

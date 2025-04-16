@@ -4,49 +4,14 @@
 #include <vector>
 
 // Create a publisher, subscriber and prefix. Initialize the transform buffer and listener.
-LocalizationPosePublisher::LocalizationPosePublisher(std::string prefix)
-: Node("localization_pose_publisher_node"), buffer(this->get_clock()), listener(buffer)
+LocalizationPosePublisher::LocalizationPosePublisher()
+: Node("localization_pose_publisher_node"), buffer_(this->get_clock()), listener_(buffer_)
 {
-  publisher = this->create_publisher<geometry_msgs::msg::PoseStamped>("global_pose", 2);
-
-  // Declare prefix parameter
-  this->declare_parameter("prefix", "");
-
-  // Get parameter from parameter server, default to constructor argument if not set
-  std::string param_prefix;
-  this->get_parameter("prefix", param_prefix);
-
-  // Use parameter if provided, otherwise use constructor argument
-  if (!param_prefix.empty()) {
-    prefix = param_prefix;
-  }
-
-  // Get namespace from node context as a fallback
-  std::string node_namespace = this->get_namespace();
-  if (!node_namespace.empty() && node_namespace[0] == '/') {
-    node_namespace = node_namespace.substr(1);
-  }
-
-  // Select prefix: parameter/argument > namespace > empty
-  if (!prefix.empty()) {
-    this->prefix = prefix;
-    // Add trailing slash if not present
-    if (this->prefix.back() != '/') {
-      this->prefix += '/';
-    }
-  } else if (!node_namespace.empty()) {
-    this->prefix = node_namespace + "/";
-  } else {
-    this->prefix = "";
-  }
-
-  RCLCPP_INFO(this->get_logger(), "Parameter prefix: '%s'", param_prefix.c_str());
-  RCLCPP_INFO(this->get_logger(), "Constructor prefix: '%s'", prefix.c_str());
-  RCLCPP_INFO(this->get_logger(), "Node namespace: '%s'", node_namespace.c_str());
-  RCLCPP_INFO(this->get_logger(), "Final prefix: '%s'", this->prefix.c_str());
-  RCLCPP_INFO(this->get_logger(), "Publishing to topic: 'global_pose'");
+  publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("global_pose", 2);
 
   timer_ = this->create_wall_timer(std::chrono::milliseconds(10), [this]() { timer_callback(); });
+
+  RCLCPP_INFO(this->get_logger(), "Publishing to topic: 'global_pose'");
 }
 
 void LocalizationPosePublisher::timer_callback()
@@ -59,12 +24,12 @@ void LocalizationPosePublisher::timer_callback()
   RCLCPP_DEBUG(
     this->get_logger(), "Looking up transform: %s -> %s", odom_frame.c_str(), base_frame.c_str());
   try {
-    transformStamped = this->buffer.lookupTransform(odom_frame, base_frame, tf2::TimePointZero);
+    transformStamped = this->buffer_.lookupTransform(odom_frame, base_frame, tf2::TimePointZero);
     RCLCPP_DEBUG(this->get_logger(), "Successfully found odom->base_link transform");
 
     RCLCPP_DEBUG(
       this->get_logger(), "Looking up transform: %s -> %s", map_frame.c_str(), base_frame.c_str());
-    transformStamped = this->buffer.lookupTransform(map_frame, base_frame, tf2::TimePointZero);
+    transformStamped = this->buffer_.lookupTransform(map_frame, base_frame, tf2::TimePointZero);
     RCLCPP_DEBUG(this->get_logger(), "Successfully found map->base_link transform");
   } catch (tf2::TransformException & ex) {
     // RCLCPP_ERROR(this->get_logger(), "Failed to get transform: %s", ex.what()); // Commented out
@@ -99,5 +64,5 @@ void LocalizationPosePublisher::timer_callback()
     localization_pose.pose.orientation.y, localization_pose.pose.orientation.z,
     localization_pose.pose.orientation.w);
 
-  this->publisher->publish(localization_pose);
+  this->publisher_->publish(localization_pose);
 }

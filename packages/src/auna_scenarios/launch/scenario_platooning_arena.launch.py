@@ -9,40 +9,43 @@ from launch.substitutions import LaunchConfiguration
 def generate_launch_description():
     """Return launch description"""
 
-    # Package Directories
-    gazebo_pkg_dir = get_package_share_directory('auna_gazebo')
-    navigation_pkg_dir = get_package_share_directory('auna_nav2')
-    omnet_pkg_dir = get_package_share_directory('auna_omnet')
+    # --- Package Directories ---
 
-    # Paths to folders and files
+    gazebo_pkg_dir = get_package_share_directory('auna_gazebo')
+    comm_pkg_dir = get_package_share_directory('auna_comm')
+
+    # --- Paths to Folders and Files ---
+
     gazebo_launch_file_dir = os.path.join(gazebo_pkg_dir, 'launch', 'gazebo')
     spawn_launch_file_dir = os.path.join(gazebo_pkg_dir, 'launch', 'spawn')
-    nav_launch_file_dir = os.path.join(navigation_pkg_dir, 'launch')
-    omnet_launch_file_dir = os.path.join(omnet_pkg_dir, 'launch')
+    comm_launch_file_dir = os.path.join(comm_pkg_dir, 'launch')
 
-    # Launch Argument Configurations
+    # --- Launch Configuration Variables ---
+
     robot_number = LaunchConfiguration('robot_number', default='2')
-    world_name = LaunchConfiguration(
-        'world_name', default='racetrack_decorated')
+    world_name = LaunchConfiguration('world_name', default='arena')
     namespace = LaunchConfiguration('namespace', default='robot')
 
-    # Launch Arguments
+    # --- Launch Arguments ---
+
     robot_number_arg = DeclareLaunchArgument(
         'robot_number',
-        default_value='2',
+        default_value='1',
         description='Number of spawned robots'
     )
     world_name_arg = DeclareLaunchArgument(
         'world_name',
-        default_value='racetrack_decorated',
+        default_value='arena',
         description='Gazebo world file name'
     )
     namespace_arg = DeclareLaunchArgument(
         'namespace',
         default_value='robot',
-        description='Namespace of the robot')
+        description='Namespace of the robot'
+    )
 
-    # Nodes and other launch files
+    # --- Launch Description Actions ---
+
     world_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
             gazebo_launch_file_dir, 'gazebo_world.launch.py')),
@@ -57,32 +60,20 @@ def generate_launch_description():
             'robot_number': robot_number,
             'world_name': world_name,
             'namespace': namespace,
-            'ground_truth': 'False'
+            'ground_truth': 'True'
         }.items(),
     )
-    omnet_cmd = IncludeLaunchDescription(
+    comm_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-            omnet_launch_file_dir, 'omnet_multi_robot_modules.launch.py')),
+            comm_launch_file_dir, 'multi_cam_communication.launch.py')),
         launch_arguments={
             'robot_number': robot_number,
-        }.items(),
-    )
-    nav_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(
-            nav_launch_file_dir, 'navigation_multi_robot.launch.py')),
-        launch_arguments={
             'namespace': namespace,
-            'robot_number': robot_number,
-            'world_name': world_name,
-            'enable_slam': 'False',  # slam can only be used without a namespace
-            'enable_localization': 'True',
-            'enable_navigation': 'True',
-            'enable_rviz': 'True',
-            'enable_map_server': 'True',
         }.items(),
     )
 
-    # Launch Description
+    # --- Launch Description ---
+
     launch_description = LaunchDescription()
 
     launch_description.add_action(robot_number_arg)
@@ -91,7 +82,6 @@ def generate_launch_description():
 
     launch_description.add_action(world_cmd)
     launch_description.add_action(spawn_cmd)
-    launch_description.add_action(omnet_cmd)
-    launch_description.add_action(nav_cmd)
+    # launch_description.add_action(comm_cmd)
 
     return launch_description

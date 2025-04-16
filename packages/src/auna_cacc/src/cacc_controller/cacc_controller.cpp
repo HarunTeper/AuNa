@@ -21,7 +21,7 @@ CaccController::CaccController() : Node("cacc_controller")
   this->declare_parameter("enable_data_logging", true);
   this->declare_parameter("log_file_path", "/home/vscode/workspace/cacc_log.csv");
 
-  enable_data_logging_ = this->get_parameter("enable_data_logging").as_bool();
+  enable_data_logging_ = false;
   log_file_path_ = this->get_parameter("log_file_path").as_string();
 
   if (enable_data_logging_) {
@@ -80,6 +80,8 @@ CaccController::CaccController() : Node("cacc_controller")
     this->get_logger(), "Created cmd_vel publisher on topic: %s", pub_cmd_vel->get_topic_name());
   pub_x_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/x", 1);
   pub_y_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/y", 1);
+  pub_waypoints_pose_array_ =
+    this->create_publisher<geometry_msgs::msg::PoseArray>("cacc/waypoints", 1);
 
   client_set_standstill_distance_ = this->create_service<auna_msgs::srv::SetFloat64>(
     "cacc/set_standstill_distance",
@@ -156,15 +158,7 @@ CaccController::CaccController() : Node("cacc_controller")
     std::chrono::milliseconds(1000 / params_.frequency), [this]() { this->timer_callback(); });
   setup_timer_ = this->create_wall_timer(
     std::chrono::milliseconds(1000),  // Changed from 250ms to 1000ms for more frequent logs
-    [this]() {
-      this->setup_timer_callback();
-      // Add debug log to show we're still waiting
-      RCLCPP_INFO(
-        this->get_logger(), "Waiting for messages - CAM: %s, Odom: %s, Pose: %s",
-        (last_cam_msg_ != nullptr ? "received" : "waiting"),
-        (last_odom_msg_ != nullptr ? "received" : "waiting"),
-        (last_pose_msg_ != nullptr ? "received" : "waiting"));
-    });
+    [this]() { this->setup_timer_callback(); });
   timer_->cancel();
 
   if (params_.use_waypoints) {
@@ -234,6 +228,34 @@ void CaccController::read_waypoints_from_csv()
     double yaw = std::atan2(next_y - prev_y, next_x - prev_x);
     waypoints_yaw_.push_back(yaw);
   }
+
+  // Create and publish a pose array of all waypoints
+  geometry_msgs::msg::PoseArray pose_array;
+  pose_array.header.stamp = this->get_clock()->now();
+  pose_array.header.frame_id = "map";  // Use appropriate frame_id
+
+  pose_array.poses.resize(num_waypoints);
+
+  for (size_t i = 0; i < num_waypoints; ++i) {
+    // Set position
+    pose_array.poses[i].position.x = waypoints_x_[i];
+    pose_array.poses[i].position.y = waypoints_y_[i];
+    pose_array.poses[i].position.z = 0.0;
+
+    // Convert yaw to quaternion
+    tf2::Quaternion q;
+    q.setRPY(0.0, 0.0, waypoints_yaw_[i]);
+
+    // Set orientation
+    pose_array.poses[i].orientation.x = q.x();
+    pose_array.poses[i].orientation.y = q.y();
+    pose_array.poses[i].orientation.z = q.z();
+    pose_array.poses[i].orientation.w = q.w();
+  }
+
+  // Publish the pose array
+  pub_waypoints_pose_array_->publish(pose_array);
+  RCLCPP_INFO(this->get_logger(), "Published pose array with %zu waypoints", num_waypoints);
 }
 
 void CaccController::setup_timer_callback()
@@ -250,6 +272,12 @@ void CaccController::setup_timer_callback()
       auto_mode_ready_ = true;
     }
   }
+  // Add debug log to show we're still waiting
+  RCLCPP_INFO(
+    this->get_logger(), "Waiting for messages - CAM: %s, Odom: %s, Pose: %s",
+    (last_cam_msg_ != nullptr ? "received" : "waiting"),
+    (last_odom_msg_ != nullptr ? "received" : "waiting"),
+    (last_pose_msg_ != nullptr ? "received" : "waiting"));
 }
 
 void CaccController::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg)
@@ -340,7 +368,7 @@ void CaccController::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
   odom_velocity_ = sqrt(pow(msg->twist.twist.linear.x, 2) + pow(msg->twist.twist.linear.y, 2)) *
                    ((msg->twist.twist.linear.x < 0) ? -1 : 1);
   if (last_odom_msg_ == nullptr) {
-    odom_acceleration_ = odom_velocity_;
+    odom_acceleration_ = 0.0;
   } else {
     double dt = msg->header.stamp.sec - last_odom_msg_->header.stamp.sec +
                 (msg->header.stamp.nanosec - last_odom_msg_->header.stamp.nanosec) / 1e9;

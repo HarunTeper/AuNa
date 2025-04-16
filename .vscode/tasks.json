@@ -180,9 +180,21 @@
             "problemMatcher": []
         },
         {
+            "label": "LaunchRViz",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios rviz.launch.py namespace:=${input:robotNamespace} robot_number:=${input:robotCount}",
+            "problemMatcher": []
+        },
+        {
             "label": "ToggleCaccController",
             "type": "shell",
             "command": "cd packages && source install/setup.bash && ros2 service call /cacc/set_cacc_enable auna_msgs/srv/SetBool \"{value: ${input:caccEnable}}\"",
+            "problemMatcher": []
+        },
+        {
+            "label": "ToggleCaccAutoMode",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 service call /${input:caccNamespace}/cacc/set_auto_mode auna_msgs/srv/SetBool \"{value: ${input:autoModeEnable}}\"",
             "problemMatcher": []
         },
         // ------------------- SCENARIOS -------------------
@@ -208,6 +220,12 @@
             "label": "LaunchScenarioSingleRobotRacetrackSlam",
             "type": "shell",
             "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_single_robot_racetrack_slam.launch.py",
+            "problemMatcher": []
+        },
+        {
+            "label": "LaunchScenarioPlatooningArena",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_platooning_arena.launch.py",
             "problemMatcher": []
         },
     ],
@@ -248,6 +266,16 @@
             "default": "true"
         },
         {
+            "id": "autoModeEnable",
+            "type": "pickString",
+            "description": "Enable or disable CACC auto mode",
+            "options": [
+                "true",
+                "false"
+            ],
+            "default": "true"
+        },
+        {
             "id": "filterIndex",
             "type": "promptString",
             "description": "Enter the index of the robot to filter CAM messages from (e.g., for follower robot1 to listen to leader robot0, enter 0)",
@@ -262,6 +290,12 @@
                 "arena"
             ],
             "default": "racetrack"
+        },
+        {
+            "id": "caccNamespace",
+            "type": "promptString",
+            "description": "Enter the namespace for the CACC controller",
+            "default": "robot"
         }
     ]
 }
