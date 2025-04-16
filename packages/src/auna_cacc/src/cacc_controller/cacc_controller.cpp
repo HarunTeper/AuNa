@@ -21,7 +21,7 @@ CaccController::CaccController() : Node("cacc_controller")
   this->declare_parameter("enable_data_logging", true);
   this->declare_parameter("log_file_path", "/home/vscode/workspace/cacc_log.csv");
 
-  enable_data_logging_ = this->get_parameter("enable_data_logging").as_bool();
+  enable_data_logging_ = false;
   log_file_path_ = this->get_parameter("log_file_path").as_string();
 
   if (enable_data_logging_) {
