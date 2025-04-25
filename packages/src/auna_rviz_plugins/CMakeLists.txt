@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(auna_rviz_plugins)
 
-# Default to C++14
+# Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -12,67 +12,95 @@ endif()
 
 # Find dependencies
 find_package(ament_cmake REQUIRED)
-
 find_package(rclcpp REQUIRED)
-find_package(pluginlib REQUIRED)
-find_package(rviz_common REQUIRED)
-# find_package(std_srvs REQUIRED) # No longer needed
 find_package(geometry_msgs REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(std_srvs REQUIRED)
 
-# Find Qt5
-find_package(Qt5 REQUIRED COMPONENTS Widgets)
+find_package(rviz_common REQUIRED)
+find_package(rviz_default_plugins REQUIRED)
+find_package(rviz_rendering REQUIRED)
 
-# Include Cpp "include" directory
-include_directories(include)
+# Find Qt5 packages
+find_package(Qt5 REQUIRED COMPONENTS Widgets Core)
 
-# Enable Qt's Meta-Object Compiler
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+# Tell CMake to run Qt's moc when necessary
 set(CMAKE_AUTOMOC ON)
 
-# Add libraries for each plugin
-add_library(cmd_vel_mux_panel SHARED
-    src/cmd_vel_mux_panel.cpp
-    # Add header if needed for AUTOMOC, usually not required if Q_OBJECT is in header
-)
-add_library(global_emergency_stop_panel SHARED
-    # src/global_emergency_stop_panel.cpp # Source file to be added later
+set(auna_rviz_plugins_headers_to_moc
+  include/auna_rviz_plugins/cmd_vel_mux_panel.hpp
+  include/auna_rviz_plugins/global_emergency_stop_panel.hpp
 )
 
-# Target dependencies
-ament_target_dependencies(cmd_vel_mux_panel PUBLIC
-    rclcpp
-    pluginlib
-    rviz_common
-    geometry_msgs
-)
-target_link_libraries(cmd_vel_mux_panel PUBLIC Qt5::Widgets)
+foreach(header "${auna_rviz_plugins_headers_to_moc}")
+  qt5_wrap_cpp(auna_rviz_plugins_moc_files "${header}")
+endforeach()
 
-ament_target_dependencies(global_emergency_stop_panel PUBLIC
-    rclcpp
-    pluginlib
-    rviz_common
-    geometry_msgs
+set(auna_rviz_plugins_source_files
+  src/cmd_vel_mux_panel.cpp
+  src/global_emergency_stop_panel.cpp
 )
-target_link_libraries(global_emergency_stop_panel PUBLIC Qt5::Widgets)
 
-# Install both libraries
-install(TARGETS cmd_vel_mux_panel global_emergency_stop_panel
-  EXPORT export_${PROJECT_NAME} # Use a unique export name
+add_library(${PROJECT_NAME} SHARED
+  ${auna_rviz_plugins_moc_files}
+  ${auna_rviz_plugins_source_files}
+)
+
+# Now that target exists, set include directories
+target_include_directories(${PROJECT_NAME} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+  ${Qt5Widgets_INCLUDE_DIRS}
+)
+
+# Specify dependencies
+ament_target_dependencies(${PROJECT_NAME}
+  rclcpp
+  rviz_common
+  geometry_msgs
+  pluginlib
+  std_srvs
+)
+
+target_link_libraries(${PROJECT_NAME}
+  Qt5::Widgets
+  Qt5::Core
+  rviz_common::rviz_common
+  pluginlib::pluginlib
+)
+
+# Install targets
+install(
+  TARGETS ${PROJECT_NAME}
+  EXPORT ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
 
-# Export targets for other packages to find
-install(EXPORT export_${PROJECT_NAME}
-  DESTINATION share/${PROJECT_NAME}/cmake
+# Install includes
+install(
+  DIRECTORY include/
+  DESTINATION include/${PROJECT_NAME}
 )
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-endif()
+# Export dependencies
+ament_export_include_directories(include)
+ament_export_dependencies(
+  rclcpp
+  rviz_common
+  geometry_msgs
+  pluginlib
+  std_srvs
+  Qt5
+)
 
+# Export modern CMake targets
+ament_export_targets(${PROJECT_NAME} HAS_LIBRARY_TARGET)
+
+# Export plugin description
 pluginlib_export_plugin_description_file(rviz_common plugins_description.xml)
 
 ament_package()
-

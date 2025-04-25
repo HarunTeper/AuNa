@@ -12,7 +12,7 @@
 
 // Qt includes
 #include <QtCore/QObject>
-#include <QtCore/QStringList>  // For splitting namespaces
+#include <QtCore/QStringList>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
@@ -24,14 +24,14 @@
 #include <string>
 #include <vector>
 
-namespace auna_rviz_plugins
-{
-
-// Forward declarations
+// Forward declarations - these need to be outside any namespace
 class QLineEdit;
 class QPushButton;
 class QLabel;
 class QVBoxLayout;
+
+namespace auna_rviz_plugins
+{
 
 class GlobalEmergencyStopPanel : public rviz_common::Panel
 {
@@ -42,11 +42,11 @@ public:
   virtual ~GlobalEmergencyStopPanel();
 
   // Override load and save functions for panel persistence
-  virtual void load(const rviz_common::Config & amp; config) override;
+  virtual void load(const rviz_common::Config & config) override;
   virtual void save(rviz_common::Config config) const override;
 
-protected slots:
-  void onNamespacesChanged(const QString & amp; text);
+private Q_SLOTS:
+  void onNamespacesChanged(const QString & text);
   void onGlobalEmergencyStopClicked();
 
 private:

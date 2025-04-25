@@ -48,8 +48,9 @@ void GlobalEmergencyStopPanel::setupUI()
   namespaces_label_ = new QLabel("Target Namespaces (comma-separated):", this);
   namespaces_input_ = new QLineEdit(this);
   namespaces_input_->setPlaceholderText("e.g., robot1,robot2");
-  connect(namespaces_input_, &amp; QLineEdit::textChanged, this, &amp;
-          GlobalEmergencyStopPanel::onNamespacesChanged);
+  connect(
+    namespaces_input_, &QLineEdit::textChanged, this,
+    &GlobalEmergencyStopPanel::onNamespacesChanged);
 
   // Emergency Stop Button
   emergency_stop_button_ = new QPushButton("GLOBAL EMERGENCY STOP", this);
@@ -60,8 +61,9 @@ void GlobalEmergencyStopPanel::setupUI()
   emergency_stop_button_->setAutoFillBackground(true);
   emergency_stop_button_->setPalette(pal);
   emergency_stop_button_->update();  // Apply palette
-  connect(emergency_stop_button_, &amp; QPushButton::clicked, this, &amp;
-          GlobalEmergencyStopPanel::onGlobalEmergencyStopClicked);
+  connect(
+    emergency_stop_button_, &QPushButton::clicked, this,
+    &GlobalEmergencyStopPanel::onGlobalEmergencyStopClicked);
 
   // Add widgets to layout
   layout_->addWidget(namespaces_label_);
@@ -80,10 +82,10 @@ void GlobalEmergencyStopPanel::initializeROS()
 }
 
 // Slot for namespace input changes
-void GlobalEmergencyStopPanel::onNamespacesChanged(const QString & amp; text)
+void GlobalEmergencyStopPanel::onNamespacesChanged(const QString & text)
 {
   target_namespaces_ = text.split(',', Qt::SkipEmptyParts);  // Split by comma, remove empty entries
-  for (QString & amp; ns : target_namespaces_) {
+  for (QString & ns : target_namespaces_) {
     ns = ns.trimmed();  // Remove leading/trailing whitespace
   }
   target_namespaces_.removeAll(QString(""));  // Ensure no empty strings remain
@@ -103,7 +105,7 @@ void GlobalEmergencyStopPanel::onGlobalEmergencyStopClicked()
     return;
   }
 
-  for (auto const & amp;[ns, pub] : publisher_map_) {
+  for (auto const & [ns, pub] : publisher_map_) {
     if (pub) {
       RCLCPP_INFO(node_->get_logger(), "Sending stop command to namespace: %s", ns.c_str());
       pub->publish(zero_twist);
@@ -122,7 +124,7 @@ void GlobalEmergencyStopPanel::updatePublishers()
   qos_profile.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE);
   qos_profile.durability(RMW_QOS_POLICY_DURABILITY_VOLATILE);
 
-  for (const QString & amp; q_ns : target_namespaces_) {
+  for (const QString & q_ns : target_namespaces_) {
     std::string ns = q_ns.toStdString();
     if (ns.empty()) continue;  // Skip empty namespaces just in case
 
@@ -139,7 +141,7 @@ void GlobalEmergencyStopPanel::updatePublishers()
         new_publisher_map[ns] =
           node_->create_publisher<geometry_msgs::msg::Twist>(topic_name, qos_profile);
         RCLCPP_INFO(node_->get_logger(), "Created publisher for: %s", topic_name.c_str());
-      } catch (const std::exception & amp; e) {
+      } catch (const std::exception & e) {
         RCLCPP_ERROR(
           node_->get_logger(), "Failed to create publisher for %s: %s", topic_name.c_str(),
           e.what());
@@ -172,11 +174,11 @@ geometry_msgs::msg::Twist GlobalEmergencyStopPanel::createZeroTwist()
 }
 
 // Load configuration
-void GlobalEmergencyStopPanel::load(const rviz_common::Config & amp; config)
+void GlobalEmergencyStopPanel::load(const rviz_common::Config & config)
 {
   rviz_common::Panel::load(config);
   QString ns_list;
-  if (config.mapGetString("TargetNamespaces", &amp; ns_list)) {
+  if (config.mapGetString("TargetNamespaces", &ns_list)) {
     namespaces_input_->setText(ns_list);  // This triggers onNamespacesChanged -> updatePublishers
   }
 }
