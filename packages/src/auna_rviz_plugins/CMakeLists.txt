@@ -16,6 +16,7 @@ find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(auna_msgs REQUIRED)
 
 find_package(rviz_common REQUIRED)
 find_package(rviz_default_plugins REQUIRED)
@@ -30,8 +31,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
 set(auna_rviz_plugins_headers_to_moc
-  include/auna_rviz_plugins/cmd_vel_mux_panel.hpp
-  include/auna_rviz_plugins/global_emergency_stop_panel.hpp
+  include/auna_rviz_plugins/control_panel.hpp
 )
 
 foreach(header "${auna_rviz_plugins_headers_to_moc}")
@@ -39,8 +39,7 @@ foreach(header "${auna_rviz_plugins_headers_to_moc}")
 endforeach()
 
 set(auna_rviz_plugins_source_files
-  src/cmd_vel_mux_panel.cpp
-  src/global_emergency_stop_panel.cpp
+  src/control_panel.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED
@@ -48,20 +47,19 @@ add_library(${PROJECT_NAME} SHARED
   ${auna_rviz_plugins_source_files}
 )
 
-# Now that target exists, set include directories
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
   ${Qt5Widgets_INCLUDE_DIRS}
 )
 
-# Specify dependencies
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   rviz_common
   geometry_msgs
   pluginlib
   std_srvs
+  auna_msgs
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -94,6 +92,7 @@ ament_export_dependencies(
   geometry_msgs
   pluginlib
   std_srvs
+  auna_msgs
   Qt5
 )
 

@@ -1,0 +1,8 @@
+# Service to set a string value, typically used for configuration or state setting.
+
+# Request
+string data       # The string value to set (e.g., "CACC", "TELEOP", "NAV2", "OFF")
+---
+# Response
+bool success      # True if the setting was accepted, False otherwise
+string message    # Optional status message (e.g., "Source set to CACC", "Invalid source")

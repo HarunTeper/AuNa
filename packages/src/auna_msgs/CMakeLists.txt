@@ -27,6 +27,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/Identifier.srv"
   "srv/SetFloat64.srv"
   "srv/SetBool.srv"
+  "srv/SetString.srv"
   DEPENDENCIES builtin_interfaces std_msgs
  )
  

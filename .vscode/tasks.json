@@ -97,7 +97,17 @@
         {
             "label": "ROS2Build-AunaRvizPlugins",
             "type": "shell",
-            "command": "cd packages && colcon build --packages-select auna_rviz_plugins --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "command": "cd packages && colcon build --packages-select auna_rviz_plugins auna_msgs --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "ROS2Build-Control",
+            "type": "shell",
+            "command": "cd packages && colcon build --packages-select auna_control --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
@@ -207,18 +217,18 @@
             "command": "cd packages && source install/setup.bash && ros2 service call /${input:caccNamespace}/cacc/set_auto_mode auna_msgs/srv/SetBool \"{value: ${input:autoModeEnable}}\"",
             "problemMatcher": []
         },
+        {
+            "label": "LaunchCmdVelMux",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 run auna_control cmd_vel_multiplexer_node --ros-args --params-file src/auna_control/config/cmd_vel_mux_params.yaml -r __ns:=/${input:robotNamespace}${input:robotIndex}",
+            "problemMatcher": [],
+            "dependsOn": [
+                "ROS2Build-Control"
+            ]
+        },
         // ------------------- SCENARIOS -------------------
         {
             "label": "LaunchScenarioRobotRacetrackNavigation",
-            "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_robot_racetrack_navigation.launch.py namespace:=${input:robotNamespace} robot_number:=${input:robotCount}",
-            "problemMatcher": []
-        },
-        {
-            "label": "LaunchScenarioRobotArenaNavigation",
-            "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_robot_arena_navigation.launch.py namespace:=${input:robotNamespace} robot_number:=${input:robotCount}",
-            "problemMatcher": []
         },
         {
             "label": "LaunchScenarioSingleRobotArenaSlam",
@@ -238,6 +248,15 @@
             "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_platooning_arena.launch.py",
             "problemMatcher": []
         },
+        {
+            "label": "LaunchRvizWithPlugins",
+            "type": "shell",
+            "command": "cd packages && source install/setup.bash && ros2 run rviz2 rviz2 -d src/auna_rviz_plugins/config/test_plugins.rviz",
+            "problemMatcher": [],
+            "dependsOn": [
+                "ROS2Build-AunaRvizPlugins"
+            ]
+        }
     ],
     "inputs": [
         {

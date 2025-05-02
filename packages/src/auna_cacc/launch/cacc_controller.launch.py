@@ -37,15 +37,11 @@ def include_launch_description(context: LaunchContext):
         LogInfo(
             msg=f"CACC launch: Detected {robot_number_value} robots with base namespace '{ns_value}'")
     )
-
-    # If we have multiple robots, start CACC controllers ONLY for follower robots (not the lead robot)
     launch_description_content.append(
         LogInfo(
-            msg=f"Starting CACC controllers for {robot_number_value-1} follower robots")
+            msg=f"Starting CACC controllers for all {robot_number_value} robots")
     )
-
-    # Start from 1 (skip robot0) since only follower robots need CACC controllers
-    for num in range(1, robot_number_value):
+    for num in range(0, robot_number_value):
         # Create namespace string properly by concatenating the resolved namespace value
         robot_ns = f"{ns_value}{num}"
 
@@ -56,7 +52,7 @@ def include_launch_description(context: LaunchContext):
         # Log explicitly which robot we're starting a controller for
         launch_description_content.append(
             LogInfo(
-                msg=f"Starting CACC controller for {robot_ns} (follower robot)")
+                msg=f"Starting CACC controller for {robot_ns}")
         )
 
         # Use PushRosNamespace within a GroupAction to properly namespace the node
@@ -100,7 +96,7 @@ def generate_launch_description():
 
     # Add additional logging at the beginning
     initial_log = LogInfo(
-        msg="Initializing CACC controller launch - will only start for follower robots"
+        msg="Initializing CACC controller launch"
     )
 
     # Launch Arguments
