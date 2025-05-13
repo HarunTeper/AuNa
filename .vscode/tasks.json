@@ -94,6 +94,16 @@
                 "isDefault": false
             }
         },
+        {
+            "label": "ROS2Build-AunaRvizPlugins",
+            "type": "shell",
+            "command": "cd packages && colcon build --packages-select auna_rviz_plugins --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
         // ------------------- LAUNCH -------------------
         {
             "label": "LaunchGazebo",
@@ -140,7 +150,7 @@
         {
             "label": "LaunchTeleop",
             "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args -r /cmd_vel:=${input:teleopCmdVel} --params-file src/auna_teleoperation/config/key_teleop.yaml",
+            "command": "cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args -r __ns:=${input:teleopNamespace} --params-file src/auna_teleoperation/config/key_teleop.yaml",
             "problemMatcher": []
         },
         {
@@ -243,10 +253,10 @@
             "default": "1"
         },
         {
-            "id": "teleopCmdVel",
+            "id": "teleopNamespace",
             "type": "promptString",
-            "description": "Enter the cmd_vel topic to remap to (don't forget to inlcude the namespace for the robot that you wish to control eg. 'robot0/cmd_vel')",
-            "default": "cmd_vel"
+            "description": "Enter the full namespace for the robot you want to teleoperate (e.g., /robot0)",
+            "default": "/robot0"
         },
         // New inputs for CACC toggle
         {

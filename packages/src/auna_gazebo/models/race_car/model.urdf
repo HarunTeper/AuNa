@@ -2,7 +2,7 @@
 <robot name="sam_bot" xmlns:xacro="http://ros.org/wiki/xacro">
   
   <!-- Arguments -->
-  <xacro:arg name="namespace" default=""/>
+  <!-- <xacro:arg name="namespace" default=""/> -->
 
   <!-- Properties -->
   <xacro:property name="cameraSizeL" value="0.03"/>
@@ -58,7 +58,7 @@
   
   <!-- Wheel macro -->
   <xacro:macro name="wheel" params="fb lr parent translateX translateY left OffsetJointX OffsetJointY OffsetJointZ OffsetY">
-    <link name="$(arg namespace)${lr}_wheel_${fb}">
+    <link name="${lr}_wheel_${fb}">
       <inertial>
         <mass value="${wheel_mass}" />
         <origin xyz="0 ${OffsetY} 0" rpy="${90*pi/180} 0 0"/>
@@ -81,8 +81,8 @@
     </link>
 
     <joint name="${lr}_wheel_${fb}_hinge" type="continuous">
-      <parent link="$(arg namespace)${parent}"/>
-      <child link="$(arg namespace)${lr}_wheel_${fb}"/>
+      <parent link="${parent}"/>
+      <child link="${lr}_wheel_${fb}"/>
       <origin xyz="${translateX * OffsetJointX} ${translateY * OffsetJointY} ${OffsetJointZ}" rpy="0 0 0" /> 
       <axis xyz="0 1 0" rpy="0 0 0" />
       <limit effort="20" velocity="500"/>
@@ -108,7 +108,7 @@
 
   <!-- Steering macro -->
   <xacro:macro name="steering_hinge" params="lr parent translateY OffsetY">
-    <link name="$(arg namespace)${lr}_steering">
+    <link name="${lr}_steering">
       <inertial>
         <mass value="${steering_mass}" />
         <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -129,8 +129,8 @@
 
     <joint name="${lr}_steering_hinge" type="continuous">
       <origin xyz="${base_x_origin_to_wheel_origin} ${translateY * base_y_origin_to_wheel_origin} ${base_z_origin_to_wheel_origin}" rpy="0 0 0" />
-      <parent link="$(arg namespace)${parent}" />
-      <child link="$(arg namespace)${lr}_steering" />
+      <parent link="${parent}" />
+      <child link="${lr}_steering" />
       <axis xyz="0 0 1" />
       <limit lower="-1.0" upper="1.0" effort="10" velocity="100" />
     </joint>
@@ -150,16 +150,16 @@
 
 
   <!--  Base Link  -->
-  <link name="$(arg namespace)base_link" />
+  <link name="base_link" />
 
   <!--  Chassis  -->
   <joint name="base_link_joint" type="fixed">
     <origin xyz="${base_x_origin_to_wheel_origin} 0 0.05" rpy="0 0 0" />
-    <parent link="$(arg namespace)base_link" />
-    <child link="$(arg namespace)chassis" />
+    <parent link="base_link" />
+    <child link="chassis" />
   </joint>
 
-  <link name='$(arg namespace)chassis'>
+  <link name='chassis'>
     <inertial>
       <mass value="${bodyMass}"/>
       <origin xyz="0 0 ${wheel_height/2}" rpy=" 0 0 0"/>
@@ -184,13 +184,13 @@
   <!--  Steering wheel  -->
   <joint name="steering_wheel_joint" type="continuous">
     <origin xyz="0.105 0 0.135" rpy="0 0 0" />
-    <parent link="$(arg namespace)chassis" />
-    <child link="$(arg namespace)steering_wheel" />
+    <parent link="chassis" />
+    <child link="steering_wheel" />
     <axis xyz="1 0 0" />
     <limit lower="-7.85" upper="7.85" effort="10000000" velocity="1000000"/>
   </joint>
 
-  <link name='$(arg namespace)steering_wheel'>
+  <link name='steering_wheel'>
     <inertial>
       <mass value="0.1"/>
       <xacro:box_inertia m="0.1" l="0.01" b="0.01" h="0.01" />
@@ -223,7 +223,7 @@
   <xacro:steering_hinge lr="right" parent="chassis" translateY="-1" OffsetY="-0.01" />
 
   <!-- Camera -->
-  <link name="$(arg namespace)camera">
+  <link name="camera">
     <inertial>
       <mass value="${cameraMass}" />
       <origin xyz="0 0 ${wheel_height/2}" rpy="0 0 0"/>
@@ -248,12 +248,12 @@
   <joint name="camera_joint" type="fixed">
     <axis xyz="0 1 0" />
     <origin xyz="0.21 0 0.075" rpy="0 0 0"/>
-    <parent link="$(arg namespace)chassis"/>
-    <child link="$(arg namespace)camera"/>
+    <parent link="chassis"/>
+    <child link="camera"/>
   </joint>
 
   <!-- Hokuyo Laser -->
-  <link name="$(arg namespace)laser">
+  <link name="laser">
     <inertial>
       <mass value="${hokuyoMass}" />
       <origin xyz="0 0 ${wheel_height/2}" rpy="0 0 0"/>
@@ -278,12 +278,12 @@
   <joint name="laser_joint" type="fixed">
     <axis xyz="0 1 0" />
     <origin xyz="0.21 0 0.135" rpy="0 0 0"/>
-    <parent link="$(arg namespace)chassis"/>
-    <child link="$(arg namespace)laser"/>
+    <parent link="chassis"/>
+    <child link="laser"/>
   </joint>
 
   <!-- GPS Link -->
-  <link name="$(arg namespace)gps_link">
+  <link name="gps_link">
     <inertial>
       <mass value="${gpsMass}" />
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -310,18 +310,18 @@
 
   <joint name="gps_joint" type="fixed">
     <origin xyz="-0.1 0 0.15" rpy="0 0 0"/>
-    <parent link="$(arg namespace)chassis"/>
-    <child link="$(arg namespace)gps_link"/>
+    <parent link="chassis"/>
+    <child link="gps_link"/>
   </joint>
 
   <!-- IMU -->
-  <link name="$(arg namespace)imu_link" />
+  <link name="imu_link" />
 
   <joint name="imu_joint" type="fixed">
     <axis xyz="0 1 0" />
     <origin xyz="0 0 0.135" rpy="0 0 0"/>
-    <parent link="$(arg namespace)chassis"/>
-    <child link="$(arg namespace)imu_link"/>
+    <parent link="chassis"/>
+    <child link="imu_link"/>
   </joint>
   
   <!-- Plugins --> 
@@ -363,8 +363,8 @@
       <publish_wheel_tf>false</publish_wheel_tf>
       <publish_distance>true</publish_distance>
       
-      <odometry_frame>$(arg namespace)odom</odometry_frame>
-      <robot_base_frame>$(arg namespace)base_link</robot_base_frame>
+      <odometry_frame>odom</odometry_frame>
+      <robot_base_frame>base_link</robot_base_frame>
 
       <ros>
         <argument>--ros-args --remap cmd_vel:=cmd_vel</argument>
@@ -393,7 +393,7 @@
   </gazebo>
 
   <!-- Laser Sensor -->
-  <gazebo reference="$(arg namespace)laser">
+  <gazebo reference="laser">
     <sensor type="ray" name="laser">
       <visualize>0</visualize>
       <ray>
@@ -427,7 +427,7 @@
   </gazebo>
   
   <!-- IMU Sensor -->
-  <gazebo reference="$(arg namespace)imu_link">
+  <gazebo reference="imu_link">
     <sensor name="imu_sensor" type="imu">
       <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
         <ros>
@@ -442,7 +442,7 @@
   </gazebo>
   
   <!-- GPS Gazebo plugin -->
-  <gazebo reference="$(arg namespace)gps_link">
+  <gazebo reference="gps_link">
     <sensor name="gps_sensor" type="gps">
       <always_on>true</always_on>
       <update_rate>10</update_rate>
@@ -472,7 +472,7 @@
   </gazebo>
 
   <!-- Camera -->
-  <gazebo reference="$(arg namespace)camera">
+  <gazebo reference="camera">
     <sensor name="camera" type="camera" >
       <visualize>0</visualize>
       <update_rate>30</update_rate>

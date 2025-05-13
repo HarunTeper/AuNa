@@ -45,7 +45,7 @@ def include_launch_description(context: LaunchContext):
     )
 
     # Start from 1 (skip robot0) since only follower robots need CACC controllers
-    for num in range(0, robot_number_value):
+    for num in range(1, robot_number_value):
         # Create namespace string properly by concatenating the resolved namespace value
         robot_ns = f"{ns_value}{num}"
 
