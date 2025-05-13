@@ -81,6 +81,14 @@ CaccController::CaccController() : Node("cacc_controller")
   pub_y_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/y", 1);
   pub_waypoints_pose_array_ =
     this->create_publisher<geometry_msgs::msg::PoseArray>("cacc/waypoints", 1);
+  pub_closest_pose_waypoint_ =
+    this->create_publisher<geometry_msgs::msg::PoseStamped>("cacc/closest_pose_waypoint", 1);
+  pub_closest_cam_waypoint_ =
+    this->create_publisher<geometry_msgs::msg::PoseStamped>("cacc/closest_cam_waypoint", 1);
+  pub_target_waypoint_ =
+    this->create_publisher<geometry_msgs::msg::PoseStamped>("cacc/target_waypoint", 1);
+  pub_cacc_pose_ =
+    this->create_publisher<geometry_msgs::msg::PoseStamped>("cacc/lookahead_pose", 1);
 
   client_set_standstill_distance_ = this->create_service<auna_msgs::srv::SetFloat64>(
     "cacc/set_standstill_distance",
@@ -125,7 +133,7 @@ CaccController::CaccController() : Node("cacc_controller")
   this->declare_parameter("use_waypoints", false);
   this->declare_parameter("waypoint_file", "/home/$USER/waypoints.txt");
   this->declare_parameter("target_velocity", 1.0);
-  this->declare_parameter("curvature_lookahead", 10);
+  this->declare_parameter("curvature_lookahead", 1.0);
   this->declare_parameter("extra_distance", 0.0);
 
   // use params_
@@ -138,7 +146,7 @@ CaccController::CaccController() : Node("cacc_controller")
   params_.use_waypoints = this->get_parameter("use_waypoints").as_bool();
   params_.waypoint_file = this->get_parameter("waypoint_file").as_string();
   params_.target_velocity = this->get_parameter("target_velocity").as_double();
-  params_.curvature_lookahead = this->get_parameter("curvature_lookahead").as_int();
+  params_.curvature_lookahead = this->get_parameter("curvature_lookahead").as_double();
   params_.extra_distance = this->get_parameter("extra_distance").as_double();
 
   dt_ = 1.0 / params_.frequency;
@@ -405,11 +413,10 @@ void CaccController::pose_callback(const geometry_msgs::msg::PoseStamped::Shared
 
 void CaccController::update_waypoint_following()
 {
-  if (auto_mode_) {
+  int closest_pose_waypoint_index;
+  {
     double closest_distance_squared = std::numeric_limits<double>::max();
     int num_waypoints = waypoints_x_.size();
-
-    int closest_waypoint_index;
 
     for (int i = 0; i < num_waypoints; ++i) {
       double dx = waypoints_x_[i] - pose_x_;
@@ -418,81 +425,19 @@ void CaccController::update_waypoint_following()
 
       if (distance_squared < closest_distance_squared) {
         closest_distance_squared = distance_squared;
-        closest_waypoint_index = i;
+        closest_pose_waypoint_index = i;
       }
     }
+  }
+  // Publish the closest waypoint
+  publish_waypoint_pose(pub_closest_pose_waypoint_, closest_pose_waypoint_index);
 
-    int target_waypoint_index_ = closest_waypoint_index;
-
-    // Calculate target waypoint index (the waypoint that is closest to the vehicle and within the
-    // time gap
-
-    double target_distance =
-      params_.standstill_distance + params_.time_gap * params_.target_velocity;
-
-    for (int i = closest_waypoint_index; true; i = (i + 1) % num_waypoints) {
-      double dx = waypoints_x_[i] - pose_x_;
-      double dy = waypoints_y_[i] - pose_y_;
-      double distance_squared = dx * dx + dy * dy;
-
-      if (distance_squared > target_distance * target_distance) {
-        // Stop the loop if the distance is increasing
-        break;
-      }
-
-      target_waypoint_index_ = i;
-    }
-    cam_x_ = waypoints_x_[target_waypoint_index_];
-    cam_y_ = waypoints_y_[target_waypoint_index_];
-
-    // Calculate yaw difference between previous and next waypoints
-    int curr_index = target_waypoint_index_;
-    cam_yaw_ = waypoints_yaw_[curr_index];
-
-    // Calculate cam_yaw_rate_ and cam_curvature_
-    double current_yaw = waypoints_yaw_[curr_index];
-
-    int next_index = (target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints;
-    double next_yaw = waypoints_yaw_[next_index];
-
-    // yaw difference in the range of -pi to pi
-    double yaw_difference;
-    if (next_yaw - current_yaw > M_PI) {
-      yaw_difference = next_yaw - current_yaw - 2 * M_PI;
-    } else if (next_yaw - current_yaw < -M_PI) {
-      yaw_difference = next_yaw - current_yaw + 2 * M_PI;
-    } else {
-      yaw_difference = next_yaw - current_yaw;
-    }
-
-    // Calculate the required time to reach the n-th next waypoint
-    double dx = waypoints_x_[(curr_index + params_.curvature_lookahead) % num_waypoints] -
-                waypoints_x_[curr_index];
-    double dy = waypoints_y_[(curr_index + params_.curvature_lookahead) % num_waypoints] -
-                waypoints_y_[curr_index];
-    double distance = std::hypot(dx, dy);
-
-    // calculate the required time by dividing distance through cam_velocity_
-    double required_time = distance / params_.target_velocity;
-
-    cam_yaw_rate_ = yaw_difference / required_time;
-
-    // scale the cam_velocity_ between target_velocity and target_velocity/2, inverse proportional
-    // to cam_yaw_rate_, whose values are between 0 and 1.25
-
-    cam_velocity_ =
-      params_.target_velocity - (params_.target_velocity / 2) * (cam_yaw_rate_ / 1.25);
-    cam_acceleration_ = (cam_velocity_ - last_cam_velocity_) / dt_;
-    last_cam_velocity_ = cam_velocity_;
-
-    // cam curvature depending on auto_mode
-    cam_curvature_ = cam_yaw_rate_ / params_.target_velocity;
-
-  } else {
+  // Check if we have received any CAM messages
+  int closest_cam_waypoint_index = -1;  // Default invalid index
+  if (last_cam_msg_ != nullptr) {
+    // Find the closest waypoint to the leader (CAM) position
     double closest_distance_squared = std::numeric_limits<double>::max();
     int num_waypoints = waypoints_x_.size();
-
-    int closest_waypoint_index;
 
     for (int i = 0; i < num_waypoints; ++i) {
       double dx = waypoints_x_[i] - cam_x_;
@@ -501,67 +446,198 @@ void CaccController::update_waypoint_following()
 
       if (distance_squared < closest_distance_squared) {
         closest_distance_squared = distance_squared;
-        closest_waypoint_index = i;
+        closest_cam_waypoint_index = i;
       }
     }
 
-    int target_waypoint_index_ = closest_waypoint_index;
+    // Publish the closest CAM waypoint (only if we found a valid one)
+    if (closest_cam_waypoint_index >= 0) {
+      publish_waypoint_pose(pub_closest_cam_waypoint_, closest_cam_waypoint_index);
+    }
+  }
 
-    // Find the previous index at which the distance to the closest waypoint is at least
-    // params_.extra_distance
-    for (int i = closest_waypoint_index; true; i = (i - 1 + num_waypoints) % num_waypoints) {
-      double dx = waypoints_x_[i] - waypoints_x_[closest_waypoint_index];
-      double dy = waypoints_y_[i] - waypoints_y_[closest_waypoint_index];
-      double distance_squared = dx * dx + dy * dy;
+  // This limits acceleration by clamping the velocity difference and uses the adjusted velocity for
+  // a smoother time-gap distance calculation
+  double velocity_diff;
+  if (last_cam_msg_ == nullptr) {
+    // No leader vehicle data available, use target velocity parameter
+    velocity_diff = params_.target_velocity - odom_velocity_;
+    RCLCPP_DEBUG(
+      this->get_logger(), "No CAM data: Using target velocity parameter (%.2f m/s)",
+      params_.target_velocity);
+  } else {
+    // Use leader vehicle's velocity from CAM message
+    velocity_diff = cam_velocity_ - odom_velocity_;
+    RCLCPP_DEBUG(
+      this->get_logger(), "Using CAM velocity: Leader=%.2f m/s, Follower=%.2f m/s, Diff=%.2f m/s",
+      cam_velocity_, odom_velocity_, velocity_diff);
+  }
 
-      if (distance_squared >= params_.extra_distance * params_.extra_distance) {
-        // Stop the loop if the distance is increasing
+  // Clamp velocity difference to limit acceleration/deceleration rate
+  const double MAX_ACCEL_RATE = 0.1;  // m/s per control cycle
+  double clamped_diff = std::max(std::min(velocity_diff, MAX_ACCEL_RATE), -MAX_ACCEL_RATE);
+  double adjusted_velocity = odom_velocity_ + clamped_diff;
+
+  // Ensure adjusted velocity is never negative
+  adjusted_velocity = std::max(0.0, adjusted_velocity);
+
+  // Calculate target distance using adjusted velocity
+  double target_distance = params_.standstill_distance + params_.time_gap * adjusted_velocity;
+
+  // Initialize target waypoint calculation
+  int target_waypoint_index = closest_pose_waypoint_index;
+  int num_waypoints = waypoints_x_.size();
+  double accumulated_distance = 0.0;
+  bool target_reached = false;
+
+  // If we have CAM data and a valid CAM waypoint, consider it as a maximum bound
+  bool has_cam_limit = (last_cam_msg_ != nullptr && closest_cam_waypoint_index >= 0);
+
+  // Find target waypoint by accumulating distance along path
+  for (int i = 0; i < num_waypoints && !target_reached; i++) {
+    int current_index = (closest_pose_waypoint_index + i) % num_waypoints;
+    int next_index = (closest_pose_waypoint_index + i + 1) % num_waypoints;
+
+    // Calculate distance between consecutive waypoints
+    double segment_dx = waypoints_x_[next_index] - waypoints_x_[current_index];
+    double segment_dy = waypoints_y_[next_index] - waypoints_y_[current_index];
+    double segment_distance = std::hypot(segment_dx, segment_dy);
+
+    // Check if adding this segment exceeds our target distance
+    if (accumulated_distance + segment_distance >= target_distance) {
+      target_waypoint_index = next_index;
+      target_reached = true;
+      RCLCPP_DEBUG(
+        this->get_logger(), "Target waypoint found at distance %.2f m (target was %.2f m)",
+        accumulated_distance + segment_distance, target_distance);
+    }
+    // If we have CAM data, check if we've reached the leader's position
+    else if (has_cam_limit) {
+      if (next_index == closest_cam_waypoint_index) {
+        target_waypoint_index = next_index;
+        target_reached = true;
+        RCLCPP_DEBUG(this->get_logger(), "Reached leader's position at waypoint %d", next_index);
+      }
+    }
+
+    // Add this segment to our accumulated distance
+
+    accumulated_distance += segment_distance;
+
+    // If we haven't reached the target yet, update the index to the next waypoint
+    if (!target_reached) {
+      target_waypoint_index = next_index;
+    }
+  }
+  // Publish the target waypoint
+  publish_waypoint_pose(pub_target_waypoint_, target_waypoint_index);
+
+  control_x_ = waypoints_x_[target_waypoint_index];
+  control_y_ = waypoints_y_[target_waypoint_index];
+  control_yaw_ = waypoints_yaw_[target_waypoint_index];
+
+  // Calculate cam_yaw_rate_ and cam_curvature_
+  int curr_index = target_waypoint_index;
+  double current_yaw = waypoints_yaw_[curr_index];
+
+  // Calculate next index based on lookahead distance in meters
+  int lookahead_index = target_waypoint_index;
+  double accumulated_lookahead_distance = 0.0;
+  {
+    int num_waypoints = waypoints_x_.size();
+
+    // Accumulate distance until we reach the specified lookahead distance
+    for (int i = 0; i < num_waypoints; i++) {
+      int current_index = (target_waypoint_index + i) % num_waypoints;
+      int next_waypoint_index = (target_waypoint_index + i + 1) % num_waypoints;
+
+      // Calculate distance between consecutive waypoints
+      double segment_dx = waypoints_x_[next_waypoint_index] - waypoints_x_[current_index];
+      double segment_dy = waypoints_y_[next_waypoint_index] - waypoints_y_[current_index];
+      double segment_distance = std::hypot(segment_dx, segment_dy);
+
+      // Add this segment to our accumulated distance
+      accumulated_lookahead_distance += segment_distance;
+      lookahead_index = next_waypoint_index;
+
+      // If we've accumulated enough distance, we're done
+      if (accumulated_lookahead_distance >= params_.curvature_lookahead) {
         break;
       }
-
-      target_waypoint_index_ = i;
     }
+  }
+  double next_yaw = waypoints_yaw_[lookahead_index];
 
-    cam_x_ = waypoints_x_[target_waypoint_index_];
-    cam_y_ = waypoints_y_[target_waypoint_index_];
-    cam_yaw_ = waypoints_yaw_[target_waypoint_index_];
+  // yaw difference in the range of -pi to pi
+  double yaw_difference;
+  if (next_yaw - current_yaw > M_PI) {
+    yaw_difference = next_yaw - current_yaw - 2 * M_PI;
+  } else if (next_yaw - current_yaw < -M_PI) {
+    yaw_difference = next_yaw - current_yaw + 2 * M_PI;
+  } else {
+    yaw_difference = next_yaw - current_yaw;
+  }
 
-    // Calculate cam_yaw_rate_ and cam_curvature_
-    double current_yaw = waypoints_yaw_[target_waypoint_index_];
+  // Calculate the required time to reach the n-th next waypoint
+  // Select appropriate target velocity based on CAM message availability
+  double target_vel_for_lookahead;
+  if (last_cam_msg_ != nullptr) {
+    // Use leader's velocity with a small safety margin
+    target_vel_for_lookahead = cam_velocity_;
+    RCLCPP_DEBUG(
+      this->get_logger(), "Using leader velocity for lookahead calculations: %.2f m/s",
+      target_vel_for_lookahead);
+  } else {
+    // No leader data, use configured target velocity
+    target_vel_for_lookahead = params_.target_velocity;
+    RCLCPP_DEBUG(
+      this->get_logger(), "Using configured target velocity for lookahead: %.2f m/s",
+      target_vel_for_lookahead);
+  }
 
-    int next_index = (target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints;
-    double next_yaw = waypoints_yaw_[next_index];
+  if (target_vel_for_lookahead < 0.1) {
+    control_yaw_rate_ = 0.0;
+  } else {
+    double required_time = accumulated_lookahead_distance / target_vel_for_lookahead;
+    control_yaw_rate_ = yaw_difference / required_time;
+  }
 
-    // yaw difference modulo for the case that one is negative and the other positive
-    double yaw_difference;
-    if (next_yaw - current_yaw > M_PI) {
-      yaw_difference = next_yaw - current_yaw - 2 * M_PI;
-    } else if (next_yaw - current_yaw < -M_PI) {
-      yaw_difference = next_yaw - current_yaw + 2 * M_PI;
-    } else {
-      yaw_difference = next_yaw - current_yaw;
-    }
+  // Calculate control velocity considering leader vehicle when available
+  double base_velocity;
+  if (last_cam_msg_ != nullptr) {
+    // Use leader's velocity as the base reference
+    base_velocity = cam_velocity_;
+    RCLCPP_DEBUG(this->get_logger(), "Using leader velocity as base: %.2f m/s", base_velocity);
+  } else {
+    // No leader data, use configured target velocity
+    base_velocity = params_.target_velocity;
+    RCLCPP_DEBUG(
+      this->get_logger(), "Using configured target velocity as base: %.2f m/s", base_velocity);
+  }
 
-    // Calculate the required time to reach the n-th next waypoint
-    double dx =
-      waypoints_x_[(target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints] -
-      waypoints_x_[target_waypoint_index_];
-    double dy =
-      waypoints_y_[(target_waypoint_index_ + params_.curvature_lookahead) % num_waypoints] -
-      waypoints_y_[target_waypoint_index_];
-    double distance = std::hypot(dx, dy);
+  // Apply cornering adjustment based on yaw rate
+  // Reduce velocity in curves proportionally to the yaw rate
+  double cornering_factor = std::max(0.0, 1.0 - std::abs(control_yaw_rate_) / 1.25);
 
-    // calculate the required time by dividing distance through cam_velocity_
-    double required_time = distance / cam_velocity_;
+  // Apply cornering slowdown only to a portion of the velocity to prevent excessive slowdowns
+  double min_cornering_velocity =
+    base_velocity * 0.7;  // Don't go below 70% of target speed in curves
+  control_velocity_ = std::max(min_cornering_velocity, base_velocity * cornering_factor);
 
-    cam_yaw_rate_ = yaw_difference / required_time;
+  // Respect the maximum velocity limit
+  control_velocity_ = std::min(control_velocity_, params_.max_velocity);
 
-    // cam curvature depending on auto_mode
-    if (cam_velocity_ == 0) {
-      cam_curvature_ = 0;
-    } else {
-      cam_curvature_ = cam_yaw_rate_ / cam_velocity_;
-    }
+  // Calculate acceleration for logging
+  control_acceleration_ = (control_velocity_ - control_last_velocity_) / dt_;
+  control_last_velocity_ = control_velocity_;
+
+  // TODO check if target_velocity or control velocity should be used
+  // cam curvature depending on auto_mode
+  // Prevent division by zero when calculating control curvature
+  if (std::abs(control_velocity_) < 0.01) {
+    control_curvature_ = 0.0;
+  } else {
+    control_curvature_ = control_yaw_rate_ / params_.target_velocity;
   }
 }
 
@@ -599,33 +675,50 @@ void CaccController::timer_callback()
     actual_distance - distance_term);
 
   // Calculate s_ (distance along curved path)
-  if (cam_curvature_ <= 0.01 && cam_curvature_ >= -0.01) {
-    double term1_s = 0.5 * pow(distance_term, 2) * cam_curvature_;
-    double term2_s = 0.125 * pow(distance_term, 4) * pow(cam_curvature_, 3);
+  if (control_curvature_ < 0.01 && control_curvature_ > -0.01) {
+    double term1_s = 0.5 * pow(distance_term, 2) * control_curvature_;
+    double term2_s = 0.125 * pow(distance_term, 4) * pow(control_curvature_, 3);
     s_ = term1_s - term2_s;
   } else {
-    double inner_term = 1 + pow(cam_curvature_, 2) * pow(distance_term, 2);
-    s_ = (-1 + sqrt(inner_term)) / cam_curvature_;
+    double inner_term = 1 + pow(control_curvature_, 2) * pow(distance_term, 2);
+    s_ = (-1 + sqrt(inner_term)) / control_curvature_;
   }
 
-  // Calculate alpha_ (angle adjustment for curved path) and store for debugging
-  alpha_ = atan(cam_curvature_ * distance_term);
+  // Calculate alpha_ (angle adjustment for curved path)
+  alpha_ = atan(control_curvature_ * distance_term);
+
+  // Store debug values for logging
   dbg_alpha_ = alpha_;  // Store for logging
   dbg_s_ = s_;          // Store for logging
 
   RCLCPP_INFO(this->get_logger(), "Curved Path Adjustment:");
   RCLCPP_INFO(
-    this->get_logger(), "  Path curvature: %.4f 1/m, s: %.2f m, alpha: %.2f rad", cam_curvature_,
-    dbg_s_, dbg_alpha_);
+    this->get_logger(), "  Path curvature: %.4f 1/m, s: %.2f m, alpha: %.2f rad",
+    control_curvature_, dbg_s_, dbg_alpha_);
 
-  x_lookahead_point_ = cam_x_ + s_ * sin(cam_yaw_);
-  y_lookahead_point_ = cam_y_ - s_ * cos(cam_yaw_);
+  x_lookahead_point_ = control_x_ + s_ * sin(control_yaw_);
+  y_lookahead_point_ = control_y_ - s_ * cos(control_yaw_);
+
+  // Publish lookahead using publish_waypoint_pose
+  geometry_msgs::msg::PoseStamped lookahead_point;
+  lookahead_point.header.stamp = this->get_clock()->now();
+  lookahead_point.header.frame_id = "map";  // Use appropriate frame_id
+  lookahead_point.pose.position.x = x_lookahead_point_;
+  lookahead_point.pose.position.y = y_lookahead_point_;
+  lookahead_point.pose.position.z = 0.0;
+  tf2::Quaternion q;
+  q.setRPY(0.0, 0.0, control_yaw_);
+  lookahead_point.pose.orientation.x = q.x();
+  lookahead_point.pose.orientation.y = q.y();
+  lookahead_point.pose.orientation.z = q.z();
+  lookahead_point.pose.orientation.w = q.w();
+  pub_cacc_pose_->publish(lookahead_point);
 
   // Calculate error states
-  z_1_ = cam_x_ - pose_x_ + s_ * sin(cam_yaw_) - distance_term * cos(pose_yaw_);
-  z_2_ = cam_y_ - pose_y_ - s_ * cos(cam_yaw_) - distance_term * sin(pose_yaw_);
-  z_3_ = cam_velocity_ * cos(cam_yaw_) - odom_velocity_ * cos(pose_yaw_ + alpha_);
-  z_4_ = cam_velocity_ * sin(cam_yaw_) - odom_velocity_ * sin(pose_yaw_ + alpha_);
+  z_1_ = control_x_ - pose_x_ + s_ * sin(control_yaw_) - distance_term * cos(pose_yaw_);
+  z_2_ = control_y_ - pose_y_ - s_ * cos(control_yaw_) - distance_term * sin(pose_yaw_);
+  z_3_ = control_velocity_ * cos(control_yaw_) - odom_velocity_ * cos(pose_yaw_ + alpha_);
+  z_4_ = control_velocity_ * sin(control_yaw_) - odom_velocity_ * sin(pose_yaw_ + alpha_);
 
   RCLCPP_INFO(this->get_logger(), "Error States:");
   RCLCPP_INFO(
@@ -636,7 +729,7 @@ void CaccController::timer_callback()
 
   // Calculate control matrix inverse (invGam calculations)
   double term1 = params_.standstill_distance + params_.time_gap * odom_velocity_;
-  double term2 = params_.time_gap - params_.time_gap * sin(alpha_) * sin(cam_yaw_ - pose_yaw_);
+  double term2 = params_.time_gap - params_.time_gap * sin(alpha_) * sin(control_yaw_ - pose_yaw_);
   invGam_Det_ = term1 * term2;
 
   // Prevent division by zero with minimum threshold
@@ -650,8 +743,10 @@ void CaccController::timer_callback()
   // Calculate invGam components (condensing this section since it's internal math)
   double num1 = (params_.standstill_distance + params_.time_gap * odom_velocity_) * cos(pose_yaw_);
   double num2 = (params_.standstill_distance + params_.time_gap * odom_velocity_) * sin(pose_yaw_);
-  double num3 = -params_.time_gap * sin(pose_yaw_) - params_.time_gap * sin(alpha_) * cos(cam_yaw_);
-  double num4 = params_.time_gap * cos(pose_yaw_) - params_.time_gap * sin(alpha_) * sin(cam_yaw_);
+  double num3 =
+    -params_.time_gap * sin(pose_yaw_) - params_.time_gap * sin(alpha_) * cos(control_yaw_);
+  double num4 =
+    params_.time_gap * cos(pose_yaw_) - params_.time_gap * sin(alpha_) * sin(control_yaw_);
 
   // Store invGam components for logging
   dbg_invGam_1_ = num1 / invGam_Det_;
@@ -666,15 +761,16 @@ void CaccController::timer_callback()
   // Calculate inP terms (control inputs before transformation) and store components for logging
   dbg_inP1_pos_err_ = z_1_ * params_.kp;
   dbg_inP1_vel_err_ = cos(alpha_) * z_3_ + sin(alpha_) * z_4_;
-  dbg_inP1_geom_vel_ =
-    (1 - cos(alpha_)) * cam_velocity_ * cos(cam_yaw_) - sin(alpha_) * cam_velocity_ * sin(cam_yaw_);
-  dbg_inP1_yaw_rate_ = cos(cam_yaw_) * s_ * cam_yaw_rate_;
+  dbg_inP1_geom_vel_ = (1 - cos(alpha_)) * control_velocity_ * cos(control_yaw_) -
+                       sin(alpha_) * control_velocity_ * sin(control_yaw_);
+  dbg_inP1_yaw_rate_ = cos(control_yaw_) * s_ * control_yaw_rate_;
   inP_1_ = dbg_inP1_pos_err_ + dbg_inP1_vel_err_ + dbg_inP1_geom_vel_ + dbg_inP1_yaw_rate_;
+
   dbg_inP2_pos_err_ = z_2_ * params_.kd;
   dbg_inP2_vel_err_ = sin(alpha_) * z_3_ + cos(alpha_) * z_4_;
-  dbg_inP2_geom_vel_ =
-    sin(alpha_) * cam_velocity_ * cos(cam_yaw_) + (1 - cos(alpha_)) * cam_velocity_ * sin(cam_yaw_);
-  dbg_inP2_yaw_rate_ = sin(cam_yaw_) * s_ * cam_yaw_rate_;
+  dbg_inP2_geom_vel_ = sin(alpha_) * control_velocity_ * cos(control_yaw_) +
+                       (1 - cos(alpha_)) * control_velocity_ * sin(control_yaw_);
+  dbg_inP2_yaw_rate_ = sin(control_yaw_) * s_ * control_yaw_rate_;
   inP_2_ = dbg_inP2_pos_err_ + dbg_inP2_vel_err_ + dbg_inP2_geom_vel_ + dbg_inP2_yaw_rate_;
 
   // Calculate final control outputs
@@ -690,14 +786,14 @@ void CaccController::timer_callback()
     cos(alpha_) * z_3_ + sin(alpha_) * z_4_, z_3_, z_4_);
 
   // Additional diagnostic logs for turns
-  if (std::abs(cam_curvature_) > 0.01) {
+  if (std::abs(control_curvature_) > 0.01) {
     RCLCPP_INFO(this->get_logger(), "Sharp Turn Detected:");
     RCLCPP_INFO(
-      this->get_logger(), "  Leader yaw rate: %.2f rad/s, Leader velocity: %.2f m/s", cam_yaw_rate_,
-      cam_velocity_);
+      this->get_logger(), "  Leader yaw rate: %.2f rad/s, Leader velocity: %.2f m/s",
+      control_yaw_rate_, control_velocity_);
     RCLCPP_INFO(
       this->get_logger(), "  Curvature effect on acceleration: %.2f m/s²",
-      (cos(cam_yaw_) * s_ * cam_yaw_rate_));
+      (cos(control_yaw_) * s_ * control_yaw_rate_));
   }
 
   last_time_ = rclcpp::Clock().now();
@@ -712,7 +808,7 @@ void CaccController::timer_callback()
       a_);
     RCLCPP_WARN(
       this->get_logger(), "  Leader-follower velocity difference: %.2f m/s",
-      cam_velocity_ - odom_velocity_);
+      control_velocity_ - odom_velocity_);
   }
 
   if (v_ > params_.max_velocity) {
@@ -834,6 +930,9 @@ void CaccController::set_cacc_enable(
   if (request->value) {
     RCLCPP_INFO(this->get_logger(), "Enabling CACC controller");
     last_cam_velocity_ = 0;
+    last_odom_velocity_ = 0;
+    last_velocity_ = 0;
+    last_time_ = rclcpp::Clock().now();
     timer_->reset();
   } else {
     RCLCPP_INFO(this->get_logger(), "Disabling CACC controller");
@@ -923,7 +1022,7 @@ rcl_interfaces::msg::SetParametersResult CaccController::dynamicParametersCallba
       } else if (name == "target_velocity") {
         params_.target_velocity = parameter.as_double();
       } else if (name == "curvature_lookahead") {
-        params_.curvature_lookahead = parameter.as_int();
+        params_.curvature_lookahead = parameter.as_double();
       } else if (name == "extra_distance") {
         params_.extra_distance = parameter.as_double();
       }
@@ -932,4 +1031,26 @@ rcl_interfaces::msg::SetParametersResult CaccController::dynamicParametersCallba
 
   result.successful = true;
   return result;
+}
+void CaccController::publish_waypoint_pose(
+  const rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr & publisher,
+  int waypoint_index)
+{
+  // Create and publish waypoint pose
+  geometry_msgs::msg::PoseStamped waypoint_pose;
+  waypoint_pose.header.stamp = this->get_clock()->now();
+  waypoint_pose.header.frame_id = "map";
+  waypoint_pose.pose.position.x = waypoints_x_[waypoint_index];
+  waypoint_pose.pose.position.y = waypoints_y_[waypoint_index];
+  waypoint_pose.pose.position.z = 0.0;
+
+  // Convert yaw to quaternion
+  tf2::Quaternion q_waypoint;
+  q_waypoint.setRPY(0.0, 0.0, waypoints_yaw_[waypoint_index]);
+  waypoint_pose.pose.orientation.x = q_waypoint.x();
+  waypoint_pose.pose.orientation.y = q_waypoint.y();
+  waypoint_pose.pose.orientation.z = q_waypoint.z();
+  waypoint_pose.pose.orientation.w = q_waypoint.w();
+
+  publisher->publish(waypoint_pose);
 }
