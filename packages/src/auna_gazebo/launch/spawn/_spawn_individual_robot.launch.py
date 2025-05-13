@@ -137,8 +137,8 @@ def generate_launch_description():
                 # ekf_config_file will use its default from localization_ekf.launch.py
             }.items(),
             # Launch if ground_truth is 'False'
-            condition=IfCondition(PythonExpression(
-                [ground_truth, " == 'False'"]))
+            # condition=IfCondition(PythonExpression(
+            #     [ground_truth, " == 'False'"]))
         ),
     ])
 

@@ -92,6 +92,7 @@ RUN if [ "$INSTALL_ROS2" = "true" ]; then \
     libunwind-dev \
     ros-humble-navigation2 \
     ros-humble-nav2-bringup \
+    ros-humble-robot-localization \
     ros-humble-etsi-its-* \
     ros-humble-gazebo-msgs \
     ros-humble-joy-linux \

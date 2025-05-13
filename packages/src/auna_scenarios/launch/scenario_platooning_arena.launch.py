@@ -60,7 +60,7 @@ def generate_launch_description():
             'robot_number': robot_number,
             'world_name': world_name,
             'namespace': namespace,
-            'ground_truth': 'True'
+            'ground_truth': 'False'
         }.items(),
     )
     comm_cmd = IncludeLaunchDescription(

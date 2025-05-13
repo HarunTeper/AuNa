@@ -3,7 +3,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, TextSubstitution
 from launch_ros.actions import Node, PushRosNamespace
 
 
@@ -56,13 +56,6 @@ def generate_launch_description():
         ]
     )
 
-    namespaced_ekf_group = GroupAction(
-        actions=[
-            PushRosNamespace(namespace),
-            ekf_node
-        ]
-    )
-
     return LaunchDescription([
         declare_namespace_arg,
         declare_use_sim_time_arg,
@@ -70,5 +63,5 @@ def generate_launch_description():
         declare_use_gps_arg,
         declare_use_imu_arg,
         declare_use_odom_arg,
-        namespaced_ekf_group
+        ekf_node
     ])
