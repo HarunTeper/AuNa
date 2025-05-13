@@ -8,7 +8,7 @@ cacc_controller:
     frequency: 50
     use_waypoints: true
     target_velocity: 1.5
-    curvature_lookahead: 10
+    curvature_lookahead: 1.0
     extra_distance: 0.0
 
     #TODO IMPLEMENT EXTRA DISTANCE AND SMOOTH CURVATURE, YAW, AND YAW RATE
