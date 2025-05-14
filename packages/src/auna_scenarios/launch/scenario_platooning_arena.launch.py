@@ -99,6 +99,6 @@ def generate_launch_description():
     launch_description.add_action(world_cmd)
     launch_description.add_action(spawn_cmd)
     # launch_description.add_action(comm_cmd)
-    launch_description.add_action(nav_cmd)
+    # launch_description.add_action(nav_cmd)
 
     return launch_description

@@ -176,21 +176,9 @@
             "problemMatcher": []
         },
         {
-            "label": "LaunchSingleCamWithLogging",
-            "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 run auna_comm cam_communication --ros-args -r __ns:=/${input:robotNamespace}${input:robotIndex} -p robot_index:=${input:robotIndex} -p filter_index:=${input:filterIndex} -p enable_cam_logging:=true",
-            "problemMatcher": []
-        },
-        {
             "label": "LaunchCacc",
             "type": "shell",
             "command": "cd packages && source install/setup.bash && ros2 launch auna_cacc cacc_controller.launch.py robot_number:=${input:robotCount} namespace:=${input:robotNamespace}",
-            "problemMatcher": []
-        },
-        {
-            "label": "LaunchSingleCacc",
-            "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 launch auna_cacc single_cacc_controller.launch.py robot_number:=${input:robotCount} namespace:=${input:robotNamespace}",
             "problemMatcher": []
         },
         {

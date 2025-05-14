@@ -58,7 +58,7 @@ CaccController::CaccController() : Node("cacc_controller")
       this->cam_callback(msg);
     });
   sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    "odom", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg) {
+    "odometry/filtered_ekf", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg) {
       if (!first_odom_received_) {
         RCLCPP_INFO(this->get_logger(), "Received first odom message");
         first_odom_received_ = true;
@@ -140,7 +140,6 @@ CaccController::CaccController() : Node("cacc_controller")
   params_.standstill_distance = this->get_parameter("standstill_distance").as_double();
   params_.time_gap = this->get_parameter("time_gap").as_double();
   params_.kp = this->get_parameter("kp").as_double();
-  params_.kd = this->get_parameter("kd").as_double();  // Increased slightly to reduce oversteering.
   params_.max_velocity = this->get_parameter("max_velocity").as_double();
   params_.frequency = this->get_parameter("frequency").as_int();
   params_.use_waypoints = this->get_parameter("use_waypoints").as_bool();
@@ -164,8 +163,7 @@ CaccController::CaccController() : Node("cacc_controller")
   timer_ = this->create_wall_timer(
     std::chrono::milliseconds(1000 / params_.frequency), [this]() { this->timer_callback(); });
   setup_timer_ = this->create_wall_timer(
-    std::chrono::milliseconds(1000),  // Changed from 250ms to 1000ms for more frequent logs
-    [this]() { this->setup_timer_callback(); });
+    std::chrono::milliseconds(1000), [this]() { this->setup_timer_callback(); });
   timer_->cancel();
 
   if (params_.use_waypoints) {

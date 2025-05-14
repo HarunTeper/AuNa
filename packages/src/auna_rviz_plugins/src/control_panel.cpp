@@ -252,6 +252,7 @@ void auna_rviz_plugins::ControlPanel::onNamespaceChanged(const QString & text)
     current_namespace_ = new_namespace;
     RCLCPP_INFO(node_->get_logger(), "Namespace changed to: %s", current_namespace_.c_str());
     updateROSSubscriptionsAndClients();
+    updateUIStates();
   }
 }
 
@@ -302,10 +303,9 @@ void auna_rviz_plugins::ControlPanel::onEmergencyStopClicked()
     estop_active_ ? "ACTIVE" : "INACTIVE");
 
   callSetEstopService(estop_active_);
-  updateUIStates();  // Optimistic UI update
+  updateUIStates();
 }
 
-// Update UI element states
 void auna_rviz_plugins::ControlPanel::updateUIStates()
 {
   if (estop_active_) {
