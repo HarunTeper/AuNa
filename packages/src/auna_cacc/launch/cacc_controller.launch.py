@@ -15,20 +15,12 @@ def include_launch_description(context: LaunchContext):
     # Launch Argument Configurations
     robot_number = LaunchConfiguration('robot_number', default='2')
     namespace = LaunchConfiguration('namespace', default='robot')
-    enable_logging = LaunchConfiguration('enable_logging', default='true')
-    log_file_path = LaunchConfiguration(
-        'log_file_path', default='/home/vscode/workspace/cacc_log.csv')
     cacc_config = LaunchConfiguration('cacc_config')
     waypoint_file = LaunchConfiguration('waypoint_file')
 
     # Get resolved values
     ns_value = context.perform_substitution(namespace)
     robot_number_value = int(context.perform_substitution(robot_number))
-    enable_logging_value = context.perform_substitution(enable_logging)
-    log_file_path_value = context.perform_substitution(log_file_path)
-
-    # Convert string to boolean for enable_logging parameter
-    enable_logging_bool = enable_logging_value.lower() == 'true'
 
     launch_description_content = []
 
@@ -44,10 +36,6 @@ def include_launch_description(context: LaunchContext):
     for num in range(0, robot_number_value):
         # Create namespace string properly by concatenating the resolved namespace value
         robot_ns = f"{ns_value}{num}"
-
-        # Create unique log file path for each robot if logging is enabled
-        robot_log_file = log_file_path_value.replace(
-            '.csv', f'_{robot_ns}.csv')
 
         # Log explicitly which robot we're starting a controller for
         launch_description_content.append(
@@ -68,8 +56,6 @@ def include_launch_description(context: LaunchContext):
                         yaml_launch.get_yaml_value(cacc_config.perform(
                             context), ['cacc_controller', 'ros__parameters']),
                         {
-                            'enable_data_logging': enable_logging_bool,
-                            'log_file_path': robot_log_file,
                             'waypoint_file': waypoint_file
                         }
                     ]

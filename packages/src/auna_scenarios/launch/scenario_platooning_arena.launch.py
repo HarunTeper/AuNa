@@ -13,12 +13,14 @@ def generate_launch_description():
 
     gazebo_pkg_dir = get_package_share_directory('auna_gazebo')
     comm_pkg_dir = get_package_share_directory('auna_comm')
+    navigation_pkg_dir = get_package_share_directory('auna_nav2')
 
     # --- Paths to Folders and Files ---
 
     gazebo_launch_file_dir = os.path.join(gazebo_pkg_dir, 'launch', 'gazebo')
     spawn_launch_file_dir = os.path.join(gazebo_pkg_dir, 'launch', 'spawn')
     comm_launch_file_dir = os.path.join(comm_pkg_dir, 'launch')
+    nav_launch_file_dir = os.path.join(navigation_pkg_dir, 'launch')
 
     # --- Launch Configuration Variables ---
 
@@ -71,6 +73,20 @@ def generate_launch_description():
             'namespace': namespace,
         }.items(),
     )
+    nav_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(
+            nav_launch_file_dir, 'navigation_multi_robot.launch.py')),
+        launch_arguments={
+            'namespace': namespace,
+            'robot_number': robot_number,
+            'world_name': world_name,
+            'enable_slam': 'False',
+            'enable_localization': 'True',
+            'enable_navigation': 'True',
+            'enable_rviz': 'False',
+            'enable_map_server': 'True',
+        }.items(),
+    )
 
     # --- Launch Description ---
 
@@ -83,5 +99,6 @@ def generate_launch_description():
     launch_description.add_action(world_cmd)
     launch_description.add_action(spawn_cmd)
     # launch_description.add_action(comm_cmd)
+    launch_description.add_action(nav_cmd)
 
     return launch_description

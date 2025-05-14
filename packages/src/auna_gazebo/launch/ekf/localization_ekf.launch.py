@@ -12,6 +12,9 @@ def generate_launch_description():
     default_ekf_config_path = os.path.join(
         auna_gazebo_pkg_share, 'config', 'ekf', 'ekf.yaml')
 
+    print(
+        f"[localization_ekf.launch.py] Using EKF config path: {default_ekf_config_path}")
+
     declare_namespace_arg = DeclareLaunchArgument(
         'namespace',
         default_value='',
@@ -38,7 +41,6 @@ def generate_launch_description():
         'use_odom', default_value='true', description='Placeholder: Enable wheel odometry input (managed by EKF YAML)'
     )
 
-    namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
     ekf_config_file = LaunchConfiguration('ekf_config_file')
 
