@@ -2,13 +2,8 @@
 /**:
   ros__parameters:
     frequency: 30.0
-    two_d_mode: false
+    two_d_mode: true
     sensor_timeout: 1.0
-    # debug: true # Enable EKF debug output
-    # # For multiple robots, you might want to make this path unique per robot,
-    # # e.g., by passing it as a parameter from the launch file.
-    # # For now, we'll use a fixed path for robot0.
-    # debug_out_file: /tmp/ekf_debug_robot0.txt # Path for the debug output
 
     odom_frame: odom
     base_link_frame: base_link
