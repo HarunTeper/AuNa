@@ -4,6 +4,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
 
+#include "std_msgs/msg/bool.hpp"
+
 #include <chrono>  // Include chrono for time points
 #include <memory>  // Include memory for unique_ptr etc.
 #include <thread>  // Include thread
@@ -68,23 +70,27 @@ private:
   rclcpp::Node::SharedPtr node_ = nullptr;
   rclcpp::executors::SingleThreadedExecutor::UniquePtr executor_ = nullptr;
   std::unique_ptr<std::thread> spinner_thread_ = nullptr;
-  rclcpp::Client<auna_msgs::srv::SetString>::SharedPtr set_source_client_ = nullptr;
-  rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr set_estop_client_ = nullptr;
-  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cacc_subscriber_ = nullptr;
-  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr teleop_subscriber_ = nullptr;
-  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr nav2_subscriber_ = nullptr;
 
   // --- State Variables ---
   std::string current_namespace_;
   SelectedSource selected_source_ = SelectedSource::OFF;
   bool estop_active_ = false;
   bool backend_node_ready_ = false;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr global_estop_publisher_ = nullptr;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr global_estop_subscriber_;
   std::chrono::time_point<std::chrono::steady_clock> cacc_last_msg_time_;
   std::chrono::time_point<std::chrono::steady_clock> teleop_last_msg_time_;
   std::chrono::time_point<std::chrono::steady_clock> nav2_last_msg_time_;
   bool cacc_msg_received_ = false;
   bool teleop_msg_received_ = false;
   bool nav2_msg_received_ = false;
+
+  // --- ROS Clients and Subscribers ---
+  rclcpp::Client<auna_msgs::srv::SetString>::SharedPtr set_source_client_ = nullptr;
+  rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr set_estop_client_ = nullptr;
+  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cacc_subscriber_ = nullptr;
+  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr teleop_subscriber_ = nullptr;
+  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr nav2_subscriber_ = nullptr;
 
   // --- Timers ---
   QTimer * ui_update_timer_ = nullptr;
@@ -103,6 +109,7 @@ private:
   void caccCallback(const geometry_msgs::msg::Twist::ConstSharedPtr msg);
   void teleopCallback(const geometry_msgs::msg::Twist::ConstSharedPtr msg);
   void nav2Callback(const geometry_msgs::msg::Twist::ConstSharedPtr msg);
+  void globalEstopCallback(const std_msgs::msg::Bool::SharedPtr msg);
 };
 
 }  // namespace auna_rviz_plugins

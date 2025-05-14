@@ -2,6 +2,7 @@
 
 #include "auna_msgs/srv/set_string.hpp"
 #include "geometry_msgs/msg/twist.hpp"
+#include "std_msgs/msg/bool.hpp"  // Added for global E-Stop
 #include "std_srvs/srv/set_bool.hpp"
 
 #include <algorithm>
@@ -16,6 +17,7 @@ using namespace std::chrono_literals;
 using SetString = auna_msgs::srv::SetString;
 using SetBool = std_srvs::srv::SetBool;
 using Twist = geometry_msgs::msg::Twist;
+using StdBool = std_msgs::msg::Bool;  // Added for global E-Stop
 
 class CmdVelMultiplexerNode : public rclcpp::Node
 {
@@ -70,6 +72,12 @@ public:
                                   &CmdVelMultiplexerNode::setEstopCallback, this,
                                   std::placeholders::_1, std::placeholders::_2));
 
+    // Subscribe to global emergency stop topic
+    global_estop_subscriber_ = this->create_subscription<StdBool>(
+      "/global_emergency_stop", 10,
+      std::bind(&CmdVelMultiplexerNode::globalEstopCallback, this, std::placeholders::_1));
+    RCLCPP_INFO(this->get_logger(), "Subscribed to /global_emergency_stop topic.");
+
     auto publish_period = std::chrono::duration<double>(1.0 / publish_rate);
     publish_timer_ = this->create_wall_timer(
       std::chrono::duration_cast<std::chrono::nanoseconds>(publish_period),
@@ -119,7 +127,25 @@ private:
     estop_active_ = request->data;
     response->success = true;
     response->message = estop_active_ ? "Emergency stop ACTIVATED" : "Emergency stop DEACTIVATED";
-    RCLCPP_WARN(this->get_logger(), "%s", response->message.c_str());
+    if (estop_active_) {
+      RCLCPP_WARN(this->get_logger(), "Namespaced E-Stop Service: %s", response->message.c_str());
+    } else {
+      RCLCPP_INFO(this->get_logger(), "Namespaced E-Stop Service: %s", response->message.c_str());
+    }
+  }
+
+  void globalEstopCallback(const StdBool::SharedPtr msg)
+  {
+    if (estop_active_ != msg->data) {
+      estop_active_ = msg->data;
+      if (estop_active_) {
+        RCLCPP_WARN(
+          this->get_logger(), "Global E-Stop Received: Emergency stop ACTIVATED via topic");
+      } else {
+        RCLCPP_INFO(
+          this->get_logger(), "Global E-Stop Received: Emergency stop DEACTIVATED via topic");
+      }
+    }
   }
 
   void publishTimerCallback()
@@ -170,6 +196,7 @@ private:
   rclcpp::Service<SetString>::SharedPtr set_source_service_;
   rclcpp::Service<SetBool>::SharedPtr set_estop_service_;
   rclcpp::TimerBase::SharedPtr publish_timer_;
+  rclcpp::Subscription<StdBool>::SharedPtr global_estop_subscriber_;  // Added
 };
 
 int main(int argc, char * argv[])

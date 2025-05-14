@@ -166,12 +166,6 @@ void auna_rviz_plugins::ControlPanel::initializeROS()
     node_->create_publisher<std_msgs::msg::Bool>("/global_emergency_stop", 10);
   RCLCPP_INFO(node_->get_logger(), "Created publisher for /global_emergency_stop");
 
-  // Add subscriber to global emergency stop to keep all GUIs synced
-  global_estop_subscriber_ = node_->create_subscription<std_msgs::msg::Bool>(
-    "/global_emergency_stop", 10,
-    std::bind(&auna_rviz_plugins::ControlPanel::globalEstopCallback, this, std::placeholders::_1));
-  RCLCPP_INFO(node_->get_logger(), "Subscribed to /global_emergency_stop topic for GUI sync");
-
   executor_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
   executor_->add_node(node_);
   spinner_thread_ = std::make_unique<std::thread>([this]() { executor_->spin(); });
@@ -197,27 +191,6 @@ void auna_rviz_plugins::ControlPanel::initializeROS()
 
   updateROSSubscriptionsAndClients();
   checkServiceAvailability();  // Initial check
-}
-
-// Add this new method to handle global E-Stop messages
-void auna_rviz_plugins::ControlPanel::globalEstopCallback(const std_msgs::msg::Bool::SharedPtr msg)
-{
-  // Only update if the state has changed and we didn't initiate the change
-  if (estop_active_ != msg->data) {
-    estop_active_ = msg->data;
-
-    // Update button state without triggering another publish
-    emergency_stop_button_->blockSignals(true);
-    emergency_stop_button_->setChecked(estop_active_);
-    emergency_stop_button_->blockSignals(false);
-
-    RCLCPP_INFO(
-      node_->get_logger(), "Received global E-Stop update: %s",
-      estop_active_ ? "ACTIVE" : "INACTIVE");
-
-    // Update the UI to reflect the new state
-    updateUIStates();
-  }
 }
 
 // Update ROS clients and subscribers based on the current namespace
@@ -341,12 +314,11 @@ void auna_rviz_plugins::ControlPanel::onEmergencyStopClicked()
     node_->get_logger(), "UI: Global E-Stop button clicked. Requesting state: %s",
     estop_active_ ? "ACTIVE" : "INACTIVE");
 
-  // Update UI immediately without waiting for the subscription callback
-  updateUIStates();
-
   auto msg = std_msgs::msg::Bool();
   msg.data = estop_active_;
   global_estop_publisher_->publish(msg);
+
+  updateUIStates();
 }
 
 void auna_rviz_plugins::ControlPanel::updateUIStates()
