@@ -55,7 +55,8 @@ def generate_launch_description():
         ],
         remappings=[
             ('odometry/filtered', 'odometry/filtered_ekf')
-        ]
+        ],
+        arguments=['--ros-args', '--log-level', 'ekf_filter_node:=debug']
     )
 
     return LaunchDescription([

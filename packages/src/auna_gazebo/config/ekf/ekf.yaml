@@ -2,8 +2,9 @@
 /**:
   ros__parameters:
     frequency: 30.0
-    two_d_mode: true
+    two_d_mode: false
     sensor_timeout: 1.0
+    print_diagnostics: true
 
     odom_frame: odom
     base_link_frame: base_link
@@ -30,15 +31,15 @@
     odom0_relative: true
     odom0_queue_size: 10
 
-    pose0: gps/fix
-    pose0_config: [true,  true,  false, # X, Y, Z
-                   false, false, false, # Roll, Pitch, Yaw
-                   false, false, false, # dX, dY, dZ
-                   false, false, false, # dRoll, dPitch, dYaw
-                   false, false, false] # ddX, ddY, ddZ
-    pose0_differential: false
-    pose0_relative: false
-    pose0_queue_size: 5
+    # pose0: gps/fix # This line can remain, it won't be used if config is false
+    # pose0_config: [false, false, false, # X, Y, Z
+    #               false, false, false, # Roll, Pitch, Yaw
+    #               false, false, false, # dX, dY, dZ
+    #               false, false, false, # dRoll, dPitch, dYaw
+    #               false, false, false] # ddX, ddY, ddZ
+    # pose0_differential: false # These can also remain
+    # pose0_relative: false
+    # pose0_queue_size: 5
 
     publish_tf: true
 

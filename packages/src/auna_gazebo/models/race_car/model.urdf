@@ -315,7 +315,13 @@
   </joint>
 
   <!-- IMU -->
-  <link name="imu_link" />
+  <link name="imu_link">
+    <inertial>
+      <mass value="0.01"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <xacro:box_inertia m="0.01" l="0.01" b="0.01" h="0.01" />
+    </inertial>
+  </link>
 
   <joint name="imu_joint" type="fixed">
     <axis xyz="0 1 0" />
@@ -323,6 +329,66 @@
     <parent link="chassis"/>
     <child link="imu_link"/>
   </joint>
+  
+  <!-- IMU Sensor -->
+  <gazebo reference="imu_link">
+    <sensor name="imu_sensor" type="imu">
+      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+        <ros>
+          <remapping>~/out:=imu</remapping>
+        </ros>
+        <initial_orientation_as_reference>false</initial_orientation_as_reference>
+        <frame_name>imu_link</frame_name>
+        <!-- Remove redundant general noise parameter -->
+        <orientation_noise>
+          <x>
+            <mean>0.0</mean>
+            <stddev>0.001</stddev>
+          </x>
+          <y>
+            <mean>0.0</mean>
+            <stddev>0.001</stddev>
+          </y>
+          <z>
+            <mean>0.0</mean>
+            <stddev>0.001</stddev>
+          </z>
+        </orientation_noise>
+        <angular_velocity_noise>
+          <x>
+            <mean>0.0</mean>
+            <stddev>0.001</stddev>
+          </x>
+          <y>
+            <mean>0.0</mean>
+            <stddev>0.001</stddev>
+          </y>
+          <z>
+            <mean>0.0</mean>
+            <stddev>0.001</stddev>
+          </z>
+        </angular_velocity_noise>
+        <!-- Add linear acceleration noise -->
+        <linear_acceleration_noise>
+          <x>
+            <mean>0.0</mean>
+            <stddev>0.0017</stddev>
+          </x>
+          <y>
+            <mean>0.0</mean>
+            <stddev>0.0017</stddev>
+          </y>
+          <z>
+            <mean>0.0</mean>
+            <stddev>0.0017</stddev>
+          </z>
+        </linear_acceleration_noise>
+      </plugin>
+      <always_on>true</always_on>
+      <update_rate>200</update_rate>
+      <visualize>true</visualize>
+    </sensor>
+  </gazebo>
   
   <!-- Plugins --> 
 
@@ -423,21 +489,6 @@
         </ros>
         <output_type>sensor_msgs/LaserScan</output_type>
       </plugin>
-    </sensor>
-  </gazebo>
-  
-  <!-- IMU Sensor -->
-  <gazebo reference="imu_link">
-    <sensor name="imu_sensor" type="imu">
-      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
-        <ros>
-          <remapping>~/out:=imu</remapping>
-        </ros>
-        <initial_orientation_as_reference>false</initial_orientation_as_reference>
-      </plugin>
-      <always_on>true</always_on>
-      <update_rate>200</update_rate>
-      <visualize>true</visualize>
     </sensor>
   </gazebo>
   
