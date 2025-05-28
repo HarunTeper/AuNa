@@ -96,14 +96,8 @@ RUN if [ "$INSTALL_ROS2" = "true" ]; then \
     ros-humble-gazebo-msgs \
     ros-humble-joy-linux \
     ros-humble-teleop-twist-keyboard \
-    ros-humble-teleop-twist-joy; \
-    fi
-
-# --- Build robot_localization from source ---
-ARG BUILD_ROBOT_LOCALIZATION_FROM_SOURCE=true
-RUN if [ "$BUILD_ROBOT_LOCALIZATION_FROM_SOURCE" = "true" ]; then \
-    #    git clone -b humble-devel https://github.com/cra-ros-pkg/robot_localization.git /home/vscode/workspace/packages/src/robot_localization; \
-    git submodule update --init --recursive; \
+    ros-humble-teleop-twist-joy \
+    ros-humble-robot-localization; \
     fi
 
 # --- Install python package for teleop
