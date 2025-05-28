@@ -1,4 +1,4 @@
-"""Spawn robot launch file"""
+"""Localization pose publisher launch file"""
 from launch_ros.actions import Node, SetRemap
 from launch.actions import GroupAction
 from launch import LaunchDescription
@@ -12,8 +12,8 @@ def generate_launch_description():
         SetRemap(src='/tf_static', dst='tf_static'),
         Node(
             package='auna_gazebo',
-            executable='ground_truth_localization',
-            name='ground_truth_localization',
+            executable='ground_truth_pose_publisher',
+            name='ground_truth_pose_publisher',
             output='screen'
         )
     ])

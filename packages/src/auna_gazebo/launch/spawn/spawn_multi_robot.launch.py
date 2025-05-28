@@ -116,7 +116,7 @@ def generate_launch_description():
     ground_truth_arg = DeclareLaunchArgument(
         'ground_truth',
         default_value='False',
-        description='Whether to use ground_truth_localization for localization'
+        description='Whether to use ground_truth_transform for localization'
     )
 
     namespace_arg = DeclareLaunchArgument(

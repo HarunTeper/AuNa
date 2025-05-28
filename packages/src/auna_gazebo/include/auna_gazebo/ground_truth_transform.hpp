@@ -15,10 +15,10 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Scalar.h>
 
-class GroundTruthLocalization : public rclcpp::Node
+class GroundTruthTransform : public rclcpp::Node
 {
 public:
-  GroundTruthLocalization();
+  GroundTruthTransform();
 
 private:
   void service_timer_callback();

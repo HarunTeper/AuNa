@@ -19,8 +19,6 @@ def generate_launch_description():
     # Paths to folders and files
     spawn_launch_file_dir = os.path.join(
         pkg_dir, 'launch', 'spawn')  # Renamed for clarity
-    ground_truth_launch_dir = os.path.join(
-        pkg_dir, 'launch', 'ground_truth_localization')
     ekf_launch_file_dir = os.path.join(
         pkg_dir, 'launch', 'ekf')  # Path for EKF launch files
 
@@ -121,26 +119,28 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(spawn_launch_file_dir,  # This path seems to be used in the original file for this
-                             '_ground_truth_localization.launch.py')
+                             '_ground_truth_transform.launch.py')
             ),
             # Launch if ground_truth is 'True'
-            condition=IfCondition(PythonExpression(
-                [ground_truth, " == 'True'"]))
+            condition=IfCondition(PythonExpression(ground_truth))
         ),
-        # EKF Localization (conditional, opposite to ground_truth)
+        # Ground truth localization (conditional)
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
-                os.path.join(ekf_launch_file_dir, 'localization_ekf.launch.py')
+                os.path.join(spawn_launch_file_dir,  # This path seems to be used in the original file for this
+                             '_ground_truth_pose_publisher.launch.py')
+            ),
+            # Launch if ground_truth is 'True'
+            condition=IfCondition(PythonExpression(ground_truth))
+        ),
+        # EKF Localization
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(ekf_launch_file_dir, 'ekf.launch.py')
             ),
             launch_arguments={
-                'namespace': namespace,
                 'use_sim_time': use_sim_time,
-                'debug_ekf': debug_ekf,
-                # ekf_config_file will use its default from localization_ekf.launch.py
             }.items(),
-            # Launch if ground_truth is 'False'
-            # condition=IfCondition(PythonExpression(
-            #     [ground_truth, " == 'False'"]))
         ),
     ])
 

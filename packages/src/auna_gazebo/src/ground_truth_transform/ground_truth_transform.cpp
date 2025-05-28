@@ -1,8 +1,8 @@
-#include "auna_gazebo/ground_truth_localization.hpp"
+#include "auna_gazebo/ground_truth_transform.hpp"
 
 // Create the publisher, timer and service client
-GroundTruthLocalization::GroundTruthLocalization()
-: Node("ground_truth_localization_node"),
+GroundTruthTransform::GroundTruthTransform()
+: Node("ground_truth_transform_node"),
   buffer_(this->get_clock()),
   listener_(buffer_),
   broadcaster_(this)
@@ -23,7 +23,7 @@ GroundTruthLocalization::GroundTruthLocalization()
 }
 
 // Timer callback to periodically call a service request for the model state
-void GroundTruthLocalization::service_timer_callback()
+void GroundTruthTransform::service_timer_callback()
 {
   auto request = std::make_shared<gazebo_msgs::srv::GetEntityState::Request>();
   request->name = name_;
@@ -36,11 +36,11 @@ void GroundTruthLocalization::service_timer_callback()
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "service not available, waiting again...");
   }
   auto result = modelClient_->async_send_request(
-    request, std::bind(&GroundTruthLocalization::model_srv_callback, this, std::placeholders::_1));
+    request, std::bind(&GroundTruthTransform::model_srv_callback, this, std::placeholders::_1));
 }
 
 // Read the requested entity state and publish the received pose to simulation_pose
-void GroundTruthLocalization::model_srv_callback(
+void GroundTruthTransform::model_srv_callback(
   const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture future)
 {
   auto result = future.get();
@@ -81,7 +81,7 @@ void GroundTruthLocalization::model_srv_callback(
   map_to_odom_transform_msg.transform.rotation.y = map_to_odom.getRotation().getY();
   map_to_odom_transform_msg.transform.rotation.z = map_to_odom.getRotation().getZ();
   map_to_odom_transform_msg.transform.rotation.w = map_to_odom.getRotation().getW();
-  map_to_odom_transform_msg.header.frame_id = "map";
+  map_to_odom_transform_msg.header.frame_id = "gazebo_world";
   map_to_odom_transform_msg.child_frame_id = "odom";
   auto stamp = tf2_ros::fromMsg(entity->header.stamp);
   map_to_odom_transform_msg.header.stamp = tf2_ros::toMsg(stamp + tf2::durationFromSec(1.0));

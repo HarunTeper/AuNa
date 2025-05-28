@@ -36,17 +36,19 @@ include_directories(include)
 add_library(robot_name_publisher_node SHARED src/robot_name_publisher/robot_name_publisher.cpp)
 add_library(global_tf_node SHARED src/global_tf/global_tf.cpp)
 add_library(localization_pose_publisher_node SHARED src/localization_pose_publisher/localization_pose_publisher.cpp)
+add_library(ground_truth_pose_publisher_node SHARED src/ground_truth_pose_publisher/ground_truth_pose_publisher.cpp)
 add_library(ground_truth_cam_node SHARED src/ground_truth_cam/ground_truth_cam.cpp)
-add_library(ground_truth_localization_node SHARED src/ground_truth_localization/ground_truth_localization.cpp)
+add_library(ground_truth_transform_node SHARED src/ground_truth_transform/ground_truth_transform.cpp)
 
 # Create Cpp executable
 add_executable(robot_name_publisher src/robot_name_publisher/robot_name_publisher_main.cpp)
 add_executable(global_tf src/global_tf/global_tf_main.cpp)
 add_executable(localization_pose_publisher src/localization_pose_publisher/localization_pose_publisher_main.cpp)
+add_executable(ground_truth_pose_publisher src/ground_truth_pose_publisher/ground_truth_pose_publisher_main.cpp)
 add_executable(ground_truth_cam src/ground_truth_cam/ground_truth_cam_main.cpp)
-add_executable(ground_truth_localization 
-  src/ground_truth_localization/ground_truth_localization.cpp
-  src/ground_truth_localization/ground_truth_localization_main.cpp)
+add_executable(ground_truth_transform 
+  src/ground_truth_transform/ground_truth_transform.cpp
+  src/ground_truth_transform/ground_truth_transform_main.cpp)
 
 # Target dependencies
 set(robot_name_publisher_dependencies rclcpp gazebo_msgs auna_msgs)
@@ -58,19 +60,22 @@ ament_target_dependencies(global_tf ${global_tf_dependencies})
 set(localization_pose_publisher_dependencies rclcpp std_msgs geometry_msgs nav_msgs tf2_ros tf2_geometry_msgs)
 ament_target_dependencies(localization_pose_publisher_node ${localization_pose_publisher_dependencies})
 ament_target_dependencies(localization_pose_publisher ${localization_pose_publisher_dependencies})
+ament_target_dependencies(ground_truth_pose_publisher_node ${localization_pose_publisher_dependencies})
+ament_target_dependencies(ground_truth_pose_publisher ${localization_pose_publisher_dependencies})
 set(ground_truth_cam_dependencies rclcpp std_msgs gazebo_msgs  tf2 etsi_its_msgs etsi_its_msgs_utils)
 ament_target_dependencies(ground_truth_cam_node ${ground_truth_cam_dependencies})
 ament_target_dependencies(ground_truth_cam ${ground_truth_cam_dependencies})
-set(ground_truth_localization_dependencies rclcpp std_msgs geometry_msgs gazebo_msgs tf2 tf2_ros tf2_geometry_msgs)
-ament_target_dependencies(ground_truth_localization_node ${ground_truth_localization_dependencies})
-ament_target_dependencies(ground_truth_localization ${ground_truth_localization_dependencies})
+set(ground_truth_transform_dependencies rclcpp std_msgs geometry_msgs gazebo_msgs tf2 tf2_ros tf2_geometry_msgs)
+ament_target_dependencies(ground_truth_transform_node ${ground_truth_transform_dependencies})
+ament_target_dependencies(ground_truth_transform ${ground_truth_transform_dependencies})
 
 # Link libraries
 target_link_libraries(robot_name_publisher robot_name_publisher_node)
 target_link_libraries(global_tf global_tf_node)
 target_link_libraries(localization_pose_publisher localization_pose_publisher_node)
+target_link_libraries(ground_truth_pose_publisher ground_truth_pose_publisher_node)
 target_link_libraries(ground_truth_cam ground_truth_cam_node)
-target_link_libraries(ground_truth_localization ground_truth_localization_node)
+target_link_libraries(ground_truth_transform ground_truth_transform_node)
 
 install(DIRECTORY 
   config
@@ -85,8 +90,9 @@ install(TARGETS
   robot_name_publisher
   global_tf
   localization_pose_publisher
+  ground_truth_pose_publisher
   ground_truth_cam
-  ground_truth_localization
+  ground_truth_transform
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -94,8 +100,9 @@ install(TARGETS
   robot_name_publisher_node
   global_tf_node
   localization_pose_publisher_node
+  ground_truth_pose_publisher_node
   ground_truth_cam_node
-  ground_truth_localization
+  ground_truth_transform
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin

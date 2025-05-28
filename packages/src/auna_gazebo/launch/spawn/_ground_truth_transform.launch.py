@@ -12,10 +12,9 @@ def generate_launch_description():
         SetRemap(src='/tf_static', dst='tf_static'),
         Node(
             package='auna_gazebo',
-            executable='ground_truth_localization',
-            name='ground_truth_localization',
-            output='screen',
-            # arguments=[namespace],
+            executable='ground_truth_transform',
+            name='ground_truth_transform',
+            output='screen'
         )
     ])
 

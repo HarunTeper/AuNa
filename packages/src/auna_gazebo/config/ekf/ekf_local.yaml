@@ -1,12 +1,13 @@
-# packages/src/auna_gazebo/config/ekf/ekf_odom.yaml
+# packages/src/auna_gazebo/config/ekf/ekf_local.yaml
 /**:
   ros__parameters:
-    frequency: 30.0
-    two_d_mode: true
-    sensor_timeout: 1.0
-    print_diagnostics: false
 
-    map_frame: odom      # For this EKF, map_frame is odom
+    frequency: 50.0
+    sensor_timeout: 0.1
+    two_d_mode: true
+    print_diagnostics: true
+
+    map_frame: map      # For this EKF, map_frame is odom
     odom_frame: odom     # Standard odom frame name
     base_link_frame: base_link # Standard base_link frame name
     world_frame: odom    # This EKF operates in the odom world_frame
@@ -18,14 +19,14 @@
                   true,  true,  true,  # Roll, Pitch, Yaw
                   false, false, false, # dX, dY, dZ
                   true,  true,  true,  # dRoll, dPitch, dYaw
-                  false, false, false] # ddX, ddY, ddZ
+                  true,  true,  true] # ddX, ddY, ddZ
     imu0_differential: false
     imu0_relative: false
     imu0_queue_size: 5
     imu0_remove_gravitational_acceleration: true
 
     odom0: odom
-    odom0_config: [false, false, false, # X, Y, Z
+    odom0_config: [true, true, false, # X, Y, Z
                    false, false, false, # Roll, Pitch, Yaw
                    true,  true,  false, # dX, dY, dZ
                    false, false, true,  # dRoll, dPitch, dYaw
