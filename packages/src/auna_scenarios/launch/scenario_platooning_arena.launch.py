@@ -27,6 +27,7 @@ def generate_launch_description():
     robot_number = LaunchConfiguration('robot_number', default='2')
     world_name = LaunchConfiguration('world_name', default='arena')
     namespace = LaunchConfiguration('namespace', default='robot')
+    debug_ekf = LaunchConfiguration('debug_ekf', default='false')
 
     # --- Launch Arguments ---
 
@@ -45,7 +46,6 @@ def generate_launch_description():
         default_value='robot',
         description='Namespace of the robot'
     )
-
     # --- Launch Description Actions ---
 
     world_cmd = IncludeLaunchDescription(
@@ -62,7 +62,8 @@ def generate_launch_description():
             'robot_number': robot_number,
             'world_name': world_name,
             'namespace': namespace,
-            'ground_truth': 'False'
+            'ground_truth': 'False',
+            'debug_ekf': debug_ekf
         }.items(),
     )
     comm_cmd = IncludeLaunchDescription(
@@ -95,10 +96,11 @@ def generate_launch_description():
     launch_description.add_action(robot_number_arg)
     launch_description.add_action(world_name_arg)
     launch_description.add_action(namespace_arg)
+    # launch_description.add_action(debug_ekf_arg)
 
     launch_description.add_action(world_cmd)
     launch_description.add_action(spawn_cmd)
     # launch_description.add_action(comm_cmd)
-    # launch_description.add_action(nav_cmd)
+    launch_description.add_action(nav_cmd)
 
     return launch_description

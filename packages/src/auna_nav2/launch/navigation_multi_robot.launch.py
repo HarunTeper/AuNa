@@ -84,6 +84,41 @@ def include_launch_description(context: LaunchContext):
     # Nodes and other launch files
     launch_description_content = []
 
+    # Launch Map Server Globally (if enabled)
+    # The map_server should not be namespaced per robot.
+    if enable_map_server.perform(context).lower() == 'true':
+        map_server_launch = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(os.path.join(
+                nav_launch_file_dir, 'map_server.launch.py')),
+            launch_arguments={
+                'namespace': '',  # Launch map_server in global namespace
+                'use_sim_time': use_sim_time,
+                'autostart': autostart,
+                'map': map_file,
+                # Assuming map_server uses some common params
+                'params_file': os.path.join(pkg_dir, 'config', 'nav2_params', params_file_name.perform(context)+".yaml")
+            }.items()
+        )
+        launch_description_content.append(map_server_launch)
+
+    # Launch RViz Globally (if enabled)
+    # This RViz instance will be for global view, subscribing to global /map
+    if enable_rviz.perform(context).lower() == 'true':
+        # Determine the global RViz config file (e.g., config_arena.rviz)
+        # This might need adjustment if rviz_config is meant to be namespaced per robot
+        global_rviz_config_file = os.path.join(
+            pkg_dir, 'rviz', 'config_arena.rviz')  # Example, adjust as needed
+
+        rviz_launch = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(os.path.join(
+                nav_launch_file_dir, 'rviz.launch.py')),
+            launch_arguments={
+                'namespace': '',  # Launch global RViz in global namespace
+                'rviz_config': global_rviz_config_file
+            }.items()
+        )
+        launch_description_content.append(rviz_launch)
+
     for num in range(robot_number):
         print(
             f"navigation_multi_robot_launch: Nav nodes {num} namespace: {robots[num]['namespace']}")
@@ -94,18 +129,18 @@ def include_launch_description(context: LaunchContext):
                 launch_arguments={
                     'autostart': autostart,
                     'default_bt_xml_filename': default_bt_xml_filename,
-                    'map': map_file,
+                    'map': map_file,  # Single robot might still need map path for its costmaps
                     'namespace': robots[num]['namespace'],
                     'params_file': robot_params_file_args[num],
-                    'rviz_config': rviz_config,
+                    'rviz_config': rviz_config,  # This would be for a per-robot RViz if enabled below
                     'use_namespace': 'true',
                     'use_sim_time': use_sim_time,
                     'world_name': world_name,
                     'enable_slam': enable_slam,
                     'enable_localization': enable_localization,
                     'enable_navigation': enable_navigation,
-                    'enable_rviz': enable_rviz,
-                    'enable_map_server': enable_map_server,
+                    'enable_rviz': 'false',  # Set to 'false' if global RViz is used, or manage per-robot
+                    'enable_map_server': 'false',  # Map server is now global
                 }.items(),
             )
         ])

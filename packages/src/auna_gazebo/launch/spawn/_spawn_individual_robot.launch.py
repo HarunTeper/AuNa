@@ -32,6 +32,7 @@ def generate_launch_description():
     y_pose = LaunchConfiguration('y_pose')
     z_pose = LaunchConfiguration('z_pose')
     ground_truth = LaunchConfiguration('ground_truth')
+    debug_ekf = LaunchConfiguration('debug_ekf')
 
     # Launch Arguments
     launch_args = [
@@ -134,6 +135,7 @@ def generate_launch_description():
             launch_arguments={
                 'namespace': namespace,
                 'use_sim_time': use_sim_time,
+                'debug_ekf': debug_ekf,
                 # ekf_config_file will use its default from localization_ekf.launch.py
             }.items(),
             # Launch if ground_truth is 'False'

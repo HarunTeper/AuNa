@@ -1,0 +1,90 @@
+# packages/src/auna_gazebo/config/ekf/ekf_map.yaml
+/**:
+  ros__parameters:
+    frequency: 30.0
+    two_d_mode: true # Assuming global sensors might have 3D info; adjust if strictly 2D
+    sensor_timeout: 1.0
+
+    # If you're having trouble, try setting this to true, and then echo the /diagnostics_agg topic to see if the node is
+    # unhappy with any settings or data.
+    print_diagnostics: false
+
+    map_frame: map       # Standard map frame name
+    odom_frame: odom     # Standard odom frame name
+    base_link_frame: base_link # Standard base_link frame name
+    world_frame: map     # This EKF operates in the map world_frame
+
+    publish_tf: true     # This EKF MUST publish the map->odom TF
+
+    imu0: imu
+    imu0_config: [false, false, false, # X, Y, Z
+                  true,  true,  true,  # Roll, Pitch, Yaw (useful for orientation in map)
+                  false, false, false, # dX, dY, dZ
+                  true,  true,  true,  # dRoll, dPitch, dYaw
+                  false, false, false] # ddX, ddY, ddZ
+    imu0_differential: false
+    imu0_relative: false
+    imu0_queue_size: 5
+    imu0_remove_gravitational_acceleration: true
+
+    odom0: odom  # This should be the RAW wheel odometry topic
+    odom0_config: [false, false, false,  # X, Y, Z
+                   false, false, false,  # Roll, Pitch, Yaw
+                   true,  true,  false,  # dX, dY, dZ (Fuse X and Y velocities from raw odom)
+                   false, false, true,   # dRoll, dPitch, dYaw (Fuse Yaw velocity from raw odom)
+                   false, false, false]  # ddX, ddY, ddZ
+    odom0_differential: true   # Matching ekf_odom's setting for this topic
+    odom0_relative: false      # Standard for nav_msgs/Odometry
+    odom0_queue_size: 10
+
+    # odom0 (wheel odometry) is intentionally omitted for this EKF instance,
+    # as it's handled by the ekf_odom_node. This EKF relies on the
+    # odom->base_link TF published by ekf_odom_node.
+
+    # [ADVANCED] The process noise covariance matrix can be difficult to tune, and can vary for each application, so it is
+    # exposed as a configuration parameter. This matrix represents the noise we add to the total error after each
+    # prediction step. The better the omnidirectional motion model matches your system, the smaller these values can be.
+    # However, if users find that a given variable is slow to converge, one approach is to increase the
+    # process_noise_covariance diagonal value for the variable in question, which will cause the filter's predicted error
+    # to be larger, which will cause the filter to trust the incoming measurement more during correction. The values are
+    # ordered as x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az. Defaults to the matrix below if
+    # unspecified.
+    # Note: the specification of covariance matrices can be cumbersome, so all matrix parameters in this package support
+    # both full specification or specification of only the diagonal values.
+    process_noise_covariance: [0.05,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                0.0,    0.05,   0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                0.0,    0.0,    0.06,   0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                0.0,    0.0,    0.0,    0.03,   0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                0.0,    0.0,    0.0,    0.0,    0.03,   0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                0.0,    0.0,    0.0,    0.0,    0.0,    0.06,   0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.025,   0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.025,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.04,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+                                0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.01,   0.0,    0.0,    0.0,    0.0,    0.0,
+                                0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.01,   0.0,    0.0,    0.0,    0.0,
+                                0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.02,   0.0,    0.0,    0.0,
+                                0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.01,   0.0,    0.0,
+                                0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.01,   0.0,
+                                0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.015]
+
+    # [ADVANCED] This represents the initial value for the state estimate error covariance matrix. Setting a diagonal
+    # value (variance) to a large value will result in rapid convergence for initial measurements of the variable in
+    # question. Users should take care not to use large values for variables that will not be measured directly. The values
+    # are ordered as x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az. Defaults to the diagonal values below
+    # if unspecified. In this example, we specify only the diagonal of the matrix.
+    initial_estimate_covariance: [1e-9,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,
+                                  0.0,    1e-9,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0,
+                                  0.0,    0.0,    1e-9,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0, # Z
+                                  0.0,    0.0,    0.0,    0.01,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0, # Roll (idx 3)
+                                  0.0,    0.0,    0.0,    0.0,    0.01,   0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0, # Pitch (idx 4)
+                                  0.0,    0.0,    0.0,    0.0,    0.0,    0.01,   0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0, # Yaw (idx 5)
+                                  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    1e-9,   0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0, # vX
+                                  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    1e-9,   0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    0.0, # vY
+                                  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    1e-9,   0.0,     0.0,     0.0,     0.0,    0.0,    0.0, # vZ
+                                  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.001,   0.0,     0.0,     0.0,    0.0,    0.0, # vRoll (idx 9)
+                                  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.001,   0.0,     0.0,    0.0,    0.0, # vPitch (idx 10)
+                                  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.001,   0.0,    0.0,    0.0, # vYaw (idx 11)
+                                  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     1e-9,   0.0,    0.0,
+                                  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    1e-9,   0.0,
+                                  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,     0.0,     0.0,    0.0,    1e-9]
+
