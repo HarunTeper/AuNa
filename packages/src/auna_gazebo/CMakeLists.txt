@@ -34,19 +34,19 @@ include_directories(include)
 
 # Add libraries
 add_library(robot_name_publisher_node SHARED src/robot_name_publisher/robot_name_publisher.cpp)
-add_library(global_tf_node SHARED src/transformations/global_tf/global_tf.cpp)
-add_library(localization_pose_publisher_node SHARED src/transformations/localization_pose_publisher/localization_pose_publisher.cpp)
-add_library(ground_truth_cam_node SHARED src/transformations/ground_truth_cam/ground_truth_cam.cpp)
-add_library(ground_truth_localization_node SHARED src/transformations/ground_truth_localization/ground_truth_localization.cpp)
+add_library(global_tf_node SHARED src/global_tf/global_tf.cpp)
+add_library(localization_pose_publisher_node SHARED src/localization_pose_publisher/localization_pose_publisher.cpp)
+add_library(ground_truth_cam_node SHARED src/ground_truth_cam/ground_truth_cam.cpp)
+add_library(ground_truth_localization_node SHARED src/ground_truth_localization/ground_truth_localization.cpp)
 
 # Create Cpp executable
 add_executable(robot_name_publisher src/robot_name_publisher/robot_name_publisher_main.cpp)
-add_executable(global_tf src/transformations/global_tf/global_tf_main.cpp)
-add_executable(localization_pose_publisher src/transformations/localization_pose_publisher/localization_pose_publisher_main.cpp)
-add_executable(ground_truth_cam src/transformations/ground_truth_cam/ground_truth_cam_main.cpp)
+add_executable(global_tf src/global_tf/global_tf_main.cpp)
+add_executable(localization_pose_publisher src/localization_pose_publisher/localization_pose_publisher_main.cpp)
+add_executable(ground_truth_cam src/ground_truth_cam/ground_truth_cam_main.cpp)
 add_executable(ground_truth_localization 
-  src/transformations/ground_truth_localization/ground_truth_localization.cpp
-  src/transformations/ground_truth_localization/ground_truth_localization_main.cpp)
+  src/ground_truth_localization/ground_truth_localization.cpp
+  src/ground_truth_localization/ground_truth_localization_main.cpp)
 
 # Target dependencies
 set(robot_name_publisher_dependencies rclcpp gazebo_msgs auna_msgs)
