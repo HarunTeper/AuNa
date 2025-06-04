@@ -1,18 +1,18 @@
-# packages/src/auna_gazebo/config/ekf/ekf_global.yaml
+# packages/src/auna_ekf/config/ekf/ekf_local.yaml
 /**:
   ros__parameters:
 
-    frequency: 20.0
-    sensor_timeout: 0.2
+    frequency: 50.0
+    sensor_timeout: 0.1
     two_d_mode: true
     print_diagnostics: true
 
     map_frame: map      # For this EKF, map_frame is odom
     odom_frame: odom     # Standard odom frame name
     base_link_frame: base_link # Standard base_link frame name
-    world_frame: map    # This EKF operates in the odom world_frame
+    world_frame: odom    # This EKF operates in the odom world_frame
 
-    publish_tf: false     # This EKF MUST publish the odom->base_link TF
+    publish_tf: true     # This EKF MUST publish the odom->base_link TF
 
     imu0: imu
     imu0_config: [false, false, false, # X, Y, Z
@@ -25,7 +25,7 @@
     imu0_queue_size: 5
     imu0_remove_gravitational_acceleration: true
 
-    odom0: odometry/gps
+    odom0: odom
     odom0_config: [true, true, false, # X, Y, Z
                    false, false, false, # Roll, Pitch, Yaw
                    true,  true,  false, # dX, dY, dZ

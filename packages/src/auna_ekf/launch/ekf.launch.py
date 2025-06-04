@@ -1,4 +1,4 @@
-# packages/src/auna_gazebo/launch/ekf/localization_ekf.launch.py
+# packages/src/auna_ekf/launch/ekf.launch.py
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -9,13 +9,13 @@ from launch.conditions import IfCondition
 
 
 def generate_launch_description():
-    auna_gazebo_pkg_share = get_package_share_directory('auna_gazebo')
+    auna_ekf_pkg_share = get_package_share_directory('auna_ekf') # Modified
     ekf_local_config_path = os.path.join(
-        auna_gazebo_pkg_share, 'config', 'ekf', 'ekf_local.yaml')
+        auna_ekf_pkg_share, 'config', 'ekf', 'ekf_local.yaml') # Modified
     ekf_global_config_path = os.path.join(
-        auna_gazebo_pkg_share, 'config', 'ekf', 'ekf_global.yaml')
+        auna_ekf_pkg_share, 'config', 'ekf', 'ekf_global.yaml') # Modified
     navsat_config_path = os.path.join(
-        auna_gazebo_pkg_share, 'config', 'ekf', 'navsat.yaml')
+        auna_ekf_pkg_share, 'config', 'ekf', 'navsat.yaml') # Modified
 
     declare_use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',
