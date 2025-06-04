@@ -1,10 +1,12 @@
 #include "auna_mqtt/mqtt_waypoint_receiver.hpp"
 
-MQTTWaypointReceiver::MQTTWaypointReceiver() : Node("mqtt_waypoint_receiver"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
+MQTTWaypointReceiver::MQTTWaypointReceiver()
+: Node("mqtt_waypoint_receiver"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
-  timer_ = this->create_wall_timer(std::chrono::milliseconds(100), [this](){timer_callback();});
+  timer_ = this->create_wall_timer(std::chrono::milliseconds(100), [this]() { timer_callback(); });
 
-  this->client_ptr_ = rclcpp_action::create_client<NavigateThroughPoses>(this,"navigate_through_poses");
+  this->client_ptr_ =
+    rclcpp_action::create_client<NavigateThroughPoses>(this, "navigate_through_poses");
 
   this->declare_parameter<std::string>("namespace", "");
   this->get_parameter<std::string>("namespace", namespace_);
@@ -21,18 +23,16 @@ MQTTWaypointReceiver::MQTTWaypointReceiver() : Node("mqtt_waypoint_receiver"), t
   m_mqttClient->set_callback(*m_callback);
 
   try {
-      m_mqttClient->connect(connOpts)->wait();
-      //  m_mqttClient.disconnect()->wait();
-  }
-  catch (const mqtt::exception& ex) {
-      std::cout << ex << std::endl;
+    m_mqttClient->connect(connOpts)->wait();
+    //  m_mqttClient.disconnect()->wait();
+  } catch (const mqtt::exception & ex) {
+    std::cout << ex << std::endl;
   }
   m_mqttClient->subscribe(_topic, 0)->wait();
 }
 
-void MQTTWaypointReceiver::timer_callback() 
+void MQTTWaypointReceiver::timer_callback()
 {
-
   RCLCPP_INFO(this->get_logger(), "Timer callback");
 
   if (poses_.empty()) {
@@ -47,15 +47,16 @@ void MQTTWaypointReceiver::timer_callback()
 
   geometry_msgs::msg::TransformStamped transformStamped;
   try {
-      if (namespace_ != "") {
-          transformStamped = tf_buffer_.lookupTransform("map", namespace_+"/base_link", tf2::TimePointZero);
-      } else {
-          transformStamped = tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero);
-      }
-  } catch (tf2::TransformException &ex) {
-      RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
-      timer_->reset();
-      return;
+    if (namespace_ != "") {
+      transformStamped =
+        tf_buffer_.lookupTransform("map", namespace_ + "/base_link", tf2::TimePointZero);
+    } else {
+      transformStamped = tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero);
+    }
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
+    timer_->reset();
+    return;
   }
 
   auto goal_msg = NavigateThroughPoses::Goal();
@@ -65,18 +66,18 @@ void MQTTWaypointReceiver::timer_callback()
   auto send_goal_options = rclcpp_action::Client<NavigateThroughPoses>::SendGoalOptions();
   send_goal_options.goal_response_callback =
     std::bind(&MQTTWaypointReceiver::goal_response_callback, this, std::placeholders::_1);
-  send_goal_options.feedback_callback =
-    std::bind(&MQTTWaypointReceiver::feedback_callback, this, std::placeholders::_1, std::placeholders::_2);
+  send_goal_options.feedback_callback = std::bind(
+    &MQTTWaypointReceiver::feedback_callback, this, std::placeholders::_1, std::placeholders::_2);
   send_goal_options.result_callback =
     std::bind(&MQTTWaypointReceiver::result_callback, this, std::placeholders::_1);
-  
+
   RCLCPP_INFO(this->get_logger(), "Sending goal");
   this->client_ptr_->async_send_goal(goal_msg, send_goal_options);
 }
 
-void MQTTWaypointReceiver::goal_response_callback(std::shared_future<GoalHandleNavigateThroughPoses::SharedPtr> future)
+void MQTTWaypointReceiver::goal_response_callback(
+  GoalHandleNavigateThroughPoses::SharedPtr goal_handle)
 {
-  auto goal_handle = future.get();
   if (!goal_handle) {
     RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
     timer_->reset();
@@ -92,7 +93,8 @@ void MQTTWaypointReceiver::feedback_callback(
   RCLCPP_INFO(this->get_logger(), "Received feedback: %i", feedback->navigation_time.sec);
 }
 
-void MQTTWaypointReceiver::result_callback(const GoalHandleNavigateThroughPoses::WrappedResult & result)
+void MQTTWaypointReceiver::result_callback(
+  const GoalHandleNavigateThroughPoses::WrappedResult & result)
 {
   switch (result.code) {
     case rclcpp_action::ResultCode::SUCCEEDED:
@@ -116,19 +118,20 @@ void MQTTWaypointReceiver::result_callback(const GoalHandleNavigateThroughPoses:
 
 void MQTTWaypointReceiver::mqtt_callback(nlohmann::json data)
 {
-//print function call
+  // print function call
   RCLCPP_INFO(this->get_logger(), "MQTT callback");
 
   geometry_msgs::msg::TransformStamped transformStamped;
   try {
-      if (namespace_ != "") {
-          transformStamped = tf_buffer_.lookupTransform("map", namespace_+"/base_link", tf2::TimePointZero);
-      } else {
-          transformStamped = tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero);
-      }
-  } catch (tf2::TransformException &ex) {
-      RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
-      return;
+    if (namespace_ != "") {
+      transformStamped =
+        tf_buffer_.lookupTransform("map", namespace_ + "/base_link", tf2::TimePointZero);
+    } else {
+      transformStamped = tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero);
+    }
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
+    return;
   }
 
   geometry_msgs::msg::PoseStamped last_pose;
@@ -142,15 +145,17 @@ void MQTTWaypointReceiver::mqtt_callback(nlohmann::json data)
   last_pose.pose.orientation.w = transformStamped.transform.rotation.w;
 
   poses_.clear();
-  for (auto& element : data) {
+  for (auto & element : data) {
     geometry_msgs::msg::PoseStamped pose;
     pose.header.frame_id = "map";
     pose.pose.position.x = element["x"];
     pose.pose.position.y = element["y"];
     pose.pose.position.z = element["z"];
 
-    double heading = atan2(pose.pose.position.y - last_pose.pose.position.y, pose.pose.position.x - last_pose.pose.position.x);
-    pose.pose.orientation = tf2::toMsg(tf2::Quaternion(tf2::Vector3(0,0,1), heading));
+    double heading = atan2(
+      pose.pose.position.y - last_pose.pose.position.y,
+      pose.pose.position.x - last_pose.pose.position.x);
+    pose.pose.orientation = tf2::toMsg(tf2::Quaternion(tf2::Vector3(0, 0, 1), heading));
 
     last_pose = pose;
 
@@ -162,5 +167,4 @@ void MQTTWaypointReceiver::mqtt_callback(nlohmann::json data)
   //   this->client_ptr_->async_cancel_all_goals();
   // }
   // timer_->reset();
-
 }
