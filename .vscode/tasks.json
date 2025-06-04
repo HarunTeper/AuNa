@@ -114,6 +114,17 @@
                 "isDefault": false
             }
         },
+        {
+            "label": "ROS2Build-EKF",
+            "type": "shell",
+            "command": "cd packages && colcon build --packages-select auna_ekf --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "detail": "Builds the auna_ekf package."
+        },
         // ------------------- LAUNCH -------------------
         {
             "label": "LaunchGazebo",
@@ -245,17 +256,6 @@
                 "ROS2Build-AunaRvizPlugins"
             ]
         },
-        {
-            "label": "ROS2Build-RobotLocalization",
-            "type": "shell",
-            "command": "cd packages && colcon build --symlink-install --packages-select robot_localization --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            },
-            "detail": "Builds only the robot_localization package located in packages/src."
-        }
     ],
     "inputs": [
         {

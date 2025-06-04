@@ -19,8 +19,8 @@ def generate_launch_description():
     # Paths to folders and files
     spawn_launch_file_dir = os.path.join(
         pkg_dir, 'launch', 'spawn')  # Renamed for clarity
-    ekf_launch_file_dir = os.path.join(
-        pkg_dir, 'launch', 'ekf')  # Path for EKF launch files
+    auna_ekf_pkg_share = get_package_share_directory('auna_ekf')
+    ekf_launch_file_dir = os.path.join(auna_ekf_pkg_share, 'launch') # Path for EKF launch files from auna_ekf
 
     # Launch Configurations
     name = LaunchConfiguration('name')

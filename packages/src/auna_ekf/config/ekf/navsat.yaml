@@ -1,4 +1,4 @@
-# /packages/src/auna_gazebo/config/ekf/navsat.yaml
+# /packages/src/auna_ekf/config/ekf/navsat.yaml
 /**:
   ros__parameters:
     frequency: 10.0
