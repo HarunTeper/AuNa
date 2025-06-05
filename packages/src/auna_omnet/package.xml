@@ -15,7 +15,7 @@
   
   <depend>auna_its_msgs</depend>
   <depend>auna_msgs</depend>
-  <depend>etsi_its_msgs</depend>
+  <depend>etsi_its_cam_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>tf2</depend>

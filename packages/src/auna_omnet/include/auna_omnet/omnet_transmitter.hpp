@@ -1,7 +1,7 @@
 #include "rclcpp/clock.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-#include "etsi_its_msgs/msg/cam.hpp"
+#include "etsi_its_cam_msgs/msg/cam.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
@@ -21,7 +21,7 @@ private:
 
   rclcpp::TimerBase::SharedPtr timer;
 
-  rclcpp::Publisher<etsi_its_msgs::msg::CAM>::SharedPtr publisher;
+  rclcpp::Publisher<etsi_its_cam_msgs::msg::CAM>::SharedPtr publisher;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_subscriber;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscriber;
 
