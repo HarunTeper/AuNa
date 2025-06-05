@@ -103,10 +103,8 @@ Run the following commands to set up OMNeT++ and Artery:
 │   └── src # Source files
 ├── auna_scenarios # Compiled ROS2 launch files for scenarios
 │   └── launch # ROS2 launch files
-├── auna_teleoperation # Teleoperation scripts
-│   └── scripts # Scripts
-└── etsi_its_msgs # CAM Message
-    └── msg # Messages
+└── auna_teleoperation # Teleoperation scripts
+    └── scripts # Scripts
 ```
 
 ## How to use?
