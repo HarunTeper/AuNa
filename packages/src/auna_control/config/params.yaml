@@ -1,0 +1,9 @@
+/**/cmd_vel_multiplexer_node:
+  ros__parameters:
+    output_topic: "cmd_vel"
+    input_sources:
+      - "/teleop"
+      - "/controller/drive"
+      - "/nav"
+      - "/ps4"
+    publish_rate: 20.0
