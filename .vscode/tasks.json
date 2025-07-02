@@ -95,19 +95,9 @@
             }
         },
         {
-            "label": "ROS2Build-AunaRvizPlugins",
-            "type": "shell",
-            "command": "cd packages && colcon build --packages-select auna_rviz_plugins auna_msgs --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            }
-        },
-        {
             "label": "ROS2Build-Control",
             "type": "shell",
-            "command": "cd packages && colcon build --packages-select auna_control --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "command": "cd packages && colcon build --packages-select auna_control auna_msgs --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
@@ -250,10 +240,10 @@
         {
             "label": "LaunchRvizWithPlugins",
             "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 run rviz2 rviz2 -d src/auna_rviz_plugins/config/test_plugins.rviz",
+            "command": "cd packages && source install/setup.bash && ros2 run rviz2 rviz2 -d src/auna_control/config/test_plugins.rviz",
             "problemMatcher": [],
             "dependsOn": [
-                "ROS2Build-AunaRvizPlugins"
+                "ROS2Build-Control"
             ]
         },
     ],

@@ -1,5 +1,5 @@
-#ifndef AUNA_RVIZ_PLUGINS_CONTROL_PANEL_HPP_
-#define AUNA_RVIZ_PLUGINS_CONTROL_PANEL_HPP_
+#ifndef AUNA_CONTROL_CONTROL_PANEL_HPP_
+#define AUNA_CONTROL_CONTROL_PANEL_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
@@ -25,16 +25,16 @@ QT_END_NAMESPACE
 #include "geometry_msgs/msg/twist.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 
-namespace auna_rviz_plugins
+namespace auna_control
 {
 
 enum class SelectedSource { OFF = 0, CACC = 1, TELEOP = 2, NAV2 = 3 };
 
-}  // namespace auna_rviz_plugins
+}  // namespace auna_control
 
-Q_DECLARE_METATYPE(auna_rviz_plugins::SelectedSource)
+Q_DECLARE_METATYPE(auna_control::SelectedSource)
 
-namespace auna_rviz_plugins
+namespace auna_control
 {
 
 class ControlPanel : public rviz_common::Panel
@@ -112,6 +112,6 @@ private:
   void globalEstopCallback(const std_msgs::msg::Bool::SharedPtr msg);
 };
 
-}  // namespace auna_rviz_plugins
+}  // namespace auna_control
 
-#endif  // AUNA_RVIZ_PLUGINS_CONTROL_PANEL_HPP_
+#endif  // AUNA_CONTROL_CONTROL_PANEL_HPP_
