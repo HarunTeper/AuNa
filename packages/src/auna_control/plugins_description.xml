@@ -1,8 +1,8 @@
-<library path="auna_rviz_plugins">
+<library path="auna_control">
 
     <!-- Combined Control Panel -->
-    <class  name="auna_rviz_plugins/ControlPanel"
-            type="auna_rviz_plugins::ControlPanel"
+    <class  name="auna_control/ControlPanel"
+            type="auna_control::ControlPanel"
             base_class_type="rviz_common::Panel">
         <description>Panel to select command velocity source (CACC, Teleop, Nav2, Off) and trigger an emergency stop via backend services.</description>
     </class>

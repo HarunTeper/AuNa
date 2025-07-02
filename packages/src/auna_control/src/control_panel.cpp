@@ -1,4 +1,4 @@
-#include "auna_rviz_plugins/control_panel.hpp"
+#include "auna_control/control_panel.hpp"
 
 // Include the generated service header explicitly
 #include "auna_msgs/srv/set_string.hpp"
@@ -31,11 +31,11 @@
 // Use chrono literals (e.g., 500ms)
 using namespace std::chrono_literals;
 
-namespace auna_rviz_plugins
+namespace auna_control
 {
 
 // Constructor
-auna_rviz_plugins::ControlPanel::ControlPanel(QWidget * parent)
+auna_control::ControlPanel::ControlPanel(QWidget * parent)
 : rviz_common::Panel(parent),             // Initialize base class
   current_namespace_("robot1"),           // Initialize default namespace
   selected_source_(SelectedSource::OFF),  // Initialize selected source
@@ -60,7 +60,7 @@ auna_rviz_plugins::ControlPanel::ControlPanel(QWidget * parent)
 }
 
 // Destructor
-auna_rviz_plugins::ControlPanel::~ControlPanel()
+auna_control::ControlPanel::~ControlPanel()
 {
   // Clean up ROS resources
   if (executor_) {
@@ -73,7 +73,7 @@ auna_rviz_plugins::ControlPanel::~ControlPanel()
 }
 
 // Setup the UI elements and add them to the main layout_
-void auna_rviz_plugins::ControlPanel::setupUI()
+void auna_control::ControlPanel::setupUI()
 {
   // Namespace Group
   QGroupBox * namespace_group = new QGroupBox("Target Namespace", this);  // Parent = this
@@ -144,20 +144,20 @@ void auna_rviz_plugins::ControlPanel::setupUI()
   // Connect signals to slots
   connect(
     namespace_input_, &QLineEdit::textChanged, this,
-    &auna_rviz_plugins::ControlPanel::onNamespaceChanged);
+    &auna_control::ControlPanel::onNamespaceChanged);
   connect(
     source_selector_, qOverload<int>(&QComboBox::currentIndexChanged), this,
-    &auna_rviz_plugins::ControlPanel::onSourceSelected);
+    &auna_control::ControlPanel::onSourceSelected);
   connect(
     emergency_stop_button_, &QPushButton::clicked, this,
-    &auna_rviz_plugins::ControlPanel::onEmergencyStopClicked);
+    &auna_control::ControlPanel::onEmergencyStopClicked);
 
   // Initially disable controls until ROS is ready
   updateUIStates();
 }
 
 // Initialize ROS components
-void auna_rviz_plugins::ControlPanel::initializeROS()
+void auna_control::ControlPanel::initializeROS()
 {
   node_ = std::make_shared<rclcpp::Node>("rviz_control_panel_node");
 
@@ -165,6 +165,12 @@ void auna_rviz_plugins::ControlPanel::initializeROS()
   global_estop_publisher_ =
     node_->create_publisher<std_msgs::msg::Bool>("/global_emergency_stop", 10);
   RCLCPP_INFO(node_->get_logger(), "Created publisher for /global_emergency_stop");
+
+  // Add subscriber to global emergency stop to keep all GUIs synced
+  global_estop_subscriber_ = node_->create_subscription<std_msgs::msg::Bool>(
+    "/global_emergency_stop", 10,
+    std::bind(&auna_control::ControlPanel::globalEstopCallback, this, std::placeholders::_1));
+  RCLCPP_INFO(node_->get_logger(), "Subscribed to /global_emergency_stop topic for GUI sync");
 
   executor_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
   executor_->add_node(node_);
@@ -178,23 +184,43 @@ void auna_rviz_plugins::ControlPanel::initializeROS()
   // Create timer for updating status indicators
   status_timer_ = new QTimer(this);  // Parent = this
   connect(
-    status_timer_, &QTimer::timeout, this,
-    &auna_rviz_plugins::ControlPanel::updateStatusIndicators);
+    status_timer_, &QTimer::timeout, this, &auna_control::ControlPanel::updateStatusIndicators);
   status_timer_->start(500ms);
 
   // Create timer to periodically check service availability
   ui_update_timer_ = new QTimer(this);  // Parent = this
   connect(
     ui_update_timer_, &QTimer::timeout, this,
-    &auna_rviz_plugins::ControlPanel::checkServiceAvailability);
+    &auna_control::ControlPanel::checkServiceAvailability);
   ui_update_timer_->start(1000ms);
 
   updateROSSubscriptionsAndClients();
   checkServiceAvailability();  // Initial check
 }
 
+// Add this new method to handle global E-Stop messages
+void auna_control::ControlPanel::globalEstopCallback(const std_msgs::msg::Bool::SharedPtr msg)
+{
+  // Only update if the state has changed and we didn't initiate the change
+  if (estop_active_ != msg->data) {
+    estop_active_ = msg->data;
+
+    // Update button state without triggering another publish
+    emergency_stop_button_->blockSignals(true);
+    emergency_stop_button_->setChecked(estop_active_);
+    emergency_stop_button_->blockSignals(false);
+
+    RCLCPP_INFO(
+      node_->get_logger(), "Received global E-Stop update: %s",
+      estop_active_ ? "ACTIVE" : "INACTIVE");
+
+    // Update the UI to reflect the new state
+    updateUIStates();
+  }
+}
+
 // Update ROS clients and subscribers based on the current namespace
-void auna_rviz_plugins::ControlPanel::updateROSSubscriptionsAndClients()
+void auna_control::ControlPanel::updateROSSubscriptionsAndClients()
 {
   set_source_client_.reset();
   // set_estop_client_.reset(); // Removed
@@ -239,24 +265,24 @@ void auna_rviz_plugins::ControlPanel::updateROSSubscriptionsAndClients()
   // Create subscribers for status monitoring
   cacc_subscriber_ = node_->create_subscription<geometry_msgs::msg::Twist>(
     cacc_topic, qos_profile,
-    std::bind(&auna_rviz_plugins::ControlPanel::caccCallback, this, std::placeholders::_1));
+    std::bind(&auna_control::ControlPanel::caccCallback, this, std::placeholders::_1));
   RCLCPP_INFO(node_->get_logger(), "Monitoring CACC status on: %s", cacc_topic.c_str());
 
   teleop_subscriber_ = node_->create_subscription<geometry_msgs::msg::Twist>(
     teleop_topic, qos_profile,
-    std::bind(&auna_rviz_plugins::ControlPanel::teleopCallback, this, std::placeholders::_1));
+    std::bind(&auna_control::ControlPanel::teleopCallback, this, std::placeholders::_1));
   RCLCPP_INFO(node_->get_logger(), "Monitoring Teleop status on: %s", teleop_topic.c_str());
 
   nav2_subscriber_ = node_->create_subscription<geometry_msgs::msg::Twist>(
     nav2_topic, qos_profile,
-    std::bind(&auna_rviz_plugins::ControlPanel::nav2Callback, this, std::placeholders::_1));
+    std::bind(&auna_control::ControlPanel::nav2Callback, this, std::placeholders::_1));
   RCLCPP_INFO(node_->get_logger(), "Monitoring Nav2 status on: %s", nav2_topic.c_str());
 
   checkServiceAvailability();  // Re-check after creating clients
 }
 
 // Slot for namespace change
-void auna_rviz_plugins::ControlPanel::onNamespaceChanged(const QString & text)
+void auna_control::ControlPanel::onNamespaceChanged(const QString & text)
 {
   std::string new_namespace = text.toStdString();
   if (new_namespace != current_namespace_) {
@@ -268,7 +294,7 @@ void auna_rviz_plugins::ControlPanel::onNamespaceChanged(const QString & text)
 }
 
 // Slot for source selection change
-void auna_rviz_plugins::ControlPanel::onSourceSelected(int index)
+void auna_control::ControlPanel::onSourceSelected(int index)
 {
   if (index < 0 || !backend_node_ready_) return;
 
@@ -300,7 +326,7 @@ void auna_rviz_plugins::ControlPanel::onSourceSelected(int index)
 }
 
 // Slot for emergency stop button click
-void auna_rviz_plugins::ControlPanel::onEmergencyStopClicked()
+void auna_control::ControlPanel::onEmergencyStopClicked()
 {
   if (!global_estop_publisher_) {
     RCLCPP_ERROR(node_->get_logger(), "Global E-Stop publisher not initialized!");
@@ -314,14 +340,15 @@ void auna_rviz_plugins::ControlPanel::onEmergencyStopClicked()
     node_->get_logger(), "UI: Global E-Stop button clicked. Requesting state: %s",
     estop_active_ ? "ACTIVE" : "INACTIVE");
 
+  // Update UI immediately without waiting for the subscription callback
+  updateUIStates();
+
   auto msg = std_msgs::msg::Bool();
   msg.data = estop_active_;
   global_estop_publisher_->publish(msg);
-
-  updateUIStates();
 }
 
-void auna_rviz_plugins::ControlPanel::updateUIStates()
+void auna_control::ControlPanel::updateUIStates()
 {
   if (estop_active_) {
     emergency_stop_button_->setStyleSheet(
@@ -371,7 +398,7 @@ void auna_rviz_plugins::ControlPanel::updateUIStates()
 
 // --- Service Call Implementations ---
 
-void auna_rviz_plugins::ControlPanel::callSetSourceService(const std::string & source_name)
+void auna_control::ControlPanel::callSetSourceService(const std::string & source_name)
 {
   if (!set_source_client_ || !set_source_client_->service_is_ready()) {
     RCLCPP_ERROR(node_->get_logger(), "SetSource service client not available or not ready.");
@@ -414,7 +441,7 @@ void auna_rviz_plugins::ControlPanel::callSetSourceService(const std::string & s
 // Removed callSetEstopService method entirely as it's no longer used.
 
 // Check if backend services are available
-void auna_rviz_plugins::ControlPanel::checkServiceAvailability()
+void auna_control::ControlPanel::checkServiceAvailability()
 {
   if (!rclcpp::ok() || !node_) {
     backend_node_ready_ = false;
@@ -443,7 +470,7 @@ void auna_rviz_plugins::ControlPanel::checkServiceAvailability()
 
 // --- Status Indicator Logic ---
 
-void auna_rviz_plugins::ControlPanel::setStatusLED(QLabel * label, bool active)
+void auna_control::ControlPanel::setStatusLED(QLabel * label, bool active)
 {
   if (!label) return;
 
@@ -469,13 +496,13 @@ void auna_rviz_plugins::ControlPanel::setStatusLED(QLabel * label, bool active)
   label->setPixmap(pixmap);
 }
 
-bool auna_rviz_plugins::ControlPanel::isMessageRecent(
+bool auna_control::ControlPanel::isMessageRecent(
   const std::chrono::time_point<std::chrono::steady_clock> & last_msg_time) const
 {
   return (std::chrono::steady_clock::now() - last_msg_time) < 1s;
 }
 
-void auna_rviz_plugins::ControlPanel::updateStatusIndicators()
+void auna_control::ControlPanel::updateStatusIndicators()
 {
   bool cacc_active = cacc_msg_received_ && isMessageRecent(cacc_last_msg_time_);
   bool teleop_active = teleop_msg_received_ && isMessageRecent(teleop_last_msg_time_);
@@ -488,21 +515,21 @@ void auna_rviz_plugins::ControlPanel::updateStatusIndicators()
 
 // --- Subscriber Callbacks ---
 
-void auna_rviz_plugins::ControlPanel::caccCallback(
+void auna_control::ControlPanel::caccCallback(
   const geometry_msgs::msg::Twist::ConstSharedPtr /*msg*/)
 {
   cacc_msg_received_ = true;
   cacc_last_msg_time_ = std::chrono::steady_clock::now();
 }
 
-void auna_rviz_plugins::ControlPanel::teleopCallback(
+void auna_control::ControlPanel::teleopCallback(
   const geometry_msgs::msg::Twist::ConstSharedPtr /*msg*/)
 {
   teleop_msg_received_ = true;
   teleop_last_msg_time_ = std::chrono::steady_clock::now();
 }
 
-void auna_rviz_plugins::ControlPanel::nav2Callback(
+void auna_control::ControlPanel::nav2Callback(
   const geometry_msgs::msg::Twist::ConstSharedPtr /*msg*/)
 {
   nav2_msg_received_ = true;
@@ -511,7 +538,7 @@ void auna_rviz_plugins::ControlPanel::nav2Callback(
 
 // --- Load/Save Configuration ---
 
-void auna_rviz_plugins::ControlPanel::load(const rviz_common::Config & config)
+void auna_control::ControlPanel::load(const rviz_common::Config & config)
 {
   rviz_common::Panel::load(config);
 
@@ -532,7 +559,7 @@ void auna_rviz_plugins::ControlPanel::load(const rviz_common::Config & config)
   // as they should be determined by the current state of the robot
 }
 
-void auna_rviz_plugins::ControlPanel::save(rviz_common::Config config) const
+void auna_control::ControlPanel::save(rviz_common::Config config) const
 {
   // First save our parent's state
   rviz_common::Panel::save(config);
@@ -546,7 +573,7 @@ void auna_rviz_plugins::ControlPanel::save(rviz_common::Config config) const
   // that should not persist between sessions for safety reasons
 }
 
-}  // namespace auna_rviz_plugins
+}  // namespace auna_control
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(auna_rviz_plugins::ControlPanel, rviz_common::Panel)
+PLUGINLIB_EXPORT_CLASS(auna_control::ControlPanel, rviz_common::Panel)
