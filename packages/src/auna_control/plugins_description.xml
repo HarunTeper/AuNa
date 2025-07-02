@@ -4,7 +4,7 @@
     <class  name="auna_control/ControlPanel"
             type="auna_control::ControlPanel"
             base_class_type="rviz_common::Panel">
-        <description>Panel to select command velocity source (CACC, Teleop, Nav2, Off) and trigger an emergency stop via backend services.</description>
+        <description>Panel to control the cmd_vel multiplexer, including emergency stop, source switching, and robot monitoring.</description>
     </class>
 
 </library>

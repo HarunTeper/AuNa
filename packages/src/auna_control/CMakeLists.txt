@@ -15,6 +15,9 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(ackermann_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(auna_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(pluginlib REQUIRED)
@@ -26,11 +29,17 @@ find_package(rviz_rendering REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Widgets Core)
 
 # --- cmd_vel_multiplexer_node ---
-add_executable(cmd_vel_multiplexer_node src/cmd_vel_multiplexer_node.cpp)
+add_executable(cmd_vel_multiplexer_node src/cmd_vel_multiplexer_node.cpp src/cmd_vel_multiplexer_main.cpp)
+target_include_directories(cmd_vel_multiplexer_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
 ament_target_dependencies(cmd_vel_multiplexer_node
   rclcpp
   rclcpp_components
   geometry_msgs
+  ackermann_msgs
   auna_msgs
   std_srvs
 )
@@ -44,6 +53,7 @@ set(CMAKE_AUTOMOC ON)
 
 set(auna_control_headers_to_moc
   include/auna_control/control_panel.hpp
+  include/auna_control/cmd_vel_multiplexer_node.hpp
 )
 
 foreach(header "${auna_control_headers_to_moc}")
@@ -69,6 +79,9 @@ ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   rviz_common
   geometry_msgs
+  ackermann_msgs
+  nav_msgs
+  sensor_msgs
   pluginlib
   std_srvs
   auna_msgs
@@ -93,6 +106,16 @@ install(
 install(
   DIRECTORY include/
   DESTINATION include
+)
+
+install(
+  DIRECTORY config
+  DESTINATION share/${PROJECT_NAME}
+)
+
+install(
+  DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
 )
 
 # Export plugin description

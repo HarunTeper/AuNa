@@ -209,7 +209,7 @@
         {
             "label": "LaunchCmdVelMux",
             "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 run auna_control cmd_vel_multiplexer_node --ros-args --params-file src/auna_control/config/cmd_vel_mux_params.yaml -r __ns:=/${input:robotNamespace}${input:robotIndex}",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_control cmd_vel_multiplexer.launch.py namespace:=${input:robotNamespace}${input:robotIndex}",
             "problemMatcher": [],
             "dependsOn": [
                 "ROS2Build-Control"

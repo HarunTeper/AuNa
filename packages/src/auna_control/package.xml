@@ -11,6 +11,9 @@
 
   <depend>rclcpp</depend>
   <depend>geometry_msgs</depend>
+  <depend>ackermann_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>sensor_msgs</depend>
   <depend>auna_msgs</depend>
   <depend>std_srvs</depend>
   <depend>qtbase5-dev</depend>
