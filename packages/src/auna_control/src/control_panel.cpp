@@ -116,9 +116,12 @@ void ControlPanel::createComboBoxServiceClients()
   source_status_client_ = node_->create_client<std_srvs::srv::Trigger>(
     current_namespace_.empty() ? "/get_source_status"
                                : "/" + current_namespace_ + "/get_source_status");
-  input_sources_client_ = node_->create_client<std_srvs::srv::Trigger>(
-    current_namespace_.empty() ? "/get_input_sources"
-                               : "/" + current_namespace_ + "/get_input_sources");
+  std::string input_sources_service_name = current_namespace_.empty()
+                                             ? "/get_input_sources"
+                                             : "/" + current_namespace_ + "/get_input_sources";
+  RCLCPP_INFO(
+    node_->get_logger(), "Creating client for service: %s", input_sources_service_name.c_str());
+  input_sources_client_ = node_->create_client<std_srvs::srv::Trigger>(input_sources_service_name);
   set_source_client_ = node_->create_client<auna_msgs::srv::SetString>(
     current_namespace_.empty() ? "/toggle_cmd_vel_source"
                                : "/" + current_namespace_ + "/toggle_cmd_vel_source");
@@ -226,10 +229,17 @@ void ControlPanel::checkEstopServiceAvailability()
 void ControlPanel::checkComboBoxServiceAvailability()
 {
   // Query input sources and current source
-  if (input_sources_client_ && input_sources_client_->service_is_ready()) {
-    auto req = std::make_shared<std_srvs::srv::Trigger::Request>();
-    input_sources_client_->async_send_request(
-      req, std::bind(&ControlPanel::onInputSourcesResponse, this, std::placeholders::_1));
+  if (input_sources_client_) {
+    RCLCPP_INFO(
+      node_->get_logger(), "Checking for service: %s", input_sources_client_->get_service_name());
+    if (input_sources_client_->service_is_ready()) {
+      RCLCPP_INFO(node_->get_logger(), "Service is ready, sending request.");
+      auto req = std::make_shared<std_srvs::srv::Trigger::Request>();
+      input_sources_client_->async_send_request(
+        req, std::bind(&ControlPanel::onInputSourcesResponse, this, std::placeholders::_1));
+    } else {
+      RCLCPP_WARN(node_->get_logger(), "Service not ready.");
+    }
   }
   if (source_status_client_ && source_status_client_->service_is_ready()) {
     auto req = std::make_shared<std_srvs::srv::Trigger::Request>();
@@ -258,6 +268,14 @@ void ControlPanel::onInputSourcesResponse(
   rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result)
 {
   RCLCPP_INFO(rclcpp::get_logger("control_panel"), "onInputSourcesResponse called");
+  if (!result.get()->success) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("control_panel"), "Get input sources service failed: %s",
+      result.get()->message.c_str());
+    return;
+  }
+  RCLCPP_INFO(
+    rclcpp::get_logger("control_panel"), "Received sources: %s", result.get()->message.c_str());
   QStringList sources =
     QString::fromStdString(result.get()->message).split(",", Qt::SkipEmptyParts);
   source_combo_box_->clear();

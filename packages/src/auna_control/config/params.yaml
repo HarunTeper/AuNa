@@ -1,9 +1,11 @@
 /**/cmd_vel_multiplexer_node:
   ros__parameters:
-    output_topic: "cmd_vel"
-    input_sources:
-      - "/teleop"
-      - "/controller/drive"
-      - "/nav"
-      - "/ps4"
+    input_source_names: ["teleop", "cacc", "nav2"]
+    input_source_topics: ["cmd_vel/teleop", "cmd_vel/cacc", "cmd_vel/nav2"]
+    input_source_types: ["TwistStamped", "TwistStamped", "TwistStamped"]
+    
+    output_topic_names: ["twist_stamped", "ackermann"]
+    output_topic_topics: ["cmd_vel_twist", "cmd_vel_ackermann"]
+    output_topic_types: ["TwistStamped", "AckermannDriveStamped"]
+    
     publish_rate: 20.0

@@ -4,6 +4,7 @@
 
 #include "ackermann_msgs/msg/ackermann_drive_stamped.hpp"
 #include "auna_msgs/srv/set_string.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 #include "std_srvs/srv/trigger.hpp"
@@ -18,6 +19,7 @@
 
 using SetBool = std_srvs::srv::SetBool;
 using AckermannDriveStamped = ackermann_msgs::msg::AckermannDriveStamped;
+using TwistStamped = geometry_msgs::msg::TwistStamped;
 using StdBool = std_msgs::msg::Bool;
 using Trigger = std_srvs::srv::Trigger;
 using SetString = auna_msgs::srv::SetString;
@@ -25,13 +27,29 @@ using SetString = auna_msgs::srv::SetString;
 namespace auna_control
 {
 
+struct InputSource
+{
+  std::string name;
+  std::string topic;
+  std::string type;
+};
+
+struct OutputTopic
+{
+  std::string name;
+  std::string topic;
+  std::string type;
+};
+
 class CmdVelMultiplexerNode : public rclcpp::Node
 {
 public:
   CmdVelMultiplexerNode();
 
 private:
-  void cmdVelCallback(const std::string & source_name, const AckermannDriveStamped::SharedPtr msg);
+  void twist_callback(const TwistStamped::SharedPtr msg, const std::string & source_name);
+  void ackermann_callback(
+    const AckermannDriveStamped::SharedPtr msg, const std::string & source_name);
   void toggleSourceCallback(
     const std::shared_ptr<SetString::Request> request,
     std::shared_ptr<SetString::Response> response);
@@ -46,15 +64,24 @@ private:
   void getInputSourcesCallback(
     const std::shared_ptr<Trigger::Request> request, std::shared_ptr<Trigger::Response> response);
 
-  std::string output_topic_;
-  std::vector<std::string> input_sources_;
+  AckermannDriveStamped twist_to_ackermann(const TwistStamped::SharedPtr & twist_msg);
+  TwistStamped ackermann_to_twist(const AckermannDriveStamped & ackermann_msg);
+
+  // Parameter parsing methods
+  void parseInputSourcesFromParameters();
+  void parseOutputTopicsFromParameters();
+  void setupPublishers();
+  void setupSubscribers();
+
+  std::vector<InputSource> input_sources_;
+  std::vector<OutputTopic> output_topics_;
   std::string current_source_;
   bool estop_active_;
   std::map<std::string, AckermannDriveStamped> last_received_msgs_;
 
-  rclcpp::Publisher<AckermannDriveStamped>::SharedPtr cmd_vel_publisher_;
-  std::map<std::string, rclcpp::Subscription<AckermannDriveStamped>::SharedPtr>
-    cmd_vel_subscribers_;
+  std::map<std::string, rclcpp::Publisher<TwistStamped>::SharedPtr> twist_publishers_;
+  std::map<std::string, rclcpp::Publisher<AckermannDriveStamped>::SharedPtr> ackermann_publishers_;
+  std::map<std::string, rclcpp::SubscriptionBase::SharedPtr> cmd_vel_subscribers_;
   rclcpp::Service<SetString>::SharedPtr set_source_service_;
   rclcpp::Service<SetBool>::SharedPtr set_estop_service_;
   rclcpp::TimerBase::SharedPtr publish_timer_;
