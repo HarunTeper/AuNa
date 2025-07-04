@@ -6,18 +6,31 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    config_path = LaunchConfiguration('config_file')
+    param_file = LaunchConfiguration('param_file')
+    topic_file = LaunchConfiguration('topic_file')
     namespace = LaunchConfiguration('namespace')
-    default_config = PathJoinSubstitution([
+
+    default_param_file = PathJoinSubstitution([
         FindPackageShare('auna_control'),
         'config',
         'params.yaml'
     ])
+    default_topic_file = PathJoinSubstitution([
+        FindPackageShare('auna_control'),
+        'config',
+        'topics.yaml'
+    ])
 
-    declare_config_arg = DeclareLaunchArgument(
-        'config_file',
-        default_value=default_config,
+    declare_param_file_arg = DeclareLaunchArgument(
+        'param_file',
+        default_value=default_param_file,
         description='Path to the cmd_vel_multiplexer parameter YAML file'
+    )
+
+    declare_topic_file_arg = DeclareLaunchArgument(
+        'topic_file',
+        default_value=default_topic_file,
+        description='Path to the cmd_vel_multiplexer topic YAML file'
     )
 
     declare_namespace_arg = DeclareLaunchArgument(
@@ -32,11 +45,12 @@ def generate_launch_description():
         namespace=namespace,
         name='cmd_vel_multiplexer_node',
         output='screen',
-        parameters=[config_path],
+        parameters=[param_file, {"topic_file": topic_file}],
     )
 
     return LaunchDescription([
-        declare_config_arg,
+        declare_param_file_arg,
+        declare_topic_file_arg,
         declare_namespace_arg,
         cmd_vel_multiplexer_node,
     ])

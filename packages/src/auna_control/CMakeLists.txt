@@ -20,6 +20,7 @@ find_package(nav_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(auna_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(yaml-cpp REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rviz_common REQUIRED)
 find_package(rviz_default_plugins REQUIRED)
@@ -42,7 +43,9 @@ ament_target_dependencies(cmd_vel_multiplexer_node
   ackermann_msgs
   auna_msgs
   std_srvs
+  yaml-cpp
 )
+target_link_libraries(cmd_vel_multiplexer_node yaml-cpp)
 install(TARGETS cmd_vel_multiplexer_node
   DESTINATION lib/${PROJECT_NAME}
 )

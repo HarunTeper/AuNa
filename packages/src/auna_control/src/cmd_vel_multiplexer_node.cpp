@@ -28,87 +28,33 @@ using SetString = auna_msgs::srv::SetString;
 namespace auna_control
 {
 
-CmdVelMultiplexerNode::CmdVelMultiplexerNode() : Node("cmd_multiplexer_node")
+CmdVelMultiplexerNode::CmdVelMultiplexerNode()
+: Node("cmd_vel_multiplexer_node", rclcpp::NodeOptions().allow_undeclared_parameters(true))
 {
-  RCLCPP_INFO(this->get_logger(), "Initializing CmdMultiplexerNode...");
-
-  // Declare parameters for input sources
-  this->declare_parameter("input_source_names", std::vector<std::string>{});
-  this->declare_parameter("input_source_topics", std::vector<std::string>{});
-  this->declare_parameter("input_source_types", std::vector<std::string>{});
-
-  // Declare parameters for output topics
-  this->declare_parameter("output_topic_names", std::vector<std::string>{});
-  this->declare_parameter("output_topic_topics", std::vector<std::string>{});
-  this->declare_parameter("output_topic_types", std::vector<std::string>{});
+  RCLCPP_INFO(this->get_logger(), "Initializing CmdVelMultiplexerNode...");
 
   this->declare_parameter("publish_rate", 20.0);
+  this->declare_parameter("wheelbase", 0.32);
+  this->declare_parameter("convert_yaw_to_steering_angle", false);
+  this->declare_parameter("topic_file", "");
 
-  // Parse input_sources
-  std::vector<std::string> input_source_names =
-    this->get_parameter("input_source_names").as_string_array();
-  std::vector<std::string> input_source_topics =
-    this->get_parameter("input_source_topics").as_string_array();
-  std::vector<std::string> input_source_types =
-    this->get_parameter("input_source_types").as_string_array();
-
-  for (size_t i = 0; i < input_source_names.size(); ++i) {
-    input_sources_.push_back(
-      {input_source_names[i], input_source_topics[i], input_source_types[i]});
-    RCLCPP_INFO(
-      this->get_logger(), "Added input source: %s, topic: %s, type: %s",
-      input_source_names[i].c_str(), input_source_topics[i].c_str(), input_source_types[i].c_str());
+  std::string topic_file = this->get_parameter("topic_file").as_string();
+  if (topic_file.empty()) {
+    RCLCPP_ERROR(this->get_logger(), "topic_file parameter is not set.");
+    return;
   }
 
-  // Parse output_topics
-  std::vector<std::string> output_topic_names =
-    this->get_parameter("output_topic_names").as_string_array();
-  std::vector<std::string> output_topic_topics =
-    this->get_parameter("output_topic_topics").as_string_array();
-  std::vector<std::string> output_topic_types =
-    this->get_parameter("output_topic_types").as_string_array();
-
-  for (size_t i = 0; i < output_topic_names.size(); ++i) {
-    output_topics_.push_back(
-      {output_topic_names[i], output_topic_topics[i], output_topic_types[i]});
-    RCLCPP_INFO(
-      this->get_logger(), "Added output topic: %s, topic: %s, type: %s",
-      output_topic_names[i].c_str(), output_topic_topics[i].c_str(), output_topic_types[i].c_str());
-  }
+  YAML::Node config = YAML::LoadFile(topic_file);
+  parseInputSourcesFromYAML(config);
+  parseOutputTopicsFromYAML(config);
 
   double publish_rate = this->get_parameter("publish_rate").as_double();
 
   current_source_ = "OFF";
   estop_active_ = false;
 
-  for (const auto & output_topic : output_topics_) {
-    if (output_topic.type == "TwistStamped") {
-      twist_publishers_[output_topic.name] =
-        this->create_publisher<TwistStamped>(output_topic.topic, 10);
-    } else if (output_topic.type == "AckermannDriveStamped") {
-      ackermann_publishers_[output_topic.name] =
-        this->create_publisher<AckermannDriveStamped>(output_topic.topic, 10);
-    }
-  }
-
-  for (const auto & source : input_sources_) {
-    if (source.type == "TwistStamped") {
-      cmd_vel_subscribers_[source.name] = this->create_subscription<TwistStamped>(
-        source.topic, 10, [this, source_name = source.name](const TwistStamped::SharedPtr msg) {
-          this->twist_callback(msg, source_name);
-        });
-    } else if (source.type == "AckermannDriveStamped") {
-      cmd_vel_subscribers_[source.name] = this->create_subscription<AckermannDriveStamped>(
-        source.topic, 10,
-        [this, source_name = source.name](const AckermannDriveStamped::SharedPtr msg) {
-          this->ackermann_callback(msg, source_name);
-        });
-    }
-    RCLCPP_INFO(
-      this->get_logger(), "Subscribing to source '%s' on topic: %s", source.name.c_str(),
-      source.topic.c_str());
-    last_received_msgs_[source.name] = createZeroAckermann();
-  }
+  setupPublishers();
+  setupSubscribers();
 
   set_source_service_ = this->create_service<SetString>(
     "toggle_cmd_vel_source", std::bind(
@@ -143,9 +89,75 @@ CmdVelMultiplexerNode::CmdVelMultiplexerNode() : Node("cmd_multiplexer_node")
   RCLCPP_INFO(this->get_logger(), "CmdMultiplexerNode initialized.");
 }
 
+void CmdVelMultiplexerNode::parseInputSourcesFromYAML(const YAML::Node & config)
+{
+  input_sources_.clear();
+  const YAML::Node inputs = config["cmd_vel_multiplexer_node"]["inputs"];
+  for (const auto & input : inputs) {
+    std::string name = input["name"].as<std::string>();
+    std::string topic = input["topic"].as<std::string>();
+    std::string type = input["type"].as<std::string>();
+    input_sources_.push_back({name, topic, type});
+    RCLCPP_INFO(
+      this->get_logger(), "Added input source: %s, topic: %s, type: %s", name.c_str(),
+      topic.c_str(), type.c_str());
+  }
+}
+
+void CmdVelMultiplexerNode::parseOutputTopicsFromYAML(const YAML::Node & config)
+{
+  output_topics_.clear();
+  const YAML::Node outputs = config["cmd_vel_multiplexer_node"]["outputs"];
+  for (const auto & output : outputs) {
+    std::string name = output["name"].as<std::string>();
+    std::string topic = output["topic"].as<std::string>();
+    std::string type = output["type"].as<std::string>();
+    output_topics_.push_back({name, topic, type});
+    RCLCPP_INFO(
+      this->get_logger(), "Added output topic: %s, topic: %s, type: %s", name.c_str(),
+      topic.c_str(), type.c_str());
+  }
+}
+
+void CmdVelMultiplexerNode::setupPublishers()
+{
+  for (const auto & output_topic : output_topics_) {
+    if (output_topic.type == "TwistStamped") {
+      twist_publishers_[output_topic.name] =
+        this->create_publisher<TwistStamped>(output_topic.topic, 10);
+    } else if (output_topic.type == "AckermannDriveStamped") {
+      ackermann_publishers_[output_topic.name] =
+        this->create_publisher<AckermannDriveStamped>(output_topic.topic, 10);
+    }
+  }
+}
+
+void CmdVelMultiplexerNode::setupSubscribers()
+{
+  for (const auto & source : input_sources_) {
+    if (source.type == "TwistStamped") {
+      cmd_vel_subscribers_[source.name] = this->create_subscription<TwistStamped>(
+        source.topic, 10, [this, source_name = source.name](const TwistStamped::SharedPtr msg) {
+          this->twist_callback(msg, source_name);
+        });
+    } else if (source.type == "AckermannDriveStamped") {
+      cmd_vel_subscribers_[source.name] = this->create_subscription<AckermannDriveStamped>(
+        source.topic, 10,
+        [this, source_name = source.name](const AckermannDriveStamped::SharedPtr msg) {
+          this->ackermann_callback(msg, source_name);
+        });
+    }
+    RCLCPP_INFO(
+      this->get_logger(), "Subscribing to source '%s' on topic: %s", source.name.c_str(),
+      source.topic.c_str());
+    last_received_msgs_[source.name] = createZeroAckermann();
+  }
+}
+
 void CmdVelMultiplexerNode::twist_callback(
   const TwistStamped::SharedPtr msg, const std::string & source_name)
 {
+  RCLCPP_INFO(this->get_logger(), "Received Twist message from source: %s", source_name.c_str());
   last_received_msgs_[source_name] = twist_to_ackermann(msg);
 }
 
@@ -219,6 +231,9 @@ void CmdVelMultiplexerNode::publishTimerCallback()
   for (auto const & [name, publisher] : ackermann_publishers_) {
     publisher->publish(msg_to_publish);
   }
+  RCLCPP_INFO(
+    this->get_logger(), "Publishing message with speed: %f, steering_angle: %f",
+    msg_to_publish.drive.speed, msg_to_publish.drive.steering_angle);
 }
 
 void CmdVelMultiplexerNode::getEstopStatusCallback(

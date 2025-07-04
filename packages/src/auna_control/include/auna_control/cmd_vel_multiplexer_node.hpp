@@ -1,6 +1,7 @@
 #pragma once
 
 #include "rclcpp/rclcpp.hpp"
+#include "yaml-cpp/yaml.h"
 
 #include "ackermann_msgs/msg/ackermann_drive_stamped.hpp"
 #include "auna_msgs/srv/set_string.hpp"
@@ -68,8 +69,8 @@ private:
   TwistStamped ackermann_to_twist(const AckermannDriveStamped & ackermann_msg);
 
   // Parameter parsing methods
-  void parseInputSourcesFromParameters();
-  void parseOutputTopicsFromParameters();
+  void parseInputSourcesFromYAML(const YAML::Node & config);
+  void parseOutputTopicsFromYAML(const YAML::Node & config);
   void setupPublishers();
   void setupSubscribers();
 

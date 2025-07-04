@@ -161,7 +161,7 @@
         {
             "label": "LaunchTeleop",
             "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args -r __ns:=${input:teleopNamespace} --params-file src/auna_teleoperation/config/key_teleop.yaml",
+            "command": "cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args -r __ns:=${input:teleopNamespace} --params-file src/auna_teleoperation/config/key_teleop.yaml -p twist_stamped_enabled:=true",
             "problemMatcher": []
         },
         {

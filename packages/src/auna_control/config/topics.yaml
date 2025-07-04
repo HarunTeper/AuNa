@@ -1,0 +1,18 @@
+cmd_vel_multiplexer_node:
+  inputs:
+    - type: "TwistStamped"
+      name: "teleop"
+      topic: "cmd_vel/teleop"
+    - type: "TwistStamped"
+      name: "cacc"
+      topic: "cmd_vel/cacc"
+    - type: "TwistStamped"
+      name: "nav2"
+      topic: "cmd_vel/nav2"
+  outputs:
+    - type: "TwistStamped"
+      name: "twist_stamped"
+      topic: "cmd_vel_twist"
+    - type: "AckermannDriveStamped"
+      name: "ackermann"
+      topic: "cmd_vel_ackermann"
