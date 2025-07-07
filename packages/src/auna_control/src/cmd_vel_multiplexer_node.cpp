@@ -4,6 +4,7 @@
 
 #include "ackermann_msgs/msg/ackermann_drive_stamped.hpp"
 #include "auna_msgs/srv/set_string.hpp"
+#include "geometry_msgs/msg/twist.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "std_srvs/srv/set_bool.hpp"
@@ -20,6 +21,7 @@
 using namespace std::chrono_literals;
 using SetBool = std_srvs::srv::SetBool;
 using AckermannDriveStamped = ackermann_msgs::msg::AckermannDriveStamped;
+using Twist = geometry_msgs::msg::Twist;
 using TwistStamped = geometry_msgs::msg::TwistStamped;
 using StdBool = std_msgs::msg::Bool;
 using Trigger = std_srvs::srv::Trigger;
@@ -81,6 +83,11 @@ CmdVelMultiplexerNode::CmdVelMultiplexerNode()
                            &CmdVelMultiplexerNode::getInputSourcesCallback, this,
                            std::placeholders::_1, std::placeholders::_2));
 
+  debug_state_service_ = this->create_service<Trigger>(
+    "debug_state", std::bind(
+                     &CmdVelMultiplexerNode::debugStateCallback, this, std::placeholders::_1,
+                     std::placeholders::_2));
+
   auto publish_period = std::chrono::duration<double>(1.0 / publish_rate);
   publish_timer_ = this->create_wall_timer(
     std::chrono::duration_cast<std::chrono::nanoseconds>(publish_period),
@@ -122,7 +129,10 @@ void CmdVelMultiplexerNode::parseOutputTopicsFromYAML(const YAML::Node & config)
 void CmdVelMultiplexerNode::setupPublishers()
 {
   for (const auto & output_topic : output_topics_) {
-    if (output_topic.type == "TwistStamped") {
+    if (output_topic.type == "Twist") {
+      twist_regular_publishers_[output_topic.name] =
+        this->create_publisher<Twist>(output_topic.topic, 10);
+    } else if (output_topic.type == "TwistStamped") {
       twist_publishers_[output_topic.name] =
         this->create_publisher<TwistStamped>(output_topic.topic, 10);
     } else if (output_topic.type == "AckermannDriveStamped") {
@@ -157,13 +167,22 @@ void CmdVelMultiplexerNode::setupSubscribers()
 void CmdVelMultiplexerNode::twist_callback(
   const TwistStamped::SharedPtr msg, const std::string & source_name)
 {
-  RCLCPP_INFO(this->get_logger(), "Received Twist message from source: %s", source_name.c_str());
+  RCLCPP_INFO(
+    this->get_logger(), "Received Twist message from source: %s, linear.x: %f, angular.z: %f",
+    source_name.c_str(), msg->twist.linear.x, msg->twist.angular.z);
   last_received_msgs_[source_name] = twist_to_ackermann(msg);
+  RCLCPP_INFO(
+    this->get_logger(), "Stored in last_received_msgs_[%s]: speed=%f, steering_angle=%f",
+    source_name.c_str(), last_received_msgs_[source_name].drive.speed,
+    last_received_msgs_[source_name].drive.steering_angle);
 }
 
 void CmdVelMultiplexerNode::ackermann_callback(
   const AckermannDriveStamped::SharedPtr msg, const std::string & source_name)
 {
+  RCLCPP_INFO(
+    this->get_logger(), "Received Ackermann message from source: %s, speed: %f, steering_angle: %f",
+    source_name.c_str(), msg->drive.speed, msg->drive.steering_angle);
   last_received_msgs_[source_name] = *msg;
 }
 
@@ -214,17 +233,33 @@ void CmdVelMultiplexerNode::publishTimerCallback()
 {
   AckermannDriveStamped msg_to_publish;
 
+  RCLCPP_DEBUG(
+    this->get_logger(), "publishTimerCallback: current_source_='%s', estop_active_=%s",
+    current_source_.c_str(), estop_active_ ? "true" : "false");
+
   if (estop_active_) {
     msg_to_publish = createZeroAckermann();
+    RCLCPP_DEBUG(this->get_logger(), "E-stop active, publishing zero message");
   } else {
     bool has_message = last_received_msgs_.count(current_source_);
+    RCLCPP_DEBUG(
+      this->get_logger(), "has_message for source '%s': %s", current_source_.c_str(),
+      has_message ? "true" : "false");
+
     if (current_source_ != "OFF" && has_message) {
       msg_to_publish = last_received_msgs_[current_source_];
+      RCLCPP_DEBUG(
+        this->get_logger(), "Using message from source '%s': speed=%f, steering_angle=%f",
+        current_source_.c_str(), msg_to_publish.drive.speed, msg_to_publish.drive.steering_angle);
     } else {
       msg_to_publish = createZeroAckermann();
+      RCLCPP_DEBUG(this->get_logger(), "Source is OFF or no message available, publishing zero");
     }
   }
 
+  for (auto const & [name, publisher] : twist_regular_publishers_) {
+    publisher->publish(ackermann_to_twist_regular(msg_to_publish));
+  }
   for (auto const & [name, publisher] : twist_publishers_) {
     publisher->publish(ackermann_to_twist(msg_to_publish));
   }
@@ -232,8 +267,8 @@ void CmdVelMultiplexerNode::publishTimerCallback()
     publisher->publish(msg_to_publish);
   }
   RCLCPP_INFO(
-    this->get_logger(), "Publishing message with speed: %f, steering_angle: %f",
-    msg_to_publish.drive.speed, msg_to_publish.drive.steering_angle);
+    this->get_logger(), "Publishing message with speed: %f, steering_angle: %f (source: %s)",
+    msg_to_publish.drive.speed, msg_to_publish.drive.steering_angle, current_source_.c_str());
 }
 
 void CmdVelMultiplexerNode::getEstopStatusCallback(
@@ -264,6 +299,25 @@ void CmdVelMultiplexerNode::getInputSourcesCallback(
   response->message = sources;
 }
 
+void CmdVelMultiplexerNode::debugStateCallback(
+  const std::shared_ptr<Trigger::Request> /*request*/, std::shared_ptr<Trigger::Response> response)
+{
+  RCLCPP_INFO(this->get_logger(), "debugStateCallback called");
+  response->success = true;
+
+  std::string debug_info = "Debug State:\n";
+  debug_info += "current_source_: " + current_source_ + "\n";
+  debug_info += "estop_active_: " + std::string(estop_active_ ? "true" : "false") + "\n";
+  debug_info += "last_received_msgs_ contents:\n";
+
+  for (const auto & [source_name, ackermann_msg] : last_received_msgs_) {
+    debug_info += "  " + source_name + ": speed=" + std::to_string(ackermann_msg.drive.speed) +
+                  ", steering_angle=" + std::to_string(ackermann_msg.drive.steering_angle) + "\n";
+  }
+
+  response->message = debug_info;
+}
+
 AckermannDriveStamped CmdVelMultiplexerNode::createZeroAckermann()
 {
   AckermannDriveStamped msg;
@@ -288,6 +342,14 @@ TwistStamped CmdVelMultiplexerNode::ackermann_to_twist(const AckermannDriveStamp
   twist_msg.header = ackermann_msg.header;
   twist_msg.twist.linear.x = ackermann_msg.drive.speed;
   twist_msg.twist.angular.z = ackermann_msg.drive.steering_angle;
+  return twist_msg;
+}
+
+Twist CmdVelMultiplexerNode::ackermann_to_twist_regular(const AckermannDriveStamped & ackermann_msg)
+{
+  Twist twist_msg;
+  twist_msg.linear.x = ackermann_msg.drive.speed;
+  twist_msg.angular.z = ackermann_msg.drive.steering_angle;
   return twist_msg;
 }
 

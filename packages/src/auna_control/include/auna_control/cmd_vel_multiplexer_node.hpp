@@ -5,6 +5,7 @@
 
 #include "ackermann_msgs/msg/ackermann_drive_stamped.hpp"
 #include "auna_msgs/srv/set_string.hpp"
+#include "geometry_msgs/msg/twist.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "std_srvs/srv/set_bool.hpp"
@@ -20,6 +21,7 @@
 
 using SetBool = std_srvs::srv::SetBool;
 using AckermannDriveStamped = ackermann_msgs::msg::AckermannDriveStamped;
+using Twist = geometry_msgs::msg::Twist;
 using TwistStamped = geometry_msgs::msg::TwistStamped;
 using StdBool = std_msgs::msg::Bool;
 using Trigger = std_srvs::srv::Trigger;
@@ -64,9 +66,12 @@ private:
     const std::shared_ptr<Trigger::Request> request, std::shared_ptr<Trigger::Response> response);
   void getInputSourcesCallback(
     const std::shared_ptr<Trigger::Request> request, std::shared_ptr<Trigger::Response> response);
+  void debugStateCallback(
+    const std::shared_ptr<Trigger::Request> request, std::shared_ptr<Trigger::Response> response);
 
   AckermannDriveStamped twist_to_ackermann(const TwistStamped::SharedPtr & twist_msg);
   TwistStamped ackermann_to_twist(const AckermannDriveStamped & ackermann_msg);
+  Twist ackermann_to_twist_regular(const AckermannDriveStamped & ackermann_msg);
 
   // Parameter parsing methods
   void parseInputSourcesFromYAML(const YAML::Node & config);
@@ -80,6 +85,7 @@ private:
   bool estop_active_;
   std::map<std::string, AckermannDriveStamped> last_received_msgs_;
 
+  std::map<std::string, rclcpp::Publisher<Twist>::SharedPtr> twist_regular_publishers_;
   std::map<std::string, rclcpp::Publisher<TwistStamped>::SharedPtr> twist_publishers_;
   std::map<std::string, rclcpp::Publisher<AckermannDriveStamped>::SharedPtr> ackermann_publishers_;
   std::map<std::string, rclcpp::SubscriptionBase::SharedPtr> cmd_vel_subscribers_;
@@ -89,6 +95,7 @@ private:
   rclcpp::Service<Trigger>::SharedPtr get_estop_status_service_;
   rclcpp::Service<Trigger>::SharedPtr get_source_status_service_;
   rclcpp::Service<Trigger>::SharedPtr get_input_sources_service_;
+  rclcpp::Service<Trigger>::SharedPtr debug_state_service_;
 };
 
 }  // namespace auna_control

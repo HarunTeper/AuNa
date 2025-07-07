@@ -10,9 +10,12 @@ cmd_vel_multiplexer_node:
       name: "nav2"
       topic: "cmd_vel/nav2"
   outputs:
+    - type: "Twist"
+      name: "twist"
+      topic: "cmd_vel_twist"
     - type: "TwistStamped"
       name: "twist_stamped"
-      topic: "cmd_vel_twist"
+      topic: "cmd_vel_twist_stamped"
     - type: "AckermannDriveStamped"
       name: "ackermann"
       topic: "cmd_vel_ackermann"
