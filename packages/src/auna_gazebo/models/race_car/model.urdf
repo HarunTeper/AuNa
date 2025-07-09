@@ -434,8 +434,8 @@
 
       <ros>
         <remapping>cmd_vel:=cmd_vel_twist</remapping>
-        <argument>--ros-args --remap odom:=odom</argument>
-        <argument>--ros-args --remap distance:=distance</argument>
+        <remapping>odom:=odom</remapping>
+        <remapping>distance:=distance</remapping>
         <remapping>/tf:=tf</remapping>
       </ros>
 
