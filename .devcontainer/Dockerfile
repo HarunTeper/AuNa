@@ -97,9 +97,7 @@ RUN if [ "$INSTALL_ROS2" = "true" ]; then \
     ros-humble-joy-linux \
     ros-humble-teleop-twist-keyboard \
     ros-humble-teleop-twist-joy \
-    ros-humble-robot-localization \
-    libpaho-mqtt-dev \
-    libpaho-mqttpp-dev; \
+    ros-humble-robot-localization; \
     fi
 
 # --- Install python package for teleop
