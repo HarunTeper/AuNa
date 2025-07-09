@@ -91,7 +91,7 @@ private:
   bool convert_yaw_to_steering_angle_;
   std::map<std::string, AckermannDriveStamped> last_received_msgs_;
 
-  OnSetParametersCallbackHandle::SharedPtr parameters_callback_handle_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr parameters_callback_handle_;
   std::map<std::string, rclcpp::Publisher<Twist>::SharedPtr> twist_regular_publishers_;
   std::map<std::string, rclcpp::Publisher<TwistStamped>::SharedPtr> twist_publishers_;
   std::map<std::string, rclcpp::Publisher<AckermannDriveStamped>::SharedPtr> ackermann_publishers_;
