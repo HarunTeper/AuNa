@@ -130,11 +130,11 @@ void ControlPanel::createComboBoxServiceClients()
 void ControlPanel::onNamespaceChanged(const QString & text)
 {
   current_namespace_ = text.toStdString();
-  // Clear the source combo box when namespace changes
   source_combo_box_->clear();
   createComboBoxServiceClients();
   checkEstopServiceAvailability();
   checkComboBoxServiceAvailability();
+  createMonitoringSubscribers();
 }
 
 void ControlPanel::onEmergencyStopClicked()
@@ -379,12 +379,12 @@ void ControlPanel::createMonitoringSubscribers()
 
   // Subscribe to odometry for position and velocity
   odom_subscriber_ = node_->create_subscription<nav_msgs::msg::Odometry>(
-    ns_prefix + "/ego_racecar/odom", 10,
+    ns_prefix + "/odom", 10,
     std::bind(&ControlPanel::onOdometryReceived, this, std::placeholders::_1));
 
-  // Subscribe to cmd_vel to monitor commanded velocities
+  // Subscribe to cmd_vel to monitor commanded velocities (from multiplexer output)
   cmd_vel_subscriber_ = node_->create_subscription<geometry_msgs::msg::Twist>(
-    ns_prefix + "/cmd_vel", 10,
+    ns_prefix + "/cmd_vel_twist", 10,
     std::bind(&ControlPanel::onCmdVelReceived, this, std::placeholders::_1));
 
   // Subscribe to IMU for acceleration (if available)
@@ -450,10 +450,10 @@ void ControlPanel::onImuReceived(const sensor_msgs::msg::Imu::SharedPtr msg)
   QMetaObject::invokeMethod(
     this,
     [this]() {
-      acceleration_label_->setText(QString("%.2f, %.2f, %.2f")
-                                     .arg(current_accel_x_)
-                                     .arg(current_accel_y_)
-                                     .arg(current_accel_z_));
+      acceleration_label_->setText(QString("%1, %2, %3")
+                                     .arg(QString::number(current_accel_x_, 'f', 2))
+                                     .arg(QString::number(current_accel_y_, 'f', 2))
+                                     .arg(QString::number(current_accel_z_, 'f', 2)));
     },
     Qt::QueuedConnection);
 }

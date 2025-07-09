@@ -433,7 +433,7 @@
       <robot_base_frame>base_link</robot_base_frame>
 
       <ros>
-        <argument>--ros-args --remap cmd_vel:=cmd_vel_twist</argument>
+        <remapping>cmd_vel:=cmd_vel_twist</remapping>
         <argument>--ros-args --remap odom:=odom</argument>
         <argument>--ros-args --remap distance:=distance</argument>
         <remapping>/tf:=tf</remapping>
