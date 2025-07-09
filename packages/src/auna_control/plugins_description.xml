@@ -1,0 +1,10 @@
+<library path="auna_control">
+
+    <!-- Combined Control Panel -->
+    <class  name="auna_control/ControlPanel"
+            type="auna_control::ControlPanel"
+            base_class_type="rviz_common::Panel">
+        <description>Panel to control the cmd_vel multiplexer, including emergency stop, source switching, and robot monitoring.</description>
+    </class>
+
+</library>

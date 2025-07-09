@@ -1,7 +1,0 @@
-/**:
-    ros__parameters:
-        input_sources: ["TELEOP", "CACC", "NAV2"]
-        # You can add other parameters here if needed, e.g.:
-        # output_topic: "/cmd_vel_out"
-        # default_source: "OFF"
-        # publish_rate: 20.0
