@@ -37,7 +37,7 @@ CmdVelMultiplexerNode::CmdVelMultiplexerNode()
 
   // Declare parameters with descriptors that allow runtime changes
   auto param_descriptor = rcl_interfaces::msg::ParameterDescriptor{};
-  param_descriptor.read_only = false;  // Allow runtime changes
+  // Allow runtime changes
 
   this->declare_parameter("publish_rate", 20.0, param_descriptor);
   this->declare_parameter("wheelbase", 0.32, param_descriptor);
