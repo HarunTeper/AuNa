@@ -43,6 +43,8 @@ CmdVelMultiplexerNode::CmdVelMultiplexerNode()
   std::string topic_file = this->get_parameter("topic_file").as_string();
   if (topic_file.empty()) {
     RCLCPP_ERROR(this->get_logger(), "topic_file parameter is not set.");
+    RCLCPP_FATAL(this->get_logger(), "Shutting down CmdVelMultiplexerNode due to missing topic_file parameter.");
+    rclcpp::shutdown();
     return;
   }
 
