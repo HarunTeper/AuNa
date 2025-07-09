@@ -68,6 +68,8 @@ private:
     const std::shared_ptr<Trigger::Request> request, std::shared_ptr<Trigger::Response> response);
   void debugStateCallback(
     const std::shared_ptr<Trigger::Request> request, std::shared_ptr<Trigger::Response> response);
+  rcl_interfaces::msg::SetParametersResult parameters_callback(
+    const std::vector<rclcpp::Parameter> & parameters);
 
   AckermannDriveStamped twist_to_ackermann(const TwistStamped::SharedPtr & twist_msg);
   TwistStamped ackermann_to_twist(const AckermannDriveStamped & ackermann_msg);
@@ -78,13 +80,18 @@ private:
   void parseOutputTopicsFromYAML(const YAML::Node & config);
   void setupPublishers();
   void setupSubscribers();
+  void updatePublishTimer();
 
   std::vector<InputSource> input_sources_;
   std::vector<OutputTopic> output_topics_;
   std::string current_source_;
   bool estop_active_;
+  double publish_rate_;
+  double wheelbase_;
+  bool convert_yaw_to_steering_angle_;
   std::map<std::string, AckermannDriveStamped> last_received_msgs_;
 
+  OnSetParametersCallbackHandle::SharedPtr parameters_callback_handle_;
   std::map<std::string, rclcpp::Publisher<Twist>::SharedPtr> twist_regular_publishers_;
   std::map<std::string, rclcpp::Publisher<TwistStamped>::SharedPtr> twist_publishers_;
   std::map<std::string, rclcpp::Publisher<AckermannDriveStamped>::SharedPtr> ackermann_publishers_;

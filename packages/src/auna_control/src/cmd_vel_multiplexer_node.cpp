@@ -35,15 +35,21 @@ CmdVelMultiplexerNode::CmdVelMultiplexerNode()
 {
   RCLCPP_INFO(this->get_logger(), "Initializing CmdVelMultiplexerNode...");
 
-  this->declare_parameter("publish_rate", 20.0);
-  this->declare_parameter("wheelbase", 0.32);
-  this->declare_parameter("convert_yaw_to_steering_angle", false);
-  this->declare_parameter("topic_file", "");
+  // Declare parameters with descriptors that allow runtime changes
+  auto param_descriptor = rcl_interfaces::msg::ParameterDescriptor{};
+  param_descriptor.read_only = false;  // Allow runtime changes
+
+  this->declare_parameter("publish_rate", 20.0, param_descriptor);
+  this->declare_parameter("wheelbase", 0.32, param_descriptor);
+  this->declare_parameter("convert_yaw_to_steering_angle", false, param_descriptor);
+  this->declare_parameter("topic_file", "", param_descriptor);
 
   std::string topic_file = this->get_parameter("topic_file").as_string();
   if (topic_file.empty()) {
     RCLCPP_ERROR(this->get_logger(), "topic_file parameter is not set.");
-    RCLCPP_FATAL(this->get_logger(), "Shutting down CmdVelMultiplexerNode due to missing topic_file parameter.");
+    RCLCPP_FATAL(
+      this->get_logger(),
+      "Shutting down CmdVelMultiplexerNode due to missing topic_file parameter.");
     rclcpp::shutdown();
     return;
   }
@@ -53,9 +59,15 @@ CmdVelMultiplexerNode::CmdVelMultiplexerNode()
   parseOutputTopicsFromYAML(config);
 
   double publish_rate = this->get_parameter("publish_rate").as_double();
+  publish_rate_ = publish_rate;
+  wheelbase_ = this->get_parameter("wheelbase").as_double();
+  convert_yaw_to_steering_angle_ = this->get_parameter("convert_yaw_to_steering_angle").as_bool();
 
   current_source_ = "OFF";
   estop_active_ = false;
+
+  parameters_callback_handle_ = this->add_on_set_parameters_callback(
+    std::bind(&CmdVelMultiplexerNode::parameters_callback, this, std::placeholders::_1));
 
   setupPublishers();
   setupSubscribers();
@@ -90,10 +102,7 @@ CmdVelMultiplexerNode::CmdVelMultiplexerNode()
                      &CmdVelMultiplexerNode::debugStateCallback, this, std::placeholders::_1,
                      std::placeholders::_2));
 
-  auto publish_period = std::chrono::duration<double>(1.0 / publish_rate);
-  publish_timer_ = this->create_wall_timer(
-    std::chrono::duration_cast<std::chrono::nanoseconds>(publish_period),
-    std::bind(&CmdVelMultiplexerNode::publishTimerCallback, this));
+  updatePublishTimer();
 
   RCLCPP_INFO(this->get_logger(), "CmdMultiplexerNode initialized.");
 }
@@ -259,6 +268,16 @@ void CmdVelMultiplexerNode::publishTimerCallback()
     }
   }
 
+  if (convert_yaw_to_steering_angle_) {
+    double linear_velocity = msg_to_publish.drive.speed;
+    double yaw_rate = msg_to_publish.drive.steering_angle;
+    if (std::abs(linear_velocity) > 1e-2) {
+      msg_to_publish.drive.steering_angle = std::atan(wheelbase_ * yaw_rate / linear_velocity);
+    } else {
+      msg_to_publish.drive.steering_angle = 0.0;
+    }
+  }
+
   for (auto const & [name, publisher] : twist_regular_publishers_) {
     publisher->publish(ackermann_to_twist_regular(msg_to_publish));
   }
@@ -320,6 +339,29 @@ void CmdVelMultiplexerNode::debugStateCallback(
   response->message = debug_info;
 }
 
+rcl_interfaces::msg::SetParametersResult CmdVelMultiplexerNode::parameters_callback(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  for (const auto & parameter : parameters) {
+    if (parameter.get_name() == "publish_rate") {
+      publish_rate_ = parameter.as_double();
+      RCLCPP_INFO(this->get_logger(), "Publish rate parameter set to: %f", publish_rate_);
+      updatePublishTimer();
+    } else if (parameter.get_name() == "wheelbase") {
+      wheelbase_ = parameter.as_double();
+      RCLCPP_INFO(this->get_logger(), "Wheelbase parameter set to: %f", wheelbase_);
+    } else if (parameter.get_name() == "convert_yaw_to_steering_angle") {
+      convert_yaw_to_steering_angle_ = parameter.as_bool();
+      RCLCPP_INFO(
+        this->get_logger(), "convert_yaw_to_steering_angle parameter set to: %s",
+        convert_yaw_to_steering_angle_ ? "true" : "false");
+    }
+  }
+  return result;
+}
+
 AckermannDriveStamped CmdVelMultiplexerNode::createZeroAckermann()
 {
   AckermannDriveStamped msg;
@@ -353,6 +395,22 @@ Twist CmdVelMultiplexerNode::ackermann_to_twist_regular(const AckermannDriveStam
   twist_msg.linear.x = ackermann_msg.drive.speed;
   twist_msg.angular.z = ackermann_msg.drive.steering_angle;
   return twist_msg;
+}
+
+void CmdVelMultiplexerNode::updatePublishTimer()
+{
+  // Cancel the existing timer if it exists
+  if (publish_timer_) {
+    publish_timer_->cancel();
+  }
+
+  // Create a new timer with the updated publish rate
+  auto publish_period = std::chrono::duration<double>(1.0 / publish_rate_);
+  publish_timer_ = this->create_wall_timer(
+    std::chrono::duration_cast<std::chrono::nanoseconds>(publish_period),
+    std::bind(&CmdVelMultiplexerNode::publishTimerCallback, this));
+
+  RCLCPP_INFO(this->get_logger(), "Updated publish timer with rate: %f Hz", publish_rate_);
 }
 
 }  // namespace auna_control
