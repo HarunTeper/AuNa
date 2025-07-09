@@ -56,7 +56,6 @@ set(CMAKE_AUTOMOC ON)
 
 set(auna_control_headers_to_moc
   include/auna_control/control_panel.hpp
-  include/auna_control/cmd_vel_multiplexer_node.hpp
 )
 
 foreach(header "${auna_control_headers_to_moc}")
