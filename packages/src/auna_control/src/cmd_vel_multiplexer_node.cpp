@@ -104,7 +104,7 @@ CmdVelMultiplexerNode::CmdVelMultiplexerNode()
 
   updatePublishTimer();
 
-  RCLCPP_INFO(this->get_logger(), "CmdMultiplexerNode initialized.");
+  RCLCPP_INFO(this->get_logger(), "CmdVelMultiplexerNode initialized.");
 }
 
 void CmdVelMultiplexerNode::parseInputSourcesFromYAML(const YAML::Node & config)
