@@ -13,11 +13,17 @@ OmnetTransmitter::OmnetTransmitter(const std::string & robot_name) : Node("omnet
     [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) { pose_callback(msg); });
   odom_subscriber = this->create_subscription<nav_msgs::msg::Odometry>(
     "odom", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg) { odom_callback(msg); });
+  pose_subscriber = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+    "global_pose", 2,
+    [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) { pose_callback(msg); });
+  odom_subscriber = this->create_subscription<nav_msgs::msg::Odometry>(
+    "odom", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg) { odom_callback(msg); });
 
   timer = this->create_wall_timer(
     std::chrono::milliseconds(100), [this]() { cam_callback(); });  // Set a default timer period
   publisher = this->create_publisher<etsi_its_cam_msgs::msg::CAM>("cam_out", 2);
 
+  this->robot_name_ = robot_name;
   this->robot_name_ = robot_name;
 }
 
@@ -151,11 +157,20 @@ void OmnetTransmitter::cam_callback()
   vhf.yaw_rate.yaw_rate_confidence.value = etsi_its_cam_msgs::msg::YawRateConfidence::UNAVAILABLE;
 
   publisher->publish(msg);
+  publisher->publish(msg);
 }
 
 // Receive and save the odometry data for speed, acceleration, yaw rate and curvature
 void OmnetTransmitter::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
+  float old_speed = this->speed_;
+  this->speed_ = sqrt(
+    pow(msg->twist.twist.linear.x, 2) +
+    pow(msg->twist.twist.linear.y, 2));  // absolute speed without direction
+  this->acceleration_ = (this->speed_ - old_speed) / (1000 / publish_period_);
+  this->yaw_rate_ = msg->twist.twist.angular.z;    // yaw rate in radians/s
+  this->yaw_rate_ = this->yaw_rate_ * 180 / M_PI;  // yaw rate in degree/s
+  this->curvature_ = this->yaw_rate_ / std::max(0.01f, this->speed_);
   float old_speed = this->speed_;
   this->speed_ = sqrt(
     pow(msg->twist.twist.linear.x, 2) +
@@ -172,7 +187,20 @@ void OmnetTransmitter::pose_callback(const geometry_msgs::msg::PoseStamped::Shar
   this->longitude_ = msg->pose.position.x;
   this->latitude_ = msg->pose.position.y;
   this->altitude_ = msg->pose.position.z;
+  this->longitude_ = msg->pose.position.x;
+  this->latitude_ = msg->pose.position.y;
+  this->altitude_ = msg->pose.position.z;
 
+  // Determine yaw from orientation quaternion
+  tf2::Quaternion quat(
+    msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,
+    msg->pose.orientation.w);
+  quat.normalize();
+  tf2::Matrix3x3 matrix(quat);
+  tf2Scalar roll;
+  tf2Scalar pitch;
+  tf2Scalar yaw;
+  matrix.getRPY(roll, pitch, yaw);
   // Determine yaw from orientation quaternion
   tf2::Quaternion quat(
     msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z,
@@ -186,6 +214,10 @@ void OmnetTransmitter::pose_callback(const geometry_msgs::msg::PoseStamped::Shar
 
   this->heading_ = yaw;                          // get heading in radians
   this->heading_ = this->heading_ * 180 / M_PI;  // get heading in degree
+  this->heading_ =
+    this->heading_ - 360 * floor(this->heading_ / 360);  // get heading in interval [0,360]
+  this->heading_ = yaw;                                  // get heading in radians
+  this->heading_ = this->heading_ * 180 / M_PI;          // get heading in degree
   this->heading_ =
     this->heading_ - 360 * floor(this->heading_ / 360);  // get heading in interval [0,360]
 }

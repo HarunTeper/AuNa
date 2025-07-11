@@ -122,4 +122,5 @@ void OmnetReceiver::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr ms
   }
 
   cam_publisher_->publish(cacc_msg);
+  cam_publisher_->publish(cacc_msg);
 }

@@ -95,19 +95,9 @@
             }
         },
         {
-            "label": "ROS2Build-AunaRvizPlugins",
-            "type": "shell",
-            "command": "cd packages && colcon build --packages-select auna_rviz_plugins auna_msgs --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            }
-        },
-        {
             "label": "ROS2Build-Control",
             "type": "shell",
-            "command": "cd packages && colcon build --packages-select auna_control --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "command": "cd packages && colcon build --packages-select auna_control auna_msgs --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
@@ -181,7 +171,7 @@
         {
             "label": "LaunchTeleop",
             "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args -r __ns:=${input:teleopNamespace} --params-file src/auna_teleoperation/config/key_teleop.yaml",
+            "command": "cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args -r __ns:=${input:teleopNamespace} --params-file src/auna_teleoperation/config/key_teleop.yaml -p twist_stamped_enabled:=true",
             "problemMatcher": []
         },
         {
@@ -227,9 +217,9 @@
             "problemMatcher": []
         },
         {
-            "label": "LaunchCmdVelMux",
+            "label": "LaunchControl",
             "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 run auna_control cmd_vel_multiplexer_node --ros-args --params-file src/auna_control/config/cmd_vel_mux_params.yaml -r __ns:=/${input:robotNamespace}${input:robotIndex}",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_control cmd_vel_multiplexer.launch.py namespace:=${input:robotNamespace}${input:robotIndex}",
             "problemMatcher": [],
             "dependsOn": [
                 "ROS2Build-Control"
@@ -254,17 +244,17 @@
         {
             "label": "LaunchScenarioPlatooningArena",
             "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_platooning_arena.launch.py",
+            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_platooning_arena.launch.py robot_number:=${input:robotCount} namespace:=${input:robotNamespace}",
             "problemMatcher": [],
             "dependsOn": "ROS2Build-ScenarioPlatooningArena"
         },
         {
             "label": "LaunchRvizWithPlugins",
             "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 run rviz2 rviz2 -d src/auna_rviz_plugins/config/test_plugins.rviz",
+            "command": "cd packages && source install/setup.bash && ros2 run rviz2 rviz2 -d src/auna_control/config/test_plugins.rviz",
             "problemMatcher": [],
             "dependsOn": [
-                "ROS2Build-AunaRvizPlugins"
+                "ROS2Build-Control"
             ]
         },
     ],

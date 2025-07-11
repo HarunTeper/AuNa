@@ -16,8 +16,6 @@ find_package(ament_cmake_python REQUIRED)
 
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
-
-find_package(auna_its_msgs REQUIRED)
 find_package(auna_msgs REQUIRED)
 find_package(etsi_its_cam_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)

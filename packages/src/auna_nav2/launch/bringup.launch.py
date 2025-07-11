@@ -106,7 +106,7 @@ def generate_launch_description():
     navigation_cmd_group = GroupAction(
         actions=[
             # Remap the controller server's output topic
-            SetRemap('cmd_vel', 'cmd_vel_nav2'),
+            SetRemap('cmd_vel', 'cmd_vel/nav2'),
 
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(os.path.join(

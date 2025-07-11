@@ -105,6 +105,12 @@ RUN if [ "$INSTALL_ROS2" = "true" ]; then \
     pip install pynput=='1.7.8'; \
     fi
 
+# --- Install mqtt packages
+RUN if [ "$INSTALL_ROS2" = "true" ]; then \
+    apt-get update && \
+    apt-get install -y libpaho-mqtt-dev; \
+    fi
+
 # --- Set up user ---
 
 # set user
