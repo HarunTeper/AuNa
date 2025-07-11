@@ -44,7 +44,7 @@ ament_target_dependencies(omnet_transmitter ${omnet_transmitter_dependencies})
 set(omnet_receiver_dependencies rclcpp etsi_its_cam_msgs)
 ament_target_dependencies(omnet_receiver_node ${omnet_receiver_dependencies})
 ament_target_dependencies(omnet_receiver ${omnet_receiver_dependencies})
-set(omnet_cam_filter_dependencies rclcpp auna_its_msgs auna_msgs)
+set(omnet_cam_filter_dependencies rclcpp etsi_its_cam_msgs auna_msgs)
 ament_target_dependencies(omnet_cam_filter_node ${omnet_cam_filter_dependencies})
 ament_target_dependencies(omnet_cam_filter ${omnet_cam_filter_dependencies})
 
