@@ -34,8 +34,6 @@ include_directories(include)
 # Add libraries
 add_library(cam_communication_node SHARED src/cam_communication/cam_communication.cpp)
 add_library(cam_receiver_node SHARED src/cam_receiver/cam_receiver.cpp)
-# Removed communication costmap
-# add_library(communciation_costmap SHARED src/communication_costmap/communication_costmap.cpp)
 include_directories(include)
 # Create Cpp executable
 add_executable(cam_communication src/cam_communication/cam_communication_main.cpp)
@@ -48,9 +46,6 @@ ament_target_dependencies(cam_communication ${cam_communication_dependencies})
 ament_target_dependencies(cam_receiver_node ${cam_communication_dependencies})
 ament_target_dependencies(cam_receiver ${cam_communication_dependencies})
 
-# Removed communication costmap
-#set(communicaton_costmap_dependencies rclcpp std_msgs auna_its_msgs nav_msgs geometry_msgs tf2 nav2_costmap_2d pluginlib nav2_util)
-#ament_target_dependencies(communciation_costmap ${communicaton_costmap_dependencies})
 
 # Link libraries
 target_link_libraries(cam_communication cam_communication_node)
@@ -71,8 +66,6 @@ install(TARGETS
 install(TARGETS
   cam_communication_node
   cam_receiver_node
-  # Removed communication costmap
-  #communciation_costmap
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -81,8 +74,6 @@ install(TARGETS
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})
 
-# Removed communication costmap
-#pluginlib_export_plugin_description_file(nav2_costmap_2d communication_costmap.xml)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
