@@ -14,7 +14,6 @@
   <depend>rclpy</depend>
   
   <depend>auna_common</depend>
-  <depend>auna_its_msgs</depend>
   <depend>auna_msgs</depend>
   <depend>gazebo_msgs</depend>
   <depend>geometry_msgs</depend>

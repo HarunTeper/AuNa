@@ -3,7 +3,7 @@ pyenv('Version','/usr/bin/python3.9');
 %ros.ros2.internal.createOrGetLocalPython(true)
 
 existing_msgs = ros2("msg","list");
-if ~any(strcmp(existing_msgs,'auna_its_msgs/CAM'))
+if ~any(strcmp(existing_msgs,'etsi_its_cam_msgs/CAM'))
     ros2genmsg("~/AuNa/src")
 end
 
