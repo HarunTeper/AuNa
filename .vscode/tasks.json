@@ -115,6 +115,16 @@
             },
             "detail": "Builds the auna_ekf package."
         },
+        {
+            "label": "ROS2Build-ScenarioPlatooningArena",
+            "type": "shell",
+            "command": "cd packages && colcon build --packages-select auna_msgs auna_common auna_its_msgs auna_comm auna_ekf auna_scenarios auna_teleoperation auna_cacc auna_control auna_rviz_plugins auna_gazebo auna_nav2 --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
         // ------------------- LAUNCH -------------------
         {
             "label": "LaunchGazebo",
@@ -235,7 +245,8 @@
             "label": "LaunchScenarioPlatooningArena",
             "type": "shell",
             "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_platooning_arena.launch.py robot_number:=${input:robotCount} namespace:=${input:robotNamespace}",
-            "problemMatcher": []
+            "problemMatcher": [],
+            "dependsOn": "ROS2Build-ScenarioPlatooningArena"
         },
         {
             "label": "LaunchRvizWithPlugins",
