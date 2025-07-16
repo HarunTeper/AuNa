@@ -1,0 +1,240 @@
+services:
+  #==============================================================================
+  # BASE SERVICE
+  #==============================================================================
+  # Minimal base image without ROS packages - used for building other images
+  base:
+    build:
+      context: .
+      dockerfile: dockerfiles/base.dockerfile
+    image: base:latest
+    profiles: ["base"]
+
+  #==============================================================================
+  # BASE SERVICE TEMPLATES
+  #==============================================================================
+  # These are abstract base services that define common configurations
+  # They are extended by actual service definitions below
+
+  # Standard package base - for ROS packages without special requirements
+  x-package-base:
+    build:
+      context: .
+      dockerfile: dockerfiles/package.dockerfile
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    privileged: true
+    network_mode: host # Required for ROS communication
+    volumes:
+      - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+    environment:
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
+      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    stdin_open: true
+    tty: true
+    profiles: ["abstract"]
+
+  # Physical car base - includes device access for hardware communication
+  x-physical-base:
+    build:
+      context: .
+      dockerfile: dockerfiles/package.dockerfile
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    privileged: true
+    network_mode: host
+    volumes:
+      - /dev:/dev # Device access for hardware
+      - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+    environment:
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
+      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    stdin_open: true
+    tty: true
+    profiles: ["abstract"]
+
+  # GUI base - includes X11 forwarding for graphical applications
+  x-gui-base:
+    build:
+      context: .
+      dockerfile: dockerfiles/package.dockerfile
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    privileged: true
+    network_mode: host
+    volumes:
+      - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw # X11 socket for GUI
+      - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
+    environment:
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
+      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+      - DISPLAY=${DISPLAY} # Forward display for GUI applications
+      - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
+      - QT_X11_NO_MITSHM=1 # X11 optimization flags
+    stdin_open: true
+    tty: true
+    profiles: ["abstract"]
+
+  # Development base - full workspace mount for development workflow
+  x-dev-base:
+    build:
+      context: .
+      dockerfile: dockerfiles/development.dockerfile
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    privileged: true
+    network_mode: host
+    user: "ubuntu"
+    volumes:
+      - /dev:/dev
+      - .:/home/ubuntu/workspace:cached # Full workspace for development
+    environment:
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
+      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    stdin_open: true
+    tty: true
+    profiles: ["abstract"]
+
+  #==============================================================================
+  # PHYSICAL CAR SERVICES
+  #==============================================================================
+  # Services for running on the physical F1TENTH car
+
+  # Main physical car service - launches all car-related nodes
+  # physical_car:
+  #   extends: x-physical-base
+  #   build:
+  #     args:
+  #       - PACKAGE_NAMES=${PHYSICAL_CAR_PACKAGES}
+  #   image: physical_car:latest
+  #   container_name: physical_car
+  #   command: ["ros2", "launch", "physical_car", "physical_car.launch.py"]
+  #   profiles: ["real"]
+
+  #==============================================================================
+  # CONTROL & TELEOPERATION SERVICES
+  #==============================================================================
+  # Services for manual control and command multiplexing
+
+  # Keyboard teleoperation - manual control via keyboard
+  teleop:
+    extends: x-gui-base
+    build:
+      args:
+        - PACKAGE_NAMES=${TELEOP_PACKAGES}
+    image: teleop:latest
+    container_name: teleop
+    command:
+      [
+        "/bin/bash",
+        "-c",
+        "source /home/ubuntu/workspace/packages/install/setup.bash && cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args --params-file src/auna_teleoperation/config/key_teleop.yaml -p twist_stamped_enabled:=true",
+      ]
+    profiles: ["teleop"]
+
+  # Command multiplexer - switches between different control sources
+  cmd_multiplexer:
+    extends: x-package-base
+    build:
+      args:
+        - PACKAGE_NAMES=${CMD_MULTIPLEXER_PACKAGES}
+    image: cmd_multiplexer:latest
+    container_name: cmd_multiplexer
+    command: ["ros2", "launch", "cmd_multiplexer", "cmd_multiplexer.launch.py"]
+    profiles: ["sim", "real"]
+
+  # Control panel - RViz-based GUI for monitoring and control
+  control_panel:
+    extends: x-gui-base
+    build:
+      args:
+        - PACKAGE_NAMES=${CONTROL_PANEL_PACKAGES}
+    image: control_panel:latest
+    container_name: control_panel
+    command: ["ros2", "launch", "control_panel", "control_panel.launch.py"]
+    profiles: ["sim", "real"]
+
+  #==============================================================================
+  # SIMULATION SERVICES
+  #==============================================================================
+  # Services for running in simulation environment
+
+  # Gazebo simulation - provides a simulated environment for testing
+  gazebo:
+    build:
+      context: .
+      dockerfile: dockerfiles/gazebo.dockerfile
+      args:
+        - PACKAGE_NAMES=${GAZEBO_PACKAGES}
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    privileged: true
+    network_mode: host
+    volumes:
+      - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw # X11 socket for GUI
+      - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
+      - /dev/snd:/dev/snd # Audio device access
+      - ${XDG_RUNTIME_DIR}/pulse:/tmp/runtime-ubuntu/pulse # PulseAudio socket
+    environment:
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
+      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+      - DISPLAY=${DISPLAY} # Forward display for GUI applications
+      - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
+      - PULSE_SERVER=unix:/tmp/runtime-ubuntu/pulse/native
+    stdin_open: true
+    tty: true
+    image: gazebo:latest
+    container_name: gazebo
+    command:
+      [
+        "/bin/bash",
+        "-c",
+        "source /usr/share/gazebo/setup.bash && ros2 launch auna_gazebo gazebo_world.launch.py",
+      ]
+    profiles: ["sim"]
+
+  # F1TENTH gym simulator - provides realistic racing simulation
+  f1tenth_gym:
+    extends: x-gui-base
+    build:
+      args:
+        - PACKAGE_NAMES=${F1TENTH_GYM_PACKAGES}
+    image: f1tenth_gym:latest
+    container_name: f1tenth_gym
+    command: ["ros2", "launch", "f1tenth_gym_ros", "gym_bridge_local_launch.py"]
+    profiles: ["sim"]
+
+  #==============================================================================
+  # AUTONOMOUS DRIVING SERVICES
+  #==============================================================================
+  # Services for autonomous behavior algorithms
+
+  # Wall following algorithm - basic autonomous driving behavior
+  wallfollowing:
+    extends: x-package-base
+    build:
+      args:
+        - PACKAGE_NAMES=${WALLFOLLOWING_PACKAGES}
+    image: wallfollowing:latest
+    container_name: wallfollowing
+    command: ["ros2", "launch", "wallfollowing", "wallfollowing.launch.py"]
+    profiles: ["wallfollowing"]
+
+  #==============================================================================
+  # DEVELOPMENT SERVICES
+  #==============================================================================
+  # Services for development and debugging
+
+  # Development environment - interactive container for development
+  development:
+    extends: x-dev-base
+    image: development:latest
+    container_name: development
+    command:
+      [
+        "/bin/bash",
+        "-c",
+        "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && /bin/bash",
+      ]
+    profiles: ["development"]

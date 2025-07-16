@@ -27,6 +27,9 @@ def include_launch_description(context: LaunchContext):
             launch_arguments={
                 'world': world,
                 'gazebo_ros_state': context.launch_configurations['gazebo_ros_state'],
+                'gui': context.launch_configurations.get('gui', 'true'),
+                'server': 'true',
+                'verbose': 'true',  # Reduce verbosity for faster startup
             }.items()
         ),
 
@@ -54,8 +57,15 @@ def generate_launch_description():
         description='Enable/disable Gazebo ROS state'
     )
 
+    gui_arg = DeclareLaunchArgument(
+        'gui',
+        default_value='true',
+        description='Enable/disable Gazebo GUI'
+    )
+
     return LaunchDescription([
         world_arg,
         gazebo_state_arg,
+        gui_arg,
         OpaqueFunction(function=include_launch_description)
     ])

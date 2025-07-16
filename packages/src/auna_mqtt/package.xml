@@ -15,7 +15,10 @@
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
   
-  <depend>paho-mqtt-cpp</depend>
+  <depend>libpaho-mqtt</depend>
+  <depend>libpaho-mqtt-dev</depend>
+  <depend>libpaho-mqttpp</depend>
+  <depend>libpaho-mqttpp-dev</depend>
   <depend>nav2_msgs</depend>
   <depend>nlohmann-json-dev</depend>
   <depend>rclcpp_action</depend>
