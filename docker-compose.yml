@@ -168,6 +168,8 @@ services:
       args:
         - PACKAGE_NAMES=${GAZEBO_PACKAGES}
         - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    image: gazebo:latest
+    container_name: gazebo
     privileged: true
     network_mode: host
     volumes:
@@ -184,8 +186,6 @@ services:
       - PULSE_SERVER=unix:/tmp/runtime-ubuntu/pulse/native
     stdin_open: true
     tty: true
-    image: gazebo:latest
-    container_name: gazebo
     command:
       [
         "/bin/bash",
@@ -194,15 +194,15 @@ services:
       ]
     profiles: ["sim"]
 
-  # F1TENTH gym simulator - provides realistic racing simulation
-  f1tenth_gym:
-    extends: x-gui-base
+  spawn_robot:
+    extends: x-package-base
     build:
       args:
-        - PACKAGE_NAMES=${F1TENTH_GYM_PACKAGES}
-    image: f1tenth_gym:latest
-    container_name: f1tenth_gym
-    command: ["ros2", "launch", "f1tenth_gym_ros", "gym_bridge_local_launch.py"]
+        - PACKAGE_NAMES=${GAZEBO_PACKAGES}
+    image: spawn_robot:latest
+    container_name: spawn_robot
+    command:
+      ["ros2", "launch", "auna_gazebo", "_spawn_individual_robot.launch.py"]
     profiles: ["sim"]
 
   #==============================================================================
