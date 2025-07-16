@@ -1,7 +1,7 @@
 #include "rclcpp/clock.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-#include "auna_its_msgs/msg/cam.hpp"
+#include "etsi_its_cam_msgs/msg/cam.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
@@ -12,7 +12,7 @@
 class OmnetTransmitter : public rclcpp::Node
 {
 public:
-  OmnetTransmitter(std::string robot_name);
+  OmnetTransmitter(const std::string & robot_name);
 
 private:
   void cam_callback();
@@ -21,7 +21,7 @@ private:
 
   rclcpp::TimerBase::SharedPtr timer;
 
-  rclcpp::Publisher<auna_its_msgs::msg::CAM>::SharedPtr publisher;
+  rclcpp::Publisher<etsi_its_cam_msgs::msg::CAM>::SharedPtr publisher;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_subscriber;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscriber;
 
@@ -36,6 +36,6 @@ private:
   float curvature_ = 0.0;
 
   // Odometry rate for acceleration
-  float publish_period_ = 100;
-  double scale_factor_ = 10;
+  double publish_period_ = 100.0;
+  double scale_factor_ = 10.0;
 };
