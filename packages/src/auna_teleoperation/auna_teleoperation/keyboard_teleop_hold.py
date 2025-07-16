@@ -50,7 +50,10 @@ k to decrease forward speed (0.1 step)
 u to increase turning speed (0.1 step)
 j to decrease turning speed (0.1 step)
 Any other key to stop
-CTRL-C or q to quit
+q to switch to the next namespace
+e to switch to the previous namespace
+p to quit
+CTRL-C to quit
 
 Configuration:
 
@@ -142,6 +145,10 @@ Max Angular Speed: +/-{self.ANGULAR_MAX} rad/s
                 try:
                     key_char = key.char
                     if key_char == "q":
+                        self.switch_namespace("next")
+                    elif key_char == "e":
+                        self.switch_namespace("previous")
+                    elif key_char == "p":
                         os.kill(os.getpid(), signal.SIGINT)
                     elif key_char == "i":
                         with self.lock:

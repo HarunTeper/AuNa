@@ -9,3 +9,5 @@ keyboard_teleop:
     angular_speed_multiplier: 0.5
     step: 0.2 # For key_teleop_incremental only
     use_sim_time: False
+    namespaces: ["robot1", "robot2", "robot3"]
+    default_namespace: "robot1"
