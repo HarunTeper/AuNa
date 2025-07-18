@@ -1,4 +1,4 @@
-#include "auna_gazebo/ground_truth_cam.hpp"
+#include "auna_ground_truth/ground_truth_cam.hpp"
 
 int main(int argc, char * argv[])
 {

@@ -1,4 +1,4 @@
-#include "auna_gazebo/ground_truth_transform.hpp"
+#include "auna_ground_truth/ground_truth_transform.hpp"
 
 // Create the publisher, timer and service client
 GroundTruthTransform::GroundTruthTransform()

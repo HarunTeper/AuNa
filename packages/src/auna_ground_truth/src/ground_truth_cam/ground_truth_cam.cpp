@@ -1,4 +1,4 @@
-#include "auna_gazebo/ground_truth_cam.hpp"
+#include "auna_ground_truth/ground_truth_cam.hpp"
 
 #include <etsi_its_cam_msgs/msg/detail/heading__struct.hpp>
 #include <etsi_its_cam_msgs/msg/detail/high_frequency_container__struct.hpp>

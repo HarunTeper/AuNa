@@ -1,4 +1,4 @@
-#include "auna_gazebo/ground_truth_pose_publisher.hpp"
+#include "auna_ground_truth/ground_truth_pose_publisher.hpp"
 
 #include <string>
 #include <vector>
