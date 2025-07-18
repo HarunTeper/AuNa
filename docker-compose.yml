@@ -87,11 +87,16 @@ services:
     network_mode: host
     user: "ubuntu"
     volumes:
-      - /dev:/dev
+      - /dev:/dev # Device access for hardware
       - .:/home/ubuntu/workspace:cached # Full workspace for development
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw # X11 socket for GUI
+      - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
     environment:
       - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
       - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+      - DISPLAY=${DISPLAY} # Forward display for GUI applications
+      - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
+      - QT_X11_NO_MITSHM=1 # X11 optimization flags
     stdin_open: true
     tty: true
     profiles: ["abstract"]
@@ -160,38 +165,53 @@ services:
   #==============================================================================
   # Services for running in simulation environment
 
-  # Gazebo simulation - provides a simulated environment for testing
+  # # Gazebo simulation - provides a simulated environment for testing
+  # gazebo:
+  #   build:
+  #     context: .
+  #     dockerfile: dockerfiles/gazebo.dockerfile
+  #     args:
+  #       - PACKAGE_NAMES=${GAZEBO_PACKAGES}
+  #       - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+  #   image: gazebo:latest
+  #   container_name: gazebo
+  #   privileged: true
+  #   network_mode: host
+  #   volumes:
+  #     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+  #     - /tmp/.X11-unix:/tmp/.X11-unix:rw # X11 socket for GUI
+  #     - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
+  #     - /dev/snd:/dev/snd # Audio device access
+  #     - ${XDG_RUNTIME_DIR}/pulse:/tmp/runtime-ubuntu/pulse # PulseAudio socket
+  #   environment:
+  #     - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
+  #     - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+  #     - DISPLAY=${DISPLAY} # Forward display for GUI applications
+  #     - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
+  #     - PULSE_SERVER=unix:/tmp/runtime-ubuntu/pulse/native
+  #     - GAZEBO_MODEL_PATH=/home/ubuntu/.gazebo/models:/home/ubuntu/workspace/packages/install/share/auna_gazebo/models
+  #     - GAZEBO_MASTER_URI=
+
+  # stdin_open: true
+  # tty: true
+  # command:
+  #   [
+  #     "/bin/bash",
+  #     "-c",
+  #     "source /usr/share/gazebo/setup.bash && ros2 launch auna_gazebo gazebo_world.launch.py",
+  #   ]
+  # profiles: ["sim"]
+
   gazebo:
+    extends: x-gui-base
     build:
-      context: .
-      dockerfile: dockerfiles/gazebo.dockerfile
       args:
         - PACKAGE_NAMES=${GAZEBO_PACKAGES}
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
     image: gazebo:latest
     container_name: gazebo
-    privileged: true
-    network_mode: host
-    volumes:
-      - ./packages/src:/home/ubuntu/workspace/packages/src:cached
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw # X11 socket for GUI
-      - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
-      - /dev/snd:/dev/snd # Audio device access
-      - ${XDG_RUNTIME_DIR}/pulse:/tmp/runtime-ubuntu/pulse # PulseAudio socket
-    environment:
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-      - DISPLAY=${DISPLAY} # Forward display for GUI applications
-      - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
-      - PULSE_SERVER=unix:/tmp/runtime-ubuntu/pulse/native
-    stdin_open: true
-    tty: true
+      - GAZEBO_MODEL_PATH=/home/ubuntu/workspace/packages/install/share/auna_gazebo/models
     command:
-      [
-        "/bin/bash",
-        "-c",
-        "source /usr/share/gazebo/setup.bash && ros2 launch auna_gazebo gazebo_world.launch.py",
-      ]
+      ["/bin/bash", "-c", "ros2 launch auna_gazebo gazebo_world.launch.py"]
     profiles: ["sim"]
 
   spawn_robot:

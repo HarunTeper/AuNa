@@ -2,7 +2,7 @@
 
 import os
 from ament_index_python.packages import get_package_share_directory
-from launch_ros.actions import Node, SetRemap
+from launch_ros.actions import Node, SetRemap, PushRosNamespace
 from launch import LaunchDescription
 from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction
@@ -19,8 +19,8 @@ def generate_launch_description():
     # Paths to folders and files
     spawn_launch_file_dir = os.path.join(
         pkg_dir, 'launch', 'spawn')  # Renamed for clarity
-    auna_ekf_pkg_share = get_package_share_directory('auna_ekf')
-    ekf_launch_file_dir = os.path.join(auna_ekf_pkg_share, 'launch') # Path for EKF launch files from auna_ekf
+    # auna_ekf_pkg_share = get_package_share_directory('auna_ekf')
+    # ekf_launch_file_dir = os.path.join(auna_ekf_pkg_share, 'launch') # Path for EKF launch files from auna_ekf
 
     # Launch Configurations
     name = LaunchConfiguration('name')
@@ -41,6 +41,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'namespace',
+            default_value='robot',
             description='Robot namespace for ROS nodes and topics'
         ),
         DeclareLaunchArgument(
@@ -70,78 +71,84 @@ def generate_launch_description():
         )
     ]
 
+    # Individual components
+    tf_remap = SetRemap(src='/tf', dst='tf')
+    tf_static_remap = SetRemap(src='/tf_static', dst='tf_static')
+
+    robot_state_publisher = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(spawn_launch_file_dir,
+                         '_robot_state_publisher.launch.py')
+        ),
+        launch_arguments={
+            'use_sim_time': use_sim_time,
+        }.items()
+    )
+
+    spawn_robot = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(spawn_launch_file_dir,
+                         '_spawn_robot_entity.launch.py')
+        ),
+        launch_arguments={
+            'x_pose': x_pose,
+            'y_pose': y_pose,
+            'z_pose': z_pose,
+            'name': name
+        }.items()
+    )
+
+    localization_pose_publisher = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(spawn_launch_file_dir,
+                         '_localization_pose_publisher.launch.py')
+        )
+    )
+
+    ground_truth_cam = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(spawn_launch_file_dir,
+                         '_ground_truth_cam.launch.py')
+        )
+    )
+
+    ground_truth_transform = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(spawn_launch_file_dir,
+                         '_ground_truth_transform.launch.py')
+        ),
+        condition=IfCondition(PythonExpression(ground_truth))
+    )
+
+    ground_truth_pose_publisher = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(spawn_launch_file_dir,
+                         '_ground_truth_pose_publisher.launch.py')
+        ),
+        condition=IfCondition(PythonExpression(ground_truth))
+    )
+
+    # # EKF Localization
+    # ekf_node = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource(
+    #         os.path.join(ekf_launch_file_dir, 'ekf.launch.py')
+    #     ),
+    #     launch_arguments={
+    #         'use_sim_time': use_sim_time,
+    #     }.items(),
+    # ),
+
     # Main robot launch group with namespace and remappings
     robot_launch_group = GroupAction([
-        SetRemap(src='/tf', dst='tf'),
-        SetRemap(src='/tf_static', dst='tf_static'),
-
-        # Robot state publisher
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(spawn_launch_file_dir,  # Use renamed variable
-                             '_robot_state_publisher.launch.py')
-            ),
-            launch_arguments={
-                'use_sim_time': use_sim_time,
-            }.items()
-        ),
-        # Spawn robot
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                # Use renamed variable
-                os.path.join(spawn_launch_file_dir,
-                             '_spawn_robot_entity.launch.py')
-            ),
-            launch_arguments={
-                'x_pose': x_pose,
-                'y_pose': y_pose,
-                'z_pose': z_pose,
-                'namespace': namespace,
-                'name': name
-            }.items()
-        ),
-        # Localization pose publisher
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(spawn_launch_file_dir,  # Use renamed variable
-                             '_localization_pose_publisher.launch.py')
-            )
-        ),
-        # Ground truth cam
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                # Use renamed variable
-                os.path.join(spawn_launch_file_dir,
-                             '_ground_truth_cam.launch.py')
-            )
-        ),
-        # Ground truth localization (conditional)
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(spawn_launch_file_dir,  # This path seems to be used in the original file for this
-                             '_ground_truth_transform.launch.py')
-            ),
-            # Launch if ground_truth is 'True'
-            condition=IfCondition(PythonExpression(ground_truth))
-        ),
-        # Ground truth localization (conditional)
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(spawn_launch_file_dir,  # This path seems to be used in the original file for this
-                             '_ground_truth_pose_publisher.launch.py')
-            ),
-            # Launch if ground_truth is 'True'
-            condition=IfCondition(PythonExpression(ground_truth))
-        ),
-        # EKF Localization
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(ekf_launch_file_dir, 'ekf.launch.py')
-            ),
-            launch_arguments={
-                'use_sim_time': use_sim_time,
-            }.items(),
-        ),
+        PushRosNamespace(namespace),
+        # tf_remap,
+        # tf_static_remap,
+        robot_state_publisher,
+        spawn_robot,
+        # localization_pose_publisher,
+        # ground_truth_cam,
+        # ground_truth_transform,
+        # ground_truth_pose_publisher,
     ])
 
     return LaunchDescription([

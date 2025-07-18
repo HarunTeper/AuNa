@@ -24,14 +24,14 @@
   <depend>tf2_ros</depend>
   <depend>etsi_its_msgs</depend>
   <depend>etsi_its_msgs_utils</depend>
-  <depend>gazebo11</depend>
-  <depend>gazebo_ros</depend>
+  <depend>gz-fortress</depend>
+  <depend>ros_gz</depend>
+  <depend>xacro</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   
   <export>
     <build_type>ament_cmake</build_type>
-    <gazebo_ros gazebo_model_path="${prefix}/models"/>
   </export>
 </package>
