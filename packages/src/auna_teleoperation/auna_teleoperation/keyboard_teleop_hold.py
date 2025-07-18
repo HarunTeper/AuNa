@@ -52,7 +52,6 @@ j to decrease turning speed (0.1 step)
 Any other key to stop
 e to switch to the next namespace
 q to switch to the previous namespace
-p to quit
 CTRL-C to quit
 
 Configuration:
