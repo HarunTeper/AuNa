@@ -36,11 +36,6 @@ def generate_launch_description():
         default_value='auna_comm',
         description='Communication system to use (omnet or auna_comm)'
     )
-    cacc_waypoints_arg = DeclareLaunchArgument(
-        'cacc_waypoints',
-        default_value='true',
-        description='Enable waypoints for CACC'
-    )
 
     # Nodes and other launch files
     scenario_cmd = IncludeLaunchDescription(
@@ -51,8 +46,8 @@ def generate_launch_description():
             'robot_number': LaunchConfiguration('robot_number'),
             'nav2': LaunchConfiguration('nav2'),
             'communication': LaunchConfiguration('communication'),
-            'cacc': 'true',
-            'cacc_waypoints': LaunchConfiguration('cacc_waypoints')
+            'cacc': 'false',
+            'cacc_waypoints': 'false'
         }.items(),
     )
 
@@ -63,7 +58,6 @@ def generate_launch_description():
     launch_description.add_action(robot_number_arg)
     launch_description.add_action(nav2_arg)
     launch_description.add_action(communication_arg)
-    launch_description.add_action(cacc_waypoints_arg)
     launch_description.add_action(scenario_cmd)
 
     return launch_description
