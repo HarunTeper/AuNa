@@ -149,8 +149,6 @@ Max Angular Speed: +/-{self.ANGULAR_MAX} rad/s
                         self.switch_namespace("next")
                     elif key_char == "q":
                         self.switch_namespace("previous")
-                    # elif key_char == "p":
-                    #     os.kill(os.getpid(), signal.SIGINT)
                     elif key_char == "i":
                         with self.lock:
                             self.linear_speed_multiplier = min(

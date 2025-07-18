@@ -84,9 +84,8 @@ class Teleop(Node, ABC):
         return twist_stamped
 
     def _publish(self):
-        if self.publisher_:
-            twist = self._make_twist(self.linear, self.angular)
-            self.publisher_.publish(twist)
+        twist = self._make_twist(self.linear, self.angular)
+        self.publisher_.publish(twist)
 
     def _update_screen(self):
         sys.stdout.write(
@@ -101,11 +100,6 @@ class Teleop(Node, ABC):
     def _create_publisher(self, namespace):
         if namespace in self.publishers_:
             return self.publishers_[namespace]
-
-        # Clean up old publishers
-        for pub in self.publishers_.values():
-            self.destroy_publisher(pub)
-        self.publishers_.clear()
 
         topic = f"/{namespace}/cmd_vel/teleop"
         if self.twist_stamped_enabled:
