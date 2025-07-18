@@ -20,8 +20,7 @@ class Teleop(Node, ABC):
         self.declare_parameter("publish_rate", 10.0)
         self.declare_parameter("linear_speed_multiplier", 1.0)
         self.declare_parameter("angular_speed_multiplier", 1.0)
-        self.declare_parameter("namespaces", [""])
-        self.declare_parameter("default_namespace", "")
+        self.declare_parameter("base_namespace", "robot")
 
         self.LINEAR_MAX = self.get_parameter("linear_max").value
         self.ANGULAR_MAX = self.get_parameter("angular_max").value
@@ -29,28 +28,16 @@ class Teleop(Node, ABC):
             "linear_speed_multiplier").value
         self.angular_speed_multiplier = self.get_parameter(
             "angular_speed_multiplier").value
-        self.namespaces = self.get_parameter("namespaces").value
-        self.default_namespace = self.get_parameter("default_namespace").value
+        self.base_namespace = self.get_parameter("base_namespace").value
 
         self._robot_base_frame = self.get_parameter("robot_base_frame").value
         self.publishers_ = {}
         self.twist_stamped_enabled = self.get_parameter(
             "twist_stamped_enabled").value
 
-        for namespace in self.namespaces:
-            if self.twist_stamped_enabled:
-                self.publishers_[namespace] = self.create_publisher(
-                    TwistStamped, namespace+"/cmd_vel/teleop", qos_profile_system_default)
-            else:
-                self.publishers_[namespace] = self.create_publisher(
-                    Twist, namespace+"/cmd_vel/teleop", qos_profile_system_default)
-
-        if self.default_namespace in self.publishers_:
-            self.publisher_ = self.publishers_[self.default_namespace]
-            self.active_namespace = self.default_namespace
-        else:
-            self.publisher_ = next(iter(self.publishers_.values()))
-            self.active_namespace = next(iter(self.publishers_.keys()))
+        self.namespace_index = 0
+        self.active_namespace = self.base_namespace + str(self.namespace_index)
+        self.publisher_ = self._create_publisher(self.active_namespace)
 
         if self.twist_stamped_enabled:
             self._make_twist = self._make_twist_stamped
@@ -97,8 +84,9 @@ class Teleop(Node, ABC):
         return twist_stamped
 
     def _publish(self):
-        twist = self._make_twist(self.linear, self.angular)
-        self.publisher_.publish(twist)
+        if self.publisher_:
+            twist = self._make_twist(self.linear, self.angular)
+            self.publisher_.publish(twist)
 
     def _update_screen(self):
         sys.stdout.write(
@@ -110,13 +98,32 @@ class Teleop(Node, ABC):
         for publisher in self.publishers_.values():
             publisher.publish(self._make_twist(0.0, 0.0))
 
-    def switch_namespace(self, direction):
-        current_index = self.namespaces.index(self.active_namespace)
-        if direction == "next":
-            new_index = (current_index + 1) % len(self.namespaces)
+    def _create_publisher(self, namespace):
+        if namespace in self.publishers_:
+            return self.publishers_[namespace]
+
+        # Clean up old publishers
+        for pub in self.publishers_.values():
+            self.destroy_publisher(pub)
+        self.publishers_.clear()
+
+        topic = f"/{namespace}/cmd_vel/teleop"
+        if self.twist_stamped_enabled:
+            publisher = self.create_publisher(
+                TwistStamped, topic, qos_profile_system_default)
         else:
-            new_index = (current_index - 1) % len(self.namespaces)
-        self.active_namespace = self.namespaces[new_index]
-        self.publisher_ = self.publishers_[self.active_namespace]
+            publisher = self.create_publisher(
+                Twist, topic, qos_profile_system_default)
+        self.publishers_[namespace] = publisher
+        return publisher
+
+    def switch_namespace(self, direction):
+        if direction == "next":
+            self.namespace_index += 1
+        else:
+            self.namespace_index = max(0, self.namespace_index - 1)
+
+        self.active_namespace = self.base_namespace + str(self.namespace_index)
+        self.publisher_ = self._create_publisher(self.active_namespace)
         self.get_logger().info(
             f"Switched to namespace: {self.active_namespace}")
