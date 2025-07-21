@@ -47,6 +47,13 @@ RUN find /home/ubuntu/workspace/packages/src -name "requirements.txt" -exec pip3
 # Install Python packages from pyproject.toml files  
 RUN find /home/ubuntu/workspace/packages/src -name "pyproject.toml" -exec sh -c 'pip3 install --break-system-packages -e "$(dirname "{}")"' \;
 
+# Install all packages from INSTALL_PACKAGE_NAMES
+ARG INSTALL_PACKAGE_NAMES
+RUN echo "Installing packages: $INSTALL_PACKAGE_NAMES" && \
+    for pkg in $INSTALL_PACKAGE_NAMES; do \
+    sudo apt install -y $pkg || echo "Warning: Package $pkg not found"; \
+    done
+
 # Clean up package lists at the end
 RUN sudo rm -rf /var/lib/apt/lists/*
 

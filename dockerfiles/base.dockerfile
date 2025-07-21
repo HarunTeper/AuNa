@@ -16,6 +16,8 @@ RUN apt-get upgrade -y --no-install-recommends \
 # Install git and bash-completion for git prompt
 RUN apt-get install -y git bash-completion
 
+# Install zenohd
+RUN apt-get install -y ros-humble-rmw-zenoh-cpp
 # Create ubuntu user and configure sudo access
 RUN useradd -m -s /bin/bash ubuntu \
     && echo 'ubuntu ALL=(root) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu \
