@@ -8,7 +8,7 @@ services:
       context: .
       dockerfile: dockerfiles/base.dockerfile
     image: base:latest
-    profiles: ["base"]
+    profiles: [ "base" ]
 
   #==============================================================================
   # BASE SERVICE TEMPLATES
@@ -32,7 +32,7 @@ services:
       - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
     stdin_open: true
     tty: true
-    profiles: ["abstract"]
+    profiles: [ "abstract" ]
 
   # Physical car base - includes device access for hardware communication
   x-physical-base:
@@ -51,7 +51,7 @@ services:
       - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
     stdin_open: true
     tty: true
-    profiles: ["abstract"]
+    profiles: [ "abstract" ]
 
   # GUI base - includes X11 forwarding for graphical applications
   x-gui-base:
@@ -74,7 +74,7 @@ services:
       - QT_X11_NO_MITSHM=1 # X11 optimization flags
     stdin_open: true
     tty: true
-    profiles: ["abstract"]
+    profiles: [ "abstract" ]
 
   # Development base - full workspace mount for development workflow
   x-dev-base:
@@ -99,7 +99,7 @@ services:
       - QT_X11_NO_MITSHM=1 # X11 optimization flags
     stdin_open: true
     tty: true
-    profiles: ["abstract"]
+    profiles: [ "abstract" ]
 
   #==============================================================================
   # PHYSICAL CAR SERVICES
@@ -130,13 +130,8 @@ services:
         - PACKAGE_NAMES=${TELEOP_PACKAGES}
     image: teleop:latest
     container_name: teleop
-    command:
-      [
-        "/bin/bash",
-        "-c",
-        "source /home/ubuntu/workspace/packages/install/setup.bash && cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args --params-file src/auna_teleoperation/config/key_teleop.yaml -p twist_stamped_enabled:=true",
-      ]
-    profiles: ["teleop"]
+    command: [ "/bin/bash", "-c", "source /home/ubuntu/workspace/packages/install/setup.bash && cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args --params-file src/auna_teleoperation/config/key_teleop.yaml -p twist_stamped_enabled:=true" ]
+    profiles: [ "teleop" ]
 
   # Command multiplexer - switches between different control sources
   cmd_multiplexer:
@@ -146,8 +141,8 @@ services:
         - PACKAGE_NAMES=${CMD_MULTIPLEXER_PACKAGES}
     image: cmd_multiplexer:latest
     container_name: cmd_multiplexer
-    command: ["ros2", "launch", "cmd_multiplexer", "cmd_multiplexer.launch.py"]
-    profiles: ["sim", "real"]
+    command: [ "ros2", "launch", "cmd_multiplexer", "cmd_multiplexer.launch.py" ]
+    profiles: [ "sim", "real" ]
 
   # Control panel - RViz-based GUI for monitoring and control
   control_panel:
@@ -157,8 +152,8 @@ services:
         - PACKAGE_NAMES=${CONTROL_PANEL_PACKAGES}
     image: control_panel:latest
     container_name: control_panel
-    command: ["ros2", "launch", "control_panel", "control_panel.launch.py"]
-    profiles: ["sim", "real"]
+    command: [ "ros2", "launch", "control_panel", "control_panel.launch.py" ]
+    profiles: [ "sim", "real" ]
 
   #==============================================================================
   # SIMULATION SERVICES
@@ -209,10 +204,8 @@ services:
         - PACKAGE_NAMES=${GAZEBO_PACKAGES}
     image: gazebo:latest
     container_name: gazebo
-      - GAZEBO_MODEL_PATH=/home/ubuntu/workspace/packages/install/share/auna_gazebo/models
-    command:
-      ["/bin/bash", "-c", "ros2 launch auna_gazebo gazebo_world.launch.py"]
-    profiles: ["sim"]
+    command: [ "/bin/bash", "-c", "ros2 launch auna_gazebo gazebo_world.launch.py" ]
+    profiles: [ "sim" ]
 
   spawn_robot:
     extends: x-package-base
@@ -221,9 +214,8 @@ services:
         - PACKAGE_NAMES=${GAZEBO_PACKAGES}
     image: spawn_robot:latest
     container_name: spawn_robot
-    command:
-      ["ros2", "launch", "auna_gazebo", "_spawn_individual_robot.launch.py"]
-    profiles: ["sim"]
+    command: [ "ros2", "launch", "auna_gazebo", "_spawn_individual_robot.launch.py" ]
+    profiles: [ "sim" ]
 
   #==============================================================================
   # AUTONOMOUS DRIVING SERVICES
@@ -238,8 +230,8 @@ services:
         - PACKAGE_NAMES=${WALLFOLLOWING_PACKAGES}
     image: wallfollowing:latest
     container_name: wallfollowing
-    command: ["ros2", "launch", "wallfollowing", "wallfollowing.launch.py"]
-    profiles: ["wallfollowing"]
+    command: [ "ros2", "launch", "wallfollowing", "wallfollowing.launch.py" ]
+    profiles: [ "wallfollowing" ]
 
   #==============================================================================
   # DEVELOPMENT SERVICES
@@ -251,10 +243,5 @@ services:
     extends: x-dev-base
     image: development:latest
     container_name: development
-    command:
-      [
-        "/bin/bash",
-        "-c",
-        "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && /bin/bash",
-      ]
-    profiles: ["development"]
+    command: [ "/bin/bash", "-c", "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && /bin/bash" ]
+    profiles: [ "development" ]
