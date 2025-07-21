@@ -22,3 +22,8 @@ Thumbs.db
 # Keep only what we need for the build
 !packages/src/
 !dockerfiles/
+# Ignore config, launch, model, and worlds folders
+**/config/
+**/launch/
+**/model/
+**/worlds/

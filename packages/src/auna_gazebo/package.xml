@@ -16,8 +16,8 @@
   <depend>auna_common</depend>
   <depend>auna_msgs</depend>
   <depend>gazebo_msgs</depend>
-  <depend>gz-fortress</depend>
-  <depend>ros_gz</depend>
+  <depend>gazebo</depend>
+  <depend>gazebo_ros</depend>
   <depend>xacro</depend>
 
   <test_depend>ament_lint_auto</test_depend>
@@ -25,5 +25,6 @@
   
   <export>
     <build_type>ament_cmake</build_type>
+    <gazebo_ros gazebo_model_path="${prefix}/models"/>
   </export>
 </package>

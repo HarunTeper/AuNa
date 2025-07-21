@@ -13,6 +13,7 @@ def generate_launch_description():
 
     # Launch Argument Configurations
     name = LaunchConfiguration('name')
+    namespace = LaunchConfiguration('namespace')
     x_pose = LaunchConfiguration('x_pose')
     y_pose = LaunchConfiguration('y_pose')
     z_pose = LaunchConfiguration('z_pose')
@@ -25,6 +26,11 @@ def generate_launch_description():
         'name',
         default_value='robot',
         description='Gazebo robot object name'
+    )
+    namespace_arg = DeclareLaunchArgument(
+        'namespace',
+        default_value='',
+        description='ROS2 robot namespace (must not be empty)'
     )
     x_pose_arg = DeclareLaunchArgument(
         'x_pose',
@@ -59,12 +65,12 @@ def generate_launch_description():
 
     # Group spawner command with namespace handling
     spawner_group = Node(
-        package='ros_gz_sim',
-        executable='create',
+        package='gazebo_ros',
+        executable='spawn_entity.py',
         name='spawn_entity',
         output='screen',
         arguments=[
-            '-name', name,
+            '-entity', name,
             '-topic', 'robot_description',
             '-x', x_pose,
             '-y', y_pose,
@@ -72,11 +78,13 @@ def generate_launch_description():
             '-R', r_orientation,
             '-P', p_orientation,
             '-Y', y_orientation,
+            '-robot_namespace', namespace,
         ],
     )
 
     return LaunchDescription([
         name_arg,
+        namespace_arg,
         x_pose_arg,
         y_pose_arg,
         z_pose_arg,
