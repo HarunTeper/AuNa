@@ -244,7 +244,7 @@ services:
     container_name: spawn_robot
     env_file:
       - .env
-    command: [ "ros2", "launch", "auna_gazebo", "_spawn_individual_robot.launch.py" ]
+    command: [ "ros2", "launch", "auna_gazebo", "spawn_robot.launch.py" ]
     profiles: [ "sim" ]
 
   #==============================================================================
