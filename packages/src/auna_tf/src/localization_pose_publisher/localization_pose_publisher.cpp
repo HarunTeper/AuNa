@@ -32,7 +32,7 @@ void LocalizationPosePublisher::timer_callback()
     transformStamped = this->buffer_.lookupTransform(map_frame, base_frame, tf2::TimePointZero);
     RCLCPP_DEBUG(this->get_logger(), "Successfully found map->base_link transform");
   } catch (tf2::TransformException & ex) {
-    // RCLCPP_ERROR(this->get_logger(), "Failed to get transform: %s", ex.what()); // Commented out
+    // RCLCPP_WARN(this->get_logger(), "Failed to get transform: %s", ex.what()); // Commented out
     // to suppress error when map frame is missing
 
     // List available frames to help diagnose the issue

@@ -1,23 +1,50 @@
 """Localization pose publisher launch file"""
 from launch_ros.actions import Node, SetRemap
-from launch.actions import GroupAction
+from launch.actions import GroupAction, DeclareLaunchArgument, OpaqueFunction
 from launch import LaunchDescription
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import PushRosNamespace
+from launch.launch_context import LaunchContext
 
+def include_launch_description(context: LaunchContext):
+    """Return launch description"""
+    # Launch Configurations
+    robot_index = LaunchConfiguration('robot_index')
+
+    # Individual components
+    tf_remap = SetRemap(src='/tf', dst='tf')
+    tf_static_remap = SetRemap(src='/tf_static', dst='tf_static')
+
+    localization_pose_publisher = Node(
+        package='auna_tf',
+        executable='localization_pose_publisher',
+        name='localization_pose_publisher',
+        output='screen'
+    )
+
+    group_cmd = GroupAction([
+        PushRosNamespace('robot_' + robot_index.perform(context)),
+        tf_remap,
+        tf_static_remap,
+        localization_pose_publisher
+    ])
+    
+    
+    launch_actions = []
+    launch_actions.append(group_cmd)
+    return launch_actions
 
 def generate_launch_description():
     """Return launch description"""
 
-    group_cmd = GroupAction([
-        SetRemap(src='/tf', dst='tf'),
-        SetRemap(src='/tf_static', dst='tf_static'),
-        Node(
-            package='auna_gazebo',
-            executable='localization_pose_publisher',
-            name='localization_pose_publisher',
-            output='screen'
-        )
-    ])
+    # Launch Arguments
+    robot_index_arg = DeclareLaunchArgument(
+        'robot_index',
+        default_value='1',
+        description='Index of the robot to spawn'
+    )
 
     return LaunchDescription([
-        group_cmd
+        robot_index_arg,
+        OpaqueFunction(function=include_launch_description)
     ])

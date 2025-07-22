@@ -2,13 +2,16 @@
 <package format="2">
   <name>auna_ground_truth</name>
   <version>0.0.1</version>
-  <description>Ground truth publisher node, moved from auna_gazebo.</description>
+  <description>Ground truth publisher node</description>
   <maintainer email="user@example.com">User</maintainer>
   <license>Apache-2.0</license>
 
-
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+
   <depend>rclcpp</depend>
+  <depend>rclpy</depend>
+
   <depend>geometry_msgs</depend>
   <depend>gazebo_msgs</depend>
   <depend>tf2</depend>
@@ -16,8 +19,12 @@
   <depend>tf2_geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>etsi_its_cam_msgs</depend>
-  <depend>esti_its_msgs_utils</depend>
+  <depend>etsi_its_msgs_utils</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
   <export>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

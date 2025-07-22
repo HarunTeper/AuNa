@@ -116,7 +116,7 @@ services:
     env_file:
       - .env
     command: ["ros2", "run", "rmw_zenoh_cpp", "rmw_zenohd"]
-    profiles: ["zenohd"]
+    profiles: ["zenohd", "sim_scenario"]
 
   #==============================================================================
   # PHYSICAL CAR SERVICES
@@ -157,7 +157,6 @@ services:
         "-c",
         "source /home/ubuntu/workspace/packages/install/setup.bash && cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args --params-file src/auna_teleoperation/config/key_teleop.yaml -p twist_stamped_enabled:=true",
       ]
-    profiles: ["teleop"]
 
   # Command multiplexer - switches between different control sources
   cmd_multiplexer:
@@ -170,7 +169,6 @@ services:
     env_file:
       - .env
     command: ["ros2", "launch", "cmd_multiplexer", "cmd_multiplexer.launch.py"]
-    profiles: ["sim", "real"]
 
   # Control panel - RViz-based GUI for monitoring and control
   control_panel:
@@ -183,7 +181,6 @@ services:
     env_file:
       - .env
     command: ["ros2", "launch", "control_panel", "control_panel.launch.py"]
-    profiles: ["sim", "real"]
 
   #==============================================================================
   # SIMULATION SERVICES
@@ -201,7 +198,7 @@ services:
       - .env
     command:
       ["/bin/bash", "-c", "ros2 launch auna_gazebo gazebo_world.launch.py"]
-    profiles: ["sim"]
+    profiles: ["sim", "sim_scenario"]
 
   spawn_robot:
     extends: x-package-base
@@ -213,7 +210,6 @@ services:
     env_file:
       - .env
     command: ["ros2", "launch", "auna_gazebo", "spawn_robot.launch.py"]
-    profiles: ["sim"]
 
   spawn_robot_robot1:
     extends: spawn_robot
@@ -226,7 +222,7 @@ services:
         "spawn_robot.launch.py",
         "robot_index:=1",
       ]
-    profiles: ["simrobot1"]
+    profiles: ["sim_robot1", "sim_scenario"]
 
   spawn_robot_robot2:
     extends: spawn_robot
@@ -239,7 +235,7 @@ services:
         "spawn_robot.launch.py",
         "robot_index:=2",
       ]
-    profiles: ["simrobot2"]
+    profiles: ["sim_robot2", "sim_scenario"]
 
   spawn_robot_robot3:
     extends: spawn_robot
@@ -252,7 +248,7 @@ services:
         "spawn_robot.launch.py",
         "robot_index:=3",
       ]
-    profiles: ["simrobot3"]
+    profiles: ["sim_robot3", "sim_scenario"]
 
   #==============================================================================
   # TF SERVICES
@@ -269,7 +265,113 @@ services:
     env_file:
       - .env
     command: ["ros2", "launch", "auna_tf", "global_tf.launch.py"]
-    profiles: ["sim"]
+    profiles: ["sim", "sim_scenario"]
+
+  localization_pose:
+    extends: x-package-base
+    build:
+      args:
+        - PACKAGE_NAMES=${TF_PACKAGES}
+    image: localization_pose:latest
+    container_name: localization_pose
+    env_file:
+      - .env
+    command:
+      ["ros2", "launch", "auna_tf", "localization_pose_publisher.launch.py"]
+
+  localization_pose_robot1:
+    extends: localization_pose
+    container_name: localization_pose_robot1
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_tf",
+        "localization_pose_publisher.launch.py",
+        "robot_index:=1",
+      ]
+    profiles: ["sim_robot1", "physical_robot1", "sim_scenario"]
+
+  localization_pose_robot2:
+    extends: localization_pose
+    container_name: localization_pose_robot2
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_tf",
+        "localization_pose_publisher.launch.py",
+        "robot_index:=2",
+      ]
+    profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
+
+  localization_pose_robot3:
+    extends: localization_pose
+    container_name: localization_pose_robot3
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_tf",
+        "localization_pose_publisher.launch.py",
+        "robot_index:=3",
+      ]
+    profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
+
+  #==============================================================================
+  # GROUND TRUTH SERVICES
+  #==============================================================================
+  # Services for publishing ground truth data
+
+  ground_truth:
+    extends: x-package-base
+    build:
+      args:
+        - PACKAGE_NAMES=${GROUND_TRUTH_PACKAGES}
+    image: ground_truth:latest
+    container_name: ground_truth
+    env_file:
+      - .env
+    command: ["ros2", "launch", "auna_ground_truth", "ground_truth.launch.py"]
+
+  ground_truth_robot1:
+    extends: ground_truth
+    container_name: ground_truth_robot1
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_ground_truth",
+        "ground_truth.launch.py",
+        "robot_index:=1",
+      ]
+    profiles: ["sim_robot1", "sim_scenario"]
+
+  ground_truth_robot2:
+    extends: ground_truth
+    container_name: ground_truth_robot2
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_ground_truth",
+        "ground_truth.launch.py",
+        "robot_index:=2",
+      ]
+    profiles: ["sim_robot2", "sim_scenario"]
+
+  ground_truth_robot3:
+    extends: ground_truth
+    container_name: ground_truth_robot3
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_ground_truth",
+        "ground_truth.launch.py",
+        "robot_index:=3",
+      ]
+    profiles: ["sim_robot3", "sim_scenario"]
 
   #==============================================================================
   # AUTONOMOUS DRIVING SERVICES
