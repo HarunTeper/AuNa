@@ -27,7 +27,6 @@ def include_launch_description(context: LaunchContext):
             ),
             launch_arguments={
                 'world': world,
-                'gazebo_ros_state': 'True',
             }.items()
         ),
 

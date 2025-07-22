@@ -203,18 +203,6 @@ services:
       ["/bin/bash", "-c", "ros2 launch auna_gazebo gazebo_world.launch.py"]
     profiles: ["sim"]
 
-  global_tf:
-    extends: x-package-base
-    build:
-      args:
-        - PACKAGE_NAMES=${TF_PACKAGES}
-    image: global_tf:latest
-    container_name: global_tf
-    env_file:
-      - .env
-    command: ["ros2", "launch", "auna_tf", "global_tf.launch.py"]
-    profiles: ["sim"]
-
   spawn_robot:
     extends: x-package-base
     build:
@@ -265,6 +253,23 @@ services:
         "robot_index:=3",
       ]
     profiles: ["simrobot3"]
+
+  #==============================================================================
+  # TF SERVICES
+  #==============================================================================
+  # Services for publishing tf and pose data
+
+  global_tf:
+    extends: x-package-base
+    build:
+      args:
+        - PACKAGE_NAMES=${TF_PACKAGES}
+    image: global_tf:latest
+    container_name: global_tf
+    env_file:
+      - .env
+    command: ["ros2", "launch", "auna_tf", "global_tf.launch.py"]
+    profiles: ["sim"]
 
   #==============================================================================
   # AUTONOMOUS DRIVING SERVICES

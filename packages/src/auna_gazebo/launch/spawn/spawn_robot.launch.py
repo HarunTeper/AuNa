@@ -27,6 +27,7 @@ def include_launch_description(context: LaunchContext):
     # Parameters
     name = 'robot_' + robot_index.perform(context)
     namespace = 'robot_' + robot_index.perform(context)
+    urdf_namespace = 'robot_' + robot_index.perform(context)
     use_sim_time = LaunchConfiguration('use_sim_time')
     x_pose = LaunchConfiguration('x_pose', default='0.0')
     y_pose = LaunchConfiguration('y_pose', default='0.0')
@@ -72,6 +73,7 @@ def include_launch_description(context: LaunchContext):
             'x_pose': x_pose,
             'y_pose': y_pose,
             'z_pose': z_pose,
+            'urdf_namespace': urdf_namespace,
             'name': name
         }.items()
     )
@@ -129,7 +131,7 @@ def include_launch_description(context: LaunchContext):
         # ground_truth_transform,
         # ground_truth_pose_publisher,
     ])
-
+    
     launch_actions = []
     launch_actions.append(robot_launch_group)
     return launch_actions

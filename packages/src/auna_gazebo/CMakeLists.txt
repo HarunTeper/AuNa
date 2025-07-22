@@ -26,7 +26,6 @@ find_package(std_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
- 
 
 # Include Cpp "include" directory
 include_directories(include)

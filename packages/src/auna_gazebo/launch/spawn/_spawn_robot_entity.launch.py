@@ -13,7 +13,7 @@ def generate_launch_description():
 
     # Launch Argument Configurations
     name = LaunchConfiguration('name')
-    namespace = LaunchConfiguration('namespace')
+    urdf_namespace = LaunchConfiguration('urdf_namespace')
     x_pose = LaunchConfiguration('x_pose')
     y_pose = LaunchConfiguration('y_pose')
     z_pose = LaunchConfiguration('z_pose')
@@ -27,10 +27,10 @@ def generate_launch_description():
         default_value='robot',
         description='Gazebo robot object name'
     )
-    namespace_arg = DeclareLaunchArgument(
-        'namespace',
+    urdf_namespace_arg = DeclareLaunchArgument(
+        'urdf_namespace',
         default_value='',
-        description='ROS2 robot namespace (must not be empty)'
+        description='ROS2 robot urdf namespace (must not be empty)'
     )
     x_pose_arg = DeclareLaunchArgument(
         'x_pose',
@@ -63,7 +63,7 @@ def generate_launch_description():
         description='Robot spawn y orientation angle'
     )
 
-    # Group spawner command with namespace handling
+    # Group spawner command with urdf_namespace handling
     spawner_group = Node(
         package='gazebo_ros',
         executable='spawn_entity.py',
@@ -78,13 +78,13 @@ def generate_launch_description():
             '-R', r_orientation,
             '-P', p_orientation,
             '-Y', y_orientation,
-            '-robot_namespace', namespace,
+            '-robot_namespace', urdf_namespace,
         ],
     )
 
     return LaunchDescription([
         name_arg,
-        namespace_arg,
+        urdf_namespace_arg,
         x_pose_arg,
         y_pose_arg,
         z_pose_arg,
