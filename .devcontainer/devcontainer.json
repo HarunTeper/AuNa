@@ -1,34 +1,18 @@
 // For format details, see https://aka.ms/devcontainer.json.
 {
 	// Configure container
-	"name": "AuNa",
-	"build": {
-		"context": "..",
-		"dockerfile": "Dockerfile",
-		"args": {
-			"VARIANT": "jammy",
-			"INSTALL_ROS2": "true",
-			"INSTALL_GAZEBO": "true",
-			"INSTALL_ROS2_TRACING": "true",
-			"ROS_DOMAIN_ID": "0",
-			"ROS_LOCALHOST_ONLY": "1",
-			"DISPLAY": "${localEnv:DISPLAY}"
-		}
-	},
+	"name": "PhoenixRacing",
+	"dockerComposeFile": [
+		"../docker-compose.yml"
+	],
+	"service": "development",
+	"runServices": [
+		"development"
+	],
 	// Configure container user
-	"remoteUser": "vscode",
+	"remoteUser": "ubuntu",
 	// Configure workspace mount point
-	"workspaceMount": "source=${localWorkspaceFolder},target=/home/vscode/workspace,type=bind,consistency=cached",
-	"workspaceFolder": "/home/vscode/workspace",
-	// Configure runtime settings
-	"runArgs": [
-		"--privileged",
-		"--network=host"
-	],
-	"mounts": [
-		"source=/dev,target=/dev,type=bind",
-		"source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind"
-	],
+	"workspaceFolder": "/home/ubuntu/workspace",
 	// Configure VS Code extensions
 	"customizations": {
 		"vscode": {
