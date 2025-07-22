@@ -12,6 +12,7 @@ from launch.substitutions import PythonExpression, LocalSubstitution
 from launch.actions import ExecuteProcess, RegisterEventHandler, LogInfo
 from launch.launch_context import LaunchContext
 from launch.event_handlers import OnShutdown
+from auna_common import yaml_launch
 
 
 def include_launch_description(context: LaunchContext):
@@ -21,14 +22,32 @@ def include_launch_description(context: LaunchContext):
     spawn_launch_file_dir = os.path.join(pkg_dir, 'launch', 'spawn')
 
     # Launch Configurations
-    name = LaunchConfiguration('name')
-    namespace = LaunchConfiguration('namespace')
+    robot_index = LaunchConfiguration('robot_index')
+    
+    # Parameters
+    name = 'robot_' + robot_index.perform(context)
+    namespace = 'robot_' + robot_index.perform(context)
     use_sim_time = LaunchConfiguration('use_sim_time')
-    x_pose = LaunchConfiguration('x_pose')
-    y_pose = LaunchConfiguration('y_pose')
-    z_pose = LaunchConfiguration('z_pose')
-    ground_truth = LaunchConfiguration('ground_truth')
-    debug_ekf = LaunchConfiguration('debug_ekf')
+    x_pose = LaunchConfiguration('x_pose', default='0.0')
+    y_pose = LaunchConfiguration('y_pose', default='0.0')
+    z_pose = LaunchConfiguration('z_pose', default='0.0')
+    
+    world_name = os.environ.get('WORLD_NAME', 'racetrack_decorated')
+    
+    map_path = os.path.join(
+        pkg_dir, "config", "map_params", f"{world_name}.yaml")
+    num = int(robot_index.perform(context))
+
+    x_pose_value = yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"]) + \
+        num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"])
+    y_pose_value = yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"]) + \
+        num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"])
+    z_pose_value = yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"]) + \
+        num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"])
+
+    x_pose = str(x_pose_value)
+    y_pose = str(y_pose_value)
+    z_pose = str(z_pose_value)
 
     # Individual components
     tf_remap = SetRemap(src='/tf', dst='tf')
@@ -57,35 +76,35 @@ def include_launch_description(context: LaunchContext):
         }.items()
     )
 
-    localization_pose_publisher = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(spawn_launch_file_dir,
-                         '_localization_pose_publisher.launch.py')
-        )
-    )
+    # localization_pose_publisher = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource(
+    #         os.path.join(spawn_launch_file_dir,
+    #                      '_localization_pose_publisher.launch.py')
+    #     )
+    # )
 
-    ground_truth_cam = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(spawn_launch_file_dir,
-                         '_ground_truth_cam.launch.py')
-        )
-    )
+    # ground_truth_cam = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource(
+    #         os.path.join(spawn_launch_file_dir,
+    #                      '_ground_truth_cam.launch.py')
+    #     )
+    # )
 
-    ground_truth_transform = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(spawn_launch_file_dir,
-                         '_ground_truth_transform.launch.py')
-        ),
-        condition=IfCondition(PythonExpression(ground_truth))
-    )
+    # ground_truth_transform = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource(
+    #         os.path.join(spawn_launch_file_dir,
+    #                      '_ground_truth_transform.launch.py')
+    #     ),
+    #     condition=IfCondition(PythonExpression(ground_truth))
+    # )
 
-    ground_truth_pose_publisher = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(spawn_launch_file_dir,
-                         '_ground_truth_pose_publisher.launch.py')
-        ),
-        condition=IfCondition(PythonExpression(ground_truth))
-    )
+    # ground_truth_pose_publisher = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource(
+    #         os.path.join(spawn_launch_file_dir,
+    #                      '_ground_truth_pose_publisher.launch.py')
+    #     ),
+    #     condition=IfCondition(PythonExpression(ground_truth))
+    # )
 
     # # EKF Localization
     # ekf_node = IncludeLaunchDescription(
@@ -100,8 +119,8 @@ def include_launch_description(context: LaunchContext):
     # Main robot launch group with namespace and remappings
     robot_launch_group = GroupAction([
         PushRosNamespace(namespace),
-        # tf_remap,
-        # tf_static_remap,
+        tf_remap,
+        tf_static_remap,
         robot_state_publisher,
         spawn_robot,
         # delete_entity_service
@@ -119,49 +138,19 @@ def include_launch_description(context: LaunchContext):
 def generate_launch_description():
 
     # Launch Arguments
-    name_arg = DeclareLaunchArgument(
-        'name',
-        default_value='robot',
-        description='Robot name in Gazebo'
-    )
-    namespace_arg = DeclareLaunchArgument(
-        'namespace',
-        default_value='robot',
-        description='Robot namespace for ROS nodes and topics'
+    robot_index_arg = DeclareLaunchArgument(
+        'robot_index',
+        default_value='1',
+        description='Index of the robot to spawn'
     )
     use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',
         default_value='true',
         description='Use simulation (Gazebo) clock if true'
     )
-    x_pose_arg = DeclareLaunchArgument(
-        'x_pose',
-        default_value='0.0',
-        description='Robot spawn x position'
-    )
-    y_pose_arg = DeclareLaunchArgument(
-        'y_pose',
-        default_value='0.0',
-        description='Robot spawn y position'
-    )
-    z_pose_arg = DeclareLaunchArgument(
-        'z_pose',
-        default_value='0.0',
-        description='Robot spawn z position'
-    )
-    declare_ground_truth_arg = DeclareLaunchArgument(
-        'ground_truth',
-        default_value='False',
-        description='Use ground truth pose'
-    )
 
     return LaunchDescription([
-        name_arg,
-        namespace_arg,
+        robot_index_arg,
         use_sim_time_arg,
-        x_pose_arg,
-        y_pose_arg,
-        z_pose_arg,
-        declare_ground_truth_arg,
         OpaqueFunction(function=include_launch_description)
     ])

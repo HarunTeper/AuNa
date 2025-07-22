@@ -9,6 +9,7 @@
 #include "std_msgs/msg/header.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+#include "gazebo_msgs/srv/get_model_list.hpp"
 
 class GlobalTF : public rclcpp::Node
 {

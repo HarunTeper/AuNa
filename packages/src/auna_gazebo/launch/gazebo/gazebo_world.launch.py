@@ -15,10 +15,11 @@ def include_launch_description(context: LaunchContext):
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
     pkg_auna_gazebo = get_package_share_directory('auna_gazebo')
 
+    # Get the environment variable WORLD_NAME, fallback to 'default' if not set
+    world_name = os.environ.get('WORLD_NAME', 'racetrack_decorated')
     # Construct world path using resolved context
-    world = os.path.join(pkg_auna_gazebo, 'worlds', str(
-        context.launch_configurations['world_name'])+'.world')
-
+    world = os.path.join(pkg_auna_gazebo, 'worlds', world_name +'.world')
+    
     return [
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
@@ -26,7 +27,7 @@ def include_launch_description(context: LaunchContext):
             ),
             launch_arguments={
                 'world': world,
-                'gazebo_ros_state': context.launch_configurations['gazebo_ros_state'],
+                'gazebo_ros_state': 'True',
             }.items()
         ),
 
@@ -41,21 +42,6 @@ def include_launch_description(context: LaunchContext):
 
 def generate_launch_description():
     """Return launch description"""
-
-    world_arg = DeclareLaunchArgument(
-        'world_name',
-        default_value='racetrack_decorated',
-        description='Gazebo world file name in /worlds folder'
-    )
-
-    gazebo_state_arg = DeclareLaunchArgument(
-        'gazebo_ros_state',
-        default_value='true',
-        description='Enable/disable Gazebo ROS state'
-    )
-
     return LaunchDescription([
-        world_arg,
-        gazebo_state_arg,
         OpaqueFunction(function=include_launch_description)
     ])
