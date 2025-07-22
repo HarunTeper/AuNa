@@ -374,6 +374,43 @@ services:
     profiles: ["sim_robot3", "sim_scenario"]
 
   #==============================================================================
+  # LOCALIZATION SERVICES
+  #==============================================================================
+  # Services for localization and state estimation
+
+  ekf_localization_sim:
+    extends: x-package-base
+    build:
+      args:
+        - PACKAGE_NAMES=${EKF_PACKAGES}
+    image: ekf_localization:latest
+    container_name: ekf_localization
+    env_file:
+      - .env
+    command: ["ros2", "launch", "auna_ekf", "ekf_sim.launch.py"]
+
+  ekf_localization_sim_robot1:
+    extends: ekf_localization_sim
+    container_name: ekf_localization_robot1
+    command:
+      ["ros2", "launch", "auna_ekf", "ekf_sim.launch.py", "robot_index:=1"]
+    profiles: ["sim_robot1", "sim_scenario"]
+
+  ekf_localization_sim_robot2:
+    extends: ekf_localization_sim
+    container_name: ekf_localization_robot2
+    command:
+      ["ros2", "launch", "auna_ekf", "ekf_sim.launch.py", "robot_index:=2"]
+    profiles: ["sim_robot2", "sim_scenario"]
+
+  ekf_localization_sim_robot3:
+    extends: ekf_localization_sim
+    container_name: ekf_localization_robot3
+    command:
+      ["ros2", "launch", "auna_ekf", "ekf_sim.launch.py", "robot_index:=3"]
+    profiles: ["sim_robot3", "sim_scenario"]
+
+  #==============================================================================
   # AUTONOMOUS DRIVING SERVICES
   #==============================================================================
   # Services for autonomous behavior algorithms
