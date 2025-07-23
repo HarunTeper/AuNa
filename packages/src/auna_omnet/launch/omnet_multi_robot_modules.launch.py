@@ -12,6 +12,10 @@ from launch.substitutions import LaunchConfiguration
 def include_launch_description(context: LaunchContext):
     """Return launch description"""
 
+    # Check if the comm type is omnet
+    if os.environ.get('AUNA_COMM_TYPE') != 'auna_omnet':
+        return []
+
     # Package Directories
     pkg_dir = get_package_share_directory('auna_omnet')
 

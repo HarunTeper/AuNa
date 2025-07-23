@@ -14,6 +14,10 @@ from launch_ros.actions import PushRosNamespace, Node
 def include_launch_description(context: LaunchContext):
     """Return launch description"""
 
+    # Check if the comm type is auna_comm
+    if os.environ.get('AUNA_COMM_TYPE') != 'auna_comm':
+        return []
+
     # Package Directories
     pkg_dir = get_package_share_directory('auna_comm')
 
