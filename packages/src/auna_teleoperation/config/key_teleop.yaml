@@ -1,6 +1,6 @@
 keyboard_teleop:
   ros__parameters:
-    twist_stamped_enabled: False
+    twist_stamped_enabled: True
     robot_base_frame: "base_link"
     publish_rate: 10.0 # Hz
     linear_max: 3.0 # m/s

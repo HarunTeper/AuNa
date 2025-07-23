@@ -1,0 +1,24 @@
+# Ignore build artifacts and logs
+packages/build/
+packages/install/
+packages/log/
+rosbag2_*/
+.git/
+.vscode/
+.devcontainer/
+
+# Ignore temporary files
+*.pyc
+*.pyo
+__pycache__/
+*.swp
+*.swo
+*~
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Keep only what we need for the build
+!packages/src/
+!dockerfiles/

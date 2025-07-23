@@ -6,3 +6,13 @@ log
 
 .idea
 *venv
+
+**/__pycache__/*
+
+**/__pycache__/*
+
+**/__pycache__/
+
+# tf2 trees
+frames_*.pdf
+frames_*.gv
