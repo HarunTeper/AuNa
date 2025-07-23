@@ -120,6 +120,11 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(
+    DIRECTORY rviz
+    DESTINATION share/${PROJECT_NAME}/
+)
+
 # Export plugin description
 pluginlib_export_plugin_description_file(rviz_common plugins_description.xml)
 
