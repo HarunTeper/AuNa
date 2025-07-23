@@ -49,7 +49,6 @@ i to increase forward speed (0.1 step)
 k to decrease forward speed (0.1 step)
 u to increase turning speed (0.1 step)
 j to decrease turning speed (0.1 step)
-Any other key to stop
 e to switch to the next namespace
 q to switch to the previous namespace
 CTRL-C to quit
