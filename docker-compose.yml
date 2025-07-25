@@ -8,6 +8,7 @@ services:
       context: .
       dockerfile: dockerfiles/base.dockerfile
     image: base:latest
+    pull_policy: build
     env_file:
       - .env
 
@@ -118,6 +119,8 @@ services:
   # Zenohd - distributed data exchange service
   zenohd:
     extends: x-package-base
+    image: zenohd:latest
+    pull_policy: build
     container_name: zenohd
     env_file:
       - .env
@@ -153,6 +156,8 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${TELEOP_PACKAGES}
+    image: teleop:latest
+    pull_policy: build
     container_name: teleop
     env_file:
       - .env
@@ -169,6 +174,8 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${CMD_MULTIPLEXER_PACKAGES}
+    image: cmd_multiplexer:latest
+    pull_policy: build
     container_name: cmd_multiplexer
     env_file:
       - .env
@@ -180,6 +187,8 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${CONTROL_PANEL_PACKAGES}
+    image: control_panel:latest
+    pull_policy: build
     container_name: control_panel
     env_file:
       - .env
@@ -195,6 +204,8 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${GAZEBO_PACKAGES}
+    image: gazebo:latest
+    pull_policy: build
     container_name: gazebo
     env_file:
       - .env
@@ -207,6 +218,8 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${GAZEBO_PACKAGES}
+    image: spawn_robot:latest
+    pull_policy: build
     container_name: spawn_robot
     env_file:
       - .env
@@ -261,6 +274,8 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${TF_PACKAGES}
+    image: global_tf:latest
+    pull_policy: build
     container_name: global_tf
     env_file:
       - .env
@@ -272,6 +287,8 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${TF_PACKAGES}
+    image: localization_pose:latest
+    pull_policy: build
     container_name: localization_pose
     env_file:
       - .env
@@ -327,6 +344,8 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${GROUND_TRUTH_PACKAGES}
+    image: ground_truth:latest
+    pull_policy: build
     container_name: ground_truth
     env_file:
       - .env
@@ -381,6 +400,8 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${EKF_PACKAGES}
+    image: ekf_localization:latest
+    pull_policy: build
     container_name: ekf_localization
     env_file:
       - .env
@@ -418,6 +439,8 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${WALLFOLLOWING_PACKAGES}
+    image: wallfollowing:latest
+    pull_policy: build
     container_name: wallfollowing
     env_file:
       - .env
@@ -432,6 +455,8 @@ services:
   # Development environment - interactive container for development
   development:
     extends: x-dev-base
+    image: development:latest
+    pull_policy: build
     container_name: development
     env_file:
       - .env
@@ -448,6 +473,8 @@ services:
     build:
       args:
         - INSTALL_PACKAGE_NAMES=${DEMO_PACKAGES}
+    image: talker:latest
+    pull_policy: build
     container_name: talker
     env_file:
       - .env
@@ -459,6 +486,8 @@ services:
     build:
       args:
         - INSTALL_PACKAGE_NAMES=${DEMO_PACKAGES}
+    image: listener:latest
+    pull_policy: build
     container_name: listener
     env_file:
       - .env
