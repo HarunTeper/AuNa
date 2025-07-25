@@ -7,6 +7,7 @@ services:
     build:
       context: .
       dockerfile: dockerfiles/base.dockerfile
+    image: base:latest
     env_file:
       - .env
 
