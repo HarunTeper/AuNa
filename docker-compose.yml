@@ -7,10 +7,8 @@ services:
     build:
       context: .
       dockerfile: dockerfiles/base.dockerfile
-    image: base:latest
     env_file:
       - .env
-    profiles: ["base"]
 
   #==============================================================================
   # BASE SERVICE TEMPLATES
@@ -20,6 +18,8 @@ services:
 
   # Standard package base - for ROS packages without special requirements
   x-package-base:
+    depends_on:
+      - base
     build:
       context: .
       dockerfile: dockerfiles/package.dockerfile
@@ -37,6 +37,8 @@ services:
 
   # Physical car base - includes device access for hardware communication
   x-physical-base:
+    depends_on:
+      - base
     build:
       context: .
       dockerfile: dockerfiles/package.dockerfile
@@ -55,6 +57,8 @@ services:
 
   # GUI base - includes X11 forwarding for graphical applications
   x-gui-base:
+    depends_on:
+      - base
     build:
       context: .
       dockerfile: dockerfiles/package.dockerfile
@@ -78,6 +82,8 @@ services:
 
   # Development base - full workspace mount for development workflow
   x-dev-base:
+    depends_on:
+      - base
     build:
       context: .
       dockerfile: dockerfiles/development.dockerfile
@@ -111,7 +117,6 @@ services:
   # Zenohd - distributed data exchange service
   zenohd:
     extends: x-package-base
-    image: zenohd:latest
     container_name: zenohd
     env_file:
       - .env
@@ -147,7 +152,6 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${TELEOP_PACKAGES}
-    image: teleop:latest
     container_name: teleop
     env_file:
       - .env
@@ -164,7 +168,6 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${CMD_MULTIPLEXER_PACKAGES}
-    image: cmd_multiplexer:latest
     container_name: cmd_multiplexer
     env_file:
       - .env
@@ -176,7 +179,6 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${CONTROL_PANEL_PACKAGES}
-    image: control_panel:latest
     container_name: control_panel
     env_file:
       - .env
@@ -192,7 +194,6 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${GAZEBO_PACKAGES}
-    image: gazebo:latest
     container_name: gazebo
     env_file:
       - .env
@@ -205,7 +206,6 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${GAZEBO_PACKAGES}
-    image: spawn_robot:latest
     container_name: spawn_robot
     env_file:
       - .env
@@ -260,7 +260,6 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${TF_PACKAGES}
-    image: global_tf:latest
     container_name: global_tf
     env_file:
       - .env
@@ -272,7 +271,6 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${TF_PACKAGES}
-    image: localization_pose:latest
     container_name: localization_pose
     env_file:
       - .env
@@ -328,7 +326,6 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${GROUND_TRUTH_PACKAGES}
-    image: ground_truth:latest
     container_name: ground_truth
     env_file:
       - .env
@@ -383,7 +380,6 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${EKF_PACKAGES}
-    image: ekf_localization:latest
     container_name: ekf_localization
     env_file:
       - .env
@@ -421,7 +417,6 @@ services:
     build:
       args:
         - PACKAGE_NAMES=${WALLFOLLOWING_PACKAGES}
-    image: wallfollowing:latest
     container_name: wallfollowing
     env_file:
       - .env
@@ -436,7 +431,6 @@ services:
   # Development environment - interactive container for development
   development:
     extends: x-dev-base
-    image: development:latest
     container_name: development
     env_file:
       - .env
@@ -453,7 +447,6 @@ services:
     build:
       args:
         - INSTALL_PACKAGE_NAMES=${DEMO_PACKAGES}
-    image: talker:latest
     container_name: talker
     env_file:
       - .env
@@ -465,7 +458,6 @@ services:
     build:
       args:
         - INSTALL_PACKAGE_NAMES=${DEMO_PACKAGES}
-    image: listener:latest
     container_name: listener
     env_file:
       - .env
