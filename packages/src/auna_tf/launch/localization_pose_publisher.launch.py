@@ -23,7 +23,7 @@ def include_launch_description(context: LaunchContext):
     )
 
     group_cmd = GroupAction([
-        PushRosNamespace('robot_' + robot_index.perform(context)),
+        PushRosNamespace('robot' + robot_index.perform(context)),
         tf_remap,
         tf_static_remap,
         localization_pose_publisher
