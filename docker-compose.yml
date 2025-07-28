@@ -18,8 +18,23 @@ services:
   # These are abstract base services that define common configurations
   # They are extended by actual service definitions below
 
+  # Common base: shared by all containers
+  x-common-base:
+    privileged: true
+    network_mode: host # Required for ROS communication
+    env_file:
+      - .env
+    stdin_open: true
+    tty: true
+    profiles: ["abstract"] # Optional: avoids appearing in `docker compose ps`
+
+  # Standard base - includes basic ROS setup and common dependencies
+  x-base:
+    extends: x-common-base
+
   # Standard package base - for ROS packages without special requirements
   x-package-base:
+    extends: x-common-base
     depends_on:
       - base
     build:
@@ -27,18 +42,12 @@ services:
       dockerfile: dockerfiles/package.dockerfile
       args:
         - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-    privileged: true
-    network_mode: host # Required for ROS communication
     volumes:
       - ./packages/src:/home/ubuntu/workspace/packages/src:cached
-    env_file:
-      - .env
-    stdin_open: true
-    tty: true
-    profiles: ["abstract"]
 
   # Physical car base - includes device access for hardware communication
   x-physical-base:
+    extends: x-common-base
     depends_on:
       - base
     build:
@@ -46,19 +55,13 @@ services:
       dockerfile: dockerfiles/package.dockerfile
       args:
         - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-    privileged: true
-    network_mode: host
     volumes:
       - /dev:/dev # Device access for hardware
       - ./packages/src:/home/ubuntu/workspace/packages/src:cached
-    env_file:
-      - .env
-    stdin_open: true
-    tty: true
-    profiles: ["abstract"]
 
   # GUI base - includes X11 forwarding for graphical applications
   x-gui-base:
+    extends: x-common-base
     depends_on:
       - base
     build:
@@ -66,8 +69,6 @@ services:
       dockerfile: dockerfiles/package.dockerfile
       args:
         - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-    privileged: true
-    network_mode: host
     volumes:
       - ./packages/src:/home/ubuntu/workspace/packages/src:cached
       - /tmp/.X11-unix:/tmp/.X11-unix:rw # X11 socket for GUI
@@ -76,14 +77,10 @@ services:
       - DISPLAY=${DISPLAY} # Forward display for GUI applications
       - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
       - QT_X11_NO_MITSHM=1 # X11 optimization flags
-    env_file:
-      - .env
-    stdin_open: true
-    tty: true
-    profiles: ["abstract"]
 
   # Development base - full workspace mount for development workflow
   x-dev-base:
+    extends: x-common-base
     depends_on:
       - base
     build:
@@ -91,8 +88,6 @@ services:
       dockerfile: dockerfiles/development.dockerfile
       args:
         - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-    privileged: true
-    network_mode: host
     user: "ubuntu"
     volumes:
       - /dev:/dev # Device access for hardware
@@ -100,14 +95,9 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw # X11 socket for GUI
       - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
     environment:
-      - DISPLAY=${DISPLAY} # Forward display for GUI applications
+      - DISPLAY=${DISPLAY}
       - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
-      - QT_X11_NO_MITSHM=1 # X11 optimization flags
-    env_file:
-      - .env
-    stdin_open: true
-    tty: true
-    profiles: ["abstract"]
+      - QT_X11_NO_MITSHM=1
 
   #==============================================================================
   # NETWORK SERVICES
