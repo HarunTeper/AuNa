@@ -1,3 +1,75 @@
+x-common-base: &common-base
+  privileged: true
+  network_mode: host # Required for ROS communication
+  env_file:
+    - .env
+  stdin_open: true
+  tty: true
+  profiles: ["abstract"] # Optional: avoids appearing in `docker compose ps`
+
+x-package-base: &package-base
+  <<: *common-base
+  depends_on:
+    - base
+  build:
+    context: .
+    dockerfile: dockerfiles/package.dockerfile
+    args:
+      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+  volumes:
+    - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+
+x-physical-base: &physical-base
+  <<: *common-base
+  depends_on:
+    - base
+  build:
+    context: .
+    dockerfile: dockerfiles/package.dockerfile
+    args:
+      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+  volumes:
+    - /dev:/dev # Device access for hardware
+    - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+
+x-gui-base: &gui-base
+  <<: *common-base
+  depends_on:
+    - base
+  build:
+    context: .
+    dockerfile: dockerfiles/package.dockerfile
+    args:
+      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+  volumes:
+    - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+    - /tmp/.X11-unix:/tmp/.X11-unix:rw # X11 socket for GUI
+    - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
+  environment:
+    - DISPLAY=${DISPLAY} # Forward display for GUI applications
+    - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
+    - QT_X11_NO_MITSHM=1 # X11 optimization flags
+
+x-dev-base: &dev-base
+  <<: *common-base
+  depends_on:
+    - base
+  build:
+    context: .
+    dockerfile: dockerfiles/development.dockerfile
+    args:
+      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+  user: "ubuntu"
+  volumes:
+    - /dev:/dev # Device access for hardware
+    - .:/home/ubuntu/workspace:cached # Full workspace for development
+    - /tmp/.X11-unix:/tmp/.X11-unix:rw # X11 socket for GUI
+    - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
+  environment:
+    - DISPLAY=${DISPLAY}
+    - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
+    - QT_X11_NO_MITSHM=1
+
 services:
   #==============================================================================
   # BASE SERVICE
@@ -13,100 +85,13 @@ services:
       - .env
 
   #==============================================================================
-  # BASE SERVICE TEMPLATES
-  #==============================================================================
-  # These are abstract base services that define common configurations
-  # They are extended by actual service definitions below
-
-  # Common base: shared by all containers
-  x-common-base:
-    privileged: true
-    network_mode: host # Required for ROS communication
-    env_file:
-      - .env
-    stdin_open: true
-    tty: true
-    profiles: ["abstract"] # Optional: avoids appearing in `docker compose ps`
-
-  # Standard base - includes basic ROS setup and common dependencies
-  x-base:
-    extends: x-common-base
-
-  # Standard package base - for ROS packages without special requirements
-  x-package-base:
-    extends: x-common-base
-    depends_on:
-      - base
-    build:
-      context: .
-      dockerfile: dockerfiles/package.dockerfile
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-    volumes:
-      - ./packages/src:/home/ubuntu/workspace/packages/src:cached
-
-  # Physical car base - includes device access for hardware communication
-  x-physical-base:
-    extends: x-common-base
-    depends_on:
-      - base
-    build:
-      context: .
-      dockerfile: dockerfiles/package.dockerfile
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-    volumes:
-      - /dev:/dev # Device access for hardware
-      - ./packages/src:/home/ubuntu/workspace/packages/src:cached
-
-  # GUI base - includes X11 forwarding for graphical applications
-  x-gui-base:
-    extends: x-common-base
-    depends_on:
-      - base
-    build:
-      context: .
-      dockerfile: dockerfiles/package.dockerfile
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-    volumes:
-      - ./packages/src:/home/ubuntu/workspace/packages/src:cached
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw # X11 socket for GUI
-      - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
-    environment:
-      - DISPLAY=${DISPLAY} # Forward display for GUI applications
-      - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
-      - QT_X11_NO_MITSHM=1 # X11 optimization flags
-
-  # Development base - full workspace mount for development workflow
-  x-dev-base:
-    extends: x-common-base
-    depends_on:
-      - base
-    build:
-      context: .
-      dockerfile: dockerfiles/development.dockerfile
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-    user: "ubuntu"
-    volumes:
-      - /dev:/dev # Device access for hardware
-      - .:/home/ubuntu/workspace:cached # Full workspace for development
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw # X11 socket for GUI
-      - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
-    environment:
-      - DISPLAY=${DISPLAY}
-      - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
-      - QT_X11_NO_MITSHM=1
-
-  #==============================================================================
   # NETWORK SERVICES
   #==============================================================================
   # Services for network communication and data exchange
 
   # Zenohd - distributed data exchange service
   zenohd:
-    extends: x-package-base
+    <<: *package-base
     image: zenohd:latest
     pull_policy: build
     container_name: zenohd
@@ -120,7 +105,7 @@ services:
 
   # Main physical car service - launches all car-related nodes
   # physical_car:
-  #   extends: x-physical-base
+  #   <<: *physical-base
   #   build:
   #     args:
   #       - PACKAGE_NAMES=${PHYSICAL_CAR_PACKAGES}
@@ -138,7 +123,7 @@ services:
 
   # Keyboard teleoperation - manual control via keyboard
   teleop:
-    extends: x-gui-base
+    <<: *gui-base
     build:
       args:
         - PACKAGE_NAMES=${TELEOP_PACKAGES}
@@ -158,7 +143,7 @@ services:
   # Services for running in simulation environment
 
   gazebo:
-    extends: x-gui-base
+    <<: *gui-base
     build:
       args:
         - PACKAGE_NAMES=${GAZEBO_PACKAGES}
@@ -170,7 +155,7 @@ services:
     profiles: ["sim", "sim_scenario"]
 
   spawn_robot:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - PACKAGE_NAMES=${GAZEBO_PACKAGES}
@@ -224,7 +209,7 @@ services:
   # Services for publishing tf and pose data
 
   global_tf:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - PACKAGE_NAMES=${TF_PACKAGES}
@@ -235,7 +220,7 @@ services:
     profiles: ["sim", "sim_scenario"]
 
   localization_pose:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - PACKAGE_NAMES=${TF_PACKAGES}
@@ -290,7 +275,7 @@ services:
   # Services for publishing ground truth data
 
   ground_truth:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - PACKAGE_NAMES=${GROUND_TRUTH_PACKAGES}
@@ -344,7 +329,7 @@ services:
   # Services for multiplexing command sources
 
   cmd_multiplexer:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - PACKAGE_NAMES=${CONTROL_PANEL_PACKAGES}
@@ -398,7 +383,7 @@ services:
   # Services for the control panel GUI
 
   control_panel:
-    extends: x-gui-base
+    <<: *gui-base
     build:
       args:
         - PACKAGE_NAMES=${CONTROL_PANEL_PACKAGES}
@@ -452,7 +437,7 @@ services:
   # Services for localization and state estimation
 
   ekf_localization_sim:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - PACKAGE_NAMES=${EKF_PACKAGES}
@@ -489,7 +474,7 @@ services:
 
   # Wall following algorithm - basic autonomous driving behavior
   wallfollowing:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - PACKAGE_NAMES=${WALLFOLLOWING_PACKAGES}
@@ -506,7 +491,7 @@ services:
 
   # Development environment - interactive container for development
   development:
-    extends: x-dev-base
+    <<: *dev-base
     image: development:latest
     pull_policy: build
     container_name: development
@@ -514,12 +499,12 @@ services:
       [
         "/bin/bash",
         "-c",
-        "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && /bin/bash",
+        "source /opt/ros/humble/setup.bash && cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && /bin/bash",
       ]
     profiles: ["development"]
 
   talker:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - INSTALL_PACKAGE_NAMES=${DEMO_PACKAGES}
@@ -530,7 +515,7 @@ services:
     profiles: ["talker"]
 
   listener:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - INSTALL_PACKAGE_NAMES=${DEMO_PACKAGES}
@@ -541,7 +526,7 @@ services:
     profiles: ["listener"]
 
   tf2_trees:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - PACKAGE_NAMES=${TF2_TOOLS_PACKAGES}
