@@ -12,23 +12,23 @@ x-common-base: &common-base
   tty: true
   pull_policy: build
 
+x-build-package-base: &build-package-base
+  context: .
+  dockerfile: dockerfiles/package.dockerfile
+  args:
+    PIP_BREAK_SYSTEM_PACKAGES: ${PIP_BREAK_SYSTEM_PACKAGES}
+
 x-package-base: &package-base
   <<: *common-base
   build:
-    context: .
-    dockerfile: dockerfiles/package.dockerfile
-    args:
-      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    <<: *build-package-base
   volumes:
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
 
 x-physical-base: &physical-base
   <<: *common-base
   build:
-    context: .
-    dockerfile: dockerfiles/package.dockerfile
-    args:
-      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    <<: *build-package-base
   volumes:
     - /dev:/dev
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
@@ -36,10 +36,7 @@ x-physical-base: &physical-base
 x-gui-base: &gui-base
   <<: *common-base
   build:
-    context: .
-    dockerfile: dockerfiles/package.dockerfile
-    args:
-      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    <<: *build-package-base
   volumes:
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
@@ -122,7 +119,9 @@ services:
   teleop:
     <<: *gui-base
     build:
+      <<: *build-package-base
       args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${TELEOP_PACKAGES}
     image: teleop:latest
     pull_policy: build
@@ -142,7 +141,9 @@ services:
   gazebo:
     <<: *gui-base
     build:
+      <<: *build-package-base
       args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${GAZEBO_PACKAGES}
     image: gazebo:latest
     pull_policy: build
@@ -154,7 +155,9 @@ services:
   spawn_robot:
     <<: *package-base
     build:
+      <<: *build-package-base
       args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${GAZEBO_PACKAGES}
     image: spawn_robot:latest
     pull_policy: build
@@ -208,7 +211,9 @@ services:
   global_tf:
     <<: *package-base
     build:
+      <<: *build-package-base
       args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${TF_PACKAGES}
     image: global_tf:latest
     pull_policy: build
@@ -219,7 +224,9 @@ services:
   localization_pose:
     <<: *package-base
     build:
+      <<: *build-package-base
       args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${TF_PACKAGES}
     image: localization_pose:latest
     pull_policy: build
@@ -274,7 +281,9 @@ services:
   ground_truth:
     <<: *package-base
     build:
+      <<: *build-package-base
       args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${GROUND_TRUTH_PACKAGES}
     image: ground_truth:latest
     pull_policy: build
@@ -328,7 +337,9 @@ services:
   cmd_multiplexer:
     <<: *package-base
     build:
+      <<: *build-package-base
       args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${CONTROL_PANEL_PACKAGES}
     image: cmd_multiplexer:latest
     pull_policy: build
@@ -382,7 +393,9 @@ services:
   control_panel:
     <<: *gui-base
     build:
+      <<: *build-package-base
       args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${CONTROL_PANEL_PACKAGES}
     image: control_panel:latest
     pull_policy: build
@@ -436,7 +449,9 @@ services:
   ekf_localization_sim:
     <<: *package-base
     build:
+      <<: *build-package-base
       args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${EKF_PACKAGES}
     image: ekf_localization:latest
     pull_policy: build
@@ -473,7 +488,9 @@ services:
   wallfollowing:
     <<: *package-base
     build:
+      <<: *build-package-base
       args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${WALLFOLLOWING_PACKAGES}
     image: wallfollowing:latest
     pull_policy: build
@@ -503,7 +520,9 @@ services:
   talker:
     <<: *package-base
     build:
+      <<: *build-package-base
       args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - INSTALL_PACKAGE_NAMES=${DEMO_PACKAGES}
     image: talker:latest
     pull_policy: build
@@ -514,7 +533,9 @@ services:
   listener:
     <<: *package-base
     build:
+      <<: *build-package-base
       args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - INSTALL_PACKAGE_NAMES=${DEMO_PACKAGES}
     image: listener:latest
     pull_policy: build
@@ -525,7 +546,9 @@ services:
   tf2_trees:
     <<: *package-base
     build:
+      <<: *build-package-base
       args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${TF2_TOOLS_PACKAGES}
     image: tf2_trees:latest
     pull_policy: build
