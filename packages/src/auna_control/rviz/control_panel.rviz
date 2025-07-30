@@ -13,6 +13,9 @@ Panels:
       - /Current View1
     Name: Views
     Splitter Ratio: 0.5
+  - Class: auna_control/ControlPanel
+    Enabled: true
+    Name: ControlPanel
 Visualization Manager:
   Class: ""
   Displays:
@@ -33,10 +36,6 @@ Visualization Manager:
       Plane: XY
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
-      Value: true
-    - Class: auna_control/ControlPanel
-      Enabled: true
-      Name: ControlPanel
       Value: true
   Global Options:
     Background Color: 48; 48; 48
