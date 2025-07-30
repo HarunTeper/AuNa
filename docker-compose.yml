@@ -1,3 +1,72 @@
+---
+#------------------------------------------------------------------------------
+# EXTENSION DEFINITIONS (outside `services:`)
+#------------------------------------------------------------------------------
+
+x-common-base: &common-base
+  privileged: true
+  network_mode: host
+  env_file:
+    - .env
+  stdin_open: true
+  tty: true
+  pull_policy: build
+
+x-package-base: &package-base
+  <<: *common-base
+  build:
+    context: .
+    dockerfile: dockerfiles/package.dockerfile
+    args:
+      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+  volumes:
+    - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+
+x-physical-base: &physical-base
+  <<: *common-base
+  build:
+    context: .
+    dockerfile: dockerfiles/package.dockerfile
+    args:
+      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+  volumes:
+    - /dev:/dev
+    - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+
+x-gui-base: &gui-base
+  <<: *common-base
+  build:
+    context: .
+    dockerfile: dockerfiles/package.dockerfile
+    args:
+      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+  volumes:
+    - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+    - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
+  environment:
+    - DISPLAY=${DISPLAY}
+    - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
+    - QT_X11_NO_MITSHM=1
+
+x-dev-base: &dev-base
+  <<: *common-base
+  build:
+    context: .
+    dockerfile: dockerfiles/development.dockerfile
+    args:
+      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+  user: "ubuntu"
+  volumes:
+    - /dev:/dev
+    - .:/home/ubuntu/workspace:cached
+    - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
+  environment:
+    - DISPLAY=${DISPLAY}
+    - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
+    - QT_X11_NO_MITSHM=1
+
 services:
   #==============================================================================
   # BASE SERVICE
@@ -13,97 +82,13 @@ services:
       - .env
 
   #==============================================================================
-  # BASE SERVICE TEMPLATES
-  #==============================================================================
-  # These are abstract base services that define common configurations
-  # They are extended by actual service definitions below
-
-  # Common base: shared by all containers
-  x-common-base:
-    privileged: true
-    network_mode: host # Required for ROS communication
-    env_file:
-      - .env
-    stdin_open: true
-    tty: true
-    pull_policy: build
-    profiles: ["abstract"] # Optional: avoids appearing in `docker compose ps`
-
-  # Standard package base - for ROS packages without special requirements
-  x-package-base:
-    extends: x-common-base
-    depends_on:
-      - base
-    build:
-      context: .
-      dockerfile: dockerfiles/package.dockerfile
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-    volumes:
-      - ./packages/src:/home/ubuntu/workspace/packages/src:cached
-
-  # Physical car base - includes device access for hardware communication
-  x-physical-base:
-    extends: x-common-base
-    depends_on:
-      - base
-    build:
-      context: .
-      dockerfile: dockerfiles/package.dockerfile
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-    volumes:
-      - /dev:/dev # Device access for hardware
-      - ./packages/src:/home/ubuntu/workspace/packages/src:cached
-
-  # GUI base - includes X11 forwarding for graphical applications
-  x-gui-base:
-    extends: x-common-base
-    depends_on:
-      - base
-    build:
-      context: .
-      dockerfile: dockerfiles/package.dockerfile
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-    volumes:
-      - ./packages/src:/home/ubuntu/workspace/packages/src:cached
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw # X11 socket for GUI
-      - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
-    environment:
-      - DISPLAY=${DISPLAY} # Forward display for GUI applications
-      - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
-      - QT_X11_NO_MITSHM=1 # X11 optimization flags
-
-  # Development base - full workspace mount for development workflow
-  x-dev-base:
-    extends: x-common-base
-    depends_on:
-      - base
-    build:
-      context: .
-      dockerfile: dockerfiles/development.dockerfile
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-    user: "ubuntu"
-    volumes:
-      - /dev:/dev # Device access for hardware
-      - .:/home/ubuntu/workspace:cached # Full workspace for development
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw # X11 socket for GUI
-      - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
-    environment:
-      - DISPLAY=${DISPLAY}
-      - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
-      - QT_X11_NO_MITSHM=1
-
-  #==============================================================================
   # NETWORK SERVICES
   #==============================================================================
   # Services for network communication and data exchange
 
   # Zenohd - distributed data exchange service
   zenohd:
-    extends: x-package-base
+    <<: *package-base
     image: zenohd:latest
     pull_policy: build
     container_name: zenohd
@@ -135,7 +120,7 @@ services:
 
   # Keyboard teleoperation - manual control via keyboard
   teleop:
-    extends: x-gui-base
+    <<: *gui-base
     build:
       args:
         - PACKAGE_NAMES=${TELEOP_PACKAGES}
@@ -155,7 +140,7 @@ services:
   # Services for running in simulation environment
 
   gazebo:
-    extends: x-gui-base
+    <<: *gui-base
     build:
       args:
         - PACKAGE_NAMES=${GAZEBO_PACKAGES}
@@ -167,7 +152,7 @@ services:
     profiles: ["sim", "sim_scenario"]
 
   spawn_robot:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - PACKAGE_NAMES=${GAZEBO_PACKAGES}
@@ -175,8 +160,6 @@ services:
     pull_policy: build
     container_name: spawn_robot
     command: ["ros2", "launch", "auna_gazebo", "spawn_robot.launch.py"]
-    depends_on:
-      - gazebo
 
   spawn_robot_robot1:
     extends: spawn_robot
@@ -223,7 +206,7 @@ services:
   # Services for publishing tf and pose data
 
   global_tf:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - PACKAGE_NAMES=${TF_PACKAGES}
@@ -234,7 +217,7 @@ services:
     profiles: ["sim", "sim_scenario"]
 
   localization_pose:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - PACKAGE_NAMES=${TF_PACKAGES}
@@ -289,7 +272,7 @@ services:
   # Services for publishing ground truth data
 
   ground_truth:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - PACKAGE_NAMES=${GROUND_TRUTH_PACKAGES}
@@ -343,7 +326,7 @@ services:
   # Services for multiplexing command sources
 
   cmd_multiplexer:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - PACKAGE_NAMES=${CONTROL_PANEL_PACKAGES}
@@ -397,7 +380,7 @@ services:
   # Services for the control panel GUI
 
   control_panel:
-    extends: x-gui-base
+    <<: *gui-base
     build:
       args:
         - PACKAGE_NAMES=${CONTROL_PANEL_PACKAGES}
@@ -451,7 +434,7 @@ services:
   # Services for localization and state estimation
 
   ekf_localization_sim:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - PACKAGE_NAMES=${EKF_PACKAGES}
@@ -488,7 +471,7 @@ services:
 
   # Wall following algorithm - basic autonomous driving behavior
   wallfollowing:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - PACKAGE_NAMES=${WALLFOLLOWING_PACKAGES}
@@ -505,7 +488,7 @@ services:
 
   # Development environment - interactive container for development
   development:
-    extends: x-dev-base
+    <<: *dev-base
     image: development:latest
     pull_policy: build
     container_name: development
@@ -518,7 +501,7 @@ services:
     profiles: ["development"]
 
   talker:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - INSTALL_PACKAGE_NAMES=${DEMO_PACKAGES}
@@ -529,7 +512,7 @@ services:
     profiles: ["talker"]
 
   listener:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - INSTALL_PACKAGE_NAMES=${DEMO_PACKAGES}
@@ -540,7 +523,7 @@ services:
     profiles: ["listener"]
 
   tf2_trees:
-    extends: x-package-base
+    <<: *package-base
     build:
       args:
         - PACKAGE_NAMES=${TF2_TOOLS_PACKAGES}
@@ -549,12 +532,10 @@ services:
     container_name: tf2_trees
     volumes:
       - .:/home/ubuntu/workspace:cached
-    command: [
+    command:
+      [
         "bash",
         "-c",
-        "ros2 run tf2_tools view_frames && \
-        ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot1/tf -r /tf_static:=/robot1/tf_static && \
-        ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot2/tf -r /tf_static:=/robot2/tf_static && \
-        ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot3/tf -r /tf_static:=/robot3/tf_static",
+        "ros2 run tf2_tools view_frames && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot1/tf -r /tf_static:=/robot1/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot2/tf -r /tf_static:=/robot2/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot3/tf -r /tf_static:=/robot3/tf_static",
       ]
     profiles: ["tf2_trees"]
