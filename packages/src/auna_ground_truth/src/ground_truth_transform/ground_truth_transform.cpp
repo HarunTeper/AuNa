@@ -54,31 +54,62 @@ void GroundTruthTransform::model_srv_callback(
     tf2::Vector3(
       entity->state.pose.position.x, entity->state.pose.position.y, entity->state.pose.position.z));
 
-  geometry_msgs::msg::TransformStamped highest_frame_to_base_link_lookup;
-  try {
-    // Try to first find the transform from map to base_link
-    highest_frame_to_base_link_lookup = buffer_.lookupTransform("map", "base_link", tf2::TimePointZero);
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_INFO(
-      this->get_logger(), "Could not find transform from map to base_link: %s", ex.what());
-    try {
-      highest_frame_to_base_link_lookup = buffer_.lookupTransform("odom", "base_link", tf2::TimePointZero);
-    } catch (tf2::TransformException & ex) {
-      RCLCPP_INFO(
-        this->get_logger(), "Could not find transform from odom to base_link: %s", ex.what());
-      return;
-    }
-  }
-  tf2::Quaternion q_ob(
-    highest_frame_to_base_link_lookup.transform.rotation.x, highest_frame_to_base_link_lookup.transform.rotation.y,
-    highest_frame_to_base_link_lookup.transform.rotation.z, highest_frame_to_base_link_lookup.transform.rotation.w);
-  tf2::Transform highest_frame_to_base_link(
-    q_ob, tf2::Vector3(
-            highest_frame_to_base_link_lookup.transform.translation.x,
-            highest_frame_to_base_link_lookup.transform.translation.y,
-            highest_frame_to_base_link_lookup.transform.translation.z));
+  geometry_msgs::msg::TransformStamped map_to_odom_lookup;
+  geometry_msgs::msg::TransformStamped odom_to_base_link_lookup;
+  
+  std::string highest_frame = "map";  // Default to map if no transforms found
 
-  tf2::Transform map_to_odom = map_to_base * highest_frame_to_base_link.inverse();
+  if (buffer_.canTransform("odom", "base_link", tf2::TimePointZero)) {
+    odom_to_base_link_lookup = buffer_.lookupTransform("odom", "base_link", tf2::TimePointZero);
+    highest_frame = "odom";
+  } else {
+    odom_to_base_link_lookup.header.frame_id = "odom";
+    odom_to_base_link_lookup.child_frame_id = "base_link";
+    odom_to_base_link_lookup.transform.translation.x = 0.0;
+    odom_to_base_link_lookup.transform.translation.y = 0.0;
+    odom_to_base_link_lookup.transform.translation.z = 0.0;
+    odom_to_base_link_lookup.transform.rotation.x = 0.0;
+    odom_to_base_link_lookup.transform.rotation.y = 0.0;
+    odom_to_base_link_lookup.transform.rotation.z = 0.0;
+    odom_to_base_link_lookup.transform.rotation.w = 1.0;
+  }
+  // Set to identity if not found
+  if (buffer_.canTransform("map", "odom", tf2::TimePointZero)) {
+    map_to_odom_lookup = buffer_.lookupTransform("map", "odom", tf2::TimePointZero);
+    highest_frame = "map";
+  } else {
+    map_to_odom_lookup.header.frame_id = "map";
+    map_to_odom_lookup.child_frame_id = "odom";
+    map_to_odom_lookup.transform.translation.x = 0.0;
+    map_to_odom_lookup.transform.translation.y = 0.0;
+    map_to_odom_lookup.transform.translation.z = 0.0;
+    map_to_odom_lookup.transform.rotation.x = 0.0;
+    map_to_odom_lookup.transform.rotation.y = 0.0;
+    map_to_odom_lookup.transform.rotation.z = 0.0;
+    map_to_odom_lookup.transform.rotation.w = 1.0;
+  }
+
+  tf2::Quaternion q_mo(
+    map_to_odom_lookup.transform.rotation.x, map_to_odom_lookup.transform.rotation.y,
+    map_to_odom_lookup.transform.rotation.z, map_to_odom_lookup.transform.rotation.w);
+  tf2::Transform map_to_odom(
+    q_mo, tf2::Vector3(
+      map_to_odom_lookup.transform.translation.x,
+      map_to_odom_lookup.transform.translation.y,
+      map_to_odom_lookup.transform.translation.z));
+
+  tf2::Quaternion q_ob(
+    odom_to_base_link_lookup.transform.rotation.x, odom_to_base_link_lookup.transform.rotation.y,
+    odom_to_base_link_lookup.transform.rotation.z, odom_to_base_link_lookup.transform.rotation.w);
+  tf2::Transform odom_to_base_link(
+    q_ob, tf2::Vector3(
+            odom_to_base_link_lookup.transform.translation.x,
+            odom_to_base_link_lookup.transform.translation.y,
+            odom_to_base_link_lookup.transform.translation.z));
+
+  tf2::Transform total_transform = map_to_odom * odom_to_base_link;
+
+  tf2::Transform gazebo_transform = map_to_base * total_transform.inverse();
 
   geometry_msgs::msg::TransformStamped map_to_odom_transform_msg;
   map_to_odom_transform_msg.transform.translation.x = map_to_odom.getOrigin()[0];
@@ -89,7 +120,7 @@ void GroundTruthTransform::model_srv_callback(
   map_to_odom_transform_msg.transform.rotation.z = map_to_odom.getRotation().getZ();
   map_to_odom_transform_msg.transform.rotation.w = map_to_odom.getRotation().getW();
   map_to_odom_transform_msg.header.frame_id = "gazebo_world";
-  map_to_odom_transform_msg.child_frame_id = "odom";
+  map_to_odom_transform_msg.child_frame_id = highest_frame;
   auto stamp = tf2_ros::fromMsg(entity->header.stamp);
   map_to_odom_transform_msg.header.stamp = tf2_ros::toMsg(stamp + tf2::durationFromSec(1.0));
   broadcaster_.sendTransform(map_to_odom_transform_msg);

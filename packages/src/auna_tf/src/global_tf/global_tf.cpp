@@ -96,6 +96,10 @@ void GlobalTF::tf_callback(
       modified.header.frame_id = "gazebo_world";
       modified.child_frame_id = robot_name + "/odom";
     }
+    else if (original_header == "gazebo_world" && original_child == "map") {
+      modified.header.frame_id = "gazebo_world";
+      modified.child_frame_id = "map";
+    }
     // Case 3: odom -> base_link transform (Typically dynamic)
     else if (
       original_header == "odom" &&
