@@ -54,24 +54,31 @@ void GroundTruthTransform::model_srv_callback(
     tf2::Vector3(
       entity->state.pose.position.x, entity->state.pose.position.y, entity->state.pose.position.z));
 
-  geometry_msgs::msg::TransformStamped odom_to_base_link_lookup;
+  geometry_msgs::msg::TransformStamped highest_frame_to_base_link_lookup;
   try {
-    odom_to_base_link_lookup = buffer_.lookupTransform("odom", "base_link", tf2::TimePointZero);
+    // Try to first find the transform from map to base_link
+    highest_frame_to_base_link_lookup = buffer_.lookupTransform("map", "base_link", tf2::TimePointZero);
   } catch (tf2::TransformException & ex) {
     RCLCPP_INFO(
-      this->get_logger(), "Could not find transform from odom to base_link: %s", ex.what());
-    return;
+      this->get_logger(), "Could not find transform from map to base_link: %s", ex.what());
+    try {
+      highest_frame_to_base_link_lookup = buffer_.lookupTransform("odom", "base_link", tf2::TimePointZero);
+    } catch (tf2::TransformException & ex) {
+      RCLCPP_INFO(
+        this->get_logger(), "Could not find transform from odom to base_link: %s", ex.what());
+      return;
+    }
   }
   tf2::Quaternion q_ob(
-    odom_to_base_link_lookup.transform.rotation.x, odom_to_base_link_lookup.transform.rotation.y,
-    odom_to_base_link_lookup.transform.rotation.z, odom_to_base_link_lookup.transform.rotation.w);
-  tf2::Transform odom_to_base(
+    highest_frame_to_base_link_lookup.transform.rotation.x, highest_frame_to_base_link_lookup.transform.rotation.y,
+    highest_frame_to_base_link_lookup.transform.rotation.z, highest_frame_to_base_link_lookup.transform.rotation.w);
+  tf2::Transform highest_frame_to_base_link(
     q_ob, tf2::Vector3(
-            odom_to_base_link_lookup.transform.translation.x,
-            odom_to_base_link_lookup.transform.translation.y,
-            odom_to_base_link_lookup.transform.translation.z));
+            highest_frame_to_base_link_lookup.transform.translation.x,
+            highest_frame_to_base_link_lookup.transform.translation.y,
+            highest_frame_to_base_link_lookup.transform.translation.z));
 
-  tf2::Transform map_to_odom = map_to_base * odom_to_base.inverse();
+  tf2::Transform map_to_odom = map_to_base * highest_frame_to_base_link.inverse();
 
   geometry_msgs::msg::TransformStamped map_to_odom_transform_msg;
   map_to_odom_transform_msg.transform.translation.x = map_to_odom.getOrigin()[0];
