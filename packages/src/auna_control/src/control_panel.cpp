@@ -119,7 +119,7 @@ void ControlPanel::createComboBoxServiceClients()
   std::string input_sources_service_name = current_namespace_.empty()
                                              ? "/get_input_sources"
                                              : "/" + current_namespace_ + "/get_input_sources";
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     node_->get_logger(), "Creating client for service: %s", input_sources_service_name.c_str());
   input_sources_client_ = node_->create_client<std_srvs::srv::Trigger>(input_sources_service_name);
   set_source_client_ = node_->create_client<auna_msgs::srv::SetString>(
@@ -139,25 +139,25 @@ void ControlPanel::onNamespaceChanged(const QString & text)
 
 void ControlPanel::onEmergencyStopClicked()
 {
-  RCLCPP_INFO(rclcpp::get_logger("control_panel"), "onEmergencyStopClicked: Button pressed");
+  RCLCPP_DEBUG(rclcpp::get_logger("control_panel"), "onEmergencyStopClicked: Button pressed");
   if (
     !estop_status_client_ || !estop_status_client_->service_is_ready() || !estop_set_client_ ||
     !estop_set_client_->service_is_ready()) {
-    RCLCPP_INFO(
+    RCLCPP_DEBUG(
       rclcpp::get_logger("control_panel"), "onEmergencyStopClicked: Service not available");
     QMessageBox::warning(this, "Error", "E-Stop service not available.");
     return;
   }
 
   // Phase 1: Before click (UI disables button, shows waiting)
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     rclcpp::get_logger("control_panel"),
     "onEmergencyStopClicked: Disabling button and updating status label");
   emergency_stop_button_->setEnabled(false);
   status_label_->setText("Status: Sending E-STOP request...");
 
   // Phase 2: During click (send service request)
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     rclcpp::get_logger("control_panel"),
     "onEmergencyStopClicked: Sending service request with data=%d", !estop_active_);
   auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
@@ -169,14 +169,14 @@ void ControlPanel::onEmergencyStopClicked()
 
 void ControlPanel::onEstopSetResponse(rclcpp::Client<std_srvs::srv::SetBool>::SharedFuture result)
 {
-  RCLCPP_INFO(rclcpp::get_logger("control_panel"), "onEstopSetResponse: Service response received");
+  RCLCPP_DEBUG(rclcpp::get_logger("control_panel"), "onEstopSetResponse: Service response received");
   auto response = result.get();
   bool success = response->success;
   QString msg = QString::fromStdString(response->message);
   QMetaObject::invokeMethod(
     this,
     [this, success, msg]() {
-      RCLCPP_INFO(rclcpp::get_logger("control_panel"), "onEstopSetResponse: Updating UI");
+      RCLCPP_DEBUG(rclcpp::get_logger("control_panel"), "onEstopSetResponse: Updating UI");
       emergency_stop_button_->setEnabled(true);
       if (success) {
         status_label_->setText("Status: " + msg);
@@ -230,10 +230,10 @@ void ControlPanel::checkComboBoxServiceAvailability()
 {
   // Query input sources and current source
   if (input_sources_client_) {
-    RCLCPP_INFO(
+    RCLCPP_DEBUG(
       node_->get_logger(), "Checking for service: %s", input_sources_client_->get_service_name());
     if (input_sources_client_->service_is_ready()) {
-      RCLCPP_INFO(node_->get_logger(), "Service is ready, sending request.");
+      RCLCPP_DEBUG(node_->get_logger(), "Service is ready, sending request.");
       auto req = std::make_shared<std_srvs::srv::Trigger::Request>();
       input_sources_client_->async_send_request(
         req, std::bind(&ControlPanel::onInputSourcesResponse, this, std::placeholders::_1));
@@ -267,14 +267,14 @@ void ControlPanel::onEstopStatusResponse(
 void ControlPanel::onInputSourcesResponse(
   rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result)
 {
-  RCLCPP_INFO(rclcpp::get_logger("control_panel"), "onInputSourcesResponse called");
+  RCLCPP_DEBUG(rclcpp::get_logger("control_panel"), "onInputSourcesResponse called");
   if (!result.get()->success) {
     RCLCPP_ERROR(
       rclcpp::get_logger("control_panel"), "Get input sources service failed: %s",
       result.get()->message.c_str());
     return;
   }
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     rclcpp::get_logger("control_panel"), "Received sources: %s", result.get()->message.c_str());
   QStringList sources =
     QString::fromStdString(result.get()->message).split(",", Qt::SkipEmptyParts);
@@ -285,7 +285,7 @@ void ControlPanel::onInputSourcesResponse(
 void ControlPanel::onSourceStatusResponse(
   rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result)
 {
-  RCLCPP_INFO(rclcpp::get_logger("control_panel"), "onSourceStatusResponse called");
+  RCLCPP_DEBUG(rclcpp::get_logger("control_panel"), "onSourceStatusResponse called");
   QString current = QString::fromStdString(result.get()->message).section(": ", 1);
   int idx = source_combo_box_->findText(current);
   if (idx >= 0) {
@@ -303,7 +303,7 @@ void ControlPanel::onSourceComboBoxChanged(int index)
 
 void ControlPanel::setCmdVelSource(const QString & source)
 {
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     rclcpp::get_logger("control_panel"), "setCmdVelSource called with source: %s",
     source.toStdString().c_str());
   if (!set_source_client_) {
@@ -391,7 +391,7 @@ void ControlPanel::createMonitoringSubscribers()
   imu_subscriber_ = node_->create_subscription<sensor_msgs::msg::Imu>(
     ns_prefix + "/imu", 10, std::bind(&ControlPanel::onImuReceived, this, std::placeholders::_1));
 
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     node_->get_logger(), "Created monitoring subscribers for namespace: %s",
     current_namespace_.c_str());
 }
@@ -425,7 +425,7 @@ void ControlPanel::onCmdVelReceived(const geometry_msgs::msg::Twist::SharedPtr m
   ;
 
   // Add debug logging to see if data is received
-  RCLCPP_INFO_THROTTLE(
+  RCLCPP_DEBUG_THROTTLE(
     node_->get_logger(), *node_->get_clock(), 1000, "Received cmd_vel: linear=%.2f, angular=%.2f",
     cmd_linear_x_, cmd_angular_z_);
 
