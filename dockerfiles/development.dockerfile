@@ -20,6 +20,8 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 RUN apt update
 
+USER ubuntu
+
 RUN sudo apt update && sudo apt install -y clangd
 
 # Update rosdep database
@@ -39,8 +41,6 @@ RUN find /tmp/requirements -name "requirements.txt" -exec pip install -r {} \; &
 # Install Python packages from pyproject.toml files  
 RUN find /tmp/toml -name "pyproject.toml" -exec pip install -e {} \; && \
     rm -rf /tmp/toml
-
-USER ubuntu
 
 # Source the workspace in bashrc if setup.bash exists
 RUN echo 'if [ -f /home/ubuntu/workspace/packages/install/setup.bash ]; then source /home/ubuntu/workspace/packages/install/setup.bash; fi' >> /home/ubuntu/.bashrc

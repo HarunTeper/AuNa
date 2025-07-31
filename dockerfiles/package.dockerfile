@@ -20,6 +20,8 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 RUN apt update
 
+USER ubuntu
+
 # Update rosdep database
 RUN rosdep update
 
@@ -70,8 +72,6 @@ RUN for pkg in $PACKAGE_NAMES; do \
 
 # Fix ownership after COPY (COPY creates files owned by root)
 RUN sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace
-
-USER ubuntu
 
 RUN cd /home/ubuntu/workspace/packages && \
     source /opt/ros/humble/setup.bash && \    
