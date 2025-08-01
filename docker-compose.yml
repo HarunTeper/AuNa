@@ -525,7 +525,7 @@ services:
       <<: *build-package-base
       args:
         - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-        - PACKAGE_NAMES=${TF2_TOOLS_PACKAGES}
+        - INSTALL_PACKAGE_NAMES=${TF2_TOOLS_PACKAGES}
     image: tf2_trees:latest
     pull_policy: build
     container_name: tf2_trees
@@ -538,3 +538,28 @@ services:
         "mkdir tf2_trees && cd tf2_trees &&ros2 run tf2_tools view_frames && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot1/tf -r /tf_static:=/robot1/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot2/tf -r /tf_static:=/robot2/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot3/tf -r /tf_static:=/robot3/tf_static",
       ]
     profiles: ["tf2_trees"]
+
+  rqt_base:
+    <<: *gui-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - INSTALL_PACKAGE_NAMES=${RQT_PACKAGES}
+    image: rqt:latest
+    pull_policy: build
+    container_name: rqt
+    command: ["rqt"]
+    profiles: ["rqt"]
+
+  rqt_reconfigure:
+    extends: rqt_base
+    container_name: rqt_reconfigure
+    profiles: ["rqt_reconfigure"]
+    command: ["ros2", "run", "rqt_reconfigure", "rqt_reconfigure"]
+
+  rqt_graph:
+    extends: rqt_base
+    container_name: rqt_graph
+    command: ["ros2", "run", "rqt_graph", "rqt_graph"]
+    profiles: ["rqt_graph"]
