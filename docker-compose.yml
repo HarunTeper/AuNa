@@ -415,45 +415,7 @@ services:
     pull_policy: build
     container_name: control_panel
     command: ["ros2", "launch", "auna_control", "control_panel.launch.py"]
-
-  control_panel_robot1:
-    extends: control_panel
-    container_name: control_panel_robot1
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_control",
-        "control_panel.launch.py",
-        "robot_index:=1",
-      ]
-    profiles: ["sim_robot1", "physical_robot1", "sim_scenario"]
-
-  control_panel_robot2:
-    extends: control_panel
-    container_name: control_panel_robot2
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_control",
-        "control_panel.launch.py",
-        "robot_index:=2",
-      ]
-    profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
-
-  control_panel_robot3:
-    extends: control_panel
-    container_name: control_panel_robot3
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_control",
-        "control_panel.launch.py",
-        "robot_index:=3",
-      ]
-    profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
+    profiles: ["sim", "sim_scenario"]
 
   #==============================================================================
   # LOCALIZATION SERVICES
