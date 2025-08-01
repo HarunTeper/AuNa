@@ -13,6 +13,8 @@
 	"remoteUser": "ubuntu",
 	// Configure workspace mount point
 	"workspaceFolder": "/home/ubuntu/workspace",
+	//Initialize command:
+	"initializeCommand": "docker compose down development --remove-orphans",
 	// Configure VS Code extensions
 	"customizations": {
 		"vscode": {

@@ -30,7 +30,7 @@ def include_ground_truth_launches(context: LaunchContext):
     tf_static_remap = SetRemap(src='/tf_static', dst='tf_static')
 
     group_cmd = GroupAction([
-        PushRosNamespace('robot_' + robot_index.perform(context)),
+        PushRosNamespace('robot' + robot_index.perform(context)),
         tf_remap,
         tf_static_remap,
         ground_truth_transform,

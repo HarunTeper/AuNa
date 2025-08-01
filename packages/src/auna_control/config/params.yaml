@@ -1,6 +1,5 @@
 /**/cmd_vel_multiplexer_node:
   ros__parameters:
-    
     publish_rate: 20.0
     wheelbase: 0.32
     convert_yaw_to_steering_angle: false

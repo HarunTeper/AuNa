@@ -23,6 +23,13 @@ RUN useradd -m -s /bin/bash ubuntu \
     && echo 'ubuntu ALL=(root) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu \
     && chmod 0440 /etc/sudoers.d/ubuntu
 
+ARG HOST_UID=1000
+ARG HOST_GID=1000
+# Set user and group IDs to match the host
+RUN usermod -u ${HOST_UID} ubuntu \
+    && groupmod -g ${HOST_GID} ubuntu \
+    && usermod -aG sudo ubuntu
+
 # Disable sudo hint message
 RUN touch /home/ubuntu/.sudo_as_admin_successful
 

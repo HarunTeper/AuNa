@@ -21,9 +21,9 @@ def include_launch_description(context: LaunchContext):
     robot_index = LaunchConfiguration('robot_index')
     
     # Parameters
-    name = 'robot_' + robot_index.perform(context)
-    namespace = 'robot_' + robot_index.perform(context)
-    urdf_namespace = 'robot_' + robot_index.perform(context)
+    name = 'robot' + robot_index.perform(context)
+    namespace = 'robot' + robot_index.perform(context)
+    urdf_namespace = 'robot' + robot_index.perform(context)
     use_sim_time = LaunchConfiguration('use_sim_time')
     x_pose = LaunchConfiguration('x_pose', default='0.0')
     y_pose = LaunchConfiguration('y_pose', default='0.0')

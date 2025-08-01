@@ -92,14 +92,26 @@ void GlobalTF::tf_callback(
       modified.header.frame_id = "map";
       modified.child_frame_id = robot_name + "/odom";
     }
-    // Case 2: odom -> base_link transform (Typically dynamic)
+    else if (original_header == "gazebo_world" && original_child == "odom") {
+      modified.header.frame_id = "gazebo_world";
+      modified.child_frame_id = robot_name + "/odom";
+    }
+    else if (original_header == "gazebo_world" && original_child == "map") {
+      modified.header.frame_id = "gazebo_world";
+      modified.child_frame_id = "map";
+    }
+    else if (original_header == "gazebo_world" && original_child == "ground_truth_base_link") {
+      modified.header.frame_id = "gazebo_world";
+      modified.child_frame_id = robot_name + "/ground_truth_base_link";
+    }
+    // Case 3: odom -> base_link transform (Typically dynamic)
     else if (
       original_header == "odom" &&
       (original_child == "base_link" || original_child == "base_footprint")) {
       modified.header.frame_id = robot_name + "/odom";
       modified.child_frame_id = robot_name + "/" + original_child;
     }
-    // Case 3: Other transforms (robot-internal, could be static or dynamic)
+    // Case 4: Other transforms (robot-internal, could be static or dynamic)
     else {
       // Prefix header if not already prefixed AND it's not a global frame like 'map'
       if (modified.header.frame_id.rfind(robot_name + "/", 0) != 0 && original_header != "map") {

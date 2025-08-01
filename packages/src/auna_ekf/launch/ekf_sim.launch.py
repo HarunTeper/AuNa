@@ -37,7 +37,7 @@ def include_launch_description(context: LaunchContext):
 
     # Namespace group for proper topic scoping
     ekf_group = GroupAction([
-        PushRosNamespace('robot_' + robot_index.perform(context)),
+        PushRosNamespace('robot' + robot_index.perform(context)),
         tf_remap,
         tf_static_remap,
         ekf_node
