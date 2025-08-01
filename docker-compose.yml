@@ -400,7 +400,6 @@ services:
     image: nav2_stack:latest
     pull_policy: build
     container_name: nav2_stack
-    command: [ "ros2", "launch", "auna_nav2", "navigation_single_robot.launch.py" ]
 
   nav2_stack_robot1:
     extends: nav2_stack
