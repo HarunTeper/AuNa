@@ -278,6 +278,20 @@ services:
   #==============================================================================
   # Services for publishing ground truth data
 
+  ground_truth_static_transform:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${GROUND_TRUTH_PACKAGES}
+    image: ground_truth_static_transform:latest
+    pull_policy: build
+    container_name: ground_truth_static_transform
+    command:
+      ["ros2", "launch", "auna_ground_truth", "static_transform.launch.py"]
+    profiles: ["sim", "sim_scenario"]
+
   ground_truth:
     <<: *package-base
     build:
