@@ -15,6 +15,9 @@ def include_launch_description(context: LaunchContext):
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
     pkg_auna_gazebo = get_package_share_directory('auna_gazebo')
 
+    # Launch Configurations
+    use_sim_time = LaunchConfiguration('use_sim_time')
+
     # Get the environment variable WORLD_NAME, fallback to 'default' if not set
     world_name = os.environ.get('WORLD_NAME', 'racetrack_decorated')
     # Construct world path using resolved context
@@ -27,6 +30,7 @@ def include_launch_description(context: LaunchContext):
             ),
             launch_arguments={
                 'world': world,
+                'use_sim_time': use_sim_time,
             }.items()
         ),
 
@@ -34,13 +38,23 @@ def include_launch_description(context: LaunchContext):
             package='auna_gazebo',
             executable='robot_name_publisher',
             name='robot_name_publisher',
-            output='screen'
+            output='screen',
+            parameters=[{'use_sim_time': use_sim_time}]
         )
     ]
 
 
 def generate_launch_description():
     """Return launch description"""
+    
+    # Declare use_sim_time argument
+    use_sim_time_arg = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='true',
+        description='Use simulation (Gazebo) clock if true'
+    )
+
     return LaunchDescription([
+        use_sim_time_arg,
         OpaqueFunction(function=include_launch_description)
     ])

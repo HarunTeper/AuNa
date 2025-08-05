@@ -13,17 +13,21 @@ import os
 
 def include_ground_truth_launches(context: LaunchContext):
     robot_index = LaunchConfiguration('robot_index')
+    use_sim_time = LaunchConfiguration('use_sim_time')
     pkg_dir = get_package_share_directory('auna_ground_truth')
     launch_dir = os.path.join(pkg_dir, 'launch')
 
     ground_truth_transform = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(launch_dir, 'ground_truth_transform.launch.py'))
+        PythonLaunchDescriptionSource(os.path.join(launch_dir, 'ground_truth_transform.launch.py')),
+        launch_arguments={'use_sim_time': use_sim_time}.items()
     )
     ground_truth_pose_publisher = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(launch_dir, 'ground_truth_pose_publisher.launch.py'))
+        PythonLaunchDescriptionSource(os.path.join(launch_dir, 'ground_truth_pose_publisher.launch.py')),
+        launch_arguments={'use_sim_time': use_sim_time}.items()
     )
     ground_truth_cam = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(launch_dir, 'ground_truth_cam.launch.py'))
+        PythonLaunchDescriptionSource(os.path.join(launch_dir, 'ground_truth_cam.launch.py')),
+        launch_arguments={'use_sim_time': use_sim_time}.items()
     )
     # Individual components
     tf_remap = SetRemap(src='/tf', dst='tf')
@@ -46,7 +50,15 @@ def generate_launch_description():
         default_value='1',
         description='Index of the robot to spawn'
     )
+    
+    use_sim_time_arg = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='true',
+        description='Use simulation (Gazebo) clock if true'
+    )
+    
     return LaunchDescription([
         robot_index_arg,
+        use_sim_time_arg,
         OpaqueFunction(function=include_ground_truth_launches)
     ])

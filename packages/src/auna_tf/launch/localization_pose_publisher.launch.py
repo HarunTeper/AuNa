@@ -10,6 +10,7 @@ def include_launch_description(context: LaunchContext):
     """Return launch description"""
     # Launch Configurations
     robot_index = LaunchConfiguration('robot_index')
+    use_sim_time = LaunchConfiguration('use_sim_time')
 
     # Individual components
     tf_remap = SetRemap(src='/tf', dst='tf')
@@ -19,7 +20,8 @@ def include_launch_description(context: LaunchContext):
         package='auna_tf',
         executable='localization_pose_publisher',
         name='localization_pose_publisher',
-        output='screen'
+        output='screen',
+        parameters=[{'use_sim_time': use_sim_time}]
     )
 
     group_cmd = GroupAction([
@@ -43,8 +45,15 @@ def generate_launch_description():
         default_value='1',
         description='Index of the robot to spawn'
     )
+    
+    use_sim_time_arg = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='true',
+        description='Use simulation (Gazebo) clock if true'
+    )
 
     return LaunchDescription([
         robot_index_arg,
+        use_sim_time_arg,
         OpaqueFunction(function=include_launch_description)
     ])
