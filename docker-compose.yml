@@ -196,6 +196,11 @@ services:
     command: [ "ros2", "launch", "auna_gazebo", "spawn_robot.launch.py", "robot_index:=3", "use_sim_time:=true" ]
     profiles: [ "sim_robot3", "sim_scenario" ]
 
+  #==============================================================================
+  # MAP SERVICES
+  #==============================================================================
+  # Services for handling maps and localization data
+
   map_server:
     <<: *package-base
     build:
@@ -206,7 +211,7 @@ services:
     image: map_server:latest
     pull_policy: build
     container_name: map_server
-    command: [ "ros2", "launch", "auna_nav2", "map_server.launch.py", "map:=${MAP_NAME}" ]
+    command: [ "ros2", "launch", "auna_nav2", "map_server.launch.py", "map_name:=${MAP_NAME}" ]
     profiles: [ "sim", "sim_scenario" ]
 
   #==============================================================================
@@ -416,8 +421,13 @@ services:
     command: [ "ros2", "launch", "auna_ekf", "ekf_sim.launch.py", "robot_index:=3", "use_sim_time:=true" ]
     profiles: [ "sim_robot3", "sim_scenario" ]
 
+  #==============================================================================
+  # NAVIGATION SERVICES
+  #==============================================================================
+  # Services for autonomous navigation and path planning
+
   nav2_stack:
-    <<: *package-base
+    <<: *gui-base
     build:
       <<: *build-package-base
       args:
@@ -432,39 +442,25 @@ services:
   nav2_stack_robot1:
     extends: nav2_stack
     container_name: nav2_stack_robot1
-    command: [ "ros2", "launch", "auna_nav2", "navigation_single_robot.launch.py", "namespace:=robot1" ]
+    command: [ "ros2", "launch", "auna_nav2", "navigation_single_robot.launch.py", "robot_index:=1", "use_sim_time:=true" ]
     profiles: [ "sim_robot1", "physical_robot1", "sim_scenario" ]
 
   nav2_stack_robot2:
     extends: nav2_stack
     container_name: nav2_stack_robot2
-    command: [ "ros2", "launch", "auna_nav2", "navigation_single_robot.launch.py", "namespace:=robot2" ]
+    command: [ "ros2", "launch", "auna_nav2", "navigation_single_robot.launch.py", "robot_index:=2", "use_sim_time:=true" ]
     profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
 
   nav2_stack_robot3:
     extends: nav2_stack
     container_name: nav2_stack_robot3
-    command: [ "ros2", "launch", "auna_nav2", "navigation_single_robot.launch.py", "namespace:=robot3" ]
+    command: [ "ros2", "launch", "auna_nav2", "navigation_single_robot.launch.py", "robot_index:=3", "use_sim_time:=true" ]
     profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
-  # AUTONOMOUS DRIVING SERVICES
+  # CACC CONTROLLER SERVICES
   #==============================================================================
-  # Services for autonomous behavior algorithms
-
-  # Wall following algorithm - basic autonomous driving behavior
-  wallfollowing:
-    <<: *package-base
-    build:
-      <<: *build-package-base
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-        - PACKAGE_NAMES=${WALLFOLLOWING_PACKAGES}
-    image: wallfollowing:latest
-    pull_policy: build
-    container_name: wallfollowing
-    command: [ "ros2", "launch", "wallfollowing", "wallfollowing.launch.py" ]
-    profiles: [ "wallfollowing" ]
+  # Services for Cooperative Adaptive Cruise Control (CACC) controllers
 
   cacc_controller:
     <<: *package-base

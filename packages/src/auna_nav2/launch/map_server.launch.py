@@ -19,8 +19,15 @@ def generate_launch_description():
     bringup_dir = get_package_share_directory('auna_nav2')
     config_dir = os.path.join(pkg_dir, 'config', 'nav2_params')
 
+    # Get map name from environment variable or default to 'default'
+    map_name = os.environ.get('MAP_NAME', 'default')
+    map_yaml_file = os.path.join(bringup_dir, 'maps', map_name, 'map.yaml')
+    declare_map_cmd = DeclareLaunchArgument(
+        'map',
+        default_value=map_yaml_file,
+        description='Full path to the map YAML file')
+
     namespace = LaunchConfiguration('namespace')
-    map_yaml_file = LaunchConfiguration('map')
     use_sim_time = LaunchConfiguration('use_sim_time')
     autostart = LaunchConfiguration('autostart')
     lifecycle_nodes = ['map_server']
@@ -36,12 +43,7 @@ def generate_launch_description():
             'namespace', default_value='',
             description='Top-level namespace'),
 
-        DeclareLaunchArgument(
-            'map',
-            default_value=os.path.join(
-                bringup_dir, 'maps', 'racetrack_decorated', 'map.yaml'),
-            description='Full path to map yaml file to load'),
-
+        declare_map_cmd,
         DeclareLaunchArgument(
             'use_sim_time', default_value='false',
             description='Use simulation (Gazebo) clock if true'),

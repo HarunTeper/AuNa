@@ -17,8 +17,6 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 
-find_package(auna_common REQUIRED)
-
 install(DIRECTORY 
   behavior_trees
   config

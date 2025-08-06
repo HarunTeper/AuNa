@@ -19,14 +19,12 @@ def generate_launch_description():
     # Get the launch directory
     bringup_dir = get_package_share_directory('auna_nav2')
     config_dir = os.path.join(bringup_dir, 'config', 'nav2_params')
-    launch_dir = os.path.join(bringup_dir, 'launch')
 
     # Get bringup dir from nav2_bringup package to use includes launch files instead of copied ones.
     nav2_bringup_dir = get_package_share_directory('nav2_bringup')
     nav2_launch_dir = os.path.join(nav2_bringup_dir, 'launch')
 
     # Create the launch configuration variables
-    # namespace = LaunchConfiguration('namespace')
     map_yaml_file = LaunchConfiguration('map')
     use_sim_time = LaunchConfiguration('use_sim_time')
     params_file = LaunchConfiguration('params_file')
@@ -38,11 +36,6 @@ def generate_launch_description():
     stdout_linebuf_envvar = SetEnvironmentVariable(
         'RCUTILS_LOGGING_BUFFERED_STREAM', '1')
 
-    # declare_namespace_cmd = DeclareLaunchArgument(
-    #     'namespace',
-    #     default_value='',
-    #     description='Top-level namespace')
-
     declare_slam_cmd = DeclareLaunchArgument(
         'slam',
         default_value='False',
@@ -50,6 +43,8 @@ def generate_launch_description():
 
     declare_map_yaml_cmd = DeclareLaunchArgument(
         'map',
+        default_value=os.path.join(
+            bringup_dir, 'maps', 'racetrack_decorated', 'map.yaml'),
         description='Full path to map yaml file to load')
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(
@@ -127,7 +122,6 @@ def generate_launch_description():
     launch_description.add_action(stdout_linebuf_envvar)
 
     # Declare the launch options
-    # launch_description.add_action(declare_namespace_cmd)
     launch_description.add_action(declare_slam_cmd)
     launch_description.add_action(declare_map_yaml_cmd)
     launch_description.add_action(declare_use_sim_time_cmd)
