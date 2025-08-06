@@ -456,6 +456,38 @@ services:
     command: [ "ros2", "launch", "wallfollowing", "wallfollowing.launch.py" ]
     profiles: [ "wallfollowing" ]
 
+  cacc_controller:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${CACC_PACKAGES}
+    image: cacc_controller:latest
+    pull_policy: build
+    container_name: cacc_controller
+    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py" ]
+
+    profiles: [ "base" ]
+
+  cacc_controller_robot1:
+    extends: cacc_controller
+    container_name: cacc_controller_robot1
+    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "namespace:=robot1" ]
+    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario" ]
+
+  cacc_controller_robot2:
+    extends: cacc_controller
+    container_name: cacc_controller_robot2
+    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "namespace:=robot2" ]
+    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
+
+  cacc_controller_robot3:
+    extends: cacc_controller
+    container_name: cacc_controller_robot3
+    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "namespace:=robot3" ]
+    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
+
   #==============================================================================
   # DEVELOPMENT SERVICES
   #==============================================================================
