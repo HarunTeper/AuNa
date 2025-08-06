@@ -22,7 +22,7 @@ RUN apt update
 
 USER ubuntu
 
-RUN sudo apt update && sudo apt install -y clangd
+RUN sudo apt update && sudo apt install -y clangd clang-format
 
 # Update rosdep database
 RUN rosdep update
