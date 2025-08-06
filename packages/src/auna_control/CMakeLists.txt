@@ -56,6 +56,7 @@ set(CMAKE_AUTOMOC ON)
 
 set(auna_control_headers_to_moc
   include/auna_control/control_panel.hpp
+  include/auna_control/control_panel_ros_interface.hpp
 )
 
 foreach(header "${auna_control_headers_to_moc}")
@@ -64,6 +65,7 @@ endforeach()
 
 set(auna_control_source_files
   src/control_panel.cpp
+  src/control_panel_ros_interface.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED

@@ -1,22 +1,13 @@
 #pragma once
 
-#include <QtCore/QTimer>
+#include "auna_control/control_panel_ros_interface.hpp"
+
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
-#include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
-
-#include "auna_msgs/srv/set_string.hpp"
-#include "nav_msgs/msg/odometry.hpp"
-#include "sensor_msgs/msg/imu.hpp"
-#include "std_srvs/srv/set_bool.hpp"
-#include "std_srvs/srv/trigger.hpp"
-
-#include <memory>
-#include <thread>
 
 namespace auna_control
 {
@@ -36,27 +27,18 @@ private Q_SLOTS:
   void onNamespaceChanged(const QString & text);
   void onEmergencyStopClicked();
   void onSourceComboBoxChanged(int index);
-  void updateUIStates();
-  void checkServiceAvailability();
-  void onEstopSetResponse(rclcpp::Client<std_srvs::srv::SetBool>::SharedFuture result);
-  void onEstopStatusResponse(rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result);
-  void onInputSourcesResponse(rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result);
-  void onSourceStatusResponse(rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result);
+
+  void onEstopStatusUpdated(bool isActive, const QString & message);
+  void onOdometryUpdated(double speed, double angular_vel, double x, double y, double z);
+  void onImuUpdated(double ax, double ay, double az);
+  void onCmdVelUpdated(double linear, double angular);
+  void onInputSourcesUpdated(const QStringList & sources);
+  void onSourceStatusUpdated(const QString & source);
+  void onBackendReady(bool ready);
 
 private:
   void setupUI();
-  void initializeROS();
-  void createComboBoxServiceClients();
-  void checkEstopServiceAvailability();
-  void checkComboBoxServiceAvailability();
-  void setCmdVelSource(const QString & source);
-
-  // Monitoring UI
   void setupMonitoringUI();
-  void createMonitoringSubscribers();
-  void onOdometryReceived(const nav_msgs::msg::Odometry::SharedPtr msg);
-  void onCmdVelReceived(const geometry_msgs::msg::Twist::SharedPtr msg);
-  void onImuReceived(const sensor_msgs::msg::Imu::SharedPtr msg);
   void updateMonitoringDisplay();
 
   QVBoxLayout * layout_;
@@ -64,6 +46,7 @@ private:
   QPushButton * emergency_stop_button_;
   QLabel * status_label_;
   QComboBox * source_combo_box_;
+  QString last_known_source_;
   QTimer * status_timer_;
 
   // Monitoring UI elements
@@ -80,23 +63,8 @@ private:
   double current_angular_vel_ = 0.0;
   double cmd_linear_x_ = 0.0, cmd_angular_z_ = 0.0;
 
-  rclcpp::Node::SharedPtr node_;
-  std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> executor_;
-  std::unique_ptr<std::thread> spinner_thread_;
-
-  rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr estop_set_client_;
-  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr estop_status_client_;
-  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr source_status_client_;
-  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr input_sources_client_;
-  rclcpp::Client<auna_msgs::srv::SetString>::SharedPtr set_source_client_;
-
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscriber_;
-  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_subscriber_;
-  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscriber_;
-
-  std::string current_namespace_;
+  ControlPanelROSInterface * control_panel_ros_interface_;
   bool estop_active_;
-  bool backend_node_ready_;
 };
 
 }  // namespace auna_control

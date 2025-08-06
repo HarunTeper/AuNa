@@ -52,7 +52,8 @@ def generate_launch_description():
         namespace=namespace,
         name='cmd_vel_multiplexer_node',
         output='screen',
-        parameters=[param_file, {"topic_file": topic_file}, {'use_sim_time': use_sim_time}],
+        parameters=[param_file, {"topic_file": topic_file}, {
+            'use_sim_time': use_sim_time}]
     )
 
     return LaunchDescription([
