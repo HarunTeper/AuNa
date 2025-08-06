@@ -196,6 +196,19 @@ services:
     command: [ "ros2", "launch", "auna_gazebo", "spawn_robot.launch.py", "robot_index:=3", "use_sim_time:=true" ]
     profiles: [ "sim_robot3", "sim_scenario" ]
 
+  map_server:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${NAV2_PACKAGES}
+    image: map_server:latest
+    pull_policy: build
+    container_name: map_server
+    command: [ "ros2", "launch", "auna_nav2", "map_server.launch.py", "map:=${MAP_NAME}" ]
+    profiles: [ "sim", "sim_scenario" ]
+
   #==============================================================================
   # TF SERVICES
   #==============================================================================
@@ -345,8 +358,27 @@ services:
     image: control_panel:latest
     pull_policy: build
     container_name: control_panel
-    command: [ "ros2", "launch", "auna_control", "control_panel.launch.py", "use_sim_time:=true" ]
-    profiles: [ "sim", "sim_scenario" ]
+    command: [ "ros2", "launch", "auna_control", "control_panel.launch.py" ]
+
+    profiles: [ "control_panel" ]
+
+  control_panel_robot1:
+    extends: control_panel
+    container_name: control_panel_robot1
+    command: [ "ros2", "launch", "auna_control", "control_panel.launch.py", "robot_index:=1" ]
+    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario" ]
+
+  control_panel_robot2:
+    extends: control_panel
+    container_name: control_panel_robot2
+    command: [ "ros2", "launch", "auna_control", "control_panel.launch.py", "robot_index:=2" ]
+    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
+
+  control_panel_robot3:
+    extends: control_panel
+    container_name: control_panel_robot3
+    command: [ "ros2", "launch", "auna_control", "control_panel.launch.py", "robot_index:=3" ]
+    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
   # LOCALIZATION SERVICES
@@ -384,6 +416,37 @@ services:
     command: [ "ros2", "launch", "auna_ekf", "ekf_sim.launch.py", "robot_index:=3", "use_sim_time:=true" ]
     profiles: [ "sim_robot3", "sim_scenario" ]
 
+  nav2_stack:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${NAV2_PACKAGES}
+    image: nav2_stack:latest
+    pull_policy: build
+    container_name: nav2_stack
+
+    profiles: [ "base" ]
+
+  nav2_stack_robot1:
+    extends: nav2_stack
+    container_name: nav2_stack_robot1
+    command: [ "ros2", "launch", "auna_nav2", "navigation_single_robot.launch.py", "namespace:=robot1" ]
+    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario" ]
+
+  nav2_stack_robot2:
+    extends: nav2_stack
+    container_name: nav2_stack_robot2
+    command: [ "ros2", "launch", "auna_nav2", "navigation_single_robot.launch.py", "namespace:=robot2" ]
+    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
+
+  nav2_stack_robot3:
+    extends: nav2_stack
+    container_name: nav2_stack_robot3
+    command: [ "ros2", "launch", "auna_nav2", "navigation_single_robot.launch.py", "namespace:=robot3" ]
+    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
+
   #==============================================================================
   # AUTONOMOUS DRIVING SERVICES
   #==============================================================================
@@ -402,6 +465,38 @@ services:
     container_name: wallfollowing
     command: [ "ros2", "launch", "wallfollowing", "wallfollowing.launch.py" ]
     profiles: [ "wallfollowing" ]
+
+  cacc_controller:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${CACC_PACKAGES}
+    image: cacc_controller:latest
+    pull_policy: build
+    container_name: cacc_controller
+    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py" ]
+
+    profiles: [ "base" ]
+
+  cacc_controller_robot1:
+    extends: cacc_controller
+    container_name: cacc_controller_robot1
+    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "namespace:=robot1" ]
+    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario" ]
+
+  cacc_controller_robot2:
+    extends: cacc_controller
+    container_name: cacc_controller_robot2
+    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "namespace:=robot2" ]
+    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
+
+  cacc_controller_robot3:
+    extends: cacc_controller
+    container_name: cacc_controller_robot3
+    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "namespace:=robot3" ]
+    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
   # DEVELOPMENT SERVICES
@@ -482,3 +577,37 @@ services:
     container_name: rqt_graph
     command: [ "ros2", "run", "rqt_graph", "rqt_graph" ]
     profiles: [ "rqt_graph" ]
+
+  cam_communication:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${COMM_PACKAGES}
+    image: cam_communication:latest
+    pull_policy: build
+    container_name: cam_communication
+    command: [ "ros2", "launch", "auna_comm", "single_cam_communication.launch.py" ]
+    environment:
+      - COMMUNICATION_TYPE=${COMMUNICATION_TYPE}
+
+    profiles: [ "base" ]
+
+  cam_communication_robot1:
+    extends: cam_communication
+    container_name: cam_communication_robot1
+    command: [ "ros2", "launch", "auna_comm", "single_cam_communication.launch.py", "robot_index:=1", "namespace:=robot1" ]
+    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario" ]
+
+  cam_communication_robot2:
+    extends: cam_communication
+    container_name: cam_communication_robot2
+    command: [ "ros2", "launch", "auna_comm", "single_cam_communication.launch.py", "robot_index:=2", "namespace:=robot2" ]
+    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
+
+  cam_communication_robot3:
+    extends: cam_communication
+    container_name: cam_communication_robot3
+    command: [ "ros2", "launch", "auna_comm", "single_cam_communication.launch.py", "robot_index:=3", "namespace:=robot3" ]
+    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
