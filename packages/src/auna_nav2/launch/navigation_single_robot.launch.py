@@ -217,7 +217,7 @@ def generate_launch_description():
     )
     use_enable_rviz_arg = DeclareLaunchArgument(
         name='enable_rviz',
-        default_value='True',
+        default_value='False',
         description='Enable RViz'
     )
 

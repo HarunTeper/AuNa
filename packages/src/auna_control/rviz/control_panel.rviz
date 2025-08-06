@@ -13,7 +13,8 @@ Panels:
       - /Current View1
     Name: Views
     Splitter Ratio: 0.5
-  - ~
+  - Class: auna_control/ControlPanel
+    Name: ControlPanel
 Visualization Manager:
   Class: ""
   Displays:

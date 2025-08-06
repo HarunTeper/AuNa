@@ -16,6 +16,14 @@
   <depend>navigation2</depend>
   <depend>rviz2</depend>
 
+  <depend>nav2_bringup</depend>
+  <depend>nav2_bt_navigator</depend>
+  <depend>nav2_amcl</depend>
+  <depend>nav2_controller</depend>
+  <depend>nav2_planner</depend>
+  <depend>nav2_recoveries</depend>
+  <depend>nav2_waypoint_follower</depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   

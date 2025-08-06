@@ -16,8 +16,14 @@ def include_launch_description(context: LaunchContext):
     namespace = LaunchConfiguration('namespace')
     cacc_config = LaunchConfiguration('cacc_config')
     waypoint_file_path = LaunchConfiguration('waypoint_file')
+    use_waypoints = LaunchConfiguration('use_waypoints')
 
     launch_description_content = []
+
+    parameters = [yaml_launch.get_yaml_value(cacc_config.perform(
+        context), ['cacc_controller', 'ros__parameters'])]
+    if use_waypoints.perform(context).lower() == 'true':
+        parameters.append({'waypoint_file': waypoint_file_path})
 
     launch_description_content.append(
         Node(
@@ -26,7 +32,7 @@ def include_launch_description(context: LaunchContext):
             name='cacc_controller',
             namespace=namespace,
             output='screen',
-            parameters=[yaml_launch.get_yaml_value(cacc_config.perform(context), ['cacc_controller', 'ros__parameters']), {'waypoint_file': waypoint_file_path}]
+            parameters=parameters
         )
     )
 
@@ -40,7 +46,8 @@ def generate_launch_description():
     pkg_dir = get_package_share_directory('auna_cacc')
 
     # Config files
-    cacc_config_file_path = os.path.join(pkg_dir, 'config', 'cacc_controller.yaml')
+    cacc_config_file_path = os.path.join(
+        pkg_dir, 'config', 'cacc_controller.yaml')
 
     # Waypoint files
     waypoint_file_path = os.path.join(pkg_dir, 'config', 'arena_waypoints.csv')
@@ -61,6 +68,11 @@ def generate_launch_description():
         default_value=waypoint_file_path,
         description='Path to waypoint file'
     )
+    use_waypoints_arg = DeclareLaunchArgument(
+        'use_waypoints',
+        default_value='false',
+        description='Whether to use waypoints'
+    )
 
     # Launch Description
     launch_description = LaunchDescription()
@@ -68,7 +80,9 @@ def generate_launch_description():
     launch_description.add_action(namespace_arg)
     launch_description.add_action(cacc_config_arg)
     launch_description.add_action(waypoint_file_path_arg)
+    launch_description.add_action(use_waypoints_arg)
 
-    launch_description.add_action(OpaqueFunction(function=include_launch_description))
+    launch_description.add_action(OpaqueFunction(
+        function=include_launch_description))
 
     return launch_description
