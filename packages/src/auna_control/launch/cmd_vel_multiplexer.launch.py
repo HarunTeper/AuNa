@@ -53,6 +53,7 @@ def generate_launch_description():
         name='cmd_vel_multiplexer_node',
         output='screen',
         parameters=[param_file, {"topic_file": topic_file}, {'use_sim_time': use_sim_time}],
+        arguments=['--ros-args', '--log-level', 'debug']
     )
 
     return LaunchDescription([

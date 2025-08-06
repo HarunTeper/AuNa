@@ -13,7 +13,7 @@ def generate_launch_description():
         default_value='true',
         description='Use simulation (Gazebo) clock if true'
     )
-    
+
     use_sim_time = LaunchConfiguration('use_sim_time')
 
     rviz_config_dir = os.path.join(get_package_share_directory(
@@ -25,7 +25,8 @@ def generate_launch_description():
             package='rviz2',
             executable='rviz2',
             name='rviz2',
-            arguments=['-d', rviz_config_dir],
+            arguments=['-d', rviz_config_dir,
+                       '--ros-args', '--log-level', 'debug'],
             output='screen',
             parameters=[{'use_sim_time': use_sim_time}]
         )
