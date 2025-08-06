@@ -462,6 +462,8 @@ services:
     pull_policy: build
     container_name: cam_communication
     command: [ "ros2", "launch", "auna_comm", "single_cam_communication.launch.py" ]
+    environment:
+      - COMMUNICATION_TYPE=${COMMUNICATION_TYPE}
 
   cam_communication_robot1:
     extends: cam_communication

@@ -1,5 +1,7 @@
 """Single robot communication launch file"""
 
+import os
+from launch.actions import LogInfo
 from launch_ros.actions import Node
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
@@ -9,6 +11,10 @@ from launch.launch_context import LaunchContext
 
 def include_launch_description(context: LaunchContext):
     """Return launch description"""
+
+    communication_type = os.environ.get('COMMUNICATION_TYPE', 'cam')
+    if communication_type != 'cam':
+        return [LogInfo(msg="COMMUNICATION_TYPE is not 'cam', skipping CAM nodes.")]
 
     # Launch Argument Configurations
     robot_index = LaunchConfiguration('robot_index')

@@ -23,28 +23,13 @@ def include_launch_description(context: LaunchContext):
     # Launch Argument Configurations
     robot_number = LaunchConfiguration('robot_number', default='2')
     namespace = LaunchConfiguration('namespace')
-    enable_cam_logging = LaunchConfiguration(
-        'enable_cam_logging', default='false')
-    cam_log_file_path = LaunchConfiguration(
-        'cam_log_file_path', default='/home/vscode/workspace/cam_messages.log')
 
     # Get resolved values
     ns_value = context.perform_substitution(namespace)
     robot_number_value = int(context.perform_substitution(robot_number))
-    enable_cam_logging_value = context.perform_substitution(enable_cam_logging)
-    cam_log_file_path_value = context.perform_substitution(cam_log_file_path)
-
-    # Convert string to boolean for enable_cam_logging parameter
-    enable_cam_logging_bool = enable_cam_logging_value.lower() == 'true'
 
     # Nodes and other launch files
     launch_description_content = []
-
-    # Log launch info
-    launch_description_content.append(
-        LogInfo(
-            msg=f"Starting CAM Communication for {robot_number_value} robots with logging: {enable_cam_logging_value}")
-    )
 
     for num in range(robot_number_value):
         # Define the namespace for this robot using the provided namespace parameter
@@ -52,10 +37,6 @@ def include_launch_description(context: LaunchContext):
 
         # Define the filter index (robot_index - 1)
         filter_idx = str(num-1)
-
-        # Create unique log file path for each robot
-        robot_log_file = cam_log_file_path_value.replace(
-            '.log', f'_robot{num}.log')
 
         # Create group for this robot's nodes
         group_actions = [
@@ -68,9 +49,6 @@ def include_launch_description(context: LaunchContext):
                 launch_arguments={
                     'robot_index': str(num),
                     'filter_index': filter_idx,
-                    # Pass the original string value ('true'/'false')
-                    'enable_cam_logging': enable_cam_logging_value,
-                    'cam_log_file_path': robot_log_file,
                 }.items(),
             )
         ]
