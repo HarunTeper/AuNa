@@ -78,6 +78,8 @@ services:
     env_file:
       - .env
 
+    profiles: [ "base" ]
+
   #==============================================================================
   # NETWORK SERVICES
   #==============================================================================
@@ -128,6 +130,8 @@ services:
     container_name: teleop
     command: [ "/bin/bash", "-c", "source /home/ubuntu/workspace/packages/install/setup.bash && cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args --params-file src/auna_teleoperation/config/key_teleop.yaml -p twist_stamped_enabled:=true" ]
 
+    profiles: [ "base" ]
+
   #==============================================================================
   # SIMULATION SERVICES
   #==============================================================================
@@ -157,6 +161,8 @@ services:
     pull_policy: build
     container_name: spawn_robot
     command: [ "ros2", "launch", "auna_gazebo", "spawn_robot.launch.py" ]
+
+    profiles: [ "base" ]
 
   spawn_robot_robot1:
     extends: spawn_robot
@@ -219,6 +225,8 @@ services:
     container_name: localization_pose
     command: [ "ros2", "launch", "auna_tf", "localization_pose_publisher.launch.py" ]
 
+    profiles: [ "base" ]
+
   localization_pose_robot1:
     extends: localization_pose
     container_name: localization_pose_robot1
@@ -267,6 +275,8 @@ services:
     container_name: ground_truth
     command: [ "ros2", "launch", "auna_ground_truth", "ground_truth.launch.py" ]
 
+    profiles: [ "base" ]
+
   ground_truth_robot1:
     extends: ground_truth
     container_name: ground_truth_robot1
@@ -301,6 +311,8 @@ services:
     pull_policy: build
     container_name: cmd_multiplexer
     command: [ "ros2", "launch", "auna_control", "cmd_vel_multiplexer.launch.py" ]
+
+    profiles: [ "base" ]
 
   cmd_multiplexer_robot1:
     extends: cmd_multiplexer
@@ -337,6 +349,8 @@ services:
     container_name: control_panel
     command: [ "ros2", "launch", "auna_control", "control_panel.launch.py" ]
 
+    profiles: [ "base" ]
+
   control_panel_robot1:
     extends: control_panel
     container_name: control_panel_robot1
@@ -372,6 +386,8 @@ services:
     container_name: ekf_localization
     command: [ "ros2", "launch", "auna_ekf", "ekf_sim.launch.py" ]
 
+    profiles: [ "base" ]
+
   ekf_localization_sim_robot1:
     extends: ekf_localization_sim
     container_name: ekf_localization_robot1
@@ -400,6 +416,8 @@ services:
     image: nav2_stack:latest
     pull_policy: build
     container_name: nav2_stack
+
+    profiles: [ "base" ]
 
   nav2_stack_robot1:
     extends: nav2_stack
@@ -506,6 +524,8 @@ services:
     command: [ "ros2", "launch", "auna_comm", "single_cam_communication.launch.py" ]
     environment:
       - COMMUNICATION_TYPE=${COMMUNICATION_TYPE}
+
+    profiles: [ "base" ]
 
   cam_communication_robot1:
     extends: cam_communication
