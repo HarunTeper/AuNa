@@ -1,7 +1,9 @@
 #include "auna_comm/cam_communication.hpp"
 
 #include <etsi_its_msgs_utils/cam_access.hpp>
+
 #include <etsi_its_cam_msgs/msg/cam.hpp>
+
 #include <cmath>
 #include <fstream>  // Added for file logging
 #include <iomanip>  // For setprecision
@@ -39,16 +41,21 @@ CamCommunication::CamCommunication() : Node("cam_communication")
       }
     }
 
-    RCLCPP_INFO(this->get_logger(), "CAM message logging enabled. Writing to: %s", cam_log_file_path_.c_str());
+    RCLCPP_INFO(
+      this->get_logger(), "CAM message logging enabled. Writing to: %s",
+      cam_log_file_path_.c_str());
     cam_log_file_.open(cam_log_file_path_, std::ios::out | std::ios::trunc);
 
     if (cam_log_file_.is_open()) {
-      cam_log_file_ << "=== CAM Message Log for Robot " << robot_index_ 
-                    << " (" << (robot_index_ == 0 ? "LEADER" : "FOLLOWER") << ") ===" << std::endl;
-      cam_log_file_ << "Timestamp,Action,StationID,GenDeltaTime,Longitude,Latitude,Heading,Speed,Acceleration,YawRate,Curvature,Details" << std::endl;
+      cam_log_file_ << "=== CAM Message Log for Robot " << robot_index_ << " ("
+                    << (robot_index_ == 0 ? "LEADER" : "FOLLOWER") << ") ===" << std::endl;
+      cam_log_file_ << "Timestamp,Action,StationID,GenDeltaTime,Longitude,Latitude,Heading,Speed,"
+                       "Acceleration,YawRate,Curvature,Details"
+                    << std::endl;
       cam_log_file_.flush();
     } else {
-      RCLCPP_ERROR(this->get_logger(), "Failed to open CAM log file: %s", cam_log_file_path_.c_str());
+      RCLCPP_ERROR(
+        this->get_logger(), "Failed to open CAM log file: %s", cam_log_file_path_.c_str());
       enable_cam_logging_ = false;
     }
   }
@@ -113,8 +120,7 @@ CamCommunication::CamCommunication() : Node("cam_communication")
   rclcpp::on_shutdown([this]() {
     if (enable_cam_logging_ && cam_log_file_.is_open()) {
       RCLCPP_INFO(this->get_logger(), "Closing CAM log file");
-      cam_log_file_ << "=== Log closed at " 
-                    << std::fixed << std::setprecision(3)
+      cam_log_file_ << "=== Log closed at " << std::fixed << std::setprecision(3)
                     << this->now().seconds() << " ===" << std::endl;
       cam_log_file_.close();
     }
@@ -126,7 +132,7 @@ void CamCommunication::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr
   int received_station_id = static_cast<int>(etsi_its_cam_msgs::access::getStationID(msg->header));
 
   // Log all received CAMs at INFO level with clear source identification
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     this->get_logger(), "[Robot%d] RX CAM from Robot%d | Speed: %.2f m/s | Gen time: %u | %s",
     robot_index_, received_station_id,
     msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency.speed
@@ -142,48 +148,50 @@ void CamCommunication::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr
 
     // Get speed value in m/s
     double speed_value = msg->cam.cam_parameters.high_frequency_container
-                          .basic_vehicle_container_high_frequency.speed.speed_value.value / 100.0;
+                           .basic_vehicle_container_high_frequency.speed.speed_value.value /
+                         100.0;
 
     // Get position values
-    double longitude = msg->cam.cam_parameters.basic_container.reference_position.longitude.value / 10000000.0;
-    double latitude = msg->cam.cam_parameters.basic_container.reference_position.latitude.value / 10000000.0;
+    double longitude =
+      msg->cam.cam_parameters.basic_container.reference_position.longitude.value / 10000000.0;
+    double latitude =
+      msg->cam.cam_parameters.basic_container.reference_position.latitude.value / 10000000.0;
 
     // Get heading value
     uint16_t raw_heading = msg->cam.cam_parameters.high_frequency_container
                              .basic_vehicle_container_high_frequency.heading.heading_value.value;
-    double heading_degrees = (raw_heading == etsi_its_cam_msgs::msg::HeadingValue::UNAVAILABLE) ? 
-                              0.0 : (raw_heading % 3600) / 10.0;
+    double heading_degrees = (raw_heading == etsi_its_cam_msgs::msg::HeadingValue::UNAVAILABLE)
+                               ? 0.0
+                               : (raw_heading % 3600) / 10.0;
 
     // Get yaw rate and determine if available
     int16_t raw_yaw_rate = msg->cam.cam_parameters.high_frequency_container
                              .basic_vehicle_container_high_frequency.yaw_rate.yaw_rate_value.value;
-    std::string yaw_rate_str = (raw_yaw_rate == etsi_its_cam_msgs::msg::YawRateValue::UNAVAILABLE) ? 
-                               "UNAVAILABLE" : std::to_string(raw_yaw_rate / 100.0);
+    std::string yaw_rate_str = (raw_yaw_rate == etsi_its_cam_msgs::msg::YawRateValue::UNAVAILABLE)
+                                 ? "UNAVAILABLE"
+                                 : std::to_string(raw_yaw_rate / 100.0);
 
     // Get curvature and determine if available
-    int16_t raw_curvature = msg->cam.cam_parameters.high_frequency_container
-                              .basic_vehicle_container_high_frequency.curvature.curvature_value.value;
-    std::string curvature_str = (raw_curvature == etsi_its_cam_msgs::msg::CurvatureValue::UNAVAILABLE) ? 
-                                "UNAVAILABLE" : std::to_string(raw_curvature / 10000.0);
+    int16_t raw_curvature =
+      msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency
+        .curvature.curvature_value.value;
+    std::string curvature_str =
+      (raw_curvature == etsi_its_cam_msgs::msg::CurvatureValue::UNAVAILABLE)
+        ? "UNAVAILABLE"
+        : std::to_string(raw_curvature / 10000.0);
 
     // Additional details to include
-    std::string processing = (received_station_id == this->filter_index_) ? "PROCESSING" : "IGNORING";
+    std::string processing =
+      (received_station_id == this->filter_index_) ? "PROCESSING" : "IGNORING";
 
     // Write to log file (CSV format for easier analysis)
-    cam_log_file_ << std::fixed << std::setprecision(6)
-                  << timestamp << ","
-                  << "RX," 
-                  << received_station_id << ","
-                  << msg->cam.generation_delta_time.value << ","
-                  << longitude << ","
-                  << latitude << ","
-                  << heading_degrees << ","
+    cam_log_file_ << std::fixed << std::setprecision(6) << timestamp << ","
+                  << "RX," << received_station_id << "," << msg->cam.generation_delta_time.value
+                  << "," << longitude << "," << latitude << "," << heading_degrees << ","
                   << speed_value << ","
-                  << "N/A" << "," // Acceleration not directly in CAM
-                  << yaw_rate_str << ","
-                  << curvature_str << ","
-                  << processing
-                  << std::endl;
+                  << "N/A"
+                  << ","  // Acceleration not directly in CAM
+                  << yaw_rate_str << "," << curvature_str << "," << processing << std::endl;
   }
 
   if (received_station_id == this->filter_index_) {
@@ -278,20 +286,23 @@ void CamCommunication::publish_cam_msg(const std::string & trigger)
     auto now = this->now();
     double timestamp = now.seconds() + now.nanoseconds() * 1e-9;
 
-    cam_log_file_ << std::fixed << std::setprecision(6)
-                  << timestamp << ","
-                  << "BUILD-START,"
-                  << this->robot_index_ << ","
-                  << gen_delta_time << ","
-                  << "N/A" << ","  // Fields being constructed
-                  << "N/A" << ","
-                  << "N/A" << ","
-                  << "N/A" << ","
-                  << "N/A" << ","
-                  << "N/A" << ","
-                  << "N/A" << ","
-                  << "Trigger: " << trigger
-                  << std::endl;
+    cam_log_file_ << std::fixed << std::setprecision(6) << timestamp << ","
+                  << "BUILD-START," << this->robot_index_ << "," << gen_delta_time << ","
+                  << "N/A"
+                  << ","  // Fields being constructed
+                  << "N/A"
+                  << ","
+                  << "N/A"
+                  << ","
+                  << "N/A"
+                  << ","
+                  << "N/A"
+                  << ","
+                  << "N/A"
+                  << ","
+                  << "N/A"
+                  << ","
+                  << "Trigger: " << trigger << std::endl;
   }
 
   // Basic Container (Section 7.3)
@@ -400,25 +411,19 @@ void CamCommunication::publish_cam_msg(const std::string & trigger)
 
     // Extract curvature value or mark as unavailable
     std::string curvature_str = "UNAVAILABLE";
-    if (vhf.curvature.curvature_value.value != etsi_its_cam_msgs::msg::CurvatureValue::UNAVAILABLE) {
+    if (
+      vhf.curvature.curvature_value.value != etsi_its_cam_msgs::msg::CurvatureValue::UNAVAILABLE) {
       curvature_str = std::to_string(vhf.curvature.curvature_value.value / 10000.0);
     }
 
     // Create detailed log entry of CAM message
-    cam_log_file_ << std::fixed << std::setprecision(6)
-                  << timestamp << ","
-                  << "TX,"
-                  << this->robot_index_ << ","
-                  << gen_delta_time << ","
-                  << this->longitude_ << ","
-                  << this->latitude_ << ","
-                  << (heading_value / 10.0) << ","
+    cam_log_file_ << std::fixed << std::setprecision(6) << timestamp << ","
+                  << "TX," << this->robot_index_ << "," << gen_delta_time << "," << this->longitude_
+                  << "," << this->latitude_ << "," << (heading_value / 10.0) << ","
                   << (vhf.speed.speed_value.value / 100.0) << ","
-                  << (vhf.longitudinal_acceleration.longitudinal_acceleration_value.value / 10.0) << ","
-                  << yaw_rate_str << ","
-                  << curvature_str << ","
-                  << "Drive direction: " << vhf.drive_direction.value
-                  << " Speed: " << this->speed_
+                  << (vhf.longitudinal_acceleration.longitudinal_acceleration_value.value / 10.0)
+                  << "," << yaw_rate_str << "," << curvature_str << ","
+                  << "Drive direction: " << vhf.drive_direction.value << " Speed: " << this->speed_
                   << std::endl;
   }
 
@@ -426,7 +431,7 @@ void CamCommunication::publish_cam_msg(const std::string & trigger)
   cam_publisher_->publish(msg);
 
   // Log the CAM message with a standardized format at INFO level
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     this->get_logger(),
     "[Robot%d] TX CAM | Gen time: %u | Speed: %.2f m/s | Accel: %.2f m/s² | Yaw rate: %.2f°/s | "
     "Pos: (%.2f, %.2f)",
