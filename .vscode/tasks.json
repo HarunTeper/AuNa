@@ -225,38 +225,6 @@
                 "ROS2Build-Control"
             ]
         },
-        // ------------------- SCENARIOS -------------------
-        {
-            "label": "LaunchScenarioRobotRacetrackNavigation",
-        },
-        {
-            "label": "LaunchScenarioSingleRobotArenaSlam",
-            "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_single_robot_arena_slam.launch.py",
-            "problemMatcher": []
-        },
-        {
-            "label": "LaunchScenarioSingleRobotRacetrackSlam",
-            "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_single_robot_racetrack_slam.launch.py",
-            "problemMatcher": []
-        },
-        {
-            "label": "LaunchScenarioPlatooningArena",
-            "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 launch auna_scenarios scenario_platooning_arena.launch.py robot_number:=${input:robotCount} namespace:=${input:robotNamespace}",
-            "problemMatcher": [],
-            "dependsOn": "ROS2Build-ScenarioPlatooningArena"
-        },
-        {
-            "label": "LaunchRvizWithPlugins",
-            "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 run rviz2 rviz2 -d src/auna_control/config/test_plugins.rviz",
-            "problemMatcher": [],
-            "dependsOn": [
-                "ROS2Build-Control"
-            ]
-        },
     ],
     "inputs": [
         {

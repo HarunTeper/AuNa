@@ -1,5 +1,7 @@
 """Single car omnet module launch file"""
 
+import os
+from launch.actions import LogInfo
 from launch_ros.actions import Node
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
@@ -8,6 +10,10 @@ from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
     """Return launch description"""
+
+    communication_type = os.environ.get('COMMUNICATION_TYPE', 'cam')
+    if communication_type != 'omnet':
+        return LaunchDescription([LogInfo(msg="COMMUNICATION_TYPE is not 'omnet', skipping OMNeT nodes.")])
 
     # Launch Argument Configurations
     namespace = LaunchConfiguration('namespace')
@@ -21,22 +27,22 @@ def generate_launch_description():
 
     # Nodes and other launch files
     omnet_transmitter_cmd = Node(
-            package='auna_omnet',
-            executable='omnet_transmitter',
-            name='omnet_transmitter',
-            namespace=namespace,
-            arguments={namespace},
-            output='screen'
-        )
+        package='auna_omnet',
+        executable='omnet_transmitter',
+        name='omnet_transmitter',
+        namespace=namespace,
+        arguments={namespace},
+        output='screen'
+    )
 
     omnet_receiver_cmd = Node(
-            package='auna_omnet',
-            executable='omnet_receiver',
-            name='omnet_receiver',
-            namespace=namespace,
-            arguments={namespace},
-            output='screen'
-        )
+        package='auna_omnet',
+        executable='omnet_receiver',
+        name='omnet_receiver',
+        namespace=namespace,
+        arguments={namespace},
+        output='screen'
+    )
 
     # Launch Description
     launch_description = LaunchDescription()
