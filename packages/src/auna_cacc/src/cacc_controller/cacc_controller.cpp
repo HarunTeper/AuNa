@@ -278,7 +278,7 @@ void CaccController::setup_timer_callback()
     }
   }
   // Add debug log to show we're still waiting
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     this->get_logger(), "Waiting for messages - CAM: %s, Odom: %s, Pose: %s",
     (last_cam_msg_ != nullptr ? "received" : "waiting"),
     (last_odom_msg_ != nullptr ? "received" : "waiting"),
@@ -287,7 +287,7 @@ void CaccController::setup_timer_callback()
 
 void CaccController::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg)
 {
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     this->get_logger(), "cam_callback - Generation Delta Time: %u",
     msg->cam.generation_delta_time.value);
   cam_x_ = msg->cam.cam_parameters.basic_container.reference_position.longitude.value / 10000000.0;
@@ -314,7 +314,7 @@ void CaccController::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr m
       dt = (current_time - previous_time) / 1000.0;
     }
 
-    RCLCPP_INFO(this->get_logger(), "Generation Delta Time difference: %.4f", dt);
+    RCLCPP_DEBUG(this->get_logger(), "Generation Delta Time difference: %.4f", dt);
 
     dt = std::min(dt, 0.1);
 
@@ -340,14 +340,14 @@ void CaccController::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr m
     cam_yaw_ = heading_degrees * (M_PI / 180.0);    // Convert from degrees to radians
   }
 
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     this->get_logger(),
     "Received CAM - Speed: %.2f m/s, Accel: %.2f m/s², Yaw Rate: %.2f deg/s, Curvature: %.4f, "
     "Station ID: %d",
     cam_velocity_, cam_acceleration_, cam_yaw_rate_ * 180 / M_PI, cam_curvature_,
     msg->header.station_id.value);
 
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     this->get_logger(), "Heading: %.2f degrees (%.2f radians)", heading_value / 10.0, cam_yaw_);
 
   last_cam_velocity_ = cam_velocity_;
@@ -645,21 +645,21 @@ void CaccController::timer_callback()
     update_waypoint_following();
   }
 
-  RCLCPP_INFO(this->get_logger(), "=== CACC Following Status ===");
+  RCLCPP_DEBUG(this->get_logger(), "=== CACC Following Status ===");
 
   // Log vehicle states - key information about both vehicles
-  RCLCPP_INFO(this->get_logger(), "Vehicle States:");
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(this->get_logger(), "Vehicle States:");
+  RCLCPP_DEBUG(
     this->get_logger(), "  Leader: velocity=%.2f m/s, acceleration=%.2f m/s², curvature=%.4f 1/m",
     cam_velocity_, cam_acceleration_, cam_curvature_);
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     this->get_logger(), "  Follower: velocity=%.2f m/s, acceleration=%.2f m/s²", odom_velocity_,
     odom_acceleration_);
 
   // Log distance parameters
   double distance_term = params_.standstill_distance + params_.time_gap * odom_velocity_;
-  RCLCPP_INFO(this->get_logger(), "Distance Parameters:");
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(this->get_logger(), "Distance Parameters:");
+  RCLCPP_DEBUG(
     this->get_logger(),
     "  Desired spacing: %.2f m (standstill=%.2f + time_gap=%.2f * velocity=%.2f)", distance_term,
     params_.standstill_distance, params_.time_gap, odom_velocity_);
@@ -668,7 +668,7 @@ void CaccController::timer_callback()
   double dx = cam_x_ - pose_x_;
   double dy = cam_y_ - pose_y_;
   double actual_distance = std::hypot(dx, dy);
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     this->get_logger(), "  Actual distance: %.2f m (error: %.2f m)", actual_distance,
     actual_distance - distance_term);
 
@@ -689,8 +689,8 @@ void CaccController::timer_callback()
   dbg_alpha_ = alpha_;  // Store for logging
   dbg_s_ = s_;          // Store for logging
 
-  RCLCPP_INFO(this->get_logger(), "Curved Path Adjustment:");
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(this->get_logger(), "Curved Path Adjustment:");
+  RCLCPP_DEBUG(
     this->get_logger(), "  Path curvature: %.4f 1/m, s: %.2f m, alpha: %.2f rad",
     control_curvature_, dbg_s_, dbg_alpha_);
 
