@@ -16,3 +16,5 @@ log
 # tf2 trees
 frames_*.pdf
 frames_*.gv
+
+tf2_trees

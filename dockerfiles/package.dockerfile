@@ -52,6 +52,13 @@ RUN for pkg in $PACKAGE_NAMES; do \
     done && \
     rm -rf /tmp/toml
 
+ARG INSTALL_PACKAGE_NAMES
+RUN echo "Installing additional packages: $INSTALL_PACKAGE_NAMES"
+RUN if [ -n "$INSTALL_PACKAGE_NAMES" ]; then \
+    sudo apt-get update && \
+    sudo apt-get install -y --no-install-recommends $INSTALL_PACKAGE_NAMES; \
+    fi
+
 # Clean up package lists at the end
 RUN sudo rm -rf /var/lib/apt/lists/*
 
