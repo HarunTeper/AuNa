@@ -476,26 +476,28 @@ services:
     image: cacc_controller:latest
     pull_policy: build
     container_name: cacc_controller
-    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py" ]
+    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "use_waypoints:=$(USE_WAYPOINTS)" ]
+    environment:
+      USE_WAYPOINTS: ${USE_WAYPOINTS:-false}
 
-    profiles: [ "base" ]
+    profiles: [ "cacc_controller" ]
 
   cacc_controller_robot1:
     extends: cacc_controller
     container_name: cacc_controller_robot1
-    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "namespace:=robot1" ]
+    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "namespace:=robot1", "use_waypoints:=$(USE_WAYPOINTS)" ]
     profiles: [ "sim_robot1", "physical_robot1", "sim_scenario" ]
 
   cacc_controller_robot2:
     extends: cacc_controller
     container_name: cacc_controller_robot2
-    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "namespace:=robot2" ]
+    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "namespace:=robot2", "use_waypoints:=$(USE_WAYPOINTS)" ]
     profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
 
   cacc_controller_robot3:
     extends: cacc_controller
     container_name: cacc_controller_robot3
-    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "namespace:=robot3" ]
+    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "namespace:=robot3", "use_waypoints:=$(USE_WAYPOINTS)" ]
     profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
