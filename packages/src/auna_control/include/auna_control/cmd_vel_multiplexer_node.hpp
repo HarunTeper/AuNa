@@ -51,6 +51,7 @@ public:
 
 private:
   void twist_callback(const TwistStamped::SharedPtr msg, const std::string & source_name);
+  void twist_regular_callback(const Twist::SharedPtr msg, const std::string & source_name);
   void ackermann_callback(
     const AckermannDriveStamped::SharedPtr msg, const std::string & source_name);
   void toggleSourceCallback(
@@ -72,6 +73,7 @@ private:
     const std::vector<rclcpp::Parameter> & parameters);
 
   AckermannDriveStamped twist_to_ackermann(const TwistStamped::SharedPtr & twist_msg);
+  AckermannDriveStamped twist_regular_to_ackermann(const Twist::SharedPtr & twist_msg);
   TwistStamped ackermann_to_twist(const AckermannDriveStamped & ackermann_msg);
   Twist ackermann_to_twist_regular(const AckermannDriveStamped & ackermann_msg);
 

@@ -26,6 +26,7 @@
 				"donjayamanne.python-extension-pack",
 				"donjayamanne.python-environment-manager",
 				"ms-azuretools.vscode-docker",
+				"p1c2u.docker-compose",
 				"ms-python.autopep8",
 				"ms-vscode.cpptools",
 				"ms-vscode.cpptools-extension-pack",

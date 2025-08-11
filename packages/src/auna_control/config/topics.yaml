@@ -6,7 +6,7 @@ cmd_vel_multiplexer_node:
     - type: "TwistStamped"
       name: "cacc"
       topic: "cmd_vel/cacc"
-    - type: "TwistStamped"
+    - type: "Twist"
       name: "nav2"
       topic: "cmd_vel/nav2"
   outputs:

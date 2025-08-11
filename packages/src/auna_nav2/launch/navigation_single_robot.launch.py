@@ -16,7 +16,6 @@ def include_launch_description(context: LaunchContext):
 
     # Package Directories
     pkg_dir = get_package_share_directory('auna_nav2')
-    gazebo_pkg_dir = get_package_share_directory('auna_gazebo')
 
     # Paths to folders and files
     nav_launch_file_dir = os.path.join(pkg_dir, 'launch')
@@ -45,7 +44,7 @@ def include_launch_description(context: LaunchContext):
         robot_namespace = ''
 
     # Calculate initial pose based on robot index and world configuration
-    map_config_path = os.path.join(gazebo_pkg_dir, "config",
+    map_config_path = os.path.join(pkg_dir, "config",
                                    "map_params", f"{world_name_str}.yaml")
 
     if robot_idx >= 0 and os.path.exists(map_config_path):
@@ -90,24 +89,6 @@ def include_launch_description(context: LaunchContext):
         convert_types=True
     )
 
-    # Debug: print parameter file path
-    # Print the actual path or content of the configured params
-    if hasattr(configured_params, 'perform'):
-        params_path = configured_params.perform(context)
-        print(f"Using configured params: {params_path}")
-        if os.path.exists(params_path):
-            with open(params_path, 'r') as f:
-                print(f.read())
-        else:
-            print(f"File does not exist: {params_path}")
-    else:
-        print(f"Using configured params: {configured_params}")
-        if os.path.exists(configured_params):
-            with open(configured_params, 'r') as f:
-                print(f.read())
-        else:
-            print(f"File does not exist: {configured_params}")
-
     actions = []
     if robot_namespace != "":
         actions.append(PushRosNamespace(robot_namespace))
@@ -134,6 +115,8 @@ def include_launch_description(context: LaunchContext):
             condition=IfCondition(enable_rviz),
             launch_arguments={
                 'rviz_config': rviz_config,
+                'use_sim_time': use_sim_time,
+                'namespace': robot_namespace
             }.items(),
         )
     )
@@ -217,7 +200,7 @@ def generate_launch_description():
     )
     use_enable_rviz_arg = DeclareLaunchArgument(
         name='enable_rviz',
-        default_value='False',
+        default_value='True',
         description='Enable RViz'
     )
 

@@ -20,6 +20,7 @@ def include_launch_description(context: LaunchContext):
     # Create the launch configuration variables
     namespace = LaunchConfiguration('namespace')
     rviz_config_file = LaunchConfiguration('rviz_config')
+    use_sim_time = LaunchConfiguration('use_sim_time')
 
     # Launch rviz
     print('Starting RViz2 with namespace: ' + namespace.perform(context))
@@ -44,8 +45,11 @@ def include_launch_description(context: LaunchContext):
                     ('/tf_static', 'tf_static'),
                     ('/goal_pose', 'goal_pose'),
                     ('/clicked_point', 'clicked_point'),
-                    ('/initialpose', 'initialpose')],
-        parameters=[{'base_frame': base_frame}]
+                    ('/initialpose', 'initialpose')
+                ],
+        parameters=[{'base_frame': base_frame, 
+                    'use_sim_time': use_sim_time}
+                ]
     )
 
     exit_event_handler = RegisterEventHandler(
@@ -66,8 +70,11 @@ def include_launch_description(context: LaunchContext):
 
 def generate_launch_description():
     """Launch RViz2 with the default view for the navigation stack. """
+    
+    print("hello")
     # Get the launch directory
     pkg_dir = get_package_share_directory('auna_nav2')
+
 
     # Declare the launch arguments
     declare_namespace_cmd = DeclareLaunchArgument(
@@ -82,12 +89,19 @@ def generate_launch_description():
             pkg_dir, 'rviz', 'config_navigation_namespace.rviz'),
         description='Full path to the RVIZ config file to use')
 
+    declare_use_sim_time_cmd = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='false',
+        description='Use simulation (Gazebo) clock if true')
+
+
     # Create the launch description and populate
     launch_description = LaunchDescription()
 
     # Declare the launch options
     launch_description.add_action(declare_namespace_cmd)
     launch_description.add_action(declare_rviz_config_file_cmd)
+    launch_description.add_action(declare_use_sim_time_cmd)
     launch_description.add_action(OpaqueFunction(
         function=include_launch_description))
 
