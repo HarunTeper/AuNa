@@ -101,7 +101,7 @@ CamCommunication::CamCommunication() : Node("cam_communication")
     [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) { this->pose_callback(msg); });
 
   odom_subscriber_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    "odom", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg) { this->odom_callback(msg); });
+    "odometry/filtered", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg) { this->odom_callback(msg); });
 
   // Timer for checking CAM generation conditions
   timer_ = this->create_wall_timer(T_CheckCamGen, [this]() { this->timer_callback(); });

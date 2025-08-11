@@ -3,7 +3,7 @@ cmd_vel_multiplexer_node:
     - type: "TwistStamped"
       name: "teleop"
       topic: "cmd_vel/teleop"
-    - type: "TwistStamped"
+    - type: "Twist"
       name: "cacc"
       topic: "cmd_vel/cacc"
     - type: "Twist"

@@ -674,16 +674,7 @@ services:
     image: cacc_controller:latest
     pull_policy: build
     container_name: cacc_controller
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_cacc",
-        "single_cacc_controller.launch.py",
-        "use_waypoints:=$(USE_WAYPOINTS)",
-      ]
-    environment:
-      USE_WAYPOINTS: ${USE_WAYPOINTS:-false}
+    command: ["ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py"]
     profiles: ["cacc_controller"]
 
   cacc_controller_robot1:
@@ -695,8 +686,7 @@ services:
         "launch",
         "auna_cacc",
         "single_cacc_controller.launch.py",
-        "namespace:=robot1",
-        "use_waypoints:=$(USE_WAYPOINTS)",
+        "robot_index:=1",
       ]
     profiles:
       ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
@@ -710,8 +700,7 @@ services:
         "launch",
         "auna_cacc",
         "single_cacc_controller.launch.py",
-        "namespace:=robot2",
-        "use_waypoints:=$(USE_WAYPOINTS)",
+        "robot_index:=2",
       ]
     profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
 
@@ -724,8 +713,7 @@ services:
         "launch",
         "auna_cacc",
         "single_cacc_controller.launch.py",
-        "namespace:=robot3",
-        "use_waypoints:=$(USE_WAYPOINTS)",
+        "robot_index:=3",
       ]
     profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
 
@@ -848,7 +836,8 @@ services:
         "robot_index:=1",
         "namespace:=robot1",
       ]
-    profiles: ["sim_robot1", "physical_robot1", "sim_scenario"]
+    profiles:
+      ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
 
   cam_communication_robot2:
     extends: cam_communication
