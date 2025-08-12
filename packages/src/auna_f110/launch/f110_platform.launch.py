@@ -33,16 +33,6 @@ def generate_launch_description():
     )
 
     # Nodes and other launch files
-    cmd_vel_to_ackermann_node = Node(
-        package='auna_f110',
-        executable='cmd_vel_to_ackermann',
-        name='cmd_vel_to_ackermann',
-        namespace=namespace,
-        parameters=[{'convert_yaw_to_steering_angle': True,
-                     'wheelbase': 0.32,
-                     }]
-    )
-
     vesc_launch_file = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
             auna_physical_launch_file_dir, 'vesc.launch.py')),
@@ -64,7 +54,6 @@ def generate_launch_description():
     launch_description.add_action(namespace_arg)
     launch_description.add_action(lidar_launch_file)
     launch_description.add_action(vesc_launch_file)
-    launch_description.add_action(cmd_vel_to_ackermann_node)
     launch_description.add_action(vesc_start_node)
 
     return launch_description

@@ -12,10 +12,13 @@ def generate_launch_description():
     """Return launch description"""
 
     # Package Directories
-    pkg_dir = get_package_share_directory('auna_physical')
+    pkg_dir = get_package_share_directory('auna_waypoints')
+
+    # Get MAP_NAME from environment variable, default to 'default' if not set
+    map_name = os.environ.get('MAP_NAME', 'default')
 
     # Config files
-    waypoints = os.path.join(pkg_dir, 'config', 'flw_waypoints.csv')
+    waypoints = os.path.join(pkg_dir, 'config', map_name, 'raw_waypoints.csv')
 
     # Launch Argument Configurations
     interpolation_distance = LaunchConfiguration('interpolation_distance')
@@ -30,7 +33,7 @@ def generate_launch_description():
     )
     plot_results_arg = DeclareLaunchArgument(
         'plot_results',
-        default_value='False',
+        default_value='True',
         description='Plot the results of the curve fitting'
     )
     swap_xy_arg = DeclareLaunchArgument(
@@ -41,7 +44,7 @@ def generate_launch_description():
 
     # Nodes and other launch files
     curve_fitting_node = Node(
-        package='auna_physical',
+        package='auna_waypoints',
         executable='curve_fitting.py',
         name='curve_fitting',
         parameters=[{'waypoint_file': waypoints,

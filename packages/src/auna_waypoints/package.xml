@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>auna_physical</name>
+  <name>auna_waypoints</name>
   <version>1.0.0</version>
   <description>AuNa Physical Package</description>
   <maintainer email="harun.teper@tu-dortmund.de">Harun Teper</maintainer>

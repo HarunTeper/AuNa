@@ -13,12 +13,10 @@
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
 
-  <depend>ackermann_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>nav2_msgs</depend>
   <depend>rclcpp_action</depend>
-  <depend>std_srvs</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
   <depend>tf2_geometry_msgs</depend>

@@ -2,6 +2,7 @@
 
 """Curve Fitting Node"""
 import csv
+import os
 import numpy as np
 import rclpy
 from rclpy.node import Node
@@ -92,9 +93,16 @@ class CurveFitting(Node):
 
     def save_interpolated_waypoints(self):
         """Saves the interpolated waypoints to a csv file"""
-        with open('new_waypoints.csv', 'w', newline='', encoding='utf-8-sig') as file:
+        # Get the input file path and construct the output path
+        input_file = self.get_parameter('waypoint_file').value
+        input_dir = os.path.dirname(input_file)
+        output_file = os.path.join(input_dir, 'waypoints.csv')
+        
+        with open(output_file, 'w', newline='', encoding='utf-8-sig') as file:
             writer = csv.writer(file)
             writer.writerows(self.interpolated_waypoints)
+        
+        self.get_logger().info(f'Saved interpolated waypoints to: {output_file}')
 
     def calculate_angle(self, point1, point2):
         """Calculates the angle between two points"""

@@ -779,6 +779,86 @@ services:
     profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
 
   #==============================================================================
+  # CURVE FITTING SERVICES
+  #==============================================================================
+  # Services for curve fitting behavior
+
+  curve_fitting:
+    <<: *gui-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${WAYPOINT_PUBLISHER_PACKAGES}
+    image: curve_fitting:latest
+    pull_policy: build
+    container_name: curve_fitting
+    command: ["ros2", "launch", "auna_waypoints", "curve_fitting.launch.py"]
+    profiles: ["curve_fitting"]
+
+  #==============================================================================
+  # WAYPOINT PUBLISHER SERVICES
+  #==============================================================================
+  # Services for publishing waypoints
+
+  waypoint_publisher:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${WAYPOINT_PUBLISHER_PACKAGES}
+    image: waypoint_publisher:latest
+    pull_policy: build
+    container_name: waypoint_publisher
+    command:
+      ["ros2", "launch", "auna_waypoints", "waypoint_publisher.launch.py"]
+    profiles: ["waypoint_publisher"]
+
+  waypoint_publisher_robot1:
+    extends: waypoint_publisher
+    container_name: waypoint_publisher_robot1
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_waypoints",
+        "waypoint_publisher.launch.py",
+        "robot_index:=1",
+        "namespace:=robot1",
+      ]
+    profiles:
+      ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
+
+  waypoint_publisher_robot2:
+    extends: waypoint_publisher
+    container_name: waypoint_publisher_robot2
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_waypoints",
+        "waypoint_publisher.launch.py",
+        "robot_index:=2",
+        "namespace:=robot2",
+      ]
+    profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
+
+  waypoint_publisher_robot3:
+    extends: waypoint_publisher
+    container_name: waypoint_publisher_robot3
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_waypoints",
+        "waypoint_publisher.launch.py",
+        "robot_index:=3",
+        "namespace:=robot3",
+      ]
+    profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
+
+  #==============================================================================
   # COMMUNICATION SERVICES
   #==============================================================================
   # Services for inter-robot communication
