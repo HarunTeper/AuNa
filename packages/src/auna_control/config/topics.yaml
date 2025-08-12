@@ -1,5 +1,8 @@
 cmd_vel_multiplexer_node:
   inputs:
+    - type: "AckermannDriveStamped"
+      name: "wallfollowing"
+      topic: "cmd_vel/wallfollowing"
     - type: "TwistStamped"
       name: "teleop"
       topic: "cmd_vel/teleop"
