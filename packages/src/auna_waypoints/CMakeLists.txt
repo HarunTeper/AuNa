@@ -31,26 +31,29 @@ find_package(tf2_geometry_msgs REQUIRED)
 include_directories(include)
 
 # Add libraries
-add_library(waypoint_publisher_node SHARED src/waypoint_publisher/waypoint_publisher.cpp)
+add_library(nav2_waypoint_publisher_node SHARED src/waypoint_publisher/nav2_waypoint_publisher.cpp)
 
 # Create Cpp executable
-add_executable(waypoint_publisher src/waypoint_publisher/waypoint_publisher_main.cpp)
+add_executable(nav2_waypoint_publisher src/waypoint_publisher/waypoint_publisher_main.cpp)
+add_executable(cacc_waypoint_publisher src/waypoint_publisher/cacc_waypoint_publisher.cpp)
 # Target dependencies
 set(waypoint_publisher_dependencies rclcpp geometry_msgs nav2_msgs rclcpp_action tf2_ros tf2_geometry_msgs)
-ament_target_dependencies(waypoint_publisher_node ${waypoint_publisher_dependencies})
-ament_target_dependencies(waypoint_publisher ${waypoint_publisher_dependencies})
+ament_target_dependencies(nav2_waypoint_publisher_node ${waypoint_publisher_dependencies})
+ament_target_dependencies(nav2_waypoint_publisher ${waypoint_publisher_dependencies})
+ament_target_dependencies(cacc_waypoint_publisher rclcpp geometry_msgs tf2_ros tf2_geometry_msgs)
 
 # Link libraries
-target_link_libraries(waypoint_publisher waypoint_publisher_node)
+target_link_libraries(nav2_waypoint_publisher nav2_waypoint_publisher_node)
 
 # Install Cpp executables
 install(TARGETS
-  waypoint_publisher
+  nav2_waypoint_publisher
+  cacc_waypoint_publisher
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(TARGETS 
-  waypoint_publisher_node
+install(TARGETS
+  nav2_waypoint_publisher_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin

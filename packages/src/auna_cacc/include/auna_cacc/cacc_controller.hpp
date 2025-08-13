@@ -27,7 +27,6 @@ struct Parameters
   double kd;
   double max_velocity;
   bool use_waypoints;
-  std::string waypoint_file;
   int frequency;
   double target_velocity;
   double curvature_lookahead;
@@ -46,6 +45,7 @@ private:
   rclcpp::Subscription<etsi_its_cam_msgs::msg::CAM>::SharedPtr sub_cam_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_pose_stamped_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr sub_waypoints_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd_vel;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::TimerBase::SharedPtr setup_timer_;
@@ -135,7 +135,6 @@ private:
   bool first_pose_received_;
 
   // general functions
-  void read_waypoints_from_csv();
   void update_waypoint_following();
   void publish_waypoint_pose(
     const rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr & publisher,
@@ -145,6 +144,7 @@ private:
   void cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg);
   void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
   void pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
+  void waypoints_callback(const geometry_msgs::msg::PoseArray::SharedPtr msg);
   void timer_callback();
   void setup_timer_callback();
 
@@ -216,7 +216,4 @@ private:
   std::string log_file_path_;
   std::ofstream log_file_;
   int log_counter_ = 0;
-
-  rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr
-    pub_waypoints_pose_array_;  // Added publisher
 };

@@ -1,6 +1,7 @@
 #include "auna_cacc/cacc_controller.hpp"
 
 #include <rclcpp/logging.hpp>
+#include <rclcpp/parameter.hpp>
 
 #include <etsi_its_msgs_utils/impl/cam/cam_getters_common.h>
 
@@ -74,13 +75,15 @@ CaccController::CaccController() : Node("cacc_controller")
       this->pose_callback(msg);
     });
 
+  sub_waypoints_ = this->create_subscription<geometry_msgs::msg::PoseArray>(
+    "/cacc/waypoints", 1,
+    [this](const geometry_msgs::msg::PoseArray::SharedPtr msg) { this->waypoints_callback(msg); });
+
   pub_cmd_vel = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel/cacc", 1);
   RCLCPP_INFO(
     this->get_logger(), "Created cmd_vel publisher on topic: %s", pub_cmd_vel->get_topic_name());
   pub_x_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/x", 1);
   pub_y_lookahead_point_ = this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/y", 1);
-  pub_waypoints_pose_array_ =
-    this->create_publisher<geometry_msgs::msg::PoseArray>("cacc/waypoints", 1);
   pub_closest_pose_waypoint_ =
     this->create_publisher<geometry_msgs::msg::PoseStamped>("cacc/closest_pose_waypoint", 1);
   pub_closest_cam_waypoint_ =
@@ -131,7 +134,6 @@ CaccController::CaccController() : Node("cacc_controller")
   this->declare_parameter("max_velocity", 1.0);
   this->declare_parameter("frequency", 50);
   this->declare_parameter("use_waypoints", false);
-  this->declare_parameter("waypoint_file", "/home/$USER/waypoints.txt");
   this->declare_parameter("target_velocity", 1.0);
   this->declare_parameter("curvature_lookahead", 1.0);
   this->declare_parameter("extra_distance", 0.0);
@@ -143,7 +145,6 @@ CaccController::CaccController() : Node("cacc_controller")
   params_.max_velocity = this->get_parameter("max_velocity").as_double();
   params_.frequency = this->get_parameter("frequency").as_int();
   params_.use_waypoints = this->get_parameter("use_waypoints").as_bool();
-  params_.waypoint_file = this->get_parameter("waypoint_file").as_string();
   params_.target_velocity = this->get_parameter("target_velocity").as_double();
   params_.curvature_lookahead = this->get_parameter("curvature_lookahead").as_double();
   params_.extra_distance = this->get_parameter("extra_distance").as_double();
@@ -166,10 +167,6 @@ CaccController::CaccController() : Node("cacc_controller")
     std::chrono::milliseconds(1000), [this]() { this->setup_timer_callback(); });
   timer_->cancel();
 
-  if (params_.use_waypoints) {
-    read_waypoints_from_csv();
-  }
-
   dyn_params_handler_ = this->add_on_set_parameters_callback(
     [this](std::vector<rclcpp::Parameter> parameters) -> rcl_interfaces::msg::SetParametersResult {
       return this->dynamicParametersCallback(parameters);
@@ -184,83 +181,23 @@ CaccController::CaccController() : Node("cacc_controller")
   });
 }
 
-void CaccController::read_waypoints_from_csv()
+void CaccController::waypoints_callback(const geometry_msgs::msg::PoseArray::SharedPtr msg)
 {
-  std::string file_path = this->get_parameter("waypoint_file").as_string();
+  waypoints_x_.clear();
+  waypoints_y_.clear();
+  waypoints_yaw_.clear();
 
-  std::ifstream file(file_path, std::ifstream::in);
-  std::string line;
-  if (file.is_open()) {
-    waypoints_x_.clear();  // Clear the existing waypoints_x_ vector
-    waypoints_y_.clear();  // Clear the existing waypoints_y_ vector
+  for (const auto & pose : msg->poses) {
+    waypoints_x_.push_back(pose.position.x);
+    waypoints_y_.push_back(pose.position.y);
 
-    while (std::getline(file, line)) {
-      std::istringstream iss(line);
-      std::string x, y;
-      std::getline(iss, x, ',');
-      std::getline(iss, y, ',');
-      try {
-        double x_value = std::stod(x);
-        double y_value = std::stod(y);
-
-        waypoints_x_.push_back(x_value);
-        waypoints_y_.push_back(y_value);
-      } catch (const std::invalid_argument & e) {
-        RCLCPP_ERROR(
-          this->get_logger(), "Invalid waypoint format in CSV file: %s", file_path.c_str());
-      }
-    }
-  } else {
-    RCLCPP_ERROR(this->get_logger(), "Unable to open file: %s", file_path.c_str());
-    return;
-  }
-  file.close();
-
-  // Calculate yaw for each waypoint
-  waypoints_yaw_.clear();  // Clear the existing waypoints_yaw_ vector
-
-  size_t num_waypoints = waypoints_x_.size();
-  for (size_t i = 0; i < num_waypoints; ++i) {
-    size_t prev_index = (i == 0) ? (num_waypoints - 1) : (i - 1);
-    size_t next_index = (i + 1) % num_waypoints;
-
-    double next_x = waypoints_x_[next_index];
-    double next_y = waypoints_y_[next_index];
-
-    double prev_x = waypoints_x_[prev_index];
-    double prev_y = waypoints_y_[prev_index];
-
-    double yaw = std::atan2(next_y - prev_y, next_x - prev_x);
+    tf2::Quaternion q(
+      pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+    tf2::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
     waypoints_yaw_.push_back(yaw);
   }
-
-  // Create and publish a pose array of all waypoints
-  geometry_msgs::msg::PoseArray pose_array;
-  pose_array.header.stamp = this->get_clock()->now();
-  pose_array.header.frame_id = "map";  // Use appropriate frame_id
-
-  pose_array.poses.resize(num_waypoints);
-
-  for (size_t i = 0; i < num_waypoints; ++i) {
-    // Set position
-    pose_array.poses[i].position.x = waypoints_x_[i];
-    pose_array.poses[i].position.y = waypoints_y_[i];
-    pose_array.poses[i].position.z = 0.0;
-
-    // Convert yaw to quaternion
-    tf2::Quaternion q;
-    q.setRPY(0.0, 0.0, waypoints_yaw_[i]);
-
-    // Set orientation
-    pose_array.poses[i].orientation.x = q.x();
-    pose_array.poses[i].orientation.y = q.y();
-    pose_array.poses[i].orientation.z = q.z();
-    pose_array.poses[i].orientation.w = q.w();
-  }
-
-  // Publish the pose array
-  pub_waypoints_pose_array_->publish(pose_array);
-  RCLCPP_INFO(this->get_logger(), "Published pose array with %zu waypoints", num_waypoints);
 }
 
 void CaccController::setup_timer_callback()
@@ -1015,8 +952,6 @@ rcl_interfaces::msg::SetParametersResult CaccController::dynamicParametersCallba
         params_.frequency = parameter.as_int();
       } else if (name == "use_waypoints") {
         params_.use_waypoints = parameter.as_bool();
-      } else if (name == "waypoint_file") {
-        params_.waypoint_file = parameter.as_string();
       } else if (name == "target_velocity") {
         params_.target_velocity = parameter.as_double();
       } else if (name == "curvature_lookahead") {
