@@ -24,6 +24,7 @@ x-package-base: &package-base
     <<: *build-package-base
   volumes:
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+    - ./traces:/home/ubuntu/workspace/traces
 
 x-physical-base: &physical-base
   <<: *common-base
@@ -32,6 +33,7 @@ x-physical-base: &physical-base
   volumes:
     - /dev:/dev
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+    - ./traces:/home/ubuntu/workspace/traces
 
 x-gui-base: &gui-base
   <<: *common-base
@@ -41,6 +43,7 @@ x-gui-base: &gui-base
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
     - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
+    - ./traces:/home/ubuntu/workspace/traces
   environment:
     - DISPLAY=${DISPLAY}
     - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
@@ -59,6 +62,7 @@ x-dev-base: &dev-base
     - .:/home/ubuntu/workspace:cached
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
     - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
+    - ./traces:/home/ubuntu/workspace/traces
   environment:
     - DISPLAY=${DISPLAY}
     - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
@@ -922,6 +926,29 @@ services:
         "namespace:=robot3",
       ]
     profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
+
+  #==============================================================================
+  # TRACING SERVICES
+  #==============================================================================
+  # Services for ros2 tracing
+  tracing:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    image: tracing:latest
+    volumes:
+      - ./traces:/home/ubuntu/workspace/traces
+    pull_policy: build
+    container_name: tracing
+    command:
+      [
+        "/bin/bash",
+        "-c",
+        "sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace/traces && source /opt/ros/humble/setup.bash && source /home/ubuntu/tracing/install/setup.bash && ros2 trace",
+      ]
+    profiles: ["tracing"]
 
   #==============================================================================
   # DEVELOPMENT SERVICES
