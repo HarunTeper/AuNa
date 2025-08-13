@@ -35,10 +35,21 @@ ament_target_dependencies(
   sensor_msgs
   std_msgs)
 
+# Include directory
+target_include_directories(wallfollowing PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+
 install(TARGETS wallfollowing DESTINATION lib/${PROJECT_NAME})
 
 # Install launch files
 install(DIRECTORY launch/ DESTINATION share/${PROJECT_NAME}/launch)
+
+# Install config files
+install(DIRECTORY config/ DESTINATION share/${PROJECT_NAME}/config)
+
+# Install include directories
+install(DIRECTORY include/ DESTINATION include/)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

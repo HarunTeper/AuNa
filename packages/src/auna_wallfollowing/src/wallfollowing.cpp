@@ -1,42 +1,72 @@
-#include "rclcpp/rclcpp.hpp"
+#include "auna_wallfollowing/wallfollowing.hpp"
 
-#include "ackermann_msgs/msg/ackermann_drive_stamped.hpp"
-#include "nav_msgs/msg/odometry.hpp"
-#include "sensor_msgs/msg/laser_scan.hpp"
-
-#include <cmath>
-#include <string>
+#include <iostream>
 
 using namespace std;
 
-class WallFollow : public rclcpp::Node
+WallFollow::WallFollow() : Node("wallfollowing")
 {
-public:
-  WallFollow() : Node("wallfollowing")
-  {
-    scan_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
-      lidarscan_topic, 10, std::bind(&WallFollow::scan_callback, this, std::placeholders::_1));
-    drive_pub_ =
-      this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>(drive_topic, 10);
+  // Declare and get parameters
+  declare_parameters();
 
-    RCLCPP_INFO(this->get_logger(), "WallFollow node initialized.");
-  }
+  // Initialize ROS2 interfaces
+  scan_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
+    lidarscan_topic_, 10, std::bind(&WallFollow::scan_callback, this, std::placeholders::_1));
+  drive_pub_ =
+    this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>(drive_topic_, 10);
 
-private:
-  double kp = 0.25;
-  double kd = 0;
-  double ki = 0;
+  RCLCPP_INFO(this->get_logger(), "WallFollow node initialized.");
+}
 
-  double prev_error = 0.0;
-  double integral = 0.0;
+void WallFollow::declare_parameters()
+{
+  // Declare PID parameters
+  this->declare_parameter("kp", 0.25);
+  this->declare_parameter("kd", 0.0);
+  this->declare_parameter("ki", 0.0);
 
-  std::string lidarscan_topic = "scan";
-  std::string drive_topic = "cmd_vel/wallfollowing";
+  // Declare controller parameters
+  this->declare_parameter("desired_distance", 0.5);
+  this->declare_parameter("velocity", 1.5);
+  this->declare_parameter("max_steering_angle", 0.4189);
+  this->declare_parameter("min_velocity", 1.0);
+  this->declare_parameter("max_velocity", 2.0);
+  this->declare_parameter("error_threshold", 1.0);
 
-  rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr drive_pub_;
-  rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_sub_;
+  // Declare angle parameters
+  this->declare_parameter("angle_a", M_PI / 4);
+  this->declare_parameter("angle_b", M_PI / 2);
+  this->declare_parameter("lookahead_distance", 1.0);
 
-  double get_range(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan, double angle)
+  // Declare topic names
+  this->declare_parameter("lidarscan_topic", std::string("scan"));
+  this->declare_parameter("drive_topic", std::string("cmd_vel/wallfollowing"));
+
+  // Get parameters
+  kp_ = this->get_parameter("kp").as_double();
+  kd_ = this->get_parameter("kd").as_double();
+  ki_ = this->get_parameter("ki").as_double();
+
+  desired_distance_ = this->get_parameter("desired_distance").as_double();
+  velocity_ = this->get_parameter("velocity").as_double();
+  max_steering_angle_ = this->get_parameter("max_steering_angle").as_double();
+  min_velocity_ = this->get_parameter("min_velocity").as_double();
+  max_velocity_ = this->get_parameter("max_velocity").as_double();
+  error_threshold_ = this->get_parameter("error_threshold").as_double();
+
+  angle_a_ = this->get_parameter("angle_a").as_double();
+  angle_b_ = this->get_parameter("angle_b").as_double();
+  lookahead_distance_ = this->get_parameter("lookahead_distance").as_double();
+
+  lidarscan_topic_ = this->get_parameter("lidarscan_topic").as_string();
+  drive_topic_ = this->get_parameter("drive_topic").as_string();
+
+  // Initialize control variables
+  prev_error_ = 0.0;
+  integral_ = 0.0;
+}
+
+double WallFollow::get_range(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan, double angle)
   {
     if (angle < scan->angle_min || angle > scan->angle_max) return -1.0;
 
@@ -49,66 +79,61 @@ private:
     return static_cast<double>(dist);
   }
 
-  double get_error(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan, double desired_distance)
-  {
-    double angle_a = M_PI / 4;
-    double angle_b = M_PI / 2;
+double WallFollow::get_error(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan, double desired_distance)
+{
+  double a = get_range(scan, angle_a_);
+  double b = get_range(scan, angle_b_);
 
-    double a = get_range(scan, angle_a);
-    double b = get_range(scan, angle_b);
+  if (a == 0.0 || b == 0.0) return 0.0;
 
-    if (a == 0.0 || b == 0.0) return 0.0;
+  double swing = angle_b_ - angle_a_;
 
-    double swing = angle_b - angle_a;
+  double alpha = atan((a * cos(swing) - b) / (a * sin(swing)));
 
-    double alpha = atan((a * cos(swing) - b) / (a * sin(swing)));
+  double Dt = b * cos(alpha);
 
-    double Dt = b * cos(alpha);
+  double Dt1 = Dt + lookahead_distance_ * sin(alpha);
 
-    double L = 1.0;
-    double Dt1 = Dt + L * sin(alpha);
+  return desired_distance - Dt1;
+}
 
-    return desired_distance - Dt1;
-  }
+void WallFollow::pid_control(double error, double velocity)
+{
+  double derivative = error - prev_error_;
+  integral_ += error;
 
-  void pid_control(double error, double velocity)
-  {
-    double derivative = error - prev_error;
-    integral += error;
+  double angle = kp_ * error + kd_ * derivative + ki_ * integral_;
 
-    double angle = kp * error + kd * derivative + ki * integral;
+  RCLCPP_DEBUG(this->get_logger(), "Angle to steer -> %f", angle);
 
-    cout << "Angle to steer -> " << (angle) << endl;
+  prev_error_ = error;
 
-    prev_error = error;
+  if (angle < -max_steering_angle_) angle = -max_steering_angle_;
+  if (angle > max_steering_angle_) angle = max_steering_angle_;
 
-    if (angle < -0.4189) angle = -0.4189;
-    if (angle > 0.4189) angle = 0.4189;
+  if (std::abs(error) > error_threshold_)
+    velocity = min_velocity_;
+  else
+    velocity = max_velocity_;
 
-    if (std::abs(error) > 1.0)
-      velocity = 1.0;
-    else
-      velocity = 2.0;
+  auto drive_msg = ackermann_msgs::msg::AckermannDriveStamped();
+  drive_msg.header.stamp = this->now();
+  drive_msg.drive.speed = velocity;
+  drive_msg.drive.steering_angle = -angle;
+  drive_pub_->publish(drive_msg);
+}
 
-    auto drive_msg = ackermann_msgs::msg::AckermannDriveStamped();
-    drive_msg.header.stamp = this->now();
-    drive_msg.drive.speed = velocity;
-    drive_msg.drive.steering_angle = -angle;
-    drive_pub_->publish(drive_msg);
-  }
+void WallFollow::scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg)
+{
+  double error = get_error(scan_msg, desired_distance_);
 
-  void scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg)
-  {
-    double desired_distance = 0.5;
-    double velocity = 1.5;
+  pid_control(error, velocity_);
+}
 
-    double error = get_error(scan_msg, desired_distance);
-
-    pid_control(error, velocity);
-  }
-
-  double radiansToDegree(const double & angleInRadians) { return angleInRadians * (180.0 / M_PI); }
-};
+double WallFollow::radiansToDegree(const double & angleInRadians) 
+{ 
+  return angleInRadians * (180.0 / M_PI); 
+}
 
 int main(int argc, char ** argv)
 {
