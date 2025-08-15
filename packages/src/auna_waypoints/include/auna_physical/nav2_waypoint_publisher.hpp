@@ -13,10 +13,10 @@
 using NavigateThroughPoses = nav2_msgs::action::NavigateThroughPoses;
 using GoalHandleNavigateThroughPoses = rclcpp_action::ClientGoalHandle<NavigateThroughPoses>;
 
-class WaypointPublisher : public rclcpp::Node
+class Nav2WaypointPublisher : public rclcpp::Node
 {
 public:
-  WaypointPublisher();
+  Nav2WaypointPublisher();
 
 private:
   // create a namespace variable
@@ -32,6 +32,7 @@ private:
 
   // publish waypoints
   void publish_waypoints();
+  rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr pose_array_publisher_;
 
   // action client and callbacks
   rclcpp_action::Client<nav2_msgs::action::NavigateThroughPoses>::SharedPtr client_ptr_;

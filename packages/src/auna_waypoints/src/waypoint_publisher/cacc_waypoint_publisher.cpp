@@ -1,3 +1,4 @@
+#include "rclcpp/qos.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 
 #include "geometry_msgs/msg/pose_array.hpp"
@@ -11,10 +12,8 @@ class CaccWaypointPublisher : public rclcpp::Node
 public:
   CaccWaypointPublisher() : Node("cacc_waypoint_publisher")
   {
-    publisher_ = this->create_publisher<geometry_msgs::msg::PoseArray>("/cacc/waypoints", 10);
-    timer_ =
-      this->create_wall_timer(std::chrono::milliseconds(1000), [this]() { timer_callback(); });
-
+    publisher_ = this->create_publisher<geometry_msgs::msg::PoseArray>(
+      "/cacc/waypoints", rclcpp::QoS(1).transient_local());
     this->declare_parameter<std::string>("waypoint_file", "");
     this->get_parameter<std::string>("waypoint_file", waypoint_file_);
 
@@ -67,6 +66,7 @@ private:
     waypoints_.header.stamp = this->get_clock()->now();
     waypoints_.header.frame_id = "map";
     publisher_->publish(waypoints_);
+    timer_->cancel();
   }
 
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr publisher_;

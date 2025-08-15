@@ -1,74 +1,59 @@
-#include "auna_physical/waypoint_publisher.hpp"
+#include "auna_physical/nav2_waypoint_publisher.hpp"
 
-WaypointPublisher::WaypointPublisher()
-: Node("waypoint_publisher"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
+#include "tf2/LinearMath/Quaternion.h"
+#include "yaml-cpp/yaml.h"
+
+Nav2WaypointPublisher::Nav2WaypointPublisher()
+: Node("nav2_waypoint_publisher"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
   timer_ = this->create_wall_timer(std::chrono::milliseconds(1000), [this]() { timer_callback(); });
 
   this->client_ptr_ =
     rclcpp_action::create_client<NavigateThroughPoses>(this, "navigate_through_poses");
 
+  this->pose_array_publisher_ =
+    this->create_publisher<geometry_msgs::msg::PoseArray>("waypoint_poses", 10);
+
   this->declare_parameter<std::string>("namespace", "");
   this->get_parameter<std::string>("namespace", namespace_);
   this->declare_parameter<std::string>("waypoint_file", "");
   this->get_parameter<std::string>("waypoint_file", waypoint_file_);
 
-  std::ifstream file(waypoint_file_, std::ifstream::in);
-  std::string line;
-  if (file.is_open()) {
-    while (std::getline(file, line)) {
-      std::istringstream iss(line);
-      std::string x, y;
-      std::getline(iss, x, ',');
-      std::getline(iss, y, ',');
+  YAML::Node waypoints = YAML::LoadFile(waypoint_file_);
+  for (const auto & waypoint : waypoints) {
+    geometry_msgs::msg::PoseStamped pose;
+    pose.header.frame_id = "map";
+    pose.pose.position.x = waypoint["x"].as<float>();
+    pose.pose.position.y = waypoint["y"].as<float>();
+    pose.pose.position.z = 0;
 
-      geometry_msgs::msg::PoseStamped pose;
-      pose.header.frame_id = "map";
-      pose.pose.position.x = std::stof(x);
-      pose.pose.position.y = std::stof(y);
-      pose.pose.position.z = 0;
+    tf2::Quaternion q;
+    q.setRPY(0, 0, waypoint["yaw"].as<double>());
+    pose.pose.orientation = tf2::toMsg(q);
 
-      double heading = 0;
-      pose.pose.orientation = tf2::toMsg(tf2::Quaternion(tf2::Vector3(0, 0, 1), heading));
-
-      poses_.push_back(pose);
-    }
-  } else {
-    RCLCPP_ERROR(this->get_logger(), "Unable to open file");
-    return;
-  }
-  file.close();
-  for (uint i = 0; i < poses_.size(); i++) {
-    if (i == 0) {
-      double heading = atan2(
-        poses_[i + 1].pose.position.y - poses_[poses_.size() - 1].pose.position.y,
-        poses_[i + 1].pose.position.x - poses_[poses_.size() - 1].pose.position.x);
-      poses_[i].pose.orientation = tf2::toMsg(tf2::Quaternion(tf2::Vector3(0, 0, 1), heading));
-    } else if (i == poses_.size() - 1) {
-      double heading = atan2(
-        poses_[0].pose.position.y - poses_[i - 1].pose.position.y,
-        poses_[0].pose.position.x - poses_[i - 1].pose.position.x);
-      poses_[i].pose.orientation = tf2::toMsg(tf2::Quaternion(tf2::Vector3(0, 0, 1), heading));
-    } else {
-      double heading = atan2(
-        poses_[i + 1].pose.position.y - poses_[i - 1].pose.position.y,
-        poses_[i + 1].pose.position.x - poses_[i - 1].pose.position.x);
-      poses_[i].pose.orientation = tf2::toMsg(tf2::Quaternion(tf2::Vector3(0, 0, 1), heading));
-    }
+    poses_.push_back(pose);
   }
 
   // to start from zero at first iteration
   current_pose_index_ = -number_of_waypoints_;
 }
 
-void WaypointPublisher::timer_callback()
+void Nav2WaypointPublisher::timer_callback()
 {
+  geometry_msgs::msg::PoseArray pose_array;
+  pose_array.header.frame_id = "map";
+  pose_array.header.stamp = this->now();
+  for (const auto & pose_stamped : poses_) {
+    pose_array.poses.push_back(pose_stamped.pose);
+  }
+  pose_array_publisher_->publish(pose_array);
+
   if (remaining_number_of_poses_ < number_of_waypoints_ * 0.5) {
     publish_waypoints();
   }
 }
 
-void WaypointPublisher::publish_waypoints()
+void Nav2WaypointPublisher::publish_waypoints()
 {
   RCLCPP_INFO(this->get_logger(), "Publishing waypoints");
 
@@ -82,18 +67,18 @@ void WaypointPublisher::publish_waypoints()
 
   auto send_goal_options = rclcpp_action::Client<NavigateThroughPoses>::SendGoalOptions();
   send_goal_options.goal_response_callback =
-    std::bind(&WaypointPublisher::goal_response_callback, this, std::placeholders::_1);
+    std::bind(&Nav2WaypointPublisher::goal_response_callback, this, std::placeholders::_1);
   send_goal_options.feedback_callback = std::bind(
-    &WaypointPublisher::feedback_callback, this, std::placeholders::_1, std::placeholders::_2);
+    &Nav2WaypointPublisher::feedback_callback, this, std::placeholders::_1, std::placeholders::_2);
   send_goal_options.result_callback =
-    std::bind(&WaypointPublisher::result_callback, this, std::placeholders::_1);
+    std::bind(&Nav2WaypointPublisher::result_callback, this, std::placeholders::_1);
 
   RCLCPP_INFO(this->get_logger(), "Sending goal");
   this->client_ptr_->async_send_goal(goal_msg, send_goal_options);
   remaining_number_of_poses_ = number_of_waypoints_;
 }
 
-void WaypointPublisher::goal_response_callback(
+void Nav2WaypointPublisher::goal_response_callback(
   GoalHandleNavigateThroughPoses::SharedPtr goal_handle)
 {
   if (!goal_handle) {
@@ -104,7 +89,7 @@ void WaypointPublisher::goal_response_callback(
   }
 }
 
-void WaypointPublisher::feedback_callback(
+void Nav2WaypointPublisher::feedback_callback(
   GoalHandleNavigateThroughPoses::SharedPtr,
   const std::shared_ptr<const NavigateThroughPoses::Feedback> feedback)
 {
@@ -112,7 +97,7 @@ void WaypointPublisher::feedback_callback(
   remaining_number_of_poses_ = feedback->number_of_poses_remaining;
 }
 
-void WaypointPublisher::result_callback(
+void Nav2WaypointPublisher::result_callback(
   const GoalHandleNavigateThroughPoses::WrappedResult & result)
 {
   switch (result.code) {
