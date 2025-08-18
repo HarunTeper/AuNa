@@ -31,8 +31,5 @@
   
   <export>
     <build_type>ament_cmake</build_type>
-    <!-- Removed communication costmap
-    <costmap_2d plugin="${prefix}/communication_costmap.xml" />
-    -->
   </export>
 </package>

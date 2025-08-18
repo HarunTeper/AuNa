@@ -1,0 +1,117 @@
+---
+#------------------------------------------------------------------------------
+# EXTENSION DEFINITIONS
+#------------------------------------------------------------------------------
+x-common-base: &common-base
+  privileged: true
+  network_mode: host
+  env_file:
+    - ../.env
+  stdin_open: true
+  tty: true
+  pull_policy: build
+
+x-build-package-base: &build-package-base
+  context: ../.
+  dockerfile: dockerfiles/package.dockerfile
+  args:
+    PIP_BREAK_SYSTEM_PACKAGES: ${PIP_BREAK_SYSTEM_PACKAGES}
+
+x-package-base: &package-base
+  <<: *common-base
+  build:
+    <<: *build-package-base
+  volumes:
+    - ../packages/src:/home/ubuntu/workspace/packages/src:cached
+
+x-gui-base: &gui-base
+  <<: *common-base
+  build:
+    <<: *build-package-base
+  volumes:
+    - ./../packages/src:/home/ubuntu/workspace/packages/src:cached
+    - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
+  environment:
+    - DISPLAY=${DISPLAY}
+    - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
+    - QT_X11_NO_MITSHM=1
+
+services:
+  # #==============================================================================
+  # # COMMUNICATION SERVICES
+  # #==============================================================================
+
+  cam_communication:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${COMM_PACKAGES}
+    image: cam_communication:latest
+    pull_policy: build
+    container_name: cam_communication
+    command:
+      ["ros2", "launch", "auna_comm", "single_cam_communication.launch.py"]
+    environment:
+      - COMMUNICATION_TYPE=${COMMUNICATION_TYPE}
+    profiles: ["base"]
+
+  cam_communication_robot1:
+    extends: cam_communication
+    container_name: cam_communication_robot1
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_comm",
+        "single_cam_communication.launch.py",
+        "robot_index:=1",
+        "namespace:=robot1",
+      ]
+    profiles:
+      ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
+
+  cam_communication_robot2:
+    extends: cam_communication
+    container_name: cam_communication_robot2
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_comm",
+        "single_cam_communication.launch.py",
+        "robot_index:=2",
+        "namespace:=robot2",
+      ]
+    profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
+
+  cam_communication_robot3:
+    extends: cam_communication
+    container_name: cam_communication_robot3
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_comm",
+        "single_cam_communication.launch.py",
+        "robot_index:=3",
+        "namespace:=robot3",
+      ]
+    profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
+
+  #==============================================================================
+  # OMNET SERVICES
+  #==============================================================================
+
+  omnet:
+    <<: *gui-base
+    build:
+      context: .
+      dockerfile: dockerfiles/omnet.dockerfile
+    image: omnet:latest
+    pull_policy: build
+    container_name: omnet
+    command: ["/bin/bash", "-c", "echo 'Hello from OMNeT++!' && exec /bin/bash"]
+    profiles: ["omnet"]

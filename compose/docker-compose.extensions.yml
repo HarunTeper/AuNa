@@ -1,0 +1,66 @@
+---
+#------------------------------------------------------------------------------
+# EXTENSION DEFINITIONS
+#------------------------------------------------------------------------------
+x-common-base: &common-base
+  privileged: true
+  network_mode: host
+  env_file:
+    - ../.env
+  stdin_open: true
+  tty: true
+  pull_policy: build
+
+x-build-package-base: &build-package-base
+  context: ../.
+  dockerfile: dockerfiles/package.dockerfile
+  args:
+    PIP_BREAK_SYSTEM_PACKAGES: ${PIP_BREAK_SYSTEM_PACKAGES}
+
+x-package-base: &package-base
+  <<: *common-base
+  build:
+    <<: *build-package-base
+  volumes:
+    - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+
+x-physical-base: &physical-base
+  <<: *common-base
+  build:
+    <<: *build-package-base
+  volumes:
+    - /dev:/dev
+    - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+
+x-gui-base: &gui-base
+  <<: *common-base
+  build:
+    <<: *build-package-base
+  volumes:
+    - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+    - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
+  environment:
+    - DISPLAY=${DISPLAY}
+    - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
+    - QT_X11_NO_MITSHM=1
+
+x-dev-base: &dev-base
+  <<: *common-base
+  build:
+    context: .
+    dockerfile: dockerfiles/development.dockerfile
+    args:
+      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+  user: "ubuntu"
+  volumes:
+    - /dev:/dev
+    - .:/home/ubuntu/workspace:cached
+    - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
+  environment:
+    - DISPLAY=${DISPLAY}
+    - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
+    - QT_X11_NO_MITSHM=1
+
+services: {}

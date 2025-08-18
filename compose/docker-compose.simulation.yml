@@ -1,0 +1,220 @@
+---
+#------------------------------------------------------------------------------
+# EXTENSION DEFINITIONS
+#------------------------------------------------------------------------------
+x-common-base: &common-base
+  privileged: true
+  network_mode: host
+  env_file:
+    - ../.env
+  stdin_open: true
+  tty: true
+  pull_policy: build
+
+x-build-package-base: &build-package-base
+  context: ../.
+  dockerfile: dockerfiles/package.dockerfile
+  args:
+    PIP_BREAK_SYSTEM_PACKAGES: ${PIP_BREAK_SYSTEM_PACKAGES}
+
+x-package-base: &package-base
+  <<: *common-base
+  build:
+    <<: *build-package-base
+  volumes:
+    - ./../packages/src:/home/ubuntu/workspace/packages/src:cached
+
+x-gui-base: &gui-base
+  <<: *common-base
+  build:
+    <<: *build-package-base
+  volumes:
+    - ./../packages/src:/home/ubuntu/workspace/packages/src:cached
+    - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
+  environment:
+    - DISPLAY=${DISPLAY}
+    - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
+    - QT_X11_NO_MITSHM=1
+
+services:
+  #==============================================================================
+  # GAZEBO SERVICES
+  #==============================================================================
+
+  gazebo:
+    <<: *gui-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${GAZEBO_PACKAGES}
+    image: gazebo:latest
+    pull_policy: build
+    container_name: gazebo
+    command:
+      [
+        "/bin/bash",
+        "-c",
+        "ros2 launch auna_gazebo gazebo_world.launch.py use_sim_time:=true",
+      ]
+    profiles: ["sim", "sim_scenario", "sim_scenario_1"]
+
+  spawn_robot:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${GAZEBO_PACKAGES}
+    image: spawn_robot:latest
+    pull_policy: build
+    container_name: spawn_robot
+    command: ["ros2", "launch", "auna_gazebo", "spawn_robot.launch.py"]
+    profiles: ["spawn_robot"]
+
+  spawn_robot_robot1:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${GAZEBO_PACKAGES}
+    image: spawn_robot:latest
+    pull_policy: build
+    container_name: spawn_robot_robot1
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_gazebo",
+        "spawn_robot.launch.py",
+        "robot_index:=1",
+        "use_sim_time:=true",
+      ]
+    profiles: ["sim_robot1", "sim_scenario", "sim_scenario_1"]
+
+  spawn_robot_robot2:
+    extends: spawn_robot
+    container_name: spawn_robot_robot2
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_gazebo",
+        "spawn_robot.launch.py",
+        "robot_index:=2",
+        "use_sim_time:=true",
+      ]
+    profiles: ["sim_robot2", "sim_scenario"]
+
+  spawn_robot_robot3:
+    extends: spawn_robot
+    container_name: spawn_robot_robot3
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_gazebo",
+        "spawn_robot.launch.py",
+        "robot_index:=3",
+        "use_sim_time:=true",
+      ]
+    profiles: ["sim_robot3", "sim_scenario"]
+
+  #==============================================================================
+  # GROUND TRUTH SERVICES
+  #==============================================================================
+
+  ground_truth_static_transform:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${GROUND_TRUTH_PACKAGES}
+    image: ground_truth_static_transform:latest
+    pull_policy: build
+    container_name: ground_truth_static_transform
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_ground_truth",
+        "static_transform.launch.py",
+        "use_sim_time:=true",
+      ]
+    profiles: ["sim", "sim_scenario", "sim_scenario_1"]
+
+  ground_truth:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${GROUND_TRUTH_PACKAGES}
+    image: ground_truth:latest
+    pull_policy: build
+    container_name: ground_truth
+    command: ["ros2", "launch", "auna_ground_truth", "ground_truth.launch.py"]
+    profiles: ["ground_truth"]
+
+  ground_truth_robot1:
+    extends: ground_truth
+    container_name: ground_truth_robot1
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_ground_truth",
+        "ground_truth.launch.py",
+        "robot_index:=1",
+        "use_sim_time:=true",
+      ]
+    profiles: ["sim_robot1", "sim_scenario", "sim_scenario_1"]
+
+  ground_truth_robot2:
+    extends: ground_truth
+    container_name: ground_truth_robot2
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_ground_truth",
+        "ground_truth.launch.py",
+        "robot_index:=2",
+        "use_sim_time:=true",
+      ]
+    profiles: ["sim_robot2", "sim_scenario"]
+
+  ground_truth_robot3:
+    extends: ground_truth
+    container_name: ground_truth_robot3
+    command:
+      [
+        "ros2",
+        "launch",
+        "auna_ground_truth",
+        "ground_truth.launch.py",
+        "robot_index:=3",
+        "use_sim_time:=true",
+      ]
+    profiles: ["sim_robot3", "sim_scenario"]
+
+  #==============================================================================
+  # TF SERVICES
+  #==============================================================================
+
+  global_tf:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${TF_PACKAGES}
+    image: global_tf:latest
+    pull_policy: build
+    container_name: global_tf
+    command:
+      ["ros2", "launch", "auna_tf", "global_tf.launch.py", "use_sim_time:=true"]
+    profiles: ["sim", "sim_scenario", "sim_scenario_1"]

@@ -1,0 +1,53 @@
+---
+#------------------------------------------------------------------------------
+# EXTENSION DEFINITIONS
+#------------------------------------------------------------------------------
+x-common-base: &common-base
+  privileged: true
+  network_mode: host
+  env_file:
+    - ../.env
+  stdin_open: true
+  tty: true
+  pull_policy: build
+
+x-build-package-base: &build-package-base
+  context: ../.
+  dockerfile: dockerfiles/package.dockerfile
+  args:
+    PIP_BREAK_SYSTEM_PACKAGES: ${PIP_BREAK_SYSTEM_PACKAGES}
+
+x-package-base: &package-base
+  <<: *common-base
+  build:
+    <<: *build-package-base
+  volumes:
+    - ../packages/src:/home/ubuntu/workspace/packages/src:cached
+
+services:
+  #==============================================================================
+  # BASE SERVICE
+  #==============================================================================
+  # Minimal base image without ROS packages - used for building other images
+  base:
+    build:
+      context: .
+      dockerfile: ../dockerfiles/base.dockerfile
+    image: base:latest
+    pull_policy: build
+    env_file:
+      - ../.env
+    profiles: ["base"]
+
+  #==============================================================================
+  # CORE NETWORK SERVICES
+  #==============================================================================
+
+  # Zenohd - distributed data exchange service
+  zenohd:
+    <<: *package-base
+    image: zenohd:latest
+    pull_policy: build
+    container_name: zenohd
+    command: ["ros2", "run", "rmw_zenoh_cpp", "rmw_zenohd"]
+    profiles: ["zenohd", "sim_scenario", "sim_scenario_1"]
