@@ -18,12 +18,12 @@ def include_launch_description(context: LaunchContext):
     spawn_launch_file_dir = os.path.join(pkg_dir, 'launch', 'spawn')
 
     # Launch Configurations
-    robot_index = LaunchConfiguration('robot_index')
+    robot_index = int(os.environ.get('ROBOT_INDEX', '0'))
     
     # Parameters
-    name = 'robot' + robot_index.perform(context)
-    namespace = 'robot' + robot_index.perform(context)
-    urdf_namespace = 'robot' + robot_index.perform(context)
+    name = f'robot{robot_index}'
+    namespace = f'robot{robot_index}'
+    urdf_namespace = f'robot{robot_index}'
     use_sim_time = LaunchConfiguration('use_sim_time')
     x_pose = LaunchConfiguration('x_pose', default='0.0')
     y_pose = LaunchConfiguration('y_pose', default='0.0')
@@ -33,7 +33,7 @@ def include_launch_description(context: LaunchContext):
     
     map_path = os.path.join(
         pkg_dir, "config", "map_params", f"{world_name}.yaml")
-    num = int(robot_index.perform(context))
+    num = int(robot_index)
 
     x_pose_value = yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"]) + \
         num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"])
@@ -136,11 +136,6 @@ def include_launch_description(context: LaunchContext):
 def generate_launch_description():
 
     # Launch Arguments
-    robot_index_arg = DeclareLaunchArgument(
-        'robot_index',
-        default_value='1',
-        description='Index of the robot to spawn'
-    )
     use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',
         default_value='true',
@@ -148,7 +143,6 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        robot_index_arg,
         use_sim_time_arg,
         OpaqueFunction(function=include_launch_description)
     ])

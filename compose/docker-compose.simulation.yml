@@ -74,52 +74,24 @@ services:
     profiles: ["spawn_robot"]
 
   spawn_robot_robot1:
-    <<: *package-base
-    build:
-      <<: *build-package-base
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-        - PACKAGE_NAMES=${GAZEBO_PACKAGES}
-    image: spawn_robot:latest
-    pull_policy: build
+    extends: spawn_robot
     container_name: spawn_robot_robot1
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_gazebo",
-        "spawn_robot.launch.py",
-        "robot_index:=1",
-        "use_sim_time:=true",
-      ]
+    environment:
+      - ROBOT_INDEX=1
     profiles: ["sim_robot1", "sim_scenario", "sim_scenario_1"]
 
   spawn_robot_robot2:
     extends: spawn_robot
     container_name: spawn_robot_robot2
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_gazebo",
-        "spawn_robot.launch.py",
-        "robot_index:=2",
-        "use_sim_time:=true",
-      ]
+    environment:
+      - ROBOT_INDEX=2
     profiles: ["sim_robot2", "sim_scenario"]
 
   spawn_robot_robot3:
     extends: spawn_robot
     container_name: spawn_robot_robot3
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_gazebo",
-        "spawn_robot.launch.py",
-        "robot_index:=3",
-        "use_sim_time:=true",
-      ]
+    environment:
+      - ROBOT_INDEX=3
     profiles: ["sim_robot3", "sim_scenario"]
 
   #==============================================================================
@@ -162,43 +134,22 @@ services:
   ground_truth_robot1:
     extends: ground_truth
     container_name: ground_truth_robot1
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_ground_truth",
-        "ground_truth.launch.py",
-        "robot_index:=1",
-        "use_sim_time:=true",
-      ]
+    environment:
+      - ROBOT_INDEX=1
     profiles: ["sim_robot1", "sim_scenario", "sim_scenario_1"]
 
   ground_truth_robot2:
     extends: ground_truth
     container_name: ground_truth_robot2
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_ground_truth",
-        "ground_truth.launch.py",
-        "robot_index:=2",
-        "use_sim_time:=true",
-      ]
+    environment:
+      - ROBOT_INDEX=2
     profiles: ["sim_robot2", "sim_scenario"]
 
   ground_truth_robot3:
     extends: ground_truth
     container_name: ground_truth_robot3
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_ground_truth",
-        "ground_truth.launch.py",
-        "robot_index:=3",
-        "use_sim_time:=true",
-      ]
+    environment:
+      - ROBOT_INDEX=3
     profiles: ["sim_robot3", "sim_scenario"]
 
   #==============================================================================

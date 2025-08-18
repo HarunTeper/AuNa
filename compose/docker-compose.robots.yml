@@ -59,44 +59,23 @@ services:
   localization_pose_robot1:
     extends: localization_pose
     container_name: localization_pose_robot1
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_tf",
-        "localization_pose_publisher.launch.py",
-        "robot_index:=1",
-        "use_sim_time:=true",
-      ]
+    environment:
+      - ROBOT_INDEX=1
     profiles:
       ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
 
   localization_pose_robot2:
     extends: localization_pose
     container_name: localization_pose_robot2
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_tf",
-        "localization_pose_publisher.launch.py",
-        "robot_index:=2",
-        "use_sim_time:=true",
-      ]
+    environment:
+      - ROBOT_INDEX=2
     profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
 
   localization_pose_robot3:
     extends: localization_pose
     container_name: localization_pose_robot3
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_tf",
-        "localization_pose_publisher.launch.py",
-        "robot_index:=3",
-        "use_sim_time:=true",
-      ]
+    environment:
+      - ROBOT_INDEX=3
     profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
 
   #==============================================================================
@@ -126,47 +105,23 @@ services:
   cmd_multiplexer_robot1:
     extends: cmd_multiplexer
     container_name: cmd_multiplexer_robot1
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_control",
-        "cmd_vel_multiplexer.launch.py",
-        "namespace:=robot1",
-        "use_sim_time:=true",
-        "initial_source:=cacc",
-      ]
+    environment:
+      - ROBOT_INDEX=1
     profiles:
       ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
 
   cmd_multiplexer_robot2:
     extends: cmd_multiplexer
     container_name: cmd_multiplexer_robot2
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_control",
-        "cmd_vel_multiplexer.launch.py",
-        "namespace:=robot2",
-        "use_sim_time:=true",
-        "initial_source:=cacc",
-      ]
+    environment:
+      - ROBOT_INDEX=2
     profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
 
   cmd_multiplexer_robot3:
     extends: cmd_multiplexer
     container_name: cmd_multiplexer_robot3
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_control",
-        "cmd_vel_multiplexer.launch.py",
-        "namespace:=robot3",
-        "use_sim_time:=true",
-        "initial_source:=cacc",
-      ]
+    environment:
+      - ROBOT_INDEX=3
     profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
 
   #==============================================================================
@@ -189,41 +144,23 @@ services:
   control_panel_robot1:
     extends: control_panel
     container_name: control_panel_robot1
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_control",
-        "control_panel.launch.py",
-        "robot_index:=1",
-      ]
+    environment:
+      - ROBOT_INDEX=1
     profiles:
       ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
 
   control_panel_robot2:
     extends: control_panel
     container_name: control_panel_robot2
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_control",
-        "control_panel.launch.py",
-        "robot_index:=2",
-      ]
+    environment:
+      - ROBOT_INDEX=2
     profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
 
   control_panel_robot3:
     extends: control_panel
     container_name: control_panel_robot3
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_control",
-        "control_panel.launch.py",
-        "robot_index:=3",
-      ]
+    environment:
+      - ROBOT_INDEX=3
     profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
 
   #==============================================================================
@@ -246,43 +183,22 @@ services:
   ekf_localization_sim_robot1:
     extends: ekf_localization_sim
     container_name: ekf_localization_robot1
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_ekf",
-        "ekf_sim.launch.py",
-        "robot_index:=1",
-        "use_sim_time:=true",
-      ]
+    environment:
+      - ROBOT_INDEX=1
     profiles: ["sim_robot1", "sim_scenario", "sim_scenario_1"]
 
   ekf_localization_sim_robot2:
     extends: ekf_localization_sim
     container_name: ekf_localization_robot2
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_ekf",
-        "ekf_sim.launch.py",
-        "robot_index:=2",
-        "use_sim_time:=true",
-      ]
+    environment:
+      - ROBOT_INDEX=2
     profiles: ["sim_robot2", "sim_scenario"]
 
   ekf_localization_sim_robot3:
     extends: ekf_localization_sim
     container_name: ekf_localization_robot3
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_ekf",
-        "ekf_sim.launch.py",
-        "robot_index:=3",
-        "use_sim_time:=true",
-      ]
+    environment:
+      - ROBOT_INDEX=3
     profiles: ["sim_robot3", "sim_scenario"]
 
   #==============================================================================
@@ -304,44 +220,23 @@ services:
   nav2_stack_robot1:
     extends: nav2_stack
     container_name: nav2_stack_robot1
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_nav2",
-        "navigation_single_robot.launch.py",
-        "robot_index:=1",
-        "use_sim_time:=true",
-      ]
+    environment:
+      - ROBOT_INDEX=1
     profiles:
       ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
 
   nav2_stack_robot2:
     extends: nav2_stack
     container_name: nav2_stack_robot2
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_nav2",
-        "navigation_single_robot.launch.py",
-        "robot_index:=2",
-        "use_sim_time:=true",
-      ]
+    environment:
+      - ROBOT_INDEX=2
     profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
 
   nav2_stack_robot3:
     extends: nav2_stack
     container_name: nav2_stack_robot3
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_nav2",
-        "navigation_single_robot.launch.py",
-        "robot_index:=3",
-        "use_sim_time:=true",
-      ]
+    environment:
+      - ROBOT_INDEX=3
     profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
 
   #==============================================================================
@@ -364,41 +259,23 @@ services:
   cacc_controller_robot1:
     extends: cacc_controller
     container_name: cacc_controller_robot1
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_cacc",
-        "single_cacc_controller.launch.py",
-        "robot_index:=1",
-      ]
+    environment:
+      - ROBOT_INDEX=1
     profiles:
       ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
 
   cacc_controller_robot2:
     extends: cacc_controller
     container_name: cacc_controller_robot2
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_cacc",
-        "single_cacc_controller.launch.py",
-        "robot_index:=2",
-      ]
+    environment:
+      - ROBOT_INDEX=2
     profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
 
   cacc_controller_robot3:
     extends: cacc_controller
     container_name: cacc_controller_robot3
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_cacc",
-        "single_cacc_controller.launch.py",
-        "robot_index:=3",
-      ]
+    environment:
+      - ROBOT_INDEX=3
     profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
 
   #==============================================================================
@@ -421,44 +298,23 @@ services:
   wallfollowing_robot1:
     extends: wallfollowing
     container_name: wallfollowing_robot1
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_wallfollowing",
-        "wallfollowing.launch.py",
-        "robot_index:=1",
-        "namespace:=robot1",
-      ]
+    environment:
+      - ROBOT_INDEX=1
     profiles:
       ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
 
   wallfollowing_robot2:
     extends: wallfollowing
     container_name: wallfollowing_robot2
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_wallfollowing",
-        "wallfollowing.launch.py",
-        "robot_index:=2",
-        "namespace:=robot2",
-      ]
+    environment:
+      - ROBOT_INDEX=2
     profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
 
   wallfollowing_robot3:
     extends: wallfollowing
     container_name: wallfollowing_robot3
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_wallfollowing",
-        "wallfollowing.launch.py",
-        "robot_index:=3",
-        "namespace:=robot3",
-      ]
+    environment:
+      - ROBOT_INDEX=3
     profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
 
   #==============================================================================
@@ -482,44 +338,23 @@ services:
   waypoint_publisher_robot1:
     extends: waypoint_publisher
     container_name: waypoint_publisher_robot1
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_waypoints",
-        "waypoint_publisher.launch.py",
-        "robot_index:=1",
-        "namespace:=robot1",
-      ]
+    environment:
+      - ROBOT_INDEX=1
     profiles:
       ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
 
   waypoint_publisher_robot2:
     extends: waypoint_publisher
     container_name: waypoint_publisher_robot2
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_waypoints",
-        "waypoint_publisher.launch.py",
-        "robot_index:=2",
-        "namespace:=robot2",
-      ]
+    environment:
+      - ROBOT_INDEX=2
     profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
 
   waypoint_publisher_robot3:
     extends: waypoint_publisher
     container_name: waypoint_publisher_robot3
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_waypoints",
-        "waypoint_publisher.launch.py",
-        "robot_index:=3",
-        "namespace:=robot3",
-      ]
+    environment:
+      - ROBOT_INDEX=3
     profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
 
   #==============================================================================
