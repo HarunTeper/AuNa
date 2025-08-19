@@ -1,91 +1,159 @@
 # syntax=docker/dockerfile:1-labs
-# Build from the base dockerfile
-FROM base:latest
+#------------------------------------------------------------------------------
+# STAGE 1: Dependency Resolution and Caching
+#------------------------------------------------------------------------------
+FROM base:latest as dependency-stage
 
 USER root
 
-# Copy the package.xml, requirements.txt, and pyproject.toml files for dependency resolution to maximize cache efficiency
+# Copy dependency files
 COPY --parents packages/src/**/package.xml /tmp/package_xmls/
 COPY --parents packages/**/requirements.txt /tmp/requirements/
 COPY --parents packages/**/*.toml /tmp/toml/
 
-# Fix ownership after COPY (COPY creates files owned by root)
-RUN chown -R ubuntu:ubuntu /tmp/package_xmls
-RUN chown -R ubuntu:ubuntu /tmp/requirements
-RUN chown -R ubuntu:ubuntu /tmp/toml
-
-# Copy and set up entrypoint script
-COPY dockerfiles/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
-RUN apt update
+# Fix ownership after COPY
+RUN chown -R ubuntu:ubuntu /tmp/package_xmls /tmp/requirements /tmp/toml
 
 USER ubuntu
 
 # Update rosdep database
-RUN rosdep update
+RUN sudo apt-get update && rosdep update
 
-ARG PIP_BREAK_SYSTEM_PACKAGES
-ENV PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-
+# Install system dependencies with error handling
 ARG PACKAGE_NAMES
-RUN echo "Building packages: $PACKAGE_NAMES"
-# Install dependencies only for packages in PACKAGE_NAMES
-RUN for pkg in $PACKAGE_NAMES; do \
-    rosdep install --from-paths /tmp/package_xmls/packages/src/$pkg --ignore-src -r -y || echo "Warning: rosdep failed for $pkg"; \
-    done && \
-    rm -rf /tmp/package_xmls
-
-# Install Python packages from requirements.txt only for PACKAGE_NAMES
-RUN for pkg in $PACKAGE_NAMES; do \
-    if [ -f "/tmp/requirements/packages/src/$pkg/requirements.txt" ]; then \
-    pip install -r /tmp/requirements/packages/src/$pkg/requirements.txt; \
+RUN echo "Resolving dependencies for: ${PACKAGE_NAMES}" \
+    && if [ -n "${PACKAGE_NAMES}" ]; then \
+    for pkg in ${PACKAGE_NAMES}; do \
+    if [ -d "/tmp/package_xmls/packages/src/$pkg" ]; then \
+    echo "Installing dependencies for $pkg"; \
+    rosdep install --from-paths /tmp/package_xmls/packages/src/$pkg --ignore-src -r -y \
+    || echo "Warning: rosdep failed for $pkg"; \
+    else \
+    echo "Warning: Package directory not found for $pkg"; \
     fi; \
-    done && \
-    rm -rf /tmp/requirements
-
-# Install Python packages from pyproject.toml only for PACKAGE_NAMES
-RUN for pkg in $PACKAGE_NAMES; do \
-    if [ -f "/tmp/toml/packages/src/$pkg/pyproject.toml" ]; then \
-    pip install -e /tmp/toml/packages/src/$pkg; \
-    fi; \
-    done && \
-    rm -rf /tmp/toml
-
-ARG INSTALL_PACKAGE_NAMES
-RUN echo "Installing additional packages: $INSTALL_PACKAGE_NAMES"
-RUN if [ -n "$INSTALL_PACKAGE_NAMES" ]; then \
-    sudo apt-get update && \
-    sudo apt-get install -y --no-install-recommends $INSTALL_PACKAGE_NAMES; \
+    done; \
+    else \
+    echo "No specific packages, installing all dependencies"; \
+    rosdep install --from-paths /tmp/package_xmls --ignore-src -r -y || echo "Some dependencies failed"; \
     fi
 
-# Clean up package lists at the end
-RUN sudo rm -rf /var/lib/apt/lists/*
+# Install Python dependencies with error handling
+RUN if [ -n "${PACKAGE_NAMES}" ]; then \
+    for pkg in ${PACKAGE_NAMES}; do \
+    if [ -f "/tmp/requirements/packages/src/$pkg/requirements.txt" ]; then \
+    echo "Installing Python requirements for $pkg"; \
+    pip install --no-cache-dir -r /tmp/requirements/packages/src/$pkg/requirements.txt || echo "Warning: pip install failed for $pkg"; \
+    fi; \
+    if [ -f "/tmp/toml/packages/src/$pkg/pyproject.toml" ]; then \
+    echo "Installing Python package $pkg"; \
+    pip install --no-cache-dir -e /tmp/toml/packages/src/$pkg || echo "Warning: pip install failed for $pkg"; \
+    fi; \
+    done; \
+    else \
+    find /tmp/requirements -name "requirements.txt" -exec pip install --no-cache-dir -r {} \; 2>/dev/null || true; \
+    find /tmp/toml -name "pyproject.toml" -exec pip install --no-cache-dir -e {} \; 2>/dev/null || true; \
+    fi
 
-# Install ROS packages and dependencies
-RUN echo "Building packages: $PACKAGE_NAMES"
-# Copy all specified packages
-RUN mkdir -p /home/ubuntu/workspace/packages/src
+RUN sudo rm -rf /tmp/package_xmls /tmp/requirements /tmp/toml \
+    && sudo apt-get clean \
+    && sudo rm -rf /var/lib/apt/lists/*
+
+#------------------------------------------------------------------------------
+# STAGE 2: Build Stage
+#------------------------------------------------------------------------------
+FROM dependency-stage as build-stage
+
+# Install additional packages if specified
+ARG INSTALL_PACKAGE_NAMES
+RUN if [ -n "$INSTALL_PACKAGE_NAMES" ]; then \
+    echo "Installing additional packages: $INSTALL_PACKAGE_NAMES"; \
+    sudo apt-get update \
+    && sudo apt-get install -y --no-install-recommends $INSTALL_PACKAGE_NAMES \
+    && sudo rm -rf /var/lib/apt/lists/*; \
+    fi
+
+# Copy source code
 COPY packages/src /tmp/src_temp/
-RUN for pkg in $PACKAGE_NAMES; do \
+RUN mkdir -p /home/ubuntu/workspace/packages/src \
+    && if [ -n "${PACKAGE_NAMES}" ]; then \
+    for pkg in ${PACKAGE_NAMES}; do \
     if [ -d "/tmp/src_temp/$pkg" ]; then \
     cp -r /tmp/src_temp/$pkg /home/ubuntu/workspace/packages/src/; \
     echo "Copied package: $pkg"; \
     else \
-    echo "Warning: Package $pkg not found"; \
+    echo "Warning: Package $pkg not found in source"; \
     fi; \
-    done && \
-    sudo rm -rf /tmp/src_temp
+    done; \
+    else \
+    cp -r /tmp/src_temp/* /home/ubuntu/workspace/packages/src/ 2>/dev/null || true; \
+    echo "Copied all available packages"; \
+    fi \
+    && sudo rm -rf /tmp/src_temp
 
-# Fix ownership after COPY (COPY creates files owned by root)
-RUN sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace
+# Fix ownership and build
+RUN sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace \
+    && cd /home/ubuntu/workspace/packages \
+    && bash -c "source /opt/ros/\${ROS_DISTRO}/setup.bash && \
+    if [ -n '${PACKAGE_NAMES}' ]; then \
+    colcon build --symlink-install --packages-select ${PACKAGE_NAMES} --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release; \
+    else \
+    colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release; \
+    fi"
 
-RUN cd /home/ubuntu/workspace/packages && \
-    source /opt/ros/humble/setup.bash && \    
-    colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON --cmake-args -DCMAKE_BUILD_TYPE=Release
+#------------------------------------------------------------------------------
+# STAGE 3: Runtime Stage (Production) [2][4]
+#------------------------------------------------------------------------------
+FROM base:latest as runtime
 
-# Source the workspace in bashrc
+# Copy built artifacts from build stage
+COPY --from=build-stage --chown=ubuntu:ubuntu /home/ubuntu/workspace/packages/install /home/ubuntu/workspace/packages/install
+
+USER ubuntu
+
+# Source workspace in bashrc
 RUN echo "source /home/ubuntu/workspace/packages/install/setup.bash" >> /home/ubuntu/.bashrc
+
+# Copy and set up entrypoint
+COPY dockerfiles/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN sudo chmod +x /usr/local/bin/entrypoint.sh
+
+SHELL ["/bin/bash", "-c"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["/bin/bash"]
+
+#------------------------------------------------------------------------------
+# STAGE 4: Development Stage (with source code access) [2]
+#------------------------------------------------------------------------------
+FROM build-stage as development
+
+# Additional development tools with cleanup
+RUN sudo apt-get update \
+    && sudo apt-get install -y --no-install-recommends \
+    clangd \
+    clang-format \
+    clang-tidy \
+    gdb \
+    valgrind \
+    build-essential \
+    cmake \
+    vim \
+    nano \
+    && sudo rm -rf /var/lib/apt/lists/*
+
+# Enhanced development aliases and configuration
+RUN echo 'alias cb="colcon build --symlink-install"' >> /home/ubuntu/.bashrc \
+    && echo 'alias cbp="colcon build --symlink-install --packages-select"' >> /home/ubuntu/.bashrc \
+    && echo 'alias cbt="colcon test"' >> /home/ubuntu/.bashrc \
+    && echo 'alias cbtr="colcon test-result --verbose"' >> /home/ubuntu/.bashrc \
+    && echo 'function ll() { ls -alF "$@"; }' >> /home/ubuntu/.bashrc \
+    && echo 'function la() { ls -A "$@"; }' >> /home/ubuntu/.bashrc
+
+# Source workspace in bashrc
+RUN echo "source /home/ubuntu/workspace/packages/install/setup.bash" >> /home/ubuntu/.bashrc
+
+# Copy and set up entrypoint
+COPY dockerfiles/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN sudo chmod +x /usr/local/bin/entrypoint.sh
 
 SHELL ["/bin/bash", "-c"]
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
