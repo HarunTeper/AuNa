@@ -91,16 +91,13 @@ void GlobalTF::tf_callback(
     if (original_header == "map" && original_child == "odom") {
       modified.header.frame_id = "map";
       modified.child_frame_id = robot_name + "/odom";
-    }
-    else if (original_header == "gazebo_world" && original_child == "odom") {
+    } else if (original_header == "gazebo_world" && original_child == "odom") {
       modified.header.frame_id = "gazebo_world";
       modified.child_frame_id = robot_name + "/odom";
-    }
-    else if (original_header == "gazebo_world" && original_child == "map") {
+    } else if (original_header == "gazebo_world" && original_child == "map") {
       modified.header.frame_id = "gazebo_world";
       modified.child_frame_id = "map";
-    }
-    else if (original_header == "gazebo_world" && original_child == "ground_truth_base_link") {
+    } else if (original_header == "gazebo_world" && original_child == "ground_truth_base_link") {
       modified.header.frame_id = "gazebo_world";
       modified.child_frame_id = robot_name + "/ground_truth_base_link";
     }

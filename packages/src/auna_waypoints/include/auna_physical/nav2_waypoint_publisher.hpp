@@ -4,6 +4,8 @@
 #include "tf2_ros/transform_listener.h"
 
 #include "geometry_msgs/msg/pose_array.hpp"
+#include "lifecycle_msgs/msg/state.hpp"
+#include "lifecycle_msgs/srv/get_state.hpp"
 #include "nav2_msgs/action/navigate_through_poses.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
@@ -42,6 +44,10 @@ private:
     const std::shared_ptr<const NavigateThroughPoses::Feedback> feedback);
   void result_callback(const GoalHandleNavigateThroughPoses::WrappedResult & result);
 
+  // lifecycle state client to ensure bt_navigator is ACTIVE before sending goals
+  rclcpp::Client<lifecycle_msgs::srv::GetState>::SharedPtr bt_get_state_client_;
+  bool is_bt_navigator_active();
+
   // waypoint data
   std::vector<geometry_msgs::msg::PoseStamped> poses_;
   std::string waypoint_file_;
@@ -49,4 +55,7 @@ private:
   int remaining_number_of_poses_ = 0;
   bool remaining_decreased_ = false;
   int number_of_waypoints_ = 20;
+
+  // behavior flags
+  bool wait_for_bt_active_ = false;
 };
