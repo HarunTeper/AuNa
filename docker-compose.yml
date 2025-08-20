@@ -636,6 +636,24 @@ services:
     profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
+  # TRACING SERVICES
+  #==============================================================================
+  # Services for ros2 tracing
+  tracing:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    image: tracing:latest
+    volumes:
+      - ./traces:/home/ubuntu/workspace/traces
+    pull_policy: build
+    container_name: tracing
+    command: [ "/bin/bash", "-c", "sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace/traces && source /opt/ros/humble/setup.bash && source /home/ubuntu/tracing/install/setup.bash && ros2 trace" ]
+    profiles: [ "tracing" ]
+
+  #==============================================================================
   # DEVELOPMENT SERVICES
   #==============================================================================
   # Services for development and debugging
