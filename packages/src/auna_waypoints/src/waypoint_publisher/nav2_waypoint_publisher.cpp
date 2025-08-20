@@ -5,10 +5,20 @@
 
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
-Nav2WaypointPublisher::Nav2WaypointPublisher() : Node("nav2_waypoint_publisher")
+#include <chrono>
+#include <thread>
+
+Nav2WaypointPublisher::Nav2WaypointPublisher()
+: Node("nav2_waypoint_publisher"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
-  // Create timer for publishing pose array and managing waypoint cycles
-  timer_ = this->create_wall_timer(std::chrono::milliseconds(1000), [this]() { timer_callback(); });
+  // Start timer with a delay to allow Nav2 to initialize
+  timer_ = this->create_wall_timer(std::chrono::milliseconds(12000), [this]() {
+    // After first callback, switch to faster interval
+    timer_->cancel();
+    timer_ =
+      this->create_wall_timer(std::chrono::milliseconds(1000), [this]() { timer_callback(); });
+    timer_callback();
+  });
 
   // Declare and get parameters
   this->declare_parameter<std::string>("namespace", "");
@@ -16,20 +26,11 @@ Nav2WaypointPublisher::Nav2WaypointPublisher() : Node("nav2_waypoint_publisher")
   this->declare_parameter<std::string>("waypoint_file", "");
   this->get_parameter<std::string>("waypoint_file", waypoint_file_);
 
-  // Create action client with proper namespace
+  // Create action client with proper namespace (keeping our improvement)
   std::string action_name =
     namespace_.empty() ? "navigate_through_poses" : namespace_ + "/navigate_through_poses";
   this->client_ptr_ = rclcpp_action::create_client<NavigateThroughPoses>(this, action_name);
 
-  // Create startup timer - delay for 8 seconds to let Nav2 fully initialize
-  startup_timer_ = this->create_wall_timer(
-    std::chrono::seconds(8),
-    std::bind(&Nav2WaypointPublisher::startup_callback, this)
-  );
-  
-  RCLCPP_INFO(get_logger(), "Nav2 Waypoint Publisher starting - waiting for Nav2...");
-
-  // Create publisher for pose array visualization
   this->pose_array_publisher_ =
     this->create_publisher<geometry_msgs::msg::PoseArray>("waypoint_poses", 10);
 
@@ -44,13 +45,17 @@ Nav2WaypointPublisher::Nav2WaypointPublisher() : Node("nav2_waypoint_publisher")
       for (const auto & waypoint : waypoints) {
         geometry_msgs::msg::PoseStamped pose;
         pose.header.frame_id = "map";
-        pose.pose.position.x = waypoint["x"].as<float>();
-        pose.pose.position.y = waypoint["y"].as<float>();
-        pose.pose.position.z = 0;
 
-        tf2::Quaternion q;
-        q.setRPY(0, 0, waypoint["yaw"].as<double>());
-        pose.pose.orientation = tf2::toMsg(q);
+        // Extract position information
+        pose.pose.position.x = waypoint["position"]["x"].as<double>();
+        pose.pose.position.y = waypoint["position"]["y"].as<double>();
+        pose.pose.position.z = waypoint["position"]["z"].as<double>();
+
+        // Extract orientation information (quaternion)
+        pose.pose.orientation.x = waypoint["orientation"]["x"].as<double>();
+        pose.pose.orientation.y = waypoint["orientation"]["y"].as<double>();
+        pose.pose.orientation.z = waypoint["orientation"]["z"].as<double>();
+        pose.pose.orientation.w = waypoint["orientation"]["w"].as<double>();
 
         poses_.push_back(pose);
       }
@@ -64,31 +69,22 @@ Nav2WaypointPublisher::Nav2WaypointPublisher() : Node("nav2_waypoint_publisher")
   number_of_waypoints_ = poses_.size();
   RCLCPP_INFO(this->get_logger(), "Loaded %zu waypoint(s)", poses_.size());
 
-  // Initialize pose index to start from beginning
-  current_pose_index_ = 0;
-  remaining_number_of_poses_ = 0;
-}
-
-void Nav2WaypointPublisher::startup_callback()
-{
-  // Wait for the action server to be available
-  if (!client_ptr_->wait_for_action_server(std::chrono::seconds(1))) {
-    RCLCPP_WARN(get_logger(), "Action server still not available after startup delay");
-    return;
+  // Debug: Log all loaded waypoints
+  for (size_t i = 0; i < poses_.size(); ++i) {
+    const auto & pos = poses_[i].pose.position;
+    RCLCPP_INFO(
+      this->get_logger(), "Loaded waypoint %zu: [%.6f, %.6f, %.6f]", i, pos.x, pos.y, pos.z);
   }
 
-  RCLCPP_INFO(get_logger(), "Startup delay complete and action server available! Starting waypoint publishing...");
-  startup_timer_->cancel();
-  startup_complete_ = true;
+  // Original initialization: start from zero at first iteration
+  current_pose_index_ = -number_of_waypoints_;
+  remaining_number_of_poses_ = 0;
+  goal_rejection_count_ = 0;
+  waiting_for_retry_ = false;
 }
 
 void Nav2WaypointPublisher::timer_callback()
 {
-  // Don't do anything until startup is complete
-  if (!startup_complete_) {
-    return;
-  }
-
   // Publish pose array for visualization
   geometry_msgs::msg::PoseArray pose_array;
   pose_array.header.frame_id = "map";
@@ -98,18 +94,44 @@ void Nav2WaypointPublisher::timer_callback()
   }
   pose_array_publisher_->publish(pose_array);
 
-  RCLCPP_INFO_THROTTLE(
-    this->get_logger(), *this->get_clock(), 5000, "Published PoseArray with %zu poses",
-    pose_array.poses.size());
-
-  // Trigger waypoint publishing when less than half poses remain
-  if (remaining_number_of_poses_ < number_of_waypoints_ * 0.5) {
+  // Original trigger condition: when less than half poses remain
+  // But don't interfere if we're waiting for a retry
+  if (!waiting_for_retry_ && remaining_number_of_poses_ < number_of_waypoints_ * 0.5) {
+    RCLCPP_INFO(
+      this->get_logger(), "Timer triggered waypoint publishing (remaining: %d)",
+      remaining_number_of_poses_);
     publish_waypoints();
+  } else if (waiting_for_retry_) {
+    RCLCPP_INFO_THROTTLE(
+      this->get_logger(), *this->get_clock(), 5000, "Waiting for retry, skipping timer trigger");
   }
 }
 
 void Nav2WaypointPublisher::publish_waypoints()
 {
+  // Check if action server is available
+  if (!action_server_available_) {
+    // On first attempt, wait longer for action server
+    if (!this->client_ptr_->wait_for_action_server(std::chrono::seconds(5))) {
+      RCLCPP_WARN(
+        this->get_logger(),
+        "NavigateThroughPoses action server not available after 5s, will retry...");
+      return;
+    } else {
+      action_server_available_ = true;
+      RCLCPP_INFO(this->get_logger(), "NavigateThroughPoses action server is now available!");
+    }
+  } else {
+    // Quick check for subsequent calls
+    if (!this->client_ptr_->wait_for_action_server(std::chrono::seconds(0))) {
+      RCLCPP_WARN(
+        this->get_logger(),
+        "NavigateThroughPoses action server temporarily unavailable, waiting...");
+      action_server_available_ = false;
+      return;
+    }
+  }
+
   RCLCPP_INFO(this->get_logger(), "Publishing waypoints (loaded=%zu)", poses_.size());
 
   // Ensure we have waypoints to publish
@@ -118,22 +140,14 @@ void Nav2WaypointPublisher::publish_waypoints()
     return;
   }
 
-  // Ensure the Nav2 action server is available
-  if (!client_ptr_ || !client_ptr_->wait_for_action_server(std::chrono::seconds(1))) {
-    RCLCPP_WARN(
-      this->get_logger(), "NavigateThroughPoses action server not available yet; will retry");
-    return;
-  }
-  RCLCPP_INFO(this->get_logger(), "NavigateThroughPoses action server is available");
-
-  // Update current pose index for next batch
+  // Original index calculation
   current_pose_index_ =
     (current_pose_index_ + number_of_waypoints_ - remaining_number_of_poses_) % poses_.size();
 
-  // Create goal with all waypoints, starting from current index
+  // Create goal with all waypoints, starting from current index (original approach)
   auto goal_msg = NavigateThroughPoses::Goal();
-  for (int i = 0; i < number_of_waypoints_; i++) {
-    auto pose = poses_[(current_pose_index_ + i) % poses_.size()];
+  for (int i = current_pose_index_; i < current_pose_index_ + number_of_waypoints_; i++) {
+    auto pose = poses_[i % poses_.size()];
     // Set current timestamp for each pose
     pose.header.stamp = this->now();
     goal_msg.poses.push_back(pose);
@@ -158,6 +172,7 @@ void Nav2WaypointPublisher::publish_waypoints()
   send_goal_options.result_callback =
     std::bind(&Nav2WaypointPublisher::result_callback, this, std::placeholders::_1);
 
+  RCLCPP_INFO(this->get_logger(), "Sending goal");
   this->client_ptr_->async_send_goal(goal_msg, send_goal_options);
   remaining_number_of_poses_ = number_of_waypoints_;
 }
@@ -166,8 +181,39 @@ void Nav2WaypointPublisher::goal_response_callback(
   GoalHandleNavigateThroughPoses::SharedPtr goal_handle)
 {
   if (!goal_handle) {
-    RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
+    goal_rejection_count_++;
+
+    if (goal_rejection_count_ <= MAX_GOAL_REJECTIONS) {
+      // Exponential backoff: 5, 10, 15, 20, 25 seconds
+      int retry_delay = goal_rejection_count_ * 5;
+      RCLCPP_WARN(
+        this->get_logger(),
+        "Goal rejected (attempt %d/%d) - Nav2 still initializing, retrying in %d seconds",
+        goal_rejection_count_, MAX_GOAL_REJECTIONS, retry_delay);
+
+      // Set retry flag to prevent timer interference
+      waiting_for_retry_ = true;
+
+      // Use std::thread but ensure it's properly managed
+      std::thread retry_thread([this, retry_delay]() {
+        std::this_thread::sleep_for(std::chrono::seconds(retry_delay));
+        RCLCPP_INFO(this->get_logger(), "Retrying waypoint goal after server rejection...");
+        waiting_for_retry_ = false;
+        publish_waypoints();
+      });
+      retry_thread.detach();
+
+    } else {
+      RCLCPP_ERROR(
+        this->get_logger(),
+        "Goal rejected %d times - Nav2 may not be properly configured. Stopping retry attempts.",
+        goal_rejection_count_);
+      waiting_for_retry_ = false;  // Stop blocking timer
+    }
   } else {
+    // Success! Reset counter and proceed
+    goal_rejection_count_ = 0;
+    waiting_for_retry_ = false;
     RCLCPP_INFO(this->get_logger(), "Goal accepted by server, waiting for result");
   }
 }
@@ -187,14 +233,29 @@ void Nav2WaypointPublisher::result_callback(
 {
   switch (result.code) {
     case rclcpp_action::ResultCode::SUCCEEDED:
-      RCLCPP_INFO(this->get_logger(), "Goal SUCCEEDED - publishing next batch of waypoints");
+      RCLCPP_INFO(this->get_logger(), "Batch SUCCEEDED");
+
+      // Move to next batch
+      current_pose_index_ += remaining_number_of_poses_;
+
+      // If we've reached the end, wrap around to start
+      if (current_pose_index_ >= number_of_waypoints_) {
+        current_pose_index_ = 0;
+        RCLCPP_INFO(this->get_logger(), "Completed all waypoints, starting over");
+      }
+
+      // Wait a moment before sending next batch
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
       publish_waypoints();
       break;
     case rclcpp_action::ResultCode::ABORTED:
-      RCLCPP_ERROR(this->get_logger(), "Goal was ABORTED");
+      RCLCPP_ERROR(this->get_logger(), "Batch was ABORTED - retrying in 5 seconds");
+      // Retry the same batch after a delay
+      std::this_thread::sleep_for(std::chrono::seconds(5));
+      publish_waypoints();
       break;
     case rclcpp_action::ResultCode::CANCELED:
-      RCLCPP_ERROR(this->get_logger(), "Goal was CANCELED");
+      RCLCPP_ERROR(this->get_logger(), "Batch was CANCELED");
       break;
     default:
       RCLCPP_ERROR(this->get_logger(), "Unknown result code (%d)", static_cast<int>(result.code));

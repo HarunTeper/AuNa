@@ -19,13 +19,13 @@ RUN apt-get install -y git bash-completion
 # Install zenohd
 RUN apt-get install -y ros-humble-rmw-zenoh-cpp
 
-# Install tracing tools
-RUN apt-get install -y \
+# Install tracing tools (user-space only; avoid DKMS modules in containers)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     lttng-tools \
     liblttng-ust-dev \
     python3-babeltrace \
     python3-lttng \
-    lttng-modules-dkms
+    && rm -rf /var/lib/apt/lists/*
 
 # Create ubuntu user and configure sudo access
 RUN useradd -m -s /bin/bash ubuntu \

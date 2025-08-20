@@ -1,5 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
+#include "tf2_ros/buffer.h"
+#include "tf2_ros/transform_listener.h"
 
 #include "geometry_msgs/msg/pose_array.hpp"
 #include "nav2_msgs/action/navigate_through_poses.hpp"
@@ -19,14 +21,13 @@ private:
   std::string namespace_;
   std::string waypoint_file_;
 
+  // TF components (from original)
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
+
   // Timer for publishing pose array and managing waypoint cycles
   rclcpp::TimerBase::SharedPtr timer_;
   void timer_callback();
-
-  // Startup timer for delayed initialization
-  rclcpp::TimerBase::SharedPtr startup_timer_;
-  void startup_callback();
-  bool startup_complete_ = false;
 
   // Waypoint publishing
   void publish_waypoints();
@@ -45,4 +46,10 @@ private:
   int current_pose_index_ = 0;
   int remaining_number_of_poses_ = 0;
   int number_of_waypoints_ = 0;
+
+  // Startup management
+  bool action_server_available_ = false;
+  int goal_rejection_count_ = 0;
+  bool waiting_for_retry_ = false;
+  static constexpr int MAX_GOAL_REJECTIONS = 5;
 };
