@@ -340,7 +340,7 @@ services:
   cmd_multiplexer_robot1:
     extends: cmd_multiplexer
     container_name: cmd_multiplexer_robot1
-    command: [ "ros2", "launch", "auna_control", "cmd_vel_multiplexer.launch.py", "namespace:=robot1", "use_sim_time:=true", "initial_source:=cacc" ]
+    command: [ "ros2", "launch", "auna_control", "cmd_vel_multiplexer.launch.py", "namespace:=robot1", "use_sim_time:=true", "initial_source:=nav2" ]
     profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
 
   cmd_multiplexer_robot2:

@@ -37,9 +37,6 @@
 		}
 	},
 	"containerEnv": {
-		"SHELL": "/bin/bash",
-		"DISPLAY": ":0",
-		"XDG_RUNTIME_DIR": "/tmp/runtime-ubuntu",
-		"QT_X11_NO_MITSHM": "1"
+		"SHELL": "/bin/bash"
 	}
 }

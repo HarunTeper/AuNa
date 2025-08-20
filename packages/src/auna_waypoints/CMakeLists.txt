@@ -17,16 +17,10 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 
-find_package(ackermann_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(nav_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(rclcpp_action REQUIRED)
-find_package(std_srvs REQUIRED)
-find_package(tf2 REQUIRED)
-find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
-find_package(lifecycle_msgs REQUIRED)
 find_package(yaml-cpp REQUIRED)
 # Include Cpp "include" directory
 include_directories(include)
@@ -37,8 +31,8 @@ add_library(nav2_waypoint_publisher_node SHARED src/waypoint_publisher/nav2_wayp
 # Create Cpp executable
 add_executable(nav2_waypoint_publisher src/waypoint_publisher/waypoint_publisher_main.cpp)
 add_executable(cacc_waypoint_publisher src/waypoint_publisher/cacc_waypoint_publisher.cpp)
-# Target dependencies
-set(waypoint_publisher_dependencies rclcpp geometry_msgs nav2_msgs rclcpp_action tf2_ros tf2_geometry_msgs lifecycle_msgs yaml-cpp)
+# Target dependencies - simplified to only what's needed
+set(waypoint_publisher_dependencies rclcpp geometry_msgs nav2_msgs rclcpp_action tf2_geometry_msgs yaml-cpp)
 ament_target_dependencies(nav2_waypoint_publisher_node ${waypoint_publisher_dependencies})
 ament_target_dependencies(nav2_waypoint_publisher ${waypoint_publisher_dependencies})
 ament_target_dependencies(cacc_waypoint_publisher rclcpp geometry_msgs tf2_ros tf2_geometry_msgs)

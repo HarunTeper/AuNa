@@ -1,54 +1,40 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import OpaqueFunction, DeclareLaunchArgument
-from launch.launch_context import LaunchContext
-from launch_ros.actions import Node, PushRosNamespace
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 
 
-def include_launch_description(context: LaunchContext):
-    """Create namespaced Nav2 waypoint publisher node."""
-
-    launch_description_content = []
-
-    # Build namespace from robot_index (e.g., robot0, robot1, ...)
-    robot_index = context.launch_configurations.get('robot_index', '0')
-    namespace = f"robot{robot_index}"
-
+def generate_launch_description():
     # Package directory and default waypoint file
     pkg_dir = get_package_share_directory('auna_waypoints')
     waypoint_file = os.path.join(
         pkg_dir, 'config', 'nav2_racetrack_waypoints.yaml')
 
-    node = Node(
+    # Launch arguments
+    robot_index_arg = DeclareLaunchArgument(
+        'robot_index',
+        default_value='1',
+        description='Index of the robot (e.g., 1 for robot1)'
+    )
+
+    # Create namespace from robot_index
+    robot_namespace = ['robot', LaunchConfiguration('robot_index')]
+
+    # Nav2 waypoint publisher node
+    nav2_waypoint_publisher_node = Node(
         package='auna_waypoints',
         executable='nav2_waypoint_publisher',
         name='nav2_waypoint_publisher',
         output='screen',
         parameters=[
             {'waypoint_file': waypoint_file},
-            {'namespace': namespace},
-            {'wait_for_bt_active': True},
-        ],
-        remappings=[('/tf', 'tf'), ('/tf_static', 'tf_static')],
+            {'namespace': robot_namespace},
+        ]
     )
 
-    # Don't use PushRosNamespace - let the code handle namespacing via the namespace parameter
-    launch_description_content.append(node)
-
-    return launch_description_content
-
-
-def generate_launch_description():
-    ld = LaunchDescription()
-
-    # Allow caller to choose which robot index to use for namespacing
-    ld.add_action(DeclareLaunchArgument(
-        'robot_index',
-        default_value='0',
-        description='Index of the robot to namespace the node (e.g., robot0).',
-    ))
-
-    ld.add_action(OpaqueFunction(function=include_launch_description))
-
-    return ld
+    return LaunchDescription([
+        robot_index_arg,
+        nav2_waypoint_publisher_node
+    ])
