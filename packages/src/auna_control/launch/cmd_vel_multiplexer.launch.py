@@ -9,11 +9,13 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     param_file = LaunchConfiguration('param_file')
     topic_file = LaunchConfiguration('topic_file')
-    namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
 
     # Get initial_source from environment variable or use default
+    robot_index = os.environ.get('ROBOT_INDEX', '0')
     initial_source = os.environ.get('INITIAL_SOURCE', 'OFF')
+    
+    namespace = f'robot{robot_index}'
 
     default_param_file = PathJoinSubstitution([
         FindPackageShare('auna_control'),
