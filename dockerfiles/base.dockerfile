@@ -47,12 +47,12 @@ USER ubuntu
 WORKDIR /home/ubuntu/workspace
 RUN sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace
 
-# Clone and build ros2_tracing
+# Build ros2_tracing from source
 RUN mkdir -p /home/ubuntu/tracing/src \
     && cd /home/ubuntu/tracing/src \
-    && git clone https://gitlab.com/ros-tracing/ros2_tracing.git \
+    && git clone https://gitlab.com/ros-tracing/ros2_tracing.git -b ${ROS_DISTRO} \
     && cd .. \
-    && bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && colcon build --packages-up-to tracetools ros2trace" \
+    && bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && colcon build" \
     && sudo usermod -aG tracing ubuntu
 
 # Enhanced bash configuration with environment variable support

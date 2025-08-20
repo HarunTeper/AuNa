@@ -94,6 +94,7 @@ RUN mkdir -p /home/ubuntu/workspace/packages/src \
 RUN sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace \
     && cd /home/ubuntu/workspace/packages \
     && bash -c "source /opt/ros/\${ROS_DISTRO}/setup.bash && \
+    source /home/ubuntu/tracing/install/setup.bash 2>/dev/null || true && \
     if [ -n '${PACKAGE_NAMES}' ]; then \
     colcon build --symlink-install --packages-select ${PACKAGE_NAMES} --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release; \
     else \
@@ -101,7 +102,7 @@ RUN sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace \
     fi"
 
 #------------------------------------------------------------------------------
-# STAGE 3: Runtime Stage (Production) [2][4]
+# STAGE 3: Runtime Stage (Production)
 #------------------------------------------------------------------------------
 FROM base:latest as runtime
 
@@ -122,7 +123,7 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/bin/bash"]
 
 #------------------------------------------------------------------------------
-# STAGE 4: Development Stage (with source code access) [2]
+# STAGE 4: Development Stage (with source code access)
 #------------------------------------------------------------------------------
 FROM build-stage as development
 
