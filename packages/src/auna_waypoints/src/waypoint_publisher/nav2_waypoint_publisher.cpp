@@ -21,6 +21,14 @@ Nav2WaypointPublisher::Nav2WaypointPublisher() : Node("nav2_waypoint_publisher")
     namespace_.empty() ? "navigate_through_poses" : namespace_ + "/navigate_through_poses";
   this->client_ptr_ = rclcpp_action::create_client<NavigateThroughPoses>(this, action_name);
 
+  // Create startup timer - delay for 8 seconds to let Nav2 fully initialize
+  startup_timer_ = this->create_wall_timer(
+    std::chrono::seconds(8),
+    std::bind(&Nav2WaypointPublisher::startup_callback, this)
+  );
+  
+  RCLCPP_INFO(get_logger(), "Nav2 Waypoint Publisher starting - waiting for Nav2...");
+
   // Create publisher for pose array visualization
   this->pose_array_publisher_ =
     this->create_publisher<geometry_msgs::msg::PoseArray>("waypoint_poses", 10);
@@ -61,8 +69,26 @@ Nav2WaypointPublisher::Nav2WaypointPublisher() : Node("nav2_waypoint_publisher")
   remaining_number_of_poses_ = 0;
 }
 
+void Nav2WaypointPublisher::startup_callback()
+{
+  // Wait for the action server to be available
+  if (!client_ptr_->wait_for_action_server(std::chrono::seconds(1))) {
+    RCLCPP_WARN(get_logger(), "Action server still not available after startup delay");
+    return;
+  }
+
+  RCLCPP_INFO(get_logger(), "Startup delay complete and action server available! Starting waypoint publishing...");
+  startup_timer_->cancel();
+  startup_complete_ = true;
+}
+
 void Nav2WaypointPublisher::timer_callback()
 {
+  // Don't do anything until startup is complete
+  if (!startup_complete_) {
+    return;
+  }
+
   // Publish pose array for visualization
   geometry_msgs::msg::PoseArray pose_array;
   pose_array.header.frame_id = "map";

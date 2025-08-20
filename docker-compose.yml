@@ -575,19 +575,25 @@ services:
   nav2_waypoint_publisher_robot1:
     extends: nav2_waypoint_publisher
     container_name: nav2_waypoint_publisher_robot1
-    command: [ "ros2", "launch", "auna_waypoints", "nav2_waypoint_publisher.launch.py", "robot_index:=1", "namespace:=robot1" ]
+    command: [ "ros2", "launch", "auna_waypoints", "nav2_waypoint_publisher.launch.py", "robot_index:=1" ]
+    depends_on:
+      - nav2_stack_robot1
     profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
 
   nav2_waypoint_publisher_robot2:
     extends: nav2_waypoint_publisher
     container_name: nav2_waypoint_publisher_robot2
-    command: [ "ros2", "launch", "auna_waypoints", "nav2_waypoint_publisher.launch.py", "robot_index:=2", "namespace:=robot2" ]
+    command: [ "ros2", "launch", "auna_waypoints", "nav2_waypoint_publisher.launch.py", "robot_index:=2" ]
+    depends_on:
+      - nav2_stack_robot2
     profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
 
   nav2_waypoint_publisher_robot3:
     extends: nav2_waypoint_publisher
     container_name: nav2_waypoint_publisher_robot3
-    command: [ "ros2", "launch", "auna_waypoints", "nav2_waypoint_publisher.launch.py", "robot_index:=3", "namespace:=robot3" ]
+    command: [ "ros2", "launch", "auna_waypoints", "nav2_waypoint_publisher.launch.py", "robot_index:=3" ]
+    depends_on:
+      - nav2_stack_robot3
     profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================

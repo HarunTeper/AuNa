@@ -23,6 +23,11 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   void timer_callback();
 
+  // Startup timer for delayed initialization
+  rclcpp::TimerBase::SharedPtr startup_timer_;
+  void startup_callback();
+  bool startup_complete_ = false;
+
   // Waypoint publishing
   void publish_waypoints();
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr pose_array_publisher_;
