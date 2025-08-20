@@ -2,7 +2,7 @@
 #------------------------------------------------------------------------------
 # STAGE 1: Dependency Resolution and Caching
 #------------------------------------------------------------------------------
-FROM base:latest as dependency-stage
+FROM base:latest AS dependency-stage
 
 USER root
 
@@ -61,7 +61,7 @@ RUN sudo rm -rf /tmp/package_xmls /tmp/requirements /tmp/toml \
 #------------------------------------------------------------------------------
 # STAGE 2: Build Stage
 #------------------------------------------------------------------------------
-FROM dependency-stage as build-stage
+FROM dependency-stage AS build-stage
 
 # Install additional packages if specified
 ARG INSTALL_PACKAGE_NAMES
@@ -104,7 +104,7 @@ RUN sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace \
 #------------------------------------------------------------------------------
 # STAGE 3: Runtime Stage (Production)
 #------------------------------------------------------------------------------
-FROM base:latest as runtime
+FROM base:latest AS runtime
 
 # Copy built artifacts from build stage
 COPY --from=build-stage --chown=ubuntu:ubuntu /home/ubuntu/workspace/packages/install /home/ubuntu/workspace/packages/install
@@ -125,7 +125,7 @@ CMD ["/bin/bash"]
 #------------------------------------------------------------------------------
 # STAGE 4: Development Stage (with source code access)
 #------------------------------------------------------------------------------
-FROM build-stage as development
+FROM build-stage AS development
 
 # Additional development tools with cleanup
 RUN sudo apt-get update \
