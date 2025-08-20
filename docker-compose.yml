@@ -249,41 +249,29 @@ services:
     pull_policy: build
     container_name: localization_pose
     command:
-      ["ros2", "launch", "auna_tf", "localization_pose_publisher.launch.py"]
+      [
+        "ros2",
+        "launch",
+        "auna_tf",
+        "localization_pose_publisher.launch.py",
+        "use_sim_time:=true",
+      ]
     profiles: ["localization_pose"]
 
   localization_pose_robot1:
     extends: localization_pose
     container_name: localization_pose_robot1
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_tf",
-        "localization_pose_publisher.launch.py",
-        "robot_index:=1",
-        "use_sim_time:=true",
-      ]
-    profiles:
-      ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
     environment:
       - ROBOT_INDEX=1
+    profiles:
+      ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
 
   localization_pose_robot2:
     extends: localization_pose
     container_name: localization_pose_robot2
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_tf",
-        "localization_pose_publisher.launch.py",
-        "robot_index:=2",
-        "use_sim_time:=true",
-      ]
-    profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
     environment:
       - ROBOT_INDEX=2
+    profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
 
   localization_pose_robot3:
     extends: localization_pose
