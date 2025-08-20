@@ -76,7 +76,7 @@ services:
     pull_policy: build
     env_file:
       - .env
-    profiles: ["base"]
+    profiles: [ "base" ]
 
   #==============================================================================
   # CORE NETWORK SERVICES
@@ -88,8 +88,8 @@ services:
     image: zenohd:latest
     pull_policy: build
     container_name: zenohd
-    command: ["ros2", "run", "rmw_zenoh_cpp", "rmw_zenohd"]
-    profiles: ["zenohd", "sim_scenario", "sim_scenario_1"]
+    command: [ "ros2", "run", "rmw_zenoh_cpp", "rmw_zenohd" ]
+    profiles: [ "zenohd", "sim_scenario", "sim_scenario_1" ]
 
   #==============================================================================
   # GAZEBO SERVICES
@@ -105,13 +105,8 @@ services:
     image: gazebo:latest
     pull_policy: build
     container_name: gazebo
-    command:
-      [
-        "/bin/bash",
-        "-c",
-        "ros2 launch auna_gazebo gazebo_world.launch.py use_sim_time:=true",
-      ]
-    profiles: ["sim", "sim_scenario", "sim_scenario_1"]
+    command: [ "/bin/bash", "-c", "ros2 launch auna_gazebo gazebo_world.launch.py use_sim_time:=true" ]
+    profiles: [ "sim", "sim_scenario", "sim_scenario_1" ]
 
   spawn_robot:
     <<: *package-base
@@ -123,29 +118,29 @@ services:
     image: spawn_robot:latest
     pull_policy: build
     container_name: spawn_robot
-    command: ["ros2", "launch", "auna_gazebo", "spawn_robot.launch.py"]
-    profiles: ["spawn_robot"]
+    command: [ "ros2", "launch", "auna_gazebo", "spawn_robot.launch.py" ]
+    profiles: [ "spawn_robot" ]
 
   spawn_robot_robot1:
     extends: spawn_robot
     container_name: spawn_robot_robot1
     environment:
       - ROBOT_INDEX=1
-    profiles: ["sim_robot1", "sim_scenario", "sim_scenario_1"]
+    profiles: [ "sim_robot1", "sim_scenario", "sim_scenario_1" ]
 
   spawn_robot_robot2:
     extends: spawn_robot
     container_name: spawn_robot_robot2
     environment:
       - ROBOT_INDEX=2
-    profiles: ["sim_robot2", "sim_scenario"]
+    profiles: [ "sim_robot2", "sim_scenario" ]
 
   spawn_robot_robot3:
     extends: spawn_robot
     container_name: spawn_robot_robot3
     environment:
       - ROBOT_INDEX=3
-    profiles: ["sim_robot3", "sim_scenario"]
+    profiles: [ "sim_robot3", "sim_scenario" ]
 
   #==============================================================================
   # GROUND TRUTH SERVICES
@@ -161,15 +156,8 @@ services:
     image: ground_truth_static_transform:latest
     pull_policy: build
     container_name: ground_truth_static_transform
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_ground_truth",
-        "static_transform.launch.py",
-        "use_sim_time:=true",
-      ]
-    profiles: ["sim", "sim_scenario", "sim_scenario_1"]
+    command: [ "ros2", "launch", "auna_ground_truth", "static_transform.launch.py", "use_sim_time:=true" ]
+    profiles: [ "sim", "sim_scenario", "sim_scenario_1" ]
 
   ground_truth:
     <<: *package-base
@@ -181,29 +169,29 @@ services:
     image: ground_truth:latest
     pull_policy: build
     container_name: ground_truth
-    command: ["ros2", "launch", "auna_ground_truth", "ground_truth.launch.py"]
-    profiles: ["ground_truth"]
+    command: [ "ros2", "launch", "auna_ground_truth", "ground_truth.launch.py" ]
+    profiles: [ "ground_truth" ]
 
   ground_truth_robot1:
     extends: ground_truth
     container_name: ground_truth_robot1
     environment:
       - ROBOT_INDEX=1
-    profiles: ["sim_robot1", "sim_scenario", "sim_scenario_1"]
+    profiles: [ "sim_robot1", "sim_scenario", "sim_scenario_1" ]
 
   ground_truth_robot2:
     extends: ground_truth
     container_name: ground_truth_robot2
     environment:
       - ROBOT_INDEX=2
-    profiles: ["sim_robot2", "sim_scenario"]
+    profiles: [ "sim_robot2", "sim_scenario" ]
 
   ground_truth_robot3:
     extends: ground_truth
     container_name: ground_truth_robot3
     environment:
       - ROBOT_INDEX=3
-    profiles: ["sim_robot3", "sim_scenario"]
+    profiles: [ "sim_robot3", "sim_scenario" ]
 
   #==============================================================================
   # TF SERVICES
@@ -219,9 +207,8 @@ services:
     image: global_tf:latest
     pull_policy: build
     container_name: global_tf
-    command:
-      ["ros2", "launch", "auna_tf", "global_tf.launch.py", "use_sim_time:=true"]
-    profiles: ["sim", "sim_scenario", "sim_scenario_1"]
+    command: [ "ros2", "launch", "auna_tf", "global_tf.launch.py", "use_sim_time:=true" ]
+    profiles: [ "sim", "sim_scenario", "sim_scenario_1" ]
 
   #==============================================================================
   # LOCALIZATION SERVICES
@@ -237,52 +224,31 @@ services:
     image: localization_pose:latest
     pull_policy: build
     container_name: localization_pose
-    command:
-      ["ros2", "launch", "auna_tf", "localization_pose_publisher.launch.py"]
-    profiles: ["localization_pose"]
+    command: [ "ros2", "launch", "auna_tf", "localization_pose_publisher.launch.py" ]
+    profiles: [ "localization_pose" ]
 
   localization_pose_robot1:
     extends: localization_pose
     container_name: localization_pose_robot1
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_tf",
-        "localization_pose_publisher.launch.py",
-        "robot_index:=1",
-        "use_sim_time:=true",
-      ]
-    profiles:
-      ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
+    command: [ "ros2", "launch", "auna_tf", "localization_pose_publisher.launch.py", "robot_index:=1", "use_sim_time:=true" ]
+    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
     environment:
       - ROBOT_INDEX=1
-    profiles:
-      ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
 
   localization_pose_robot2:
     extends: localization_pose
     container_name: localization_pose_robot2
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_tf",
-        "localization_pose_publisher.launch.py",
-        "robot_index:=2",
-        "use_sim_time:=true",
-      ]
-    profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
+    command: [ "ros2", "launch", "auna_tf", "localization_pose_publisher.launch.py", "robot_index:=2", "use_sim_time:=true" ]
+    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
     environment:
       - ROBOT_INDEX=2
-    profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
 
   localization_pose_robot3:
     extends: localization_pose
     container_name: localization_pose_robot3
     environment:
       - ROBOT_INDEX=3
-    profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
+    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
   # CMD MULTIPLEXER SERVICES
@@ -298,8 +264,8 @@ services:
     image: cmd_multiplexer:latest
     pull_policy: build
     container_name: cmd_multiplexer
-    command: ["ros2", "launch", "auna_control", "cmd_vel_multiplexer.launch.py"]
-    profiles: ["cmd_multiplexer"]
+    command: [ "ros2", "launch", "auna_control", "cmd_vel_multiplexer.launch.py" ]
+    profiles: [ "cmd_multiplexer" ]
 
   cmd_multiplexer_robot1:
     extends: cmd_multiplexer
@@ -307,8 +273,7 @@ services:
     environment:
       - ROBOT_INDEX=1
       - INITIAL_SOURCE=OFF
-    profiles:
-      ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
+    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
 
   cmd_multiplexer_robot2:
     extends: cmd_multiplexer
@@ -316,7 +281,7 @@ services:
     environment:
       - ROBOT_INDEX=2
       - INITIAL_SOURCE=cacc
-    profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
+    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
 
   cmd_multiplexer_robot3:
     extends: cmd_multiplexer
@@ -324,7 +289,7 @@ services:
     environment:
       - ROBOT_INDEX=3
       - INITIAL_SOURCE=cacc
-    profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
+    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
   # CONTROL PANEL SERVICES
@@ -340,30 +305,29 @@ services:
     image: control_panel:latest
     pull_policy: build
     container_name: control_panel
-    command: ["ros2", "launch", "auna_control", "control_panel.launch.py"]
-    profiles: ["control_panel"]
+    command: [ "ros2", "launch", "auna_control", "control_panel.launch.py" ]
+    profiles: [ "control_panel" ]
 
   control_panel_robot1:
     extends: control_panel
     container_name: control_panel_robot1
     environment:
       - ROBOT_INDEX=1
-    profiles:
-      ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
+    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
 
   control_panel_robot2:
     extends: control_panel
     container_name: control_panel_robot2
     environment:
       - ROBOT_INDEX=2
-    profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
+    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
 
   control_panel_robot3:
     extends: control_panel
     container_name: control_panel_robot3
     environment:
       - ROBOT_INDEX=3
-    profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
+    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
   # EKF LOCALIZATION SERVICES
@@ -379,29 +343,29 @@ services:
     image: ekf_localization:latest
     pull_policy: build
     container_name: ekf_localization
-    command: ["ros2", "launch", "auna_ekf", "ekf_sim.launch.py"]
-    profiles: ["ekf_localization"]
+    command: [ "ros2", "launch", "auna_ekf", "ekf_sim.launch.py" ]
+    profiles: [ "ekf_localization" ]
 
   ekf_localization_sim_robot1:
     extends: ekf_localization_sim
     container_name: ekf_localization_robot1
     environment:
       - ROBOT_INDEX=1
-    profiles: ["sim_robot1", "sim_scenario", "sim_scenario_1"]
+    profiles: [ "sim_robot1", "sim_scenario", "sim_scenario_1" ]
 
   ekf_localization_sim_robot2:
     extends: ekf_localization_sim
     container_name: ekf_localization_robot2
     environment:
       - ROBOT_INDEX=2
-    profiles: ["sim_robot2", "sim_scenario"]
+    profiles: [ "sim_robot2", "sim_scenario" ]
 
   ekf_localization_sim_robot3:
     extends: ekf_localization_sim
     container_name: ekf_localization_robot3
     environment:
       - ROBOT_INDEX=3
-    profiles: ["sim_robot3", "sim_scenario"]
+    profiles: [ "sim_robot3", "sim_scenario" ]
 
   #==============================================================================
   # NAVIGATION SERVICES
@@ -417,37 +381,29 @@ services:
     image: nav2_stack:latest
     pull_policy: build
     container_name: nav2_stack
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_nav2",
-        "navigation_single_robot.launch.py",
-        "use_sim_time:=true",
-      ]
-    profiles: ["base"]
+    command: [ "ros2", "launch", "auna_nav2", "navigation_single_robot.launch.py", "use_sim_time:=true" ]
+    profiles: [ "base" ]
 
   nav2_stack_robot1:
     extends: nav2_stack
     container_name: nav2_stack_robot1
     environment:
       - ROBOT_INDEX=1
-    profiles:
-      ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
+    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
 
   nav2_stack_robot2:
     extends: nav2_stack
     container_name: nav2_stack_robot2
     environment:
       - ROBOT_INDEX=2
-    profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
+    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
 
   nav2_stack_robot3:
     extends: nav2_stack
     container_name: nav2_stack_robot3
     environment:
       - ROBOT_INDEX=3
-    profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
+    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
   # CACC CONTROLLER SERVICES
@@ -463,30 +419,29 @@ services:
     image: cacc_controller:latest
     pull_policy: build
     container_name: cacc_controller
-    command: ["ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py"]
-    profiles: ["cacc_controller"]
+    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py" ]
+    profiles: [ "cacc_controller" ]
 
   cacc_controller_robot1:
     extends: cacc_controller
     container_name: cacc_controller_robot1
     environment:
       - ROBOT_INDEX=1
-    profiles:
-      ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
+    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
 
   cacc_controller_robot2:
     extends: cacc_controller
     container_name: cacc_controller_robot2
     environment:
       - ROBOT_INDEX=2
-    profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
+    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
 
   cacc_controller_robot3:
     extends: cacc_controller
     container_name: cacc_controller_robot3
     environment:
       - ROBOT_INDEX=3
-    profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
+    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
   # WALL FOLLOWING SERVICES
@@ -502,30 +457,29 @@ services:
     image: wallfollowing:latest
     pull_policy: build
     container_name: wallfollowing
-    command: ["ros2", "launch", "auna_wallfollowing", "wallfollowing.launch.py"]
-    profiles: ["wallfollowing"]
+    command: [ "ros2", "launch", "auna_wallfollowing", "wallfollowing.launch.py" ]
+    profiles: [ "wallfollowing" ]
 
   wallfollowing_robot1:
     extends: wallfollowing
     container_name: wallfollowing_robot1
     environment:
       - ROBOT_INDEX=1
-    profiles:
-      ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
+    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
 
   wallfollowing_robot2:
     extends: wallfollowing
     container_name: wallfollowing_robot2
     environment:
       - ROBOT_INDEX=2
-    profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
+    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
 
   wallfollowing_robot3:
     extends: wallfollowing
     container_name: wallfollowing_robot3
     environment:
       - ROBOT_INDEX=3
-    profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
+    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
   # WAYPOINT PUBLISHER SERVICES
@@ -541,31 +495,29 @@ services:
     image: waypoint_publisher:latest
     pull_policy: build
     container_name: waypoint_publisher
-    command:
-      ["ros2", "launch", "auna_waypoints", "waypoint_publisher.launch.py"]
-    profiles: ["waypoint_publisher"]
+    command: [ "ros2", "launch", "auna_waypoints", "waypoint_publisher.launch.py" ]
+    profiles: [ "waypoint_publisher" ]
 
   waypoint_publisher_robot1:
     extends: waypoint_publisher
     container_name: waypoint_publisher_robot1
     environment:
       - ROBOT_INDEX=1
-    profiles:
-      ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
+    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
 
   waypoint_publisher_robot2:
     extends: waypoint_publisher
     container_name: waypoint_publisher_robot2
     environment:
       - ROBOT_INDEX=2
-    profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
+    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
 
   waypoint_publisher_robot3:
     extends: waypoint_publisher
     container_name: waypoint_publisher_robot3
     environment:
       - ROBOT_INDEX=3
-    profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
+    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
   # MAP SERVICES
@@ -581,15 +533,8 @@ services:
     image: map_server:latest
     pull_policy: build
     container_name: map_server
-    command:
-      [
-        "ros2",
-        "launch",
-        "auna_nav2",
-        "map_server.launch.py",
-        "map_name:=${MAP_NAME}",
-      ]
-    profiles: ["sim", "sim_scenario"]
+    command: [ "ros2", "launch", "auna_nav2", "map_server.launch.py", "map_name:=${MAP_NAME}" ]
+    profiles: [ "sim", "sim_scenario" ]
 
   #==============================================================================
   # DEVELOPMENT SERVICES
@@ -600,13 +545,8 @@ services:
     image: development:latest
     pull_policy: build
     container_name: development
-    command:
-      [
-        "/bin/bash",
-        "-c",
-        "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && cd .. && /bin/bash",
-      ]
-    profiles: ["development"]
+    command: [ "/bin/bash", "-c", "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && cd .. && /bin/bash" ]
+    profiles: [ "development" ]
 
   #==============================================================================
   # CONTROL & TELEOPERATION SERVICES
@@ -622,13 +562,8 @@ services:
     image: teleop:latest
     pull_policy: build
     container_name: teleop
-    command:
-      [
-        "/bin/bash",
-        "-c",
-        "source /home/ubuntu/workspace/packages/install/setup.bash && cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args --params-file src/auna_teleoperation/config/key_teleop.yaml",
-      ]
-    profiles: ["teleop", "manual_control"]
+    command: [ "/bin/bash", "-c", "source /home/ubuntu/workspace/packages/install/setup.bash && cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args --params-file src/auna_teleoperation/config/key_teleop.yaml" ]
+    profiles: [ "teleop", "manual_control" ]
 
   #==============================================================================
   # CURVE FITTING SERVICES
@@ -644,8 +579,8 @@ services:
     image: curve_fitting:latest
     pull_policy: build
     container_name: curve_fitting
-    command: ["ros2", "launch", "auna_waypoints", "curve_fitting.launch.py"]
-    profiles: ["curve_fitting"]
+    command: [ "ros2", "launch", "auna_waypoints", "curve_fitting.launch.py" ]
+    profiles: [ "curve_fitting" ]
 
   #==============================================================================
   # TRACING SERVICES
@@ -662,13 +597,8 @@ services:
       - ./traces:/home/ubuntu/workspace/traces
     pull_policy: build
     container_name: tracing
-    command:
-      [
-        "/bin/bash",
-        "-c",
-        "sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace/traces && source /opt/ros/humble/setup.bash && source /home/ubuntu/tracing/install/setup.bash && ros2 trace",
-      ]
-    profiles: ["tracing"]
+    command: [ "/bin/bash", "-c", "sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace/traces && source /opt/ros/humble/setup.bash && source /home/ubuntu/tracing/install/setup.bash && ros2 trace" ]
+    profiles: [ "tracing" ]
 
   #==============================================================================
   # DEMO SERVICES
@@ -684,8 +614,8 @@ services:
     image: talker:latest
     pull_policy: build
     container_name: talker
-    command: ["ros2", "run", "demo_nodes_cpp", "talker"]
-    profiles: ["talker"]
+    command: [ "ros2", "run", "demo_nodes_cpp", "talker" ]
+    profiles: [ "talker" ]
 
   listener:
     <<: *package-base
@@ -697,8 +627,8 @@ services:
     image: listener:latest
     pull_policy: build
     container_name: listener
-    command: ["ros2", "run", "demo_nodes_cpp", "listener"]
-    profiles: ["listener"]
+    command: [ "ros2", "run", "demo_nodes_cpp", "listener" ]
+    profiles: [ "listener" ]
 
   #==============================================================================
   # TF2 TOOLS
@@ -716,13 +646,8 @@ services:
     container_name: tf2_trees
     volumes:
       - .:/home/ubuntu/workspace:cached
-    command:
-      [
-        "bash",
-        "-c",
-        "mkdir -p tf2_trees && cd tf2_trees &&ros2 run tf2_tools view_frames && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot1/tf -r /tf_static:=/robot1/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot2/tf -r /tf_static:=/robot2/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot3/tf -r /tf_static:=/robot3/tf_static",
-      ]
-    profiles: ["tf2_trees"]
+    command: [ "bash", "-c", "mkdir -p tf2_trees && cd tf2_trees &&ros2 run tf2_tools view_frames && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot1/tf -r /tf_static:=/robot1/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot2/tf -r /tf_static:=/robot2/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot3/tf -r /tf_static:=/robot3/tf_static" ]
+    profiles: [ "tf2_trees" ]
 
   #==============================================================================
   # RQT SERVICES
@@ -738,20 +663,20 @@ services:
     image: rqt:latest
     pull_policy: build
     container_name: rqt
-    command: ["rqt"]
-    profiles: ["rqt"]
+    command: [ "rqt" ]
+    profiles: [ "rqt" ]
 
   rqt_reconfigure:
     extends: rqt_base
     container_name: rqt_reconfigure
-    profiles: ["rqt_reconfigure"]
-    command: ["ros2", "run", "rqt_reconfigure", "rqt_reconfigure"]
+    profiles: [ "rqt_reconfigure" ]
+    command: [ "ros2", "run", "rqt_reconfigure", "rqt_reconfigure" ]
 
   rqt_graph:
     extends: rqt_base
     container_name: rqt_graph
-    command: ["ros2", "run", "rqt_graph", "rqt_graph"]
-    profiles: ["rqt_graph"]
+    command: [ "ros2", "run", "rqt_graph", "rqt_graph" ]
+    profiles: [ "rqt_graph" ]
 
   #==============================================================================
   # COMMUNICATION SERVICES
@@ -767,31 +692,29 @@ services:
     image: cam_communication:latest
     pull_policy: build
     container_name: cam_communication
-    command:
-      ["ros2", "launch", "auna_comm", "single_cam_communication.launch.py"]
-    profiles: ["base"]
+    command: [ "ros2", "launch", "auna_comm", "single_cam_communication.launch.py" ]
+    profiles: [ "base" ]
 
   cam_communication_robot1:
     extends: cam_communication
     container_name: cam_communication_robot1
     environment:
       - ROBOT_INDEX=1
-    profiles:
-      ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
+    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
 
   cam_communication_robot2:
     extends: cam_communication
     container_name: cam_communication_robot2
     environment:
       - ROBOT_INDEX=2
-    profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
+    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
 
   cam_communication_robot3:
     extends: cam_communication
     container_name: cam_communication_robot3
     environment:
       - ROBOT_INDEX=3
-    profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
+    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
   # OMNET SERVICES
@@ -805,5 +728,5 @@ services:
     image: omnet:latest
     pull_policy: build
     container_name: omnet
-    command: ["/bin/bash", "-c", "echo 'Hello from OMNeT++!' && exec /bin/bash"]
-    profiles: ["omnet"]
+    command: [ "/bin/bash", "-c", "echo 'Hello from OMNeT++!' && exec /bin/bash" ]
+    profiles: [ "omnet" ]
