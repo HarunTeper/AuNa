@@ -21,8 +21,8 @@ RUN sudo apt-get update && rosdep update
 
 # Install system dependencies with error handling
 ARG PACKAGE_NAMES
-RUN echo "Resolving dependencies for: ${PACKAGE_NAMES}" \
-    && if [ -n "${PACKAGE_NAMES}" ]; then \
+RUN echo "Resolving dependencies for: ${PACKAGE_NAMES}" && \
+    if [ -n "${PACKAGE_NAMES}" ]; then \
     for pkg in ${PACKAGE_NAMES}; do \
     if [ -d "/tmp/package_xmls/packages/src/$pkg" ]; then \
     echo "Installing dependencies for $pkg"; \
@@ -32,9 +32,6 @@ RUN echo "Resolving dependencies for: ${PACKAGE_NAMES}" \
     echo "Warning: Package directory not found for $pkg"; \
     fi; \
     done; \
-    else \
-    echo "No specific packages, installing all dependencies"; \
-    rosdep install --from-paths /tmp/package_xmls --ignore-src -r -y || echo "Some dependencies failed"; \
     fi
 
 # Install Python dependencies with error handling
@@ -49,9 +46,6 @@ RUN if [ -n "${PACKAGE_NAMES}" ]; then \
     pip install --no-cache-dir -e /tmp/toml/packages/src/$pkg || echo "Warning: pip install failed for $pkg"; \
     fi; \
     done; \
-    else \
-    find /tmp/requirements -name "requirements.txt" -exec pip install --no-cache-dir -r {} \; 2>/dev/null || true; \
-    find /tmp/toml -name "pyproject.toml" -exec pip install --no-cache-dir -e {} \; 2>/dev/null || true; \
     fi
 
 RUN sudo rm -rf /tmp/package_xmls /tmp/requirements /tmp/toml \
@@ -74,8 +68,8 @@ RUN if [ -n "$INSTALL_PACKAGE_NAMES" ]; then \
 
 # Copy source code
 COPY packages/src /tmp/src_temp/
-RUN mkdir -p /home/ubuntu/workspace/packages/src \
-    && if [ -n "${PACKAGE_NAMES}" ]; then \
+RUN mkdir -p /home/ubuntu/workspace/packages/src && \
+    if [ -n "${PACKAGE_NAMES}" ]; then \
     for pkg in ${PACKAGE_NAMES}; do \
     if [ -d "/tmp/src_temp/$pkg" ]; then \
     cp -r /tmp/src_temp/$pkg /home/ubuntu/workspace/packages/src/; \
@@ -84,9 +78,6 @@ RUN mkdir -p /home/ubuntu/workspace/packages/src \
     echo "Warning: Package $pkg not found in source"; \
     fi; \
     done; \
-    else \
-    cp -r /tmp/src_temp/* /home/ubuntu/workspace/packages/src/ 2>/dev/null || true; \
-    echo "Copied all available packages"; \
     fi \
     && sudo rm -rf /tmp/src_temp
 

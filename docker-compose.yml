@@ -23,6 +23,8 @@ x-package-base: &package-base
     <<: *build-package-base
   volumes:
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+    - ./traces:/shared/traces:rw
+    - ./lttng:/shared/lttng:rw
 
 x-physical-base: &physical-base
   <<: *common-base
@@ -31,6 +33,8 @@ x-physical-base: &physical-base
   volumes:
     - /dev:/dev
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+    - ./traces:/shared/traces:rw
+    - ./lttng:/shared/lttng:rw
 
 x-gui-base: &gui-base
   <<: *common-base
@@ -38,6 +42,8 @@ x-gui-base: &gui-base
     <<: *build-package-base
   volumes:
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+    - ./traces:/shared/traces:rw
+    - ./lttng:/shared/lttng:rw
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
     - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
   environment:
@@ -72,6 +78,11 @@ services:
     build:
       context: .
       dockerfile: dockerfiles/base.dockerfile
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - HOST_UID=${HOST_UID}
+        - HOST_GID=${HOST_GID}
+        - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
     image: base:latest
     pull_policy: build
     env_file:
@@ -627,29 +638,6 @@ services:
     profiles: ["curve_fitting"]
 
   #==============================================================================
-  # TRACING SERVICES
-  #==============================================================================
-
-  tracing:
-    <<: *package-base
-    build:
-      <<: *build-package-base
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-    image: tracing:latest
-    volumes:
-      - ./traces:/home/ubuntu/workspace/traces
-    pull_policy: build
-    container_name: tracing
-    command:
-      [
-        "/bin/bash",
-        "-c",
-        "sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace/traces && source /opt/ros/humble/setup.bash && source /home/ubuntu/tracing/install/setup.bash && ros2 trace",
-      ]
-    profiles: ["tracing"]
-
-  #==============================================================================
   # DEMO SERVICES
   #==============================================================================
 
@@ -786,3 +774,46 @@ services:
     container_name: omnet
     command: ["/bin/bash", "-c", "echo 'Hello from OMNeT++!' && exec /bin/bash"]
     profiles: ["omnet"]
+
+  #==============================================================================
+  # TRACING SERVICES
+  #==============================================================================
+
+  tracing:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    image: tracing:latest
+    pull_policy: build
+    container_name: tracing
+    command: ["/bin/bash", "-c", "ros2 trace"]
+    profiles: ["tracing"]
+
+  analysis:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    volumes:
+      - .:/home/ubuntu/workspace
+    image: tracing:latest
+    pull_policy: build
+    container_name: tracing
+    command: ["/bin/bash", "-c", "/bin/bash"]
+    profiles: ["tracing"]
+
+  # Add a test service to your docker-compose.yml
+  test_tracing:
+    <<: *package-base
+    image: test_tracing:latest
+    container_name: test_tracing
+    command:
+      [
+        "/bin/bash",
+        "-c",
+        "while true; do ros2 topic pub /test_topic std_msgs/String 'data: hello'; sleep 0.01; done",
+      ]
+    profiles: ["test_tracing"]

@@ -6,6 +6,7 @@ ARG PIP_BREAK_SYSTEM_PACKAGES=1
 ARG HOST_UID=1000
 ARG HOST_GID=1000
 ARG ROS_DOMAIN_ID=12
+ARG RMW_IMPLEMENTATION=rmw_zenoh_cpp
 
 # Configure environment
 ENV DEBIAN_FRONTEND=noninteractive
@@ -55,10 +56,15 @@ RUN mkdir -p /home/ubuntu/tracing/src \
     && bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && colcon build" \
     && sudo usermod -aG tracing ubuntu
 
+# Create shared directories and set permissions
+RUN sudo mkdir -p /shared/traces /shared/lttng \
+    && sudo chown -R ubuntu:ubuntu /shared/traces /shared/lttng \
+    && sudo chmod -R 755 /shared/traces /shared/lttng
+
 # Enhanced bash configuration with environment variable support
 RUN echo 'PS1="\[\033[32m\]\u\[\033[0m\] ➜ \[\033[34m\]\w\[\033[31m\]\$(__git_ps1 \" (%s)\")\[\033[0m\] $ "' >> ~/.bashrc \
     && echo "source /opt/ros/\${ROS_DISTRO}/setup.bash" >> ~/.bashrc \
     && echo 'source /home/ubuntu/tracing/install/setup.bash' >> ~/.bashrc \
-    && echo 'export RMW_IMPLEMENTATION=rmw_zenoh_cpp' >> ~/.bashrc
+    && echo 'export RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION}' >> ~/.bashrc
 
 SHELL ["/bin/bash", "-c"]
