@@ -48,15 +48,6 @@ RUN if [ -n "${PACKAGE_NAMES}" ]; then \
     done; \
     fi
 
-RUN sudo rm -rf /tmp/package_xmls /tmp/requirements /tmp/toml \
-    && sudo apt-get clean \
-    && sudo rm -rf /var/lib/apt/lists/*
-
-#------------------------------------------------------------------------------
-# STAGE 2: Build Stage
-#------------------------------------------------------------------------------
-FROM dependency-stage AS build-stage
-
 # Install additional packages if specified
 ARG INSTALL_PACKAGE_NAMES
 RUN if [ -n "$INSTALL_PACKAGE_NAMES" ]; then \
@@ -65,6 +56,15 @@ RUN if [ -n "$INSTALL_PACKAGE_NAMES" ]; then \
     && sudo apt-get install -y --no-install-recommends $INSTALL_PACKAGE_NAMES \
     && sudo rm -rf /var/lib/apt/lists/*; \
     fi
+
+RUN sudo rm -rf /tmp/package_xmls /tmp/requirements /tmp/toml \
+    && sudo apt-get clean \
+    && sudo rm -rf /var/lib/apt/lists/*
+
+#------------------------------------------------------------------------------
+# STAGE 2: Build Stage
+#------------------------------------------------------------------------------
+FROM dependency-stage AS build-stage
 
 # Copy source code
 COPY packages/src /tmp/src_temp/
@@ -95,7 +95,7 @@ RUN sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace \
 #------------------------------------------------------------------------------
 # STAGE 3: Runtime Stage (Production)
 #------------------------------------------------------------------------------
-FROM base:latest AS runtime
+FROM dependency-stage AS runtime
 
 # Copy built artifacts from build stage
 COPY --from=build-stage --chown=ubuntu:ubuntu /home/ubuntu/workspace/packages/install /home/ubuntu/workspace/packages/install

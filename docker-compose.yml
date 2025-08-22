@@ -16,36 +16,48 @@ x-build-package-base: &build-package-base
   dockerfile: dockerfiles/package.dockerfile
   args:
     PIP_BREAK_SYSTEM_PACKAGES: ${PIP_BREAK_SYSTEM_PACKAGES}
+  target: runtime
 
 x-package-base: &package-base
   <<: *common-base
   build:
     <<: *build-package-base
   volumes:
+    # Packages
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
-    - ./traces:/shared/traces:rw
-    - ./lttng:/shared/lttng:rw
+    # Tracing
+    - /dev/shm:/dev/shm:rw
+    - /var/run/lttng:/var/run/lttng:rw
+    - /tmp:/tmp:rw
 
 x-physical-base: &physical-base
   <<: *common-base
   build:
     <<: *build-package-base
   volumes:
-    - /dev:/dev
+    # Packages
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
-    - ./traces:/shared/traces:rw
-    - ./lttng:/shared/lttng:rw
+    # IO
+    - /dev:/dev
+    # Tracing
+    - /dev/shm:/dev/shm:rw
+    - /var/run/lttng:/var/run/lttng:rw
+    - /tmp:/tmp:rw
 
 x-gui-base: &gui-base
   <<: *common-base
   build:
     <<: *build-package-base
   volumes:
+    # Packages
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
-    - ./traces:/shared/traces:rw
-    - ./lttng:/shared/lttng:rw
+    # GUI
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
     - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
+    # Tracing
+    - /dev/shm:/dev/shm:rw
+    - /var/run/lttng:/var/run/lttng:rw
+    - /tmp:/tmp:rw
   environment:
     - DISPLAY=${DISPLAY}
     - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
@@ -60,10 +72,17 @@ x-dev-base: &dev-base
       - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
   user: "ubuntu"
   volumes:
-    - /dev:/dev
+    # Workspace
     - .:/home/ubuntu/workspace:cached
+    # IO
+    - /dev:/dev
+    # GUI
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
     - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
+    # Tracing
+    - /dev/shm:/dev/shm:rw
+    - /var/run/lttng:/var/run/lttng:rw
+    - /tmp:/tmp:rw
   environment:
     - DISPLAY=${DISPLAY}
     - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
