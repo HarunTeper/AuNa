@@ -10,7 +10,7 @@ def generate_launch_description():
     # Package directory and default waypoint file
     pkg_dir = get_package_share_directory('auna_waypoints')
     waypoint_file = os.path.join(
-        pkg_dir, 'config', 'nav2_racetrack_waypoints.yaml')
+        pkg_dir, 'config', 'racetrack_decorated', 'nav2_racetrack_waypoints.yaml')
 
     # Launch arguments
     robot_index_arg = DeclareLaunchArgument(
