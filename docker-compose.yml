@@ -534,24 +534,24 @@ services:
     command: [ "ros2", "launch", "auna_waypoints", "nav2_waypoint_publisher.launch.py" ]
     profiles: [ "nav2_waypoint_publisher" ]
 
-  waypoint_publisher_robot1:
-    extends: waypoint_publisher
-    container_name: waypoint_publisher_robot1
+  nav2_waypoint_publisher_robot1:
+    extends: nav2_waypoint_publisher
+    container_name: nav2_waypoint_publisher_robot1
     environment:
       - ROBOT_INDEX=1
     profiles:
       ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
 
-  waypoint_publisher_robot2:
-    extends: waypoint_publisher
-    container_name: waypoint_publisher_robot2
+  nav2_waypoint_publisher_robot2:
+    extends: nav2_waypoint_publisher
+    container_name: nav2_waypoint_publisher_robot2
     environment:
       - ROBOT_INDEX=2
     profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
 
-  waypoint_publisher_robot3:
-    extends: waypoint_publisher
-    container_name: waypoint_publisher_robot3
+  nav2_waypoint_publisher_robot3:
+    extends: nav2_waypoint_publisher
+    container_name: nav2_waypoint_publisher_robot3
     environment:
       - ROBOT_INDEX=3
     profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
@@ -632,15 +632,6 @@ services:
         - PACKAGE_NAMES=${WAYPOINT_PUBLISHER_PACKAGES}
     image: curve_fitting:latest
   # Services for development and debugging
-
-  # Development environment - interactive container for development
-  development:
-    <<: *dev-base
-    image: development:latest
-    pull_policy: build
-    container_name: curve_fitting
-    command: ["ros2", "launch", "auna_waypoints", "curve_fitting.launch.py"]
-    profiles: ["curve_fitting"]
 
   #==============================================================================
   # DEMO SERVICES
@@ -806,7 +797,7 @@ services:
       - .:/home/ubuntu/workspace
     image: tracing:latest
     pull_policy: build
-    container_name: tracing
+    container_name: analysis
     command: ["/bin/bash", "-c", "/bin/bash"]
     profiles: ["tracing"]
 
