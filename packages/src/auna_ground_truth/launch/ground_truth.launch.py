@@ -12,10 +12,11 @@ import os
 
 
 def include_ground_truth_launches(context: LaunchContext):
-    robot_index = LaunchConfiguration('robot_index')
     use_sim_time = LaunchConfiguration('use_sim_time')
     pkg_dir = get_package_share_directory('auna_ground_truth')
     launch_dir = os.path.join(pkg_dir, 'launch')
+    
+    robot_index = int(os.environ.get('ROBOT_INDEX', '0'))
 
     ground_truth_transform = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(launch_dir, 'ground_truth_transform.launch.py')),
@@ -34,7 +35,7 @@ def include_ground_truth_launches(context: LaunchContext):
     tf_static_remap = SetRemap(src='/tf_static', dst='tf_static')
 
     group_cmd = GroupAction([
-        PushRosNamespace('robot' + robot_index.perform(context)),
+        PushRosNamespace(f'robot{robot_index}'),
         tf_remap,
         tf_static_remap,
         ground_truth_transform,
@@ -45,11 +46,6 @@ def include_ground_truth_launches(context: LaunchContext):
     return [group_cmd]
 
 def generate_launch_description():
-    robot_index_arg = DeclareLaunchArgument(
-        'robot_index',
-        default_value='1',
-        description='Index of the robot to spawn'
-    )
     
     use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',
@@ -58,7 +54,6 @@ def generate_launch_description():
     )
     
     return LaunchDescription([
-        robot_index_arg,
         use_sim_time_arg,
         OpaqueFunction(function=include_ground_truth_launches)
     ])

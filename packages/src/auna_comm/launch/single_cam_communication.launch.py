@@ -15,16 +15,15 @@ def include_launch_description(context: LaunchContext):
     communication_type = os.environ.get('COMMUNICATION_TYPE', 'cam')
     if communication_type != 'cam':
         return [LogInfo(msg="COMMUNICATION_TYPE is not 'cam', skipping CAM nodes.")]
+    robot_index = int(os.environ.get('ROBOT_INDEX', '0'))
 
     # Launch Argument Configurations
-    robot_index = LaunchConfiguration('robot_index')
     namespace = LaunchConfiguration('namespace')
     log_level = LaunchConfiguration('log_level')
     enable_cam_logging = LaunchConfiguration('enable_cam_logging')
     cam_log_file_path = LaunchConfiguration('cam_log_file_path')
 
     # Get resolved values
-    robot_index_value = int(context.perform_substitution(robot_index))
     namespace_value = context.perform_substitution(namespace)
 
     # Create unique log file path for each robot
@@ -51,7 +50,7 @@ def include_launch_description(context: LaunchContext):
         name='cam_receiver',
         namespace=namespace,
         parameters=[{
-            'filter_index': robot_index_value,
+            'filter_index': robot_index,
             'robot_namespace': namespace_value
         }],
         output='screen'
@@ -63,12 +62,6 @@ def include_launch_description(context: LaunchContext):
 def generate_launch_description():
     """Return launch description"""
 
-    # Launch Arguments
-    robot_index_arg = DeclareLaunchArgument(
-        'robot_index',
-        default_value='0',
-        description='Robot identifier index'
-    )
     namespace_arg = DeclareLaunchArgument(
         'namespace',
         default_value='robot0',
@@ -93,7 +86,6 @@ def generate_launch_description():
     # Launch Description
     launch_description = LaunchDescription()
 
-    launch_description.add_action(robot_index_arg)
     launch_description.add_action(namespace_arg)
     launch_description.add_action(log_level_arg)
     launch_description.add_action(enable_cam_logging_arg)

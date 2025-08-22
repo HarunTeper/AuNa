@@ -1,5 +1,0 @@
-<library path="communciation_costmap">
-  <class name="auna_comm::CommunicationCostmap" type="auna_comm::CommunicationCostmap" base_class_type="nav2_costmap_2d::Layer">
-    <description>Communication Costmap</description>
-  </class>
-</library>

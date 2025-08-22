@@ -1,3 +1,4 @@
+import os
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
@@ -8,8 +9,13 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     param_file = LaunchConfiguration('param_file')
     topic_file = LaunchConfiguration('topic_file')
-    namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
+
+    # Get initial_source from environment variable or use default
+    robot_index = os.environ.get('ROBOT_INDEX', '0')
+    initial_source = os.environ.get('INITIAL_SOURCE', 'OFF')
+    
+    namespace = f'robot{robot_index}'
 
     default_param_file = PathJoinSubstitution([
         FindPackageShare('auna_control'),
@@ -46,12 +52,6 @@ def generate_launch_description():
         description='Use simulation (Gazebo) clock if true'
     )
 
-    declare_initial_source_arg = DeclareLaunchArgument(
-        'initial_source',
-        default_value='OFF',
-        description='Initial cmd_vel source to activate (symbolic name from topics.yaml, or OFF)'
-    )
-
     cmd_vel_multiplexer_node = Node(
         package='auna_control',
         executable='cmd_vel_multiplexer_node',
@@ -60,7 +60,7 @@ def generate_launch_description():
         output='screen',
         parameters=[param_file, {"topic_file": topic_file}, {
             'use_sim_time': use_sim_time,
-            'initial_source': LaunchConfiguration('initial_source')
+            'initial_source': initial_source
         }]
     )
 
@@ -70,5 +70,4 @@ def generate_launch_description():
         declare_namespace_arg,
         declare_use_sim_time_arg,
         cmd_vel_multiplexer_node,
-        declare_initial_source_arg,
     ])

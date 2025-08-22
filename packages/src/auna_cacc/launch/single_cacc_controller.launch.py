@@ -15,12 +15,14 @@ def include_launch_description(context: LaunchContext):
 
     # Launch Argument Configurations
     cacc_config = LaunchConfiguration('cacc_config')
-    robot_index = LaunchConfiguration('robot_index')
-    use_waypoints = LaunchConfiguration('use_waypoints')
+    waypoint_file_path = LaunchConfiguration('waypoint_file')
+    
+    use_waypoints = os.environ.get('USE_WAYPOINTS', 'true').lower() == 'true'
+    robot_index = int(os.environ.get('ROBOT_INDEX', '0'))
 
     # Create robot namespace based on index
-    if int(robot_index.perform(context)) >= 0:
-        namespace = f'robot{robot_index.perform(context)}'
+    if int(robot_index) >= 0:
+        namespace = f'robot{robot_index}'
     else:
         namespace = ''
 
@@ -55,11 +57,6 @@ def generate_launch_description():
         pkg_dir, 'config', 'cacc_controller.yaml')
 
     # Launch Arguments
-    robot_index_arg = DeclareLaunchArgument(
-        'robot_index',
-        default_value='1',
-        description='Robot index'
-    )
     cacc_config_arg = DeclareLaunchArgument(
         'cacc_config',
         default_value=cacc_config_file_path,
@@ -75,7 +72,6 @@ def generate_launch_description():
     # Launch Description
     launch_description = LaunchDescription()
 
-    launch_description.add_action(robot_index_arg)
     launch_description.add_action(cacc_config_arg)
     launch_description.add_action(use_waypoints_arg)
 

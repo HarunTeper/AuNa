@@ -31,15 +31,14 @@ def include_launch_description(context: LaunchContext):
     enable_localization = LaunchConfiguration('enable_localization')
     enable_navigation = LaunchConfiguration('enable_navigation')
     enable_rviz = LaunchConfiguration('enable_rviz')
-    robot_index = LaunchConfiguration('robot_index')
 
     # Get robot index from context and world name from environment
-    robot_idx = int(robot_index.perform(context))
+    robot_index = int(os.environ.get('ROBOT_INDEX', '0'))
     world_name_str = os.environ.get('WORLD_NAME', 'racetrack_decorated')
 
     # Create robot namespace based on index
-    if robot_idx >= 0:
-        robot_namespace = f'robot{robot_idx}'
+    if robot_index >= 0:
+        robot_namespace = f'robot{robot_index}'
     else:
         robot_namespace = ''
 
@@ -47,15 +46,15 @@ def include_launch_description(context: LaunchContext):
     map_config_path = os.path.join(pkg_dir, "config",
                                    "map_params", f"{world_name_str}.yaml")
 
-    if robot_idx >= 0 and os.path.exists(map_config_path):
+    if robot_index >= 0 and os.path.exists(map_config_path):
         with open(map_config_path, 'r') as f:
             map_config = yaml.safe_load(f)
         x_pose = map_config["spawn"]["offset"]["x"] + \
-            robot_idx * map_config["spawn"]["linear"]["x"]
+            robot_index * map_config["spawn"]["linear"]["x"]
         y_pose = map_config["spawn"]["offset"]["y"] + \
-            robot_idx * map_config["spawn"]["linear"]["y"]
+            robot_index * map_config["spawn"]["linear"]["y"]
         z_pose = map_config["spawn"]["offset"]["z"] + \
-            robot_idx * map_config["spawn"]["linear"]["z"]
+            robot_index * map_config["spawn"]["linear"]["z"]
     else:
         # Default pose if no world config or invalid robot index
         x_pose = 0.0
@@ -163,11 +162,6 @@ def generate_launch_description():
         default_value=default_map_file,
         description='Full path to map file to load'
     )
-    robot_index_arg = DeclareLaunchArgument(
-        'robot_index',
-        default_value='0',
-        description='Robot index number (0, 1, 2, etc.)'
-    )
     params_file_arg = DeclareLaunchArgument(
         'params_file',
         default_value=default_params_file,
@@ -209,7 +203,6 @@ def generate_launch_description():
     launch_description.add_action(autostart_arg)
     launch_description.add_action(default_bt_xml_filename_arg)
     launch_description.add_action(map_arg)
-    launch_description.add_action(robot_index_arg)
     launch_description.add_action(params_file_arg)
     launch_description.add_action(rviz_config_arg)
     launch_description.add_action(use_sim_time_arg)
