@@ -12,10 +12,13 @@ def generate_launch_description():
     waypoint_file = os.path.join(
         pkg_dir, 'config', 'racetrack_decorated', 'nav2_racetrack_waypoints.yaml')
 
+    # Get robot index from environment variable, fallback to launch argument
+    robot_index = os.environ.get('ROBOT_INDEX', '1')
+
     # Launch arguments
     robot_index_arg = DeclareLaunchArgument(
         'robot_index',
-        default_value='1',
+        default_value=robot_index,
         description='Index of the robot (e.g., 1 for robot1)'
     )
 
