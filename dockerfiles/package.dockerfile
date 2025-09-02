@@ -95,10 +95,10 @@ RUN sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace \
 #------------------------------------------------------------------------------
 # STAGE 3: Runtime Stage (Production)
 #------------------------------------------------------------------------------
-FROM dependency-stage AS runtime
+FROM build-stage AS runtime
 
-# Copy built artifacts from build stage
-COPY --from=build-stage --chown=ubuntu:ubuntu /home/ubuntu/workspace/packages/install /home/ubuntu/workspace/packages/install
+# # Copy built artifacts from build stage
+# COPY --from=build-stage --chown=ubuntu:ubuntu /home/ubuntu/workspace/packages/install /home/ubuntu/workspace/packages/install
 
 USER ubuntu
 

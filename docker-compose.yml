@@ -10,6 +10,8 @@ x-common-base: &common-base
   stdin_open: true
   tty: true
   pull_policy: build
+  ipc: host
+  pid: host
 
 x-build-package-base: &build-package-base
   context: .
@@ -26,9 +28,7 @@ x-package-base: &package-base
     # Packages
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
     # Tracing
-    - /dev/shm:/dev/shm:rw
     - /var/run/lttng:/var/run/lttng:rw
-    - /tmp:/tmp:rw
 
 x-physical-base: &physical-base
   <<: *common-base
@@ -40,9 +40,7 @@ x-physical-base: &physical-base
     # IO
     - /dev:/dev
     # Tracing
-    - /dev/shm:/dev/shm:rw
     - /var/run/lttng:/var/run/lttng:rw
-    - /tmp:/tmp:rw
 
 x-gui-base: &gui-base
   <<: *common-base
@@ -55,9 +53,7 @@ x-gui-base: &gui-base
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
     - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
     # Tracing
-    - /dev/shm:/dev/shm:rw
     - /var/run/lttng:/var/run/lttng:rw
-    - /tmp:/tmp:rw
   environment:
     - DISPLAY=${DISPLAY}
     - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
@@ -80,9 +76,7 @@ x-dev-base: &dev-base
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
     - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
     # Tracing
-    - /dev/shm:/dev/shm:rw
     - /var/run/lttng:/var/run/lttng:rw
-    - /tmp:/tmp:rw
   environment:
     - DISPLAY=${DISPLAY}
     - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
@@ -813,7 +807,16 @@ services:
     image: tracing:latest
     pull_policy: build
     container_name: tracing
-    command: ["/bin/bash", "-c", "ros2 trace"]
+    user: root
+    volumes:
+      - /var/run/lttng:/var/run/lttng:rw
+      - ./traces:/home/ubuntu/workspace/traces:rw
+    command:
+      [
+        "/bin/bash",
+        "-c",
+        "source /home/ubuntu/tracing/install/setup.bash && ROS_TRACE_DIR=${ROS_TRACE_DIR} ros2 trace && chown -R 1000:1000 /home/ubuntu/workspace/traces",
+      ]
     profiles: ["tracing"]
 
   analysis:

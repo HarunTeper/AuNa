@@ -22,3 +22,6 @@ Thumbs.db
 # Keep only what we need for the build
 !packages/src/
 !dockerfiles/
+
+# Ignore live trace output and LTTng runtime files
+traces

@@ -56,10 +56,10 @@ RUN mkdir -p /home/ubuntu/tracing/src \
     && bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && colcon build" \
     && sudo usermod -aG tracing ubuntu
 
-# Create shared directories and set permissions
-RUN sudo mkdir -p /shared/traces /shared/lttng \
-    && sudo chown -R ubuntu:ubuntu /shared/traces /shared/lttng \
-    && sudo chmod -R 755 /shared/traces /shared/lttng
+# # Create shared directories and set permissions
+# RUN sudo mkdir -p /shared/traces /shared/lttng \
+#     && sudo chown -R ubuntu:ubuntu /shared/traces /shared/lttng \
+#     && sudo chmod -R 755 /shared/traces /shared/lttng
 
 # Enhanced bash configuration with environment variable support
 RUN echo 'PS1="\[\033[32m\]\u\[\033[0m\] ➜ \[\033[34m\]\w\[\033[31m\]\$(__git_ps1 \" (%s)\")\[\033[0m\] $ "' >> ~/.bashrc \
