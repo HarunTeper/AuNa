@@ -1,4 +1,4 @@
-#include "auna_control/control_panel_ros_interface.hpp"
+#include "control_panel/control_panel_ros_interface.hpp"
 
 #include <QStringList>
 #include <QTimer>
@@ -61,7 +61,7 @@ void ControlPanelROSInterface::createClientsAndSubscribers()
   source_status_client_ = node_->create_client<Trigger>(ns_prefix + "/get_source_status");
   input_sources_client_ = node_->create_client<Trigger>(ns_prefix + "/get_input_sources");
   set_source_client_ =
-    node_->create_client<auna_msgs::srv::SetString>(ns_prefix + "/toggle_cmd_vel_source");
+    node_->create_client<roboracer_msgs::srv::SetString>(ns_prefix + "/toggle_cmd_vel_source");
 
   odom_subscriber_ = node_->create_subscription<nav_msgs::msg::Odometry>(
     ns_prefix + "/odom", 10,
@@ -76,7 +76,18 @@ void ControlPanelROSInterface::createClientsAndSubscribers()
 
 void ControlPanelROSInterface::setNamespace(const QString & ns)
 {
-  current_namespace_ = ns.toStdString();
+  // Validate the namespace string to prevent crashes
+  std::string ns_str = ns.toStdString();
+  
+  // Check for invalid characters that could cause ROS topic/service name issues
+  if (ns_str.find(' ') != std::string::npos) {
+    if (node_) {
+      RCLCPP_WARN(node_->get_logger(), "Invalid namespace with spaces: '%s', ignoring", ns_str.c_str());
+    }
+    return;
+  }
+  
+  current_namespace_ = ns_str;
   if (node_) {
     RCLCPP_DEBUG(node_->get_logger(), "Setting namespace to: '%s'", current_namespace_.c_str());
   }
@@ -115,7 +126,7 @@ void ControlPanelROSInterface::setCmdVelSource(const QString & source)
     }
     return;
   }
-  auto request = std::make_shared<auna_msgs::srv::SetString::Request>();
+  auto request = std::make_shared<roboracer_msgs::srv::SetString::Request>();
   request->data = source.toStdString();
   if (node_) {
     RCLCPP_DEBUG(node_->get_logger(), "Setting cmd_vel source to: '%s'", request->data.c_str());
@@ -208,7 +219,7 @@ void ControlPanelROSInterface::onSourceStatusResponse(rclcpp::Client<Trigger>::S
 }
 
 void ControlPanelROSInterface::onSetSourceResponse(
-  rclcpp::Client<auna_msgs::srv::SetString>::SharedFuture future)
+  rclcpp::Client<roboracer_msgs::srv::SetString>::SharedFuture future)
 {
   // After setting source, check the updated status
   (void)future;
