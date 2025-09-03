@@ -1,4 +1,4 @@
-#include "control_panel/control_panel.hpp"
+#include "auna_control/control_panel.hpp"
 
 #include <QtCore/QTimer>
 #include <QtCore/QRegExp>
@@ -15,7 +15,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-namespace control_panel
+namespace auna_control
 {
 
 ControlPanel::ControlPanel(QWidget * parent) : Panel(parent), estop_active_(false)
@@ -305,7 +305,7 @@ void ControlPanel::updateMonitoringDisplay()
                             .arg(QString::number(cmd_angular_z_, 'f', 2)));
 }
 
-}  // namespace control_panel
+}  // namespace auna_control
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(control_panel::ControlPanel, rviz_common::Panel)
+PLUGINLIB_EXPORT_CLASS(auna_control::ControlPanel, rviz_common::Panel)
