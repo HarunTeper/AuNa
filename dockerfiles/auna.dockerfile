@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1-labs
 #------------------------------------------------------------------------------
-# UNIFIED ROS2 DOCKERFILE - Base + Package functionality
+# ROS2 DOCKERFILE
 #------------------------------------------------------------------------------
 
 # Build arguments

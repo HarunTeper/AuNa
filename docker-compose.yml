@@ -89,6 +89,8 @@ services:
   # CORE NETWORK SERVICES
   #==============================================================================
   zenohd:
+    build:
+      <<: *build-auna
     privileged: true
     network_mode: host
     env_file:
