@@ -90,46 +90,14 @@ ARG INSTALL_PACKAGE_NAMES
 
 USER root
 
-# Copy source files first to determine package structure
-COPY packages/src /tmp/src_scan/
-
-# Smart dependency copying based on PACKAGE_NAMES (including nested packages)
-RUN mkdir -p /tmp/package_xmls /tmp/requirements /tmp/toml && \
-    if [ -n "${PACKAGE_NAMES}" ]; then \
-    echo "Scanning for packages: ${PACKAGE_NAMES}"; \
-    for pkg in ${PACKAGE_NAMES}; do \
-    echo "Processing package: $pkg"; \
-    # Find all directories matching the package name (handles nested packages)
-    find /tmp/src_scan -type d -name "$pkg" | while read pkg_dir; do \
-    if [ -f "$pkg_dir/package.xml" ]; then \
-    rel_path=$(echo "$pkg_dir" | sed 's|^/tmp/src_scan/||'); \
-    echo "Found package: $pkg at $rel_path"; \
-    # Copy package.xml
-    mkdir -p "/tmp/package_xmls/packages/src/$rel_path"; \
-    cp "$pkg_dir/package.xml" "/tmp/package_xmls/packages/src/$rel_path/"; \
-    # Copy requirements.txt if exists
-    if [ -f "$pkg_dir/requirements.txt" ]; then \
-    mkdir -p "/tmp/requirements/packages/src/$rel_path"; \
-    cp "$pkg_dir/requirements.txt" "/tmp/requirements/packages/src/$rel_path/"; \
-    fi; \
-    # Copy toml files if exist
-    if [ -f "$pkg_dir/pyproject.toml" ] || [ -f "$pkg_dir/setup.cfg" ]; then \
-    mkdir -p "/tmp/toml/packages/src/$rel_path"; \
-    [ -f "$pkg_dir/pyproject.toml" ] && cp "$pkg_dir/pyproject.toml" "/tmp/toml/packages/src/$rel_path/"; \
-    [ -f "$pkg_dir/setup.cfg" ] && cp "$pkg_dir/setup.cfg" "/tmp/toml/packages/src/$rel_path/"; \
-    fi; \
-    fi; \
-    done; \
-    done; \
-    # else \
-    # echo "No PACKAGE_NAMES specified, copying all dependencies"; \
-    # find /tmp/src_scan -name "package.xml" -exec cp --parents {} /tmp/package_xmls/ \;; \
-    # find /tmp/src_scan -name "requirements.txt" -exec cp --parents {} /tmp/requirements/ \;; \
-    # find /tmp/src_scan -name "*.toml" -exec cp --parents {} /tmp/toml/ \;; \
-    fi
+# Copy dependency files using --parents to preserve nested structure
+COPY --parents packages/src/**/package.xml /tmp/
+COPY --parents packages/src/**/requirements.txt /tmp/
+COPY --parents packages/src/**/pyproject.toml /tmp/
+COPY --parents packages/src/**/setup.cfg /tmp/
 
 # Fix ownership after COPY
-RUN chown -R ubuntu:ubuntu /tmp/package_xmls /tmp/requirements /tmp/toml /tmp/src_scan
+RUN chown -R ubuntu:ubuntu /tmp/packages
 
 USER ubuntu
 
@@ -137,23 +105,23 @@ USER ubuntu
 RUN sudo apt-get update && rosdep update
 
 # Install ROS dependencies
-RUN if [ -d "/tmp/package_xmls/packages" ]; then \
+RUN if [ -d "/tmp/packages" ]; then \
     echo "Installing ROS dependencies..."; \
-    rosdep install --from-paths /tmp/package_xmls/packages --ignore-src -r -y \
+    rosdep install --from-paths /tmp/packages --ignore-src -r -y \
     || echo "Warning: Some rosdep installations failed"; \
     fi
 
 # Install Python dependencies
-RUN if [ -d "/tmp/requirements/packages" ]; then \
+RUN if [ -d "/tmp/packages" ]; then \
     echo "Installing Python requirements..."; \
-    find /tmp/requirements/packages -name "requirements.txt" -exec pip install --no-cache-dir -r {} \; \
+    find /tmp/packages -name "requirements.txt" -exec pip install --no-cache-dir -r {} \; \
     || echo "Warning: Some pip installations failed"; \
     fi
 
 # Install Python packages (editable installs)
-RUN if [ -d "/tmp/toml/packages" ]; then \
+RUN if [ -d "/tmp/packages" ]; then \
     echo "Installing Python packages..."; \
-    find /tmp/toml/packages -name "pyproject.toml" -exec dirname {} \; | while read dir; do \
+    find /tmp/packages -name "pyproject.toml" -exec dirname {} \; | while read dir; do \
     pip install --no-cache-dir -e "$dir" || echo "Warning: pip install failed for $dir"; \
     done; \
     fi
@@ -167,7 +135,7 @@ RUN if [ -n "$INSTALL_PACKAGE_NAMES" ]; then \
     fi
 
 # Cleanup
-RUN sudo rm -rf /tmp/package_xmls /tmp/requirements /tmp/toml /tmp/src_scan \
+RUN sudo rm -rf /tmp/packages \
     && sudo apt-get clean \
     && sudo rm -rf /var/lib/apt/lists/*
 
@@ -179,16 +147,16 @@ FROM dependency-stage AS build-stage
 ARG PACKAGE_NAMES
 
 # Copy source code for specified packages
-COPY packages/src /tmp/src_temp/
-RUN mkdir -p /home/ubuntu/workspace/packages/src && \
-    if [ -n "${PACKAGE_NAMES}" ]; then \
+COPY --parents packages/src /tmp/
+RUN if [ -n "${PACKAGE_NAMES}" ]; then \
     echo "Copying specified packages: ${PACKAGE_NAMES}"; \
+    mkdir -p /home/ubuntu/workspace; \
     for pkg in ${PACKAGE_NAMES}; do \
     # Find all directories matching the package name (handles nested packages)
-    find /tmp/src_temp -type d -name "$pkg" | while read pkg_dir; do \
+    find /tmp/packages/src -type d -name "$pkg" | while read pkg_dir; do \
     if [ -f "$pkg_dir/package.xml" ]; then \
-    rel_path=$(echo "$pkg_dir" | sed 's|^/tmp/src_temp/||'); \
-    dest_dir="/home/ubuntu/workspace/packages/src/$rel_path"; \
+    rel_path=$(echo "$pkg_dir" | sed 's|^/tmp/||'); \
+    dest_dir="/home/ubuntu/workspace/$rel_path"; \
     mkdir -p "$(dirname "$dest_dir")"; \
     cp -r "$pkg_dir" "$(dirname "$dest_dir")/"; \
     echo "Copied package: $pkg from $rel_path"; \
@@ -197,9 +165,10 @@ RUN mkdir -p /home/ubuntu/workspace/packages/src && \
     done; \
     # else \
     # echo "Copying all packages"; \
-    # cp -r /tmp/src_temp/* /home/ubuntu/workspace/packages/src/; \
+    # mkdir -p /home/ubuntu/workspace; \
+    # cp -r /tmp/packages /home/ubuntu/workspace/; \
     fi \
-    && sudo rm -rf /tmp/src_temp
+    && sudo rm -rf /tmp/packages
 
 # Fix ownership and build
 RUN sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace \
