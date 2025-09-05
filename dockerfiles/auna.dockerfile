@@ -148,9 +148,9 @@ ARG PACKAGE_NAMES
 
 # Copy source code for specified packages
 COPY --parents packages/src /tmp/
-RUN if [ -n "${PACKAGE_NAMES}" ]; then \
+RUN mkdir -p /home/ubuntu/workspace/packages/src && \
+    if [ -n "${PACKAGE_NAMES}" ]; then \
     echo "Copying specified packages: ${PACKAGE_NAMES}"; \
-    mkdir -p /home/ubuntu/workspace; \
     for pkg in ${PACKAGE_NAMES}; do \
     # Find all directories matching the package name (handles nested packages)
     find /tmp/packages/src -type d -name "$pkg" | while read pkg_dir; do \
@@ -163,19 +163,22 @@ RUN if [ -n "${PACKAGE_NAMES}" ]; then \
     fi; \
     done; \
     done; \
-    # else \
-    # echo "Copying all packages"; \
-    # mkdir -p /home/ubuntu/workspace; \
-    # cp -r /tmp/packages /home/ubuntu/workspace/; \
+    else \
+    echo "No packages specified, skipping package copy"; \
     fi \
     && sudo rm -rf /tmp/packages
 
 # Fix ownership and build
 RUN sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace \
-    && cd /home/ubuntu/workspace/packages \
-    && bash -c "source /opt/ros/\${ROS_DISTRO}/setup.bash && \
+    && if [ -n "${PACKAGE_NAMES}" ] && [ "$(find /home/ubuntu/workspace/packages/src -name "package.xml" -type f 2>/dev/null | wc -l)" -gt 0 ]; then \
+    echo "Building packages..."; \
+    cd /home/ubuntu/workspace/packages && \
+    bash -c "source /opt/ros/\${ROS_DISTRO}/setup.bash && \
     source /home/ubuntu/tracing/install/setup.bash 2>/dev/null || true && \
-    colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release"
+    colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release"; \
+    else \
+    echo "No packages to build, skipping build step"; \
+    fi
 
 #------------------------------------------------------------------------------
 # RUNTIME STAGE - Production ready image
