@@ -4,7 +4,7 @@
 [![ROS2](https://img.shields.io/badge/ROS2-Humble-blue)](https://docs.ros.org/en/humble/)
 [![Docker](https://img.shields.io/badge/docker compose-blue)](https://docs.docker.com/compose/)
 
-A comprehensive ROS2-based framework for autonomous vehicle simulation, featuring cooperative driving scenarios, multi-robot coordination, and advanced navigation algorithms. The system integrates Gazebo simulation, MATLAB/Simulink control systems, and OMNeT++ communication modeling to provide a complete autonomous navigation research platform.
+A comprehensive ROS2-based framework for autonomous vehicle simulation, featuring cooperative driving scenarios, multi-robot coordination, and advanced navigation algorithms. The system uses Docker Compose for easy deployment and provides Gazebo simulation with RViz visualization.
 
 ![Gazebo Simulation](media/gazeboSimulation.gif)
 
@@ -14,31 +14,12 @@ A comprehensive ROS2-based framework for autonomous vehicle simulation, featurin
 - **CACC Implementation**: Cooperative Adaptive Cruise Control for platooning scenarios
 - **Advanced Navigation**: Integration with ROS2 Navigation2 stack for path planning and obstacle avoidance
 - **Wall Following**: Robust wall-following algorithms using LIDAR data
-<!-- - **Physical Hardware Support**: Integration with F1/10 race cars and Logitech G29 steering wheels -->
-- **Communication Protocols**: ETSI ITS-G5 CAM (Cooperative Awareness Messages) implementation
-- **Flexible Deployment**: Docker-based containerized deployment with multiple scenario profiles
+- **Docker-based Deployment**: Simple containerized deployment - no manual installation required
 - **Real-time Visualization**: Gazebo 3D simulation with RViz integration
-<!-- - **MATLAB/Simulink Integration**: Seamless connection for control system development -->
-<!-- - **OMNeT++ Network Simulation**: Vehicle-to-vehicle communication modeling -->
-
-## 📋 System Requirements
-
-### Hardware Requirements
-- **CPU**: Multi-core processor (4+ cores recommended)
-- **RAM**: 8GB minimum, 16GB recommended
-- **GPU**: NVIDIA GPU with CUDA support (optional, for enhanced graphics)
-- **Storage**: 20GB available disk space
-
-### Software Dependencies
-- **Operating System**: Ubuntu 20.04 LTS or newer
-<!-- - **ROS2**: Humble Hawksbill (recommended) or Galactic Geochelone -->
-- **Docker**: Latest version with docker compose
-<!-- - **MATLAB/Simulink**: R2021a or later (optional, for control system integration)
-- **OMNeT++**: Version 6.0+ (optional, for network simulation) -->
 
 ## 🛠️ Installation
 
-### Method 1: Docker Installation (Recommended)
+**Prerequisites**: Docker with docker compose support
 
 1. **Clone the repository**:
    ```bash
@@ -46,130 +27,85 @@ A comprehensive ROS2-based framework for autonomous vehicle simulation, featurin
    cd AuNa
    ```
 
-2. **Configure environment**:
-   ```bash
-   # Review and edit environment configuration
-   # The .env file contains pre-configured settings
-   # Modify as needed for your system
-   nano .env
-   ```
+## 🚀 Usage
 
-## 🚀 Quick Start
+### Running Simulations
 
-### Running a Basic Simulation With One Robot
+The only supported method is through Docker Compose. You only need to specify the world name:
 
-1. **Start the simulation environment**:
-   ```bash
-   # Using Docker (recommended)
-   docker compose --profile sim_scenario_1 up
-
-### Running Platooning Scenario
-
-The platooning scenario demonstrates cooperative adaptive cruise control (CACC) with multiple robots:
-
+#### Single Robot Scenario
 ```bash
-# Start full platooning scenario with 3 robots
+# Default world (racetrack_decorated)
+docker compose --profile sim_scenario_1 up
+
+# Specify custom world
+WORLD_NAME=arena docker compose --profile sim_scenario_1 up
+```
+
+#### Multi-Robot Scenario (3 robots)
+```bash
+# Default world (racetrack_decorated) 
 docker compose --profile sim_scenario up
 
-# View the simulation
-# Open your browser and navigate to Gazebo GUI or use RViz
+# Specify custom world
+WORLD_NAME=arena docker compose --profile sim_scenario up
 ```
+
+### Available Worlds
+- `racetrack_decorated` - Racing track environment (default)
+- `arena` - Open arena environment
+
+After launching, **Gazebo** and **RViz** windows will start automatically.
+
+## 🎮 RViz Configuration
+
+Once the simulation starts, you'll see both **Gazebo** (simulation) and **RViz** (visualization) windows.
+
+### Setting Up Robot Namespace in RViz
+
+1. **Enter the namespace** in RViz for each robot you want to control:
+   - Format: `robot` + index (starting from 1)
+   - Examples: `robot1`, `robot2`, `robot3`
+
+2. **Select input source** after entering the namespace:
+   - **Default**: `off` (no autonomous control)
+   - **Available sources**:
+     - `wallfollowing` - Follow walls using LIDAR
+     - `teleop` - Manual keyboard control  
+     - `nav2` - Navigation2 path planning
+     - `cacc` - Cooperative Adaptive Cruise Control
+
+### Robot Role Configuration
+
+#### Leader Robot (robot1)
+**For racetrack_decorated world:**
+- Use `wallfollowing` for autonomous wall following
+- Use `nav2` for goal-based navigation
+
+**For arena world:**
+- Use `nav2` for goal-based navigation  
+- Use `cacc` for coordinated movement
+
+#### Follower Robots (robot2, robot3, ...)
+**For all worlds:**
+- Use `cacc` for following the leader robot in formation
+
+### Example Usage Flow
+
+1. Start simulation:
+   ```bash
+   docker compose --profile sim_scenario up
+   ```
+
+2. In RViz window:
+   - Enter namespace: `robot1`
+   - Select input source: `wallfollowing` (for leader on racetrack)
+   
+3. For additional robots:
+   - Enter namespace: `robot2` 
+   - Select input source: `cacc` (follower)
 
 ![OMNeT++ Simulation](media/omnetSimulation.gif)
-
-## 📁 Package Overview
-
-### Core Simulation Packages
-
-| Package | Description |
-|---------|-------------|
-| `auna_gazebo` | Gazebo integration, world files, and robot models |
-| `auna_ground_truth` | Ground truth pose estimation for simulation |
-| `auna_tf` | Transform management and coordinate frames |
-| `auna_msgs` | Custom message definitions |
-
-### Navigation & Control Packages
-
-| Package | Description |
-|---------|-------------|
-| `auna_nav2` | Navigation2 stack integration and configuration |
-| `auna_cacc` | Cooperative Adaptive Cruise Control implementation |
-| `auna_control` | Control panel and command multiplexing |
-| `auna_wallfollowing` | Wall-following algorithms using LIDAR |
-| `auna_waypoints` | Waypoint management and trajectory planning |
-
-### Communication & Networking
-
-| Package | Description |
-|---------|-------------|
-| `auna_comm` | V2V communication protocols (CAM messages) |
-| `auna_omnet` | OMNeT++ integration for network simulation |
-
-### Hardware Integration
-
-| Package | Description |
-|---------|-------------|
-| `auna_f110` | F1/10 race car platform support |
-| `physical/ros-g29-force-feedback` | Logitech G29 steering wheel integration |
-
-### Utilities
-
-| Package | Description |
-|---------|-------------|
-| `auna_teleoperation` | Remote control and manual driving |
-| `auna_ekf` | Extended Kalman Filter for localization |
-| `auna_common` | Shared utilities and common functions |
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Key environment variables in `.env`:
-
-```bash
-# ROS2 Configuration
-ROS_DISTRO=humble                    # ROS2 distribution
-RMW_IMPLEMENTATION=rmw_zenoh_cpp     # ROS2 middleware
-
-# Simulation Parameters
-WORLD_NAME=racetrack_decorated       # Gazebo world to load (racetrack_decorated/arena)
-COMMUNICATION_TYPE=cam               # Communication protocol (cam/omnet)
-USE_WAYPOINTS=true                   # Enable waypoint navigation
-
-# Docker Configuration
-HOST_UID=1000                        # Host user ID for Docker
-HOST_GID=1000                        # Host group ID for Docker
-```
-
-### Robot Configuration
-
-Modify robot parameters in `packages/src/auna_gazebo/config/`:
-
-- `model_params/`: Robot physical parameters
-- `map_params/`: Map-specific configuration
-
-### Navigation Configuration
-
-Tune navigation parameters in `packages/src/auna_nav2/config/nav2_params/`:
-
-- `nav2_params.yaml`: Core navigation parameters
-- `planner_params.yaml`: Path planning configuration
-- `controller_params.yaml`: Path following parameters
-
-## 🧪 Development
-
-### Creating Custom Scenarios
-
-1. **Create a new world file**:
-   ```bash
-   cp packages/src/auna_gazebo/worlds/racetrack_decorated.world packages/src/auna_gazebo/worlds/my_world.world
-   # Edit my_world.world in Gazebo or text editor
-   ```
-
-2. **Add to .env**:
-   ```yaml
-   WORLD_NAME=my_world
-   ```
 
 ## 🐛 Troubleshooting
 
@@ -186,35 +122,31 @@ Tune navigation parameters in `packages/src/auna_nav2/config/nav2_params/`:
 
 2. **Gazebo crashes or has poor performance**:
    ```bash
-   # Check GPU drivers
-   nvidia-smi  # For NVIDIA GPUs
+   # Check GPU drivers (for NVIDIA GPUs)
+   nvidia-smi
    
    # Reduce graphics quality in Gazebo settings
-   # Or set LIBGL_ALWAYS_SOFTWARE=1
+   # Or disable GPU acceleration: LIBGL_ALWAYS_SOFTWARE=1
    ```
 
-3. **ROS2 nodes cannot communicate**:
-   ```bash
-   # Check ROS_DOMAIN_ID
-   echo $ROS_DOMAIN_ID
-   
-   # Verify network configuration
-   ros2 node list
-   ros2 topic list
-   ```
+3. **RViz namespace not working**:
+   - Ensure you enter the exact namespace format: `robot1`, `robot2`, etc.
+   - Check that the robot containers are running: `docker compose ps`
 
-4. **Navigation fails**:
-   ```bash
-   # Check map and localization
-   ros2 topic echo /map
-   ros2 topic echo /amcl_pose
-   ```
+4. **Input source changes not taking effect**:
+   - Wait a few seconds after selecting the input source
+   - Check the robot's status in the control panel interface
 
-### Performance Optimization
+## 📁 Package Overview
 
-- **Reduce simulation load**: Decrease number of robots or sensors
-- **Optimize Docker**: Increase memory limits in docker compose.yml
-- **GPU acceleration**: Ensure proper GPU drivers and Docker GPU support
+The framework consists of several ROS2 packages organized by functionality:
+
+- **`auna_gazebo`** - Gazebo simulation environment and robot models
+- **`auna_nav2`** - Navigation2 integration and path planning  
+- **`auna_cacc`** - Cooperative Adaptive Cruise Control
+- **`auna_wallfollowing`** - Wall-following algorithms using LIDAR
+- **`auna_control`** - Input source selection and command multiplexing
+- **`auna_teleoperation`** - Manual keyboard control
 
 ## 🤝 Contributing
 
@@ -233,13 +165,6 @@ Tune navigation parameters in `packages/src/auna_nav2/config/nav2_params/`:
    ```
 5. **Create a Pull Request**
 
-### Coding Standards
-
-- Follow ROS2 coding standards
-- Use clang-format for C++ code formatting
-- Include unit tests for new features
-- Update documentation for API changes
-
 ## 📄 License
 
 This project's licensing is under development. Please refer to individual package licenses for specific components and check with the maintainers for usage permissions.
@@ -249,7 +174,6 @@ This project's licensing is under development. Please refer to individual packag
 - **ROS2 Community**: For the robust robotics framework
 - **Navigation2 Team**: For the navigation stack
 - **Gazebo Team**: For the simulation environment
-- **ETSI**: For ITS communication standards
 - **Contributors**: All researchers and developers who contributed to this project
 
 ## 📞 Support
