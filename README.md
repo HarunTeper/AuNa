@@ -1,6 +1,6 @@
 # AuNa: Autonomous Navigation System Simulator
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-See%20Packages-blue.svg)](packages/)
 [![ROS2](https://img.shields.io/badge/ROS2-Humble-blue)](https://docs.ros.org/en/humble/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-blue)](https://docs.docker.com/compose/)
 
@@ -111,7 +111,7 @@ A comprehensive ROS2-based framework for autonomous vehicle simulation, featurin
 3. **Open visualization**:
    ```bash
    # Launch RViz for monitoring
-   rviz2 -d packages/src/auna_nav2/rviz/navigation.rviz
+   rviz2 -d packages/src/auna_nav2/rviz/config_navigation_namespace.rviz
    ```
 
 ### Running Platooning Scenario
@@ -436,7 +436,7 @@ docker-compose --profile physical_robot1 up
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project's licensing is under development. Please refer to individual package licenses for specific components and check with the maintainers for usage permissions.
 
 ## 🙏 Acknowledgments
 
