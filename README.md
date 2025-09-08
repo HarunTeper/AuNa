@@ -1,148 +1,263 @@
-# Autonomous Navigation System Simulator
-___
-This repository includes a complete ROS2 package for the simulation of autonomous robots. It features the simulation models, navigation algorithms and other components to run and evaluate cooperative driving scenarios. Each scenario can be extended to feature different robots, additional system components and more. The launch files are modularly built, so that each part can be configured without directly affecting the other components of the simulation.
+# AuNa: Autonomous Navigation System Simulator
 
-Additionally, it integrates ROS2-Foxy with MATLAB/Simulink and OMNeT++/Artery, to enable the integration of control systems and communication standards. Currently, it includes a CACC-controller for platooning and an implementation of the ETSI-ITS-G5 communication architecture.
+[![License](https://img.shields.io/badge/License-See%20Packages-blue.svg)](packages/)
+[![ROS2](https://img.shields.io/badge/ROS2-Humble-blue)](https://docs.ros.org/en/humble/)
+[![Docker](https://img.shields.io/badge/docker compose-blue)](https://docs.docker.com/compose/)
 
-![](https://github.com/HarunTeper/AuNa/blob/main/media/gazeboSimulation.gif)
+A comprehensive ROS2-based framework for autonomous vehicle simulation, featuring cooperative driving scenarios, multi-robot coordination, and advanced navigation algorithms. The system integrates Gazebo simulation, MATLAB/Simulink control systems, and OMNeT++ communication modeling to provide a complete autonomous navigation research platform.
 
-## Package Setup and Overview
-___
-### Installation
+![Gazebo Simulation](media/gazeboSimulation.gif)
 
-The following steps explain the required installation steps to run the framework on a machine running Ubuntu 20.04:
+## 🚀 Key Features
 
-### Using Devcontainer and Dockerfile
+- **Multi-Robot Simulation**: Support for multiple autonomous vehicles in coordinated scenarios
+- **CACC Implementation**: Cooperative Adaptive Cruise Control for platooning scenarios
+- **Advanced Navigation**: Integration with ROS2 Navigation2 stack for path planning and obstacle avoidance
+- **Wall Following**: Robust wall-following algorithms using LIDAR data
+<!-- - **Physical Hardware Support**: Integration with F1/10 race cars and Logitech G29 steering wheels -->
+- **Communication Protocols**: ETSI ITS-G5 CAM (Cooperative Awareness Messages) implementation
+- **Flexible Deployment**: Docker-based containerized deployment with multiple scenario profiles
+- **Real-time Visualization**: Gazebo 3D simulation with RViz integration
+<!-- - **MATLAB/Simulink Integration**: Seamless connection for control system development -->
+<!-- - **OMNeT++ Network Simulation**: Vehicle-to-vehicle communication modeling -->
 
-1. Install Docker: Follow the instructions to install Docker on your system from https://docs.docker.com/get-docker/
-2. Install Visual Studio Code: Download and install Visual Studio Code from https://code.visualstudio.com/
-3. Install Remote - Containers extension: In Visual Studio Code, go to the Extensions view by clicking the Extensions icon in the Activity Bar on the side of the window. Search for "Remote - Containers" and install it.
-4. Clone the repository: Clone this repository to your local machine.
-5. Open the repository in Visual Studio Code: Open Visual Studio Code and use the "Open Folder" option to open the cloned repository.
-6. Reopen in Container: Once the repository is open, you should see a notification prompting you to reopen the folder in a container. Click "Reopen in Container". If you don't see the notification, you can manually reopen in container by pressing `F1` and selecting "Remote-Containers: Reopen in Container".
+## 📋 System Requirements
 
-### MATLAB and Simulink
+### Hardware Requirements
+- **CPU**: Multi-core processor (4+ cores recommended)
+- **RAM**: 8GB minimum, 16GB recommended
+- **GPU**: NVIDIA GPU with CUDA support (optional, for enhanced graphics)
+- **Storage**: 20GB available disk space
 
-First, install MATLAB and Simulink as described here:
+### Software Dependencies
+- **Operating System**: Ubuntu 20.04 LTS or newer
+<!-- - **ROS2**: Humble Hawksbill (recommended) or Galactic Geochelone -->
+- **Docker**: Latest version with docker compose
+<!-- - **MATLAB/Simulink**: R2021a or later (optional, for control system integration)
+- **OMNeT++**: Version 6.0+ (optional, for network simulation) -->
 
-    https://de.mathworks.com/help/install/
-    https://de.mathworks.com/products/matlab.html
-    https://de.mathworks.com/products/simulink.html
+## 🛠️ Installation
 
-Install Python3.9:
+### Method 1: Docker Installation (Recommended)
 
-    sudo add-apt-repository ppa:deadsnakes/ppa
-    sudo apt-get update
-    sudo apt install python3.9 python3.9-venv libpython3.9
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/HarunTeper/AuNa.git
+   cd AuNa
+   ```
 
-Create symlinks to the Python3.9 installation:
+2. **Configure environment**:
+   ```bash
+   # Review and edit environment configuration
+   # The .env file contains pre-configured settings
+   # Modify as needed for your system
+   nano .env
+   ```
 
-    sudo ln -s /usr/lib/x86_64-linux-gnu/libpython3.9.so.1 /usr/lib/libpython3.9.so.1
-    sudo ln -s /usr/lib/x86_64-linux-gnu/libpython3.9.so.1.0 /usr/lib/libpython3.9.so.1.0
+## 🚀 Quick Start
 
-Install numpy:
+### Running a Basic Simulation With One Robot
 
-    sudo apt-get install python-numpy
+1. **Start the simulation environment**:
+   ```bash
+   # Using Docker (recommended)
+   docker compose --profile sim_scenario_1 up
 
-In every MATLAB script, you need to add the following line at the beginning:
+### Running Platooning Scenario
 
-    pyenv('Version','/usr/bin/python3.9');
+The platooning scenario demonstrates cooperative adaptive cruise control (CACC) with multiple robots:
 
-After that, ROS2 and MATLAB/Simulink are connected.
+```bash
+# Start full platooning scenario with 3 robots
+docker compose --profile sim_scenario up
 
-### OMNeT++ and Artery
-
-Run the following commands to set up OMNeT++ and Artery:
-
-    cd /workspace
-    wget https://github.com/omnetpp/omnetpp/releases/download/omnetpp-5.6.2/omnetpp-5.6.2-src-linux.tgz
-    tar -xvzf omnetpp-5.6.2-src-linux.tgz -C ~/
-    rm omnetpp-5.6.2-src-linux.tgz
-    cd ~/omnetpp-5.6.2
-    ./configure
-    make
-
-    cd /workspace
-    git clone --recurse-submodule https://github.com/HarunTeper/artery-ros2 ~/artery-ros2
-    cd ~/artery-ros2
-    mkdir build
-    cd build
-    cmake ..
-    cmake -j 24 --build .
-
-### File structure:
-```
-├── auna_cacc
-│   ├── CACC # Includes the MATLAB script and Simulink model
-│   └── launch # Launch files for the CACC controller
-├── auna_common # Commonly used scripts and functions
-│   └── auna_common # Scripts
-├── auna_gazebo
-│   ├── config # Configuration files
-│   │   ├── map_params # Map specific parameters
-│   │   └── model_params # Robot model specific parameters
-│   ├── include # Header files
-│   ├── launch # ROS2 launch files
-│   ├── models # Robot model URDF files
-│   ├── src # Source files
-│   └── worlds # Gazebo world files
-├── auna_its_msgs # Simplified CAM message
-│   └── msg # Message folder
-├── auna_msgs # Commonly used custom message types
-│   ├── msg # Messages
-│   └── srv # Services
-├── auna_nav2
-│   ├── config # Configuration files
-│   │   └── nav2_params # Nav2 parameters
-│   ├── launch # ROS2 launch files
-│   ├── maps # Map-specific occupancy grid maps
-│   └── rviz # Rviz configurations
-├── auna_omnet
-│   ├── include # Header files
-│   ├── launch # ROS2 launch files
-│   └── src # Source files
-├── auna_scenarios # Compiled ROS2 launch files for scenarios
-│   └── launch # ROS2 launch files
-└── auna_teleoperation # Teleoperation scripts
-    └── scripts # Scripts
+# View the simulation
+# Open your browser and navigate to Gazebo GUI or use RViz
 ```
 
-## How to use?
-___
-## ROS2
+![OMNeT++ Simulation](media/omnetSimulation.gif)
 
-Run the platooning scenario using the following command:
+## 📁 Package Overview
 
-    ros2 launch auna_scenarios scenario_platooning.launch.py
+### Core Simulation Packages
 
-Adjust the number of robots using parameters:
+| Package | Description |
+|---------|-------------|
+| `auna_gazebo` | Gazebo integration, world files, and robot models |
+| `auna_ground_truth` | Ground truth pose estimation for simulation |
+| `auna_tf` | Transform management and coordinate frames |
+| `auna_msgs` | Custom message definitions |
 
-    ros2 launch auna_scenarios scenario_platooning.launch.py robot_number:=3
+### Navigation & Control Packages
 
-## MATLAB and Simulink
+| Package | Description |
+|---------|-------------|
+| `auna_nav2` | Navigation2 stack integration and configuration |
+| `auna_cacc` | Cooperative Adaptive Cruise Control implementation |
+| `auna_control` | Control panel and command multiplexing |
+| `auna_wallfollowing` | Wall-following algorithms using LIDAR |
+| `auna_waypoints` | Waypoint management and trajectory planning |
 
-In general, it is possible to integrate any MATLAB and Simulink script via the ROS2 publisher and subscriber functionalities.
+### Communication & Networking
 
-An example is shown by the platooning controller, which can be found in *src/car_simulator/matlab/CACC*. It receives the current state of the direct leading vehicle and outputs the corresponding velocity and steering angle, so that a stable inter-vehicle distance is maintained.
+| Package | Description |
+|---------|-------------|
+| `auna_comm` | V2V communication protocols (CAM messages) |
+| `auna_omnet` | OMNeT++ integration for network simulation |
 
-## OMNeT++ and Artery
+### Hardware Integration
 
-The scenario can be launched by running the following command
+| Package | Description |
+|---------|-------------|
+| `auna_f110` | F1/10 race car platform support |
+| `physical/ros-g29-force-feedback` | Logitech G29 steering wheel integration |
 
-    cmake --build build --target run_ros2_platooning
+### Utilities
 
-After building, select the *Fast* option to run the simulation.
+| Package | Description |
+|---------|-------------|
+| `auna_teleoperation` | Remote control and manual driving |
+| `auna_ekf` | Extended Kalman Filter for localization |
+| `auna_common` | Shared utilities and common functions |
 
-![](https://github.com/HarunTeper/AuNa/blob/main/media/omnetSimulation.gif)
+## 🔧 Configuration
 
-## Using the Devcontainer for Development
+### Environment Variables
 
-The devcontainer is configured to provide a consistent development environment with all necessary dependencies installed. To use the devcontainer for development:
+Key environment variables in `.env`:
 
-1. Open the repository in Visual Studio Code.
-2. Reopen the folder in a container by clicking "Reopen in Container" when prompted or by pressing `F1` and selecting "Remote-Containers: Reopen in Container".
-3. Once the container is running, you can use the integrated terminal in Visual Studio Code to run commands and build the project.
+```bash
+# ROS2 Configuration
+ROS_DISTRO=humble                    # ROS2 distribution
+RMW_IMPLEMENTATION=rmw_zenoh_cpp     # ROS2 middleware
 
-## Acknowledgements
+# Simulation Parameters
+WORLD_NAME=racetrack_decorated       # Gazebo world to load (racetrack_decorated/arena)
+COMMUNICATION_TYPE=cam               # Communication protocol (cam/omnet)
+USE_WAYPOINTS=true                   # Enable waypoint navigation
 
-We would like to thank all the authors who helped to extend the framework. In particular, we would like to thank Anggera Bayuwindra, Enio Prates Vasconcelos Filho, Raphael Riebl, and Ricardo Severino for providing their components and implementation details for the integration.
+# Docker Configuration
+HOST_UID=1000                        # Host user ID for Docker
+HOST_GID=1000                        # Host group ID for Docker
+```
+
+### Robot Configuration
+
+Modify robot parameters in `packages/src/auna_gazebo/config/`:
+
+- `model_params/`: Robot physical parameters
+- `map_params/`: Map-specific configuration
+
+### Navigation Configuration
+
+Tune navigation parameters in `packages/src/auna_nav2/config/nav2_params/`:
+
+- `nav2_params.yaml`: Core navigation parameters
+- `planner_params.yaml`: Path planning configuration
+- `controller_params.yaml`: Path following parameters
+
+## 🧪 Development
+
+### Creating Custom Scenarios
+
+1. **Create a new world file**:
+   ```bash
+   cp packages/src/auna_gazebo/worlds/racetrack_decorated.world packages/src/auna_gazebo/worlds/my_world.world
+   # Edit my_world.world in Gazebo or text editor
+   ```
+
+2. **Add to .env**:
+   ```yaml
+   WORLD_NAME=my_world
+   ```
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+1. **Docker containers fail to start**:
+   ```bash
+   # Check Docker daemon
+   sudo systemctl status docker
+   
+   # Rebuild containers
+   docker compose build --no-cache
+   ```
+
+2. **Gazebo crashes or has poor performance**:
+   ```bash
+   # Check GPU drivers
+   nvidia-smi  # For NVIDIA GPUs
+   
+   # Reduce graphics quality in Gazebo settings
+   # Or set LIBGL_ALWAYS_SOFTWARE=1
+   ```
+
+3. **ROS2 nodes cannot communicate**:
+   ```bash
+   # Check ROS_DOMAIN_ID
+   echo $ROS_DOMAIN_ID
+   
+   # Verify network configuration
+   ros2 node list
+   ros2 topic list
+   ```
+
+4. **Navigation fails**:
+   ```bash
+   # Check map and localization
+   ros2 topic echo /map
+   ros2 topic echo /amcl_pose
+   ```
+
+### Performance Optimization
+
+- **Reduce simulation load**: Decrease number of robots or sensors
+- **Optimize Docker**: Increase memory limits in docker compose.yml
+- **GPU acceleration**: Ensure proper GPU drivers and Docker GPU support
+
+## 🤝 Contributing
+
+1. **Fork the repository**
+2. **Create a feature branch**:
+   ```bash
+   git checkout -b feature/my-new-feature
+   ```
+3. **Make changes and commit**:
+   ```bash
+   git commit -am 'Add some feature'
+   ```
+4. **Push to the branch**:
+   ```bash
+   git push origin feature/my-new-feature
+   ```
+5. **Create a Pull Request**
+
+### Coding Standards
+
+- Follow ROS2 coding standards
+- Use clang-format for C++ code formatting
+- Include unit tests for new features
+- Update documentation for API changes
+
+## 📄 License
+
+This project's licensing is under development. Please refer to individual package licenses for specific components and check with the maintainers for usage permissions.
+
+## 🙏 Acknowledgments
+
+- **ROS2 Community**: For the robust robotics framework
+- **Navigation2 Team**: For the navigation stack
+- **Gazebo Team**: For the simulation environment
+- **ETSI**: For ITS communication standards
+- **Contributors**: All researchers and developers who contributed to this project
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/HarunTeper/AuNa/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/HarunTeper/AuNa/discussions)
+- **Email**: harun.teper@tu-dortmund.de
+
+---
+
+**Happy Autonomous Navigation!** 🚗🤖
