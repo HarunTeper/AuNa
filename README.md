@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-See%20Packages-blue.svg)](packages/)
 [![ROS2](https://img.shields.io/badge/ROS2-Humble-blue)](https://docs.ros.org/en/humble/)
-[![Docker](https://img.shields.io/badge/Docker-Compose-blue)](https://docs.docker.com/compose/)
+[![Docker](https://img.shields.io/badge/docker compose-blue)](https://docs.docker.com/compose/)
 
 A comprehensive ROS2-based framework for autonomous vehicle simulation, featuring cooperative driving scenarios, multi-robot coordination, and advanced navigation algorithms. The system integrates Gazebo simulation, MATLAB/Simulink control systems, and OMNeT++ communication modeling to provide a complete autonomous navigation research platform.
 
@@ -14,12 +14,12 @@ A comprehensive ROS2-based framework for autonomous vehicle simulation, featurin
 - **CACC Implementation**: Cooperative Adaptive Cruise Control for platooning scenarios
 - **Advanced Navigation**: Integration with ROS2 Navigation2 stack for path planning and obstacle avoidance
 - **Wall Following**: Robust wall-following algorithms using LIDAR data
-- **Physical Hardware Support**: Integration with F1/10 race cars and Logitech G29 steering wheels
+<!-- - **Physical Hardware Support**: Integration with F1/10 race cars and Logitech G29 steering wheels -->
 - **Communication Protocols**: ETSI ITS-G5 CAM (Cooperative Awareness Messages) implementation
 - **Flexible Deployment**: Docker-based containerized deployment with multiple scenario profiles
 - **Real-time Visualization**: Gazebo 3D simulation with RViz integration
-- **MATLAB/Simulink Integration**: Seamless connection for control system development
-- **OMNeT++ Network Simulation**: Vehicle-to-vehicle communication modeling
+<!-- - **MATLAB/Simulink Integration**: Seamless connection for control system development -->
+<!-- - **OMNeT++ Network Simulation**: Vehicle-to-vehicle communication modeling -->
 
 ## 📋 System Requirements
 
@@ -30,11 +30,11 @@ A comprehensive ROS2-based framework for autonomous vehicle simulation, featurin
 - **Storage**: 20GB available disk space
 
 ### Software Dependencies
-- **Operating System**: Ubuntu 20.04 LTS or Ubuntu 22.04 LTS
-- **ROS2**: Humble Hawksbill (recommended) or Galactic Geochelone
-- **Docker**: Latest version with docker-compose
-- **MATLAB/Simulink**: R2021a or later (optional, for control system integration)
-- **OMNeT++**: Version 6.0+ (optional, for network simulation)
+- **Operating System**: Ubuntu 20.04 LTS or newer
+<!-- - **ROS2**: Humble Hawksbill (recommended) or Galactic Geochelone -->
+- **Docker**: Latest version with docker compose
+<!-- - **MATLAB/Simulink**: R2021a or later (optional, for control system integration)
+- **OMNeT++**: Version 6.0+ (optional, for network simulation) -->
 
 ## 🛠️ Installation
 
@@ -54,65 +54,14 @@ A comprehensive ROS2-based framework for autonomous vehicle simulation, featurin
    nano .env
    ```
 
-3. **Build Docker containers**:
-   ```bash
-   docker-compose build
-   ```
-
-### Method 2: Native Installation
-
-1. **Install ROS2 Humble**:
-   ```bash
-   # Add ROS2 apt repository
-   sudo apt update && sudo apt install curl gnupg lsb-release
-   sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
-   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
-   
-   # Install ROS2
-   sudo apt update
-   sudo apt install ros-humble-desktop python3-colcon-common-extensions
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   # Navigation2 and Gazebo
-   sudo apt install ros-humble-navigation2 ros-humble-nav2-bringup ros-humble-gazebo-ros-pkgs
-   
-   # Additional packages
-   sudo apt install ros-humble-xacro ros-humble-rmw-cyclonedx-cpp ros-humble-ackermann-msgs
-   ```
-
-3. **Build the workspace**:
-   ```bash
-   cd AuNa/packages
-   colcon build --symlink-install
-   source install/setup.bash
-   ```
-
 ## 🚀 Quick Start
 
-### Running a Basic Simulation
+### Running a Basic Simulation With One Robot
 
 1. **Start the simulation environment**:
    ```bash
    # Using Docker (recommended)
-   docker-compose --profile sim_scenario_1 up
-   
-   # Or using native installation
-   ros2 launch auna_gazebo gazebo_world.launch.py
-   ```
-
-2. **Launch a single robot scenario**:
-   ```bash
-   # Start robot 1 with navigation stack
-   docker-compose --profile sim_robot1 up
-   ```
-
-3. **Open visualization**:
-   ```bash
-   # Launch RViz for monitoring
-   rviz2 -d packages/src/auna_nav2/rviz/config_navigation_namespace.rviz
-   ```
+   docker compose --profile sim_scenario_1 up
 
 ### Running Platooning Scenario
 
@@ -120,7 +69,7 @@ The platooning scenario demonstrates cooperative adaptive cruise control (CACC) 
 
 ```bash
 # Start full platooning scenario with 3 robots
-docker-compose --profile sim_scenario up
+docker compose --profile sim_scenario up
 
 # View the simulation
 # Open your browser and navigate to Gazebo GUI or use RViz
@@ -171,75 +120,6 @@ docker-compose --profile sim_scenario up
 | `auna_ekf` | Extended Kalman Filter for localization |
 | `auna_common` | Shared utilities and common functions |
 
-## 🎯 Usage Examples
-
-### Example 1: Single Robot Navigation
-
-```bash
-# 1. Start Gazebo simulation
-docker-compose up gazebo
-
-# 2. Spawn robot
-docker-compose up spawn_robot_robot1
-
-# 3. Start navigation stack
-docker-compose up nav2_stack_robot1
-
-# 4. Set navigation goal through RViz or programmatically
-ros2 topic pub /robot1/goal_pose geometry_msgs/PoseStamped "..."
-```
-
-### Example 2: Wall Following
-
-```bash
-# Start wall following scenario
-docker-compose up gazebo spawn_robot_robot1 wallfollowing_robot1
-
-# The robot will automatically start following the nearest wall
-```
-
-### Example 3: Multi-Robot CACC Platooning
-
-```bash
-# Start complete platooning scenario
-docker-compose --profile sim_scenario up
-
-# Robots will automatically form a platoon with CACC control
-```
-
-### Example 4: Manual Teleoperation
-
-```bash
-# Start robot and teleoperation
-docker-compose up spawn_robot_robot1 teleop
-
-# Use keyboard controls:
-# W/S: Forward/Backward
-# A/D: Left/Right steering
-# Space: Emergency stop
-```
-
-## 🏗️ System Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Gazebo        │    │   Navigation2   │    │   MATLAB/       │
-│   Simulation    │◄──►│   Stack         │◄──►│   Simulink      │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-          │                        │                        │
-          ▼                        ▼                        ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Robot         │    │   CACC          │    │   Communication │
-│   Controllers   │◄──►│   Controller    │◄──►│   (V2V/V2I)     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-          │                        │                        │
-          ▼                        ▼                        ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Sensors       │    │   Localization  │    │   OMNeT++       │
-│   (LIDAR/Camera)│◄──►│   (EKF/AMCL)    │◄──►│   Network Sim   │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
-
 ## 🔧 Configuration
 
 ### Environment Variables
@@ -252,7 +132,7 @@ ROS_DISTRO=humble                    # ROS2 distribution
 RMW_IMPLEMENTATION=rmw_zenoh_cpp     # ROS2 middleware
 
 # Simulation Parameters
-WORLD_NAME=racetrack_decorated       # Gazebo world to load
+WORLD_NAME=racetrack_decorated       # Gazebo world to load (racetrack_decorated/arena)
 COMMUNICATION_TYPE=cam               # Communication protocol (cam/omnet)
 USE_WAYPOINTS=true                   # Enable waypoint navigation
 
@@ -286,46 +166,10 @@ Tune navigation parameters in `packages/src/auna_nav2/config/nav2_params/`:
    # Edit my_world.world in Gazebo or text editor
    ```
 
-2. **Add to docker-compose**:
+2. **Add to .env**:
    ```yaml
-   my_scenario:
-     extends: gazebo
-     environment:
-       - WORLD_NAME=my_world
+   WORLD_NAME=my_world
    ```
-
-### Adding New Robot Controllers
-
-1. **Create package**:
-   ```bash
-   cd packages/src
-   ros2 pkg create --build-type ament_cmake my_controller
-   ```
-
-2. **Implement controller node**:
-   ```cpp
-   #include "rclcpp/rclcpp.hpp"
-   #include "geometry_msgs/msg/twist.hpp"
-   
-   class MyController : public rclcpp::Node {
-       // Implementation
-   };
-   ```
-
-3. **Add to CMakeLists.txt and package.xml**
-
-### Testing
-
-Run tests for specific packages:
-
-```bash
-# Build with tests
-colcon build --packages-select auna_cacc --cmake-args -DBUILD_TESTING=ON
-
-# Run tests
-colcon test --packages-select auna_cacc
-colcon test-result --verbose
-```
 
 ## 🐛 Troubleshooting
 
@@ -337,7 +181,7 @@ colcon test-result --verbose
    sudo systemctl status docker
    
    # Rebuild containers
-   docker-compose build --no-cache
+   docker compose build --no-cache
    ```
 
 2. **Gazebo crashes or has poor performance**:
@@ -364,51 +208,13 @@ colcon test-result --verbose
    # Check map and localization
    ros2 topic echo /map
    ros2 topic echo /amcl_pose
-   
-   # Verify robot model and sensors
-   ros2 run robot_state_publisher robot_state_publisher
    ```
 
 ### Performance Optimization
 
 - **Reduce simulation load**: Decrease number of robots or sensors
-- **Optimize Docker**: Increase memory limits in docker-compose.yml
+- **Optimize Docker**: Increase memory limits in docker compose.yml
 - **GPU acceleration**: Ensure proper GPU drivers and Docker GPU support
-
-## 📚 Advanced Features
-
-### MATLAB/Simulink Integration
-
-1. **Setup MATLAB ROS2 interface**:
-   ```matlab
-   % In MATLAB command window
-   pyenv('Version','/usr/bin/python3.9');
-   ```
-
-2. **Use Simulink models**: Located in `packages/src/auna_cacc/CACC/`
-
-### OMNeT++ Network Simulation
-
-1. **Build OMNeT++ container**:
-   ```bash
-   docker-compose build omnet
-   ```
-
-2. **Run network simulation**:
-   ```bash
-   docker-compose --profile omnet up
-   ```
-
-### Physical Robot Integration
-
-For F1/10 race cars:
-
-```bash
-# Connect to physical robot
-docker-compose --profile physical_robot1 up
-
-# Ensure proper network configuration for robot communication
-```
 
 ## 🤝 Contributing
 
