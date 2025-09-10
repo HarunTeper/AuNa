@@ -2,7 +2,6 @@
 #------------------------------------------------------------------------------
 # EXTENSION DEFINITIONS
 #------------------------------------------------------------------------------
-
 x-common-base: &common-base
   privileged: true
   network_mode: host
@@ -24,6 +23,8 @@ x-package-base: &package-base
     <<: *build-package-base
   volumes:
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+    - ./traces:/shared/traces:rw
+    - ./lttng:/shared/lttng:rw
 
 x-physical-base: &physical-base
   <<: *common-base
@@ -32,6 +33,8 @@ x-physical-base: &physical-base
   volumes:
     - /dev:/dev
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+    - ./traces:/shared/traces:rw
+    - ./lttng:/shared/lttng:rw
 
 x-gui-base: &gui-base
   <<: *common-base
@@ -39,6 +42,8 @@ x-gui-base: &gui-base
     <<: *build-package-base
   volumes:
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+    - ./traces:/shared/traces:rw
+    - ./lttng:/shared/lttng:rw
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
     - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
   environment:
@@ -73,6 +78,11 @@ services:
     build:
       context: .
       dockerfile: dockerfiles/base.dockerfile
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - HOST_UID=${HOST_UID}
+        - HOST_GID=${HOST_GID}
+        - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
     image: base:latest
     pull_policy: build
     env_file:
@@ -80,9 +90,8 @@ services:
     profiles: [ "base" ]
 
   #==============================================================================
-  # NETWORK SERVICES
+  # CORE NETWORK SERVICES
   #==============================================================================
-  # Services for network communication and data exchange
 
   # Zenohd - distributed data exchange service
   zenohd:
@@ -94,63 +103,8 @@ services:
     profiles: [ "zenohd", "sim_scenario", "sim_scenario_1" ]
 
   #==============================================================================
-  # OMNET SERVICES
+  # GAZEBO SERVICES
   #==============================================================================
-  # Services for omnet simulation environment
-
-  # OMNeT++ simulation service
-  omnet:
-    <<: *gui-base
-    build:
-      context: .
-      dockerfile: dockerfiles/omnet.dockerfile
-    image: omnet:latest
-    pull_policy: build
-    container_name: omnet
-    command: [ "/bin/bash", "-c", "echo 'Hello from OMNeT++!' && exec /bin/bash" ]
-    profiles: [ "omnet" ]
-
-  #==============================================================================
-  # PHYSICAL CAR SERVICES
-  #==============================================================================
-  # Services for running on the physical F1TENTH car
-
-  # Main physical car service - launches all car-related nodes
-  # physical_car:
-  #   extends: x-physical-base
-  #   build:
-  #     args:
-  #       - PACKAGE_NAMES=${PHYSICAL_CAR_PACKAGES}
-  #   image: physical_car:latest
-  #   container_name: physical_car
-  #   env_file:
-  #     - .env
-  #   command: ["ros2", "launch", "physical_car", "physical_car.launch.py"]
-  #   profiles: ["real"]
-
-  #==============================================================================
-  # CONTROL & TELEOPERATION SERVICES
-  #==============================================================================
-  # Services for manual control and command multiplexing
-
-  # Keyboard teleoperation - manual control via keyboard
-  teleop:
-    <<: *gui-base
-    build:
-      <<: *build-package-base
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-        - PACKAGE_NAMES=${TELEOP_PACKAGES}
-    image: teleop:latest
-    pull_policy: build
-    container_name: teleop
-    command: [ "/bin/bash", "-c", "source /home/ubuntu/workspace/packages/install/setup.bash && cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args --params-file src/auna_teleoperation/config/key_teleop.yaml" ]
-    profiles: [ "teleop", "manual_control" ]
-
-  #==============================================================================
-  # SIMULATION SERVICES
-  #==============================================================================
-  # Services for running in simulation environment
 
   gazebo:
     <<: *gui-base
@@ -179,101 +133,29 @@ services:
     profiles: [ "spawn_robot" ]
 
   spawn_robot_robot1:
-    <<: *package-base
-    build:
-      <<: *build-package-base
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-        - PACKAGE_NAMES=${GAZEBO_PACKAGES}
-    image: spawn_robot:latest
-    pull_policy: build
+    extends: spawn_robot
     container_name: spawn_robot_robot1
-    command: [ "ros2", "launch", "auna_gazebo", "spawn_robot.launch.py", "robot_index:=1", "use_sim_time:=true" ]
+    environment:
+      - ROBOT_INDEX=1
     profiles: [ "sim_robot1", "sim_scenario", "sim_scenario_1" ]
 
   spawn_robot_robot2:
     extends: spawn_robot
     container_name: spawn_robot_robot2
-    command: [ "ros2", "launch", "auna_gazebo", "spawn_robot.launch.py", "robot_index:=2", "use_sim_time:=true" ]
+    environment:
+      - ROBOT_INDEX=2
     profiles: [ "sim_robot2", "sim_scenario" ]
 
   spawn_robot_robot3:
     extends: spawn_robot
     container_name: spawn_robot_robot3
-    command: [ "ros2", "launch", "auna_gazebo", "spawn_robot.launch.py", "robot_index:=3", "use_sim_time:=true" ]
+    environment:
+      - ROBOT_INDEX=3
     profiles: [ "sim_robot3", "sim_scenario" ]
-
-  #==============================================================================
-  # MAP SERVICES
-  #==============================================================================
-  # Services for handling maps and localization data
-
-  map_server:
-    <<: *package-base
-    build:
-      <<: *build-package-base
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-        - PACKAGE_NAMES=${NAV2_PACKAGES}
-    image: map_server:latest
-    pull_policy: build
-    container_name: map_server
-    command: [ "ros2", "launch", "auna_nav2", "map_server.launch.py", "map_name:=${MAP_NAME}" ]
-    profiles: [ "sim", "sim_scenario" ]
-
-  #==============================================================================
-  # TF SERVICES
-  #==============================================================================
-  # Services for publishing tf and pose data
-
-  global_tf:
-    <<: *package-base
-    build:
-      <<: *build-package-base
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-        - PACKAGE_NAMES=${TF_PACKAGES}
-    image: global_tf:latest
-    pull_policy: build
-    container_name: global_tf
-    command: [ "ros2", "launch", "auna_tf", "global_tf.launch.py", "use_sim_time:=true" ]
-    profiles: [ "sim", "sim_scenario", "sim_scenario_1" ]
-
-  localization_pose:
-    <<: *package-base
-    build:
-      <<: *build-package-base
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-        - PACKAGE_NAMES=${TF_PACKAGES}
-    image: localization_pose:latest
-    pull_policy: build
-    container_name: localization_pose
-    command: [ "ros2", "launch", "auna_tf", "localization_pose_publisher.launch.py" ]
-    profiles: [ "localization_pose" ]
-
-  localization_pose_robot1:
-    extends: localization_pose
-    container_name: localization_pose_robot1
-    command: [ "ros2", "launch", "auna_tf", "localization_pose_publisher.launch.py", "robot_index:=1", "use_sim_time:=true" ]
-    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
-
-  localization_pose_robot2:
-    extends: localization_pose
-    container_name: localization_pose_robot2
-    command: [ "ros2", "launch", "auna_tf", "localization_pose_publisher.launch.py", "robot_index:=2", "use_sim_time:=true" ]
-    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
-
-  localization_pose_robot3:
-    extends: localization_pose
-    container_name: localization_pose_robot3
-    command: [ "ros2", "launch", "auna_tf", "localization_pose_publisher.launch.py", "robot_index:=3", "use_sim_time:=true" ]
-    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
   # GROUND TRUTH SERVICES
   #==============================================================================
-  # Services for publishing ground truth data
 
   ground_truth_static_transform:
     <<: *package-base
@@ -304,25 +186,82 @@ services:
   ground_truth_robot1:
     extends: ground_truth
     container_name: ground_truth_robot1
-    command: [ "ros2", "launch", "auna_ground_truth", "ground_truth.launch.py", "robot_index:=1", "use_sim_time:=true" ]
+    environment:
+      - ROBOT_INDEX=1
     profiles: [ "sim_robot1", "sim_scenario", "sim_scenario_1" ]
 
   ground_truth_robot2:
     extends: ground_truth
     container_name: ground_truth_robot2
-    command: [ "ros2", "launch", "auna_ground_truth", "ground_truth.launch.py", "robot_index:=2", "use_sim_time:=true" ]
+    environment:
+      - ROBOT_INDEX=2
     profiles: [ "sim_robot2", "sim_scenario" ]
 
   ground_truth_robot3:
     extends: ground_truth
     container_name: ground_truth_robot3
-    command: [ "ros2", "launch", "auna_ground_truth", "ground_truth.launch.py", "robot_index:=3", "use_sim_time:=true" ]
+    environment:
+      - ROBOT_INDEX=3
     profiles: [ "sim_robot3", "sim_scenario" ]
+
+  #==============================================================================
+  # TF SERVICES
+  #==============================================================================
+
+  global_tf:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${TF_PACKAGES}
+    image: global_tf:latest
+    pull_policy: build
+    container_name: global_tf
+    command: [ "ros2", "launch", "auna_tf", "global_tf.launch.py", "use_sim_time:=true" ]
+    profiles: [ "sim", "sim_scenario", "sim_scenario_1" ]
+
+  #==============================================================================
+  # LOCALIZATION SERVICES
+  #==============================================================================
+
+  localization_pose:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${TF_PACKAGES}
+    image: localization_pose:latest
+    pull_policy: build
+    container_name: localization_pose
+    command: [ "ros2", "launch", "auna_tf", "localization_pose_publisher.launch.py", "use_sim_time:=true" ]
+    profiles: [ "localization_pose" ]
+
+  localization_pose_robot1:
+    extends: localization_pose
+    container_name: localization_pose_robot1
+    environment:
+      - ROBOT_INDEX=1
+    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
+
+  localization_pose_robot2:
+    extends: localization_pose
+    container_name: localization_pose_robot2
+    environment:
+      - ROBOT_INDEX=2
+    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
+
+  localization_pose_robot3:
+    extends: localization_pose
+    container_name: localization_pose_robot3
+    environment:
+      - ROBOT_INDEX=3
+    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
   # CMD MULTIPLEXER SERVICES
   #==============================================================================
-  # Services for multiplexing command sources
 
   cmd_multiplexer:
     <<: *package-base
@@ -334,31 +273,36 @@ services:
     image: cmd_multiplexer:latest
     pull_policy: build
     container_name: cmd_multiplexer
-    command: [ "ros2", "launch", "auna_control", "cmd_vel_multiplexer.launch.py", "initial_source:=cacc" ]
+    command: [ "ros2", "launch", "auna_control", "cmd_vel_multiplexer.launch.py" ]
     profiles: [ "cmd_multiplexer" ]
 
   cmd_multiplexer_robot1:
     extends: cmd_multiplexer
     container_name: cmd_multiplexer_robot1
-    command: [ "ros2", "launch", "auna_control", "cmd_vel_multiplexer.launch.py", "namespace:=robot1", "use_sim_time:=true", "initial_source:=none" ]
+    environment:
+      - ROBOT_INDEX=1
+      - INITIAL_SOURCE=OFF
     profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
 
   cmd_multiplexer_robot2:
     extends: cmd_multiplexer
     container_name: cmd_multiplexer_robot2
-    command: [ "ros2", "launch", "auna_control", "cmd_vel_multiplexer.launch.py", "namespace:=robot2", "use_sim_time:=true", "initial_source:=cacc" ]
+    environment:
+      - ROBOT_INDEX=2
+      - INITIAL_SOURCE=cacc
     profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
 
   cmd_multiplexer_robot3:
     extends: cmd_multiplexer
     container_name: cmd_multiplexer_robot3
-    command: [ "ros2", "launch", "auna_control", "cmd_vel_multiplexer.launch.py", "namespace:=robot3", "use_sim_time:=true", "initial_source:=cacc" ]
+    environment:
+      - ROBOT_INDEX=3
+      - INITIAL_SOURCE=cacc
     profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
   # CONTROL PANEL SERVICES
   #==============================================================================
-  # Services for the control panel GUI
 
   control_panel:
     <<: *gui-base
@@ -371,31 +315,32 @@ services:
     pull_policy: build
     container_name: control_panel
     command: [ "ros2", "launch", "auna_control", "control_panel.launch.py" ]
-
     profiles: [ "control_panel" ]
 
   control_panel_robot1:
     extends: control_panel
     container_name: control_panel_robot1
-    command: [ "ros2", "launch", "auna_control", "control_panel.launch.py", "robot_index:=1" ]
+    environment:
+      - ROBOT_INDEX=1
     profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
 
   control_panel_robot2:
     extends: control_panel
     container_name: control_panel_robot2
-    command: [ "ros2", "launch", "auna_control", "control_panel.launch.py", "robot_index:=2" ]
+    environment:
+      - ROBOT_INDEX=2
     profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
 
   control_panel_robot3:
     extends: control_panel
     container_name: control_panel_robot3
-    command: [ "ros2", "launch", "auna_control", "control_panel.launch.py", "robot_index:=3" ]
+    environment:
+      - ROBOT_INDEX=3
     profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
-  # LOCALIZATION SERVICES
+  # EKF LOCALIZATION SERVICES
   #==============================================================================
-  # Services for localization and state estimation
 
   ekf_localization_sim:
     <<: *package-base
@@ -413,25 +358,27 @@ services:
   ekf_localization_sim_robot1:
     extends: ekf_localization_sim
     container_name: ekf_localization_robot1
-    command: [ "ros2", "launch", "auna_ekf", "ekf_sim.launch.py", "robot_index:=1", "use_sim_time:=true" ]
+    environment:
+      - ROBOT_INDEX=1
     profiles: [ "sim_robot1", "sim_scenario", "sim_scenario_1" ]
 
   ekf_localization_sim_robot2:
     extends: ekf_localization_sim
     container_name: ekf_localization_robot2
-    command: [ "ros2", "launch", "auna_ekf", "ekf_sim.launch.py", "robot_index:=2", "use_sim_time:=true" ]
+    environment:
+      - ROBOT_INDEX=2
     profiles: [ "sim_robot2", "sim_scenario" ]
 
   ekf_localization_sim_robot3:
     extends: ekf_localization_sim
     container_name: ekf_localization_robot3
-    command: [ "ros2", "launch", "auna_ekf", "ekf_sim.launch.py", "robot_index:=3", "use_sim_time:=true" ]
+    environment:
+      - ROBOT_INDEX=3
     profiles: [ "sim_robot3", "sim_scenario" ]
 
   #==============================================================================
   # NAVIGATION SERVICES
   #==============================================================================
-  # Services for autonomous navigation and path planning
 
   nav2_stack:
     <<: *gui-base
@@ -443,31 +390,33 @@ services:
     image: nav2_stack:latest
     pull_policy: build
     container_name: nav2_stack
-
+    command: [ "ros2", "launch", "auna_nav2", "navigation_single_robot.launch.py", "use_sim_time:=true" ]
     profiles: [ "base" ]
 
   nav2_stack_robot1:
     extends: nav2_stack
     container_name: nav2_stack_robot1
-    command: [ "ros2", "launch", "auna_nav2", "navigation_single_robot.launch.py", "robot_index:=1", "use_sim_time:=true" ]
+    environment:
+      - ROBOT_INDEX=1
     profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
 
   nav2_stack_robot2:
     extends: nav2_stack
     container_name: nav2_stack_robot2
-    command: [ "ros2", "launch", "auna_nav2", "navigation_single_robot.launch.py", "robot_index:=2", "use_sim_time:=true" ]
+    environment:
+      - ROBOT_INDEX=2
     profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
 
   nav2_stack_robot3:
     extends: nav2_stack
     container_name: nav2_stack_robot3
-    command: [ "ros2", "launch", "auna_nav2", "navigation_single_robot.launch.py", "robot_index:=3", "use_sim_time:=true" ]
+    environment:
+      - ROBOT_INDEX=3
     profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
   # CACC CONTROLLER SERVICES
   #==============================================================================
-  # Services for Cooperative Adaptive Cruise Control (CACC) controllers
 
   cacc_controller:
     <<: *package-base
@@ -485,25 +434,27 @@ services:
   cacc_controller_robot1:
     extends: cacc_controller
     container_name: cacc_controller_robot1
-    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "robot_index:=1", "use_waypoints:=true" ]
+    environment:
+      - ROBOT_INDEX=1
     profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
 
   cacc_controller_robot2:
     extends: cacc_controller
     container_name: cacc_controller_robot2
-    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "robot_index:=2", "use_waypoints:=false" ]
+    environment:
+      - ROBOT_INDEX=2
     profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
 
   cacc_controller_robot3:
     extends: cacc_controller
     container_name: cacc_controller_robot3
-    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "robot_index:=3", "use_waypoints:=false" ]
+    environment:
+      - ROBOT_INDEX=3
     profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
   # WALL FOLLOWING SERVICES
   #==============================================================================
-  # Services for wall following behavior
 
   wallfollowing:
     <<: *package-base
@@ -521,43 +472,27 @@ services:
   wallfollowing_robot1:
     extends: wallfollowing
     container_name: wallfollowing_robot1
-    command: [ "ros2", "launch", "auna_wallfollowing", "wallfollowing.launch.py", "robot_index:=1", "namespace:=robot1" ]
+    environment:
+      - ROBOT_INDEX=1
     profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
 
   wallfollowing_robot2:
     extends: wallfollowing
     container_name: wallfollowing_robot2
-    command: [ "ros2", "launch", "auna_wallfollowing", "wallfollowing.launch.py", "robot_index:=2", "namespace:=robot2" ]
+    environment:
+      - ROBOT_INDEX=2
     profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
 
   wallfollowing_robot3:
     extends: wallfollowing
     container_name: wallfollowing_robot3
-    command: [ "ros2", "launch", "auna_wallfollowing", "wallfollowing.launch.py", "robot_index:=3", "namespace:=robot3" ]
+    environment:
+      - ROBOT_INDEX=3
     profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
-
-  #==============================================================================
-  # CURVE FITTING SERVICES
-  #==============================================================================
-  # Services for curve fitting behavior
-
-  curve_fitting:
-    <<: *gui-base
-    build:
-      <<: *build-package-base
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-        - PACKAGE_NAMES=${WAYPOINT_PUBLISHER_PACKAGES}
-    image: curve_fitting:latest
-    pull_policy: build
-    container_name: curve_fitting
-    command: [ "ros2", "launch", "auna_waypoints", "curve_fitting.launch.py" ]
-    profiles: [ "curve_fitting" ]
 
   #==============================================================================
   # WAYPOINT PUBLISHER SERVICES
   #==============================================================================
-  # Services for publishing waypoints
 
   nav2_waypoint_publisher:
     <<: *package-base
@@ -575,90 +510,45 @@ services:
   nav2_waypoint_publisher_robot1:
     extends: nav2_waypoint_publisher
     container_name: nav2_waypoint_publisher_robot1
-    command: [ "ros2", "launch", "auna_waypoints", "nav2_waypoint_publisher.launch.py", "robot_index:=1" ]
-    depends_on:
-      - nav2_stack_robot1
+    environment:
+      - ROBOT_INDEX=1
     profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
 
   nav2_waypoint_publisher_robot2:
     extends: nav2_waypoint_publisher
     container_name: nav2_waypoint_publisher_robot2
-    command: [ "ros2", "launch", "auna_waypoints", "nav2_waypoint_publisher.launch.py", "robot_index:=2" ]
-    depends_on:
-      - nav2_stack_robot2
+    environment:
+      - ROBOT_INDEX=2
     profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
 
   nav2_waypoint_publisher_robot3:
     extends: nav2_waypoint_publisher
     container_name: nav2_waypoint_publisher_robot3
-    command: [ "ros2", "launch", "auna_waypoints", "nav2_waypoint_publisher.launch.py", "robot_index:=3" ]
-    depends_on:
-      - nav2_stack_robot3
-    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
-
-  #==============================================================================
-  # COMMUNICATION SERVICES
-  #==============================================================================
-  # Services for inter-robot communication
-
-  cam_communication:
-    <<: *package-base
-    build:
-      <<: *build-package-base
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-        - PACKAGE_NAMES=${COMM_PACKAGES}
-    image: cam_communication:latest
-    pull_policy: build
-    container_name: cam_communication
-    command: [ "ros2", "launch", "auna_comm", "single_cam_communication.launch.py" ]
     environment:
-      - COMMUNICATION_TYPE=${COMMUNICATION_TYPE}
-
-    profiles: [ "base" ]
-
-  cam_communication_robot1:
-    extends: cam_communication
-    container_name: cam_communication_robot1
-    command: [ "ros2", "launch", "auna_comm", "single_cam_communication.launch.py", "robot_index:=1", "namespace:=robot1" ]
-    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
-
-  cam_communication_robot2:
-    extends: cam_communication
-    container_name: cam_communication_robot2
-    command: [ "ros2", "launch", "auna_comm", "single_cam_communication.launch.py", "robot_index:=2", "namespace:=robot2" ]
-    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
-
-  cam_communication_robot3:
-    extends: cam_communication
-    container_name: cam_communication_robot3
-    command: [ "ros2", "launch", "auna_comm", "single_cam_communication.launch.py", "robot_index:=3", "namespace:=robot3" ]
+      - ROBOT_INDEX=3
     profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
-  # TRACING SERVICES
+  # MAP SERVICES
   #==============================================================================
-  # Services for ros2 tracing
-  tracing:
+
+  map_server:
     <<: *package-base
     build:
       <<: *build-package-base
       args:
         - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-    image: tracing:latest
-    volumes:
-      - ./traces:/home/ubuntu/workspace/traces
+        - PACKAGE_NAMES=${NAV2_PACKAGES}
+    image: map_server:latest
     pull_policy: build
-    container_name: tracing
-    command: [ "/bin/bash", "-c", "sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace/traces && source /opt/ros/humble/setup.bash && source /home/ubuntu/tracing/install/setup.bash && ros2 trace" ]
-    profiles: [ "tracing" ]
+    container_name: map_server
+    command: [ "ros2", "launch", "auna_nav2", "map_server.launch.py", "map_name:=${MAP_NAME}" ]
+    profiles: [ "sim", "sim_scenario" ]
 
   #==============================================================================
   # DEVELOPMENT SERVICES
   #==============================================================================
-  # Services for development and debugging
 
-  # Development environment - interactive container for development
   development:
     <<: *dev-base
     image: development:latest
@@ -666,6 +556,41 @@ services:
     container_name: development
     command: [ "/bin/bash", "-c", "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && cd .. && /bin/bash" ]
     profiles: [ "development" ]
+
+  #==============================================================================
+  # CONTROL & TELEOPERATION SERVICES
+  #==============================================================================
+
+  teleop:
+    <<: *gui-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${TELEOP_PACKAGES}
+    image: teleop:latest
+    pull_policy: build
+    container_name: teleop
+    command: [ "/bin/bash", "-c", "source /home/ubuntu/workspace/packages/install/setup.bash && cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args --params-file src/auna_teleoperation/config/key_teleop.yaml" ]
+    profiles: [ "teleop", "manual_control" ]
+
+  #==============================================================================
+  # CURVE FITTING SERVICES
+  #==============================================================================
+
+  curve_fitting:
+    <<: *gui-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${WAYPOINT_PUBLISHER_PACKAGES}
+    image: curve_fitting:latest
+  # Services for development and debugging
+
+  #==============================================================================
+  # DEMO SERVICES
+  #==============================================================================
 
   talker:
     <<: *package-base
@@ -693,6 +618,10 @@ services:
     command: [ "ros2", "run", "demo_nodes_cpp", "listener" ]
     profiles: [ "listener" ]
 
+  #==============================================================================
+  # TF2 TOOLS
+  #==============================================================================
+
   tf2_trees:
     <<: *package-base
     build:
@@ -707,6 +636,10 @@ services:
       - .:/home/ubuntu/workspace:cached
     command: [ "bash", "-c", "mkdir -p tf2_trees && cd tf2_trees &&ros2 run tf2_tools view_frames && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot1/tf -r /tf_static:=/robot1/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot2/tf -r /tf_static:=/robot2/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot3/tf -r /tf_static:=/robot3/tf_static" ]
     profiles: [ "tf2_trees" ]
+
+  #==============================================================================
+  # RQT SERVICES
+  #==============================================================================
 
   rqt_base:
     <<: *gui-base
@@ -732,3 +665,129 @@ services:
     container_name: rqt_graph
     command: [ "ros2", "run", "rqt_graph", "rqt_graph" ]
     profiles: [ "rqt_graph" ]
+
+  #==============================================================================
+  # COMMUNICATION SERVICES
+  #==============================================================================
+
+  cam_communication:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+        - PACKAGE_NAMES=${COMM_PACKAGES}
+    image: cam_communication:latest
+    pull_policy: build
+    container_name: cam_communication
+    command: [ "ros2", "launch", "auna_comm", "single_cam_communication.launch.py" ]
+    profiles: [ "base" ]
+
+  cam_communication_robot1:
+    extends: cam_communication
+    container_name: cam_communication_robot1
+    environment:
+      - ROBOT_INDEX=1
+    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
+
+  cam_communication_robot2:
+    extends: cam_communication
+    container_name: cam_communication_robot2
+    environment:
+      - ROBOT_INDEX=2
+    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
+
+  cam_communication_robot3:
+    extends: cam_communication
+    container_name: cam_communication_robot3
+    environment:
+      - ROBOT_INDEX=3
+    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
+
+  #==============================================================================
+  # OMNET SERVICES
+  #==============================================================================
+
+  omnet:
+    <<: *gui-base
+    build:
+      context: .
+      dockerfile: dockerfiles/omnet.dockerfile
+    image: omnet:latest
+    pull_policy: build
+    container_name: omnet
+    command: [ "/bin/bash", "-c", "echo 'Hello from OMNeT++!' && exec /bin/bash" ]
+    profiles: [ "omnet" ]
+
+  #==============================================================================
+  # TRACING SERVICES
+  #==============================================================================
+
+  tracing:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    image: tracing:latest
+    pull_policy: build
+    container_name: tracing
+    command: [ "/bin/bash", "-c", "ros2 trace" ]
+    profiles: [ "tracing" ]
+
+  analysis:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+      args:
+        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    volumes:
+      - .:/home/ubuntu/workspace
+    image: tracing:latest
+    pull_policy: build
+    container_name: analysis
+    command: [ "/bin/bash", "-c", "/bin/bash" ]
+    profiles: [ "tracing" ]
+
+  # Add a test service to your docker-compose.yml
+  test_tracing:
+    <<: *package-base
+    image: test_tracing:latest
+    container_name: test_tracing
+    command: [ "/bin/bash", "-c", "while true; do ros2 topic pub /test_topic std_msgs/String 'data: hello'; sleep 0.01; done" ]
+    profiles: [ "test_tracing" ]
+
+  #==============================================================================
+  # WAYPOINT PUBLISHER SERVICES
+  #==============================================================================
+
+  cacc_waypoint_publisher:
+    <<: *package-base
+    build:
+      <<: *build-package-base
+    image: cacc_waypoint_publisher:latest
+    pull_policy: build
+    container_name: cacc_waypoint_publisher
+    command: [ "ros2", "launch", "auna_waypoints", "cacc_waypoint_publisher.launch.py" ]
+    profiles: [ "cacc_waypoint_publisher" ]
+
+  cacc_waypoint_publisher_robot1:
+    extends: cacc_waypoint_publisher
+    container_name: cacc_waypoint_publisher_robot1
+    environment:
+      - ROBOT_INDEX=1
+    profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
+
+  cacc_waypoint_publisher_robot2:
+    extends: cacc_waypoint_publisher
+    container_name: cacc_waypoint_publisher_robot2
+    environment:
+      - ROBOT_INDEX=2
+    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
+
+  cacc_waypoint_publisher_robot3:
+    extends: cacc_waypoint_publisher
+    container_name: cacc_waypoint_publisher_robot3
+    environment:
+      - ROBOT_INDEX=3
+    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]

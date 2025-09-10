@@ -15,7 +15,7 @@ def include_launch_description(context: LaunchContext):
     launch_description_content = []
 
     # Get robot_index and construct namespace
-    robot_index = context.launch_configurations.get('robot_index', '0')
+    robot_index = int(os.environ.get('ROBOT_INDEX', '0'))
     namespace = f"robot{robot_index}"
 
     # Package Directories
@@ -50,13 +50,6 @@ def generate_launch_description():
     """Return launch description"""
     # Launch Description
     launch_description = LaunchDescription()
-
-    # Declare robot_index argument
-    launch_description.add_action(DeclareLaunchArgument(
-        'robot_index',
-        default_value='0',
-        description='Index of the robot to namespace the node.'
-    ))
 
     launch_description.add_action(OpaqueFunction(
         function=include_launch_description))

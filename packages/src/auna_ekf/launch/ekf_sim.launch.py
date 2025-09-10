@@ -11,8 +11,7 @@ from launch.launch_context import LaunchContext
 
 def include_launch_description(context: LaunchContext):
     """Return launch description"""
-    # Launch Configurations
-    robot_index = LaunchConfiguration('robot_index')
+    robot_index = int(os.environ.get('ROBOT_INDEX', '0'))
 
     # Individual components
     tf_remap = SetRemap(src='/tf', dst='tf')
@@ -37,7 +36,7 @@ def include_launch_description(context: LaunchContext):
 
     # Namespace group for proper topic scoping
     ekf_group = GroupAction([
-        PushRosNamespace('robot' + robot_index.perform(context)),
+        PushRosNamespace(f'robot{robot_index}'),
         tf_remap,
         tf_static_remap,
         ekf_node
@@ -49,11 +48,6 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    robot_index_arg = DeclareLaunchArgument(
-        'robot_index',
-        default_value='1',
-        description='Index of the robot to spawn'
-    )
 
     declare_use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',
@@ -61,7 +55,6 @@ def generate_launch_description():
         description='Use simulation (Gazebo) clock if true'
     )
     return LaunchDescription([
-        robot_index_arg,
         declare_use_sim_time_arg,
         OpaqueFunction(function=include_launch_description)
     ])
