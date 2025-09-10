@@ -516,13 +516,8 @@ services:
     <<: *dev-base
     image: development:latest
     container_name: development
-    command:
-      [
-        "/bin/bash",
-        "-c",
-        "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && cd .. && /bin/bash",
-      ]
-    profiles: ["zenohd", "development"]
+    command: [ "/bin/bash", "-c", "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && cd .. && /bin/bash" ]
+    profiles: [ "zenohd", "development" ]
 
   #==============================================================================
   # CONTROL & TELEOPERATION SERVICES
@@ -549,8 +544,8 @@ services:
         - PACKAGE_NAMES=${WAYPOINT_PUBLISHER_PACKAGES}
     image: curve_fitting:latest
     container_name: curve_fitting
-    command: ["ros2", "launch", "auna_waypoints", "curve_fitting.launch.py"]
-    profiles: ["curve_fitting"]
+    command: [ "ros2", "launch", "auna_waypoints", "curve_fitting.launch.py" ]
+    profiles: [ "curve_fitting" ]
 
   #==============================================================================
   # DEMO SERVICES
@@ -590,7 +585,7 @@ services:
     container_name: tf2_trees
     volumes:
       - .:/home/ubuntu/workspace:cached
-    command: [ "bash", "-c", "mkdir -p tf2_trees && cd tf2_trees &&ros2 run tf2_tools view_frames && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot1/tf -r /tf_static:=/robot1/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot2/tf -r /tf_static:=/robot2/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot3/tf -r /tf_static:=/robot3/tf_static" ]
+    command: [ "bash", "-c", "mkdir -p tf2_trees && cd tf2_trees && ros2 run tf2_tools view_frames && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot1/tf -r /tf_static:=/robot1/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot2/tf -r /tf_static:=/robot2/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot3/tf -r /tf_static:=/robot3/tf_static" ]
     profiles: [ "tf2_trees" ]
 
   #==============================================================================
@@ -678,13 +673,8 @@ services:
     volumes:
       - /var/run/lttng:/var/run/lttng:rw
       - ./traces:/home/ubuntu/workspace/traces:rw
-    command:
-      [
-        "/bin/bash",
-        "-c",
-        "source /home/ubuntu/tracing/install/setup.bash && ROS_TRACE_DIR=${ROS_TRACE_DIR} ros2 trace && chown -R 1000:1000 /home/ubuntu/workspace/traces",
-      ]
-    profiles: ["tracing"]
+    command: [ "/bin/bash", "-c", "source /home/ubuntu/tracing/install/setup.bash && ROS_TRACE_DIR=${ROS_TRACE_DIR} ros2 trace && chown -R 1000:1000 /home/ubuntu/workspace/traces" ]
+    profiles: [ "tracing" ]
 
   analysis:
     <<: *package-base
@@ -710,7 +700,9 @@ services:
   cacc_waypoint_publisher:
     <<: *package-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
+      args:
+        - PACKAGE_NAMES=${WAYPOINT_PUBLISHER_PACKAGES}
     image: cacc_waypoint_publisher:latest
     pull_policy: build
     container_name: cacc_waypoint_publisher
