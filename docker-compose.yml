@@ -86,28 +86,6 @@ x-dev-base: &dev-base
 
 services:
   #==============================================================================
-<<<<<<< HEAD
-  # BASE SERVICE
-  #==============================================================================
-  # Minimal base image without ROS packages - used for building other images
-  base:
-    build:
-      context: .
-      dockerfile: dockerfiles/base.dockerfile
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-        - HOST_UID=${HOST_UID}
-        - HOST_GID=${HOST_GID}
-        - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-    image: base:latest
-    pull_policy: build
-    env_file:
-      - .env
-    profiles: [ "base" ]
-
-  #==============================================================================
-=======
->>>>>>> humble
   # CORE NETWORK SERVICES
   #==============================================================================
   zenohd:
@@ -123,13 +101,8 @@ services:
     ipc: host
     image: zenohd:latest
     container_name: zenohd
-<<<<<<< HEAD
     command: [ "ros2", "run", "rmw_zenoh_cpp", "rmw_zenohd" ]
     profiles: [ "zenohd", "sim_scenario", "sim_scenario_1" ]
-=======
-    command: ["ros2", "run", "rmw_zenoh_cpp", "rmw_zenohd"]
-    profiles: ["zenohd", "sim_scenario", "sim_scenario_1", "development"]
->>>>>>> humble
 
   #==============================================================================
   # GAZEBO SERVICES
@@ -488,30 +461,18 @@ services:
   #==============================================================================
   # WAYPOINT PUBLISHER SERVICES
   #==============================================================================
-<<<<<<< HEAD
 
   nav2_waypoint_publisher:
-=======
-  waypoint_publisher:
->>>>>>> humble
     <<: *package-base
     build:
       <<: *build-auna
       args:
         - PACKAGE_NAMES=${WAYPOINT_PUBLISHER_PACKAGES}
-<<<<<<< HEAD
     image: nav2_waypoint_publisher:latest
     pull_policy: build
     container_name: nav2_waypoint_publisher
     command: [ "ros2", "launch", "auna_waypoints", "nav2_waypoint_publisher.launch.py" ]
     profiles: [ "nav2_waypoint_publisher" ]
-=======
-    image: waypoint_publisher:latest
-    container_name: waypoint_publisher
-    command:
-      ["ros2", "launch", "auna_waypoints", "waypoint_publisher.launch.py"]
-    profiles: ["waypoint_publisher"]
->>>>>>> humble
 
   nav2_waypoint_publisher_robot1:
     extends: nav2_waypoint_publisher
@@ -555,10 +516,6 @@ services:
     <<: *dev-base
     image: development:latest
     container_name: development
-<<<<<<< HEAD
-    command: [ "/bin/bash", "-c", "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && cd .. && /bin/bash" ]
-    profiles: [ "development" ]
-=======
     command:
       [
         "/bin/bash",
@@ -566,7 +523,6 @@ services:
         "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && cd .. && /bin/bash",
       ]
     profiles: ["zenohd", "development"]
->>>>>>> humble
 
   #==============================================================================
   # CONTROL & TELEOPERATION SERVICES
@@ -592,13 +548,9 @@ services:
       args:
         - PACKAGE_NAMES=${WAYPOINT_PUBLISHER_PACKAGES}
     image: curve_fitting:latest
-<<<<<<< HEAD
-  # Services for development and debugging
-=======
     container_name: curve_fitting
     command: ["ros2", "launch", "auna_waypoints", "curve_fitting.launch.py"]
     profiles: ["curve_fitting"]
->>>>>>> humble
 
   #==============================================================================
   # DEMO SERVICES
@@ -722,10 +674,6 @@ services:
     <<: *package-base
     image: tracing:latest
     container_name: tracing
-<<<<<<< HEAD
-    command: [ "/bin/bash", "-c", "ros2 trace" ]
-    profiles: [ "tracing" ]
-=======
     user: root
     volumes:
       - /var/run/lttng:/var/run/lttng:rw
@@ -737,23 +685,16 @@ services:
         "source /home/ubuntu/tracing/install/setup.bash && ROS_TRACE_DIR=${ROS_TRACE_DIR} ros2 trace && chown -R 1000:1000 /home/ubuntu/workspace/traces",
       ]
     profiles: ["tracing"]
->>>>>>> humble
 
   analysis:
     <<: *package-base
     volumes:
       - .:/home/ubuntu/workspace
     image: tracing:latest
-<<<<<<< HEAD
     pull_policy: build
     container_name: analysis
     command: [ "/bin/bash", "-c", "/bin/bash" ]
     profiles: [ "tracing" ]
-=======
-    container_name: analysis
-    command: ["/bin/bash", "-c", "/bin/bash"]
-    profiles: ["tracing"]
->>>>>>> humble
 
   test_tracing:
     <<: *package-base
