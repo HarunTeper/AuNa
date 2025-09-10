@@ -1,7 +1,8 @@
 ---
 #------------------------------------------------------------------------------
-# EXTENSION DEFINITIONS
+# UNIFIED DOCKER COMPOSE
 #------------------------------------------------------------------------------
+
 x-common-base: &common-base
   privileged: true
   network_mode: host
@@ -10,42 +11,53 @@ x-common-base: &common-base
   stdin_open: true
   tty: true
   pull_policy: build
+  ipc: host
+  pid: "host"
 
-x-build-package-base: &build-package-base
+x-build-auna: &build-auna
   context: .
-  dockerfile: dockerfiles/package.dockerfile
+  dockerfile: dockerfiles/auna.dockerfile
   args:
-    PIP_BREAK_SYSTEM_PACKAGES: ${PIP_BREAK_SYSTEM_PACKAGES}
+    - ROS_DISTRO=${ROS_DISTRO}
+    - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    - HOST_UID=${HOST_UID}
+    - HOST_GID=${HOST_GID}
+    - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
+    - RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION}
+  target: runtime
 
 x-package-base: &package-base
   <<: *common-base
   build:
-    <<: *build-package-base
+    <<: *build-auna
   volumes:
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
-    - ./traces:/shared/traces:rw
-    - ./lttng:/shared/lttng:rw
+    - /var/run/lttng:/var/run/lttng:rw
 
 x-physical-base: &physical-base
   <<: *common-base
   build:
-    <<: *build-package-base
+    <<: *build-auna
   volumes:
-    - /dev:/dev
+    # Packages
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
-    - ./traces:/shared/traces:rw
-    - ./lttng:/shared/lttng:rw
+    # IO
+    - /dev:/dev
+    # Tracing
+    - /var/run/lttng:/var/run/lttng:rw
 
 x-gui-base: &gui-base
   <<: *common-base
   build:
-    <<: *build-package-base
+    <<: *build-auna
   volumes:
+    # Packages
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
-    - ./traces:/shared/traces:rw
-    - ./lttng:/shared/lttng:rw
+    # GUI
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
     - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
+    # Tracing
+    - /var/run/lttng:/var/run/lttng:rw
   environment:
     - DISPLAY=${DISPLAY}
     - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
@@ -54,16 +66,19 @@ x-gui-base: &gui-base
 x-dev-base: &dev-base
   <<: *common-base
   build:
-    context: .
-    dockerfile: dockerfiles/development.dockerfile
-    args:
-      - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
+    <<: *build-auna
+    target: development
   user: "ubuntu"
   volumes:
-    - /dev:/dev
+    # Workspace
     - .:/home/ubuntu/workspace:cached
+    # IO
+    - /dev:/dev
+    # GUI
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
     - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
+    # Tracing
+    - /var/run/lttng:/var/run/lttng:rw
   environment:
     - DISPLAY=${DISPLAY}
     - XDG_RUNTIME_DIR=/tmp/runtime-ubuntu
@@ -71,6 +86,7 @@ x-dev-base: &dev-base
 
 services:
   #==============================================================================
+<<<<<<< HEAD
   # BASE SERVICE
   #==============================================================================
   # Minimal base image without ROS packages - used for building other images
@@ -90,31 +106,41 @@ services:
     profiles: [ "base" ]
 
   #==============================================================================
+=======
+>>>>>>> humble
   # CORE NETWORK SERVICES
   #==============================================================================
-
-  # Zenohd - distributed data exchange service
   zenohd:
-    <<: *package-base
-    image: zenohd:latest
+    build:
+      <<: *build-auna
+    privileged: true
+    network_mode: host
+    env_file:
+      - .env
+    stdin_open: true
+    tty: true
     pull_policy: build
+    ipc: host
+    image: zenohd:latest
     container_name: zenohd
+<<<<<<< HEAD
     command: [ "ros2", "run", "rmw_zenoh_cpp", "rmw_zenohd" ]
     profiles: [ "zenohd", "sim_scenario", "sim_scenario_1" ]
+=======
+    command: ["ros2", "run", "rmw_zenoh_cpp", "rmw_zenohd"]
+    profiles: ["zenohd", "sim_scenario", "sim_scenario_1", "development"]
+>>>>>>> humble
 
   #==============================================================================
   # GAZEBO SERVICES
   #==============================================================================
-
   gazebo:
     <<: *gui-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${GAZEBO_PACKAGES}
     image: gazebo:latest
-    pull_policy: build
     container_name: gazebo
     command: [ "/bin/bash", "-c", "ros2 launch auna_gazebo gazebo_world.launch.py use_sim_time:=true" ]
     profiles: [ "sim", "sim_scenario", "sim_scenario_1" ]
@@ -122,12 +148,10 @@ services:
   spawn_robot:
     <<: *package-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${GAZEBO_PACKAGES}
     image: spawn_robot:latest
-    pull_policy: build
     container_name: spawn_robot
     command: [ "ros2", "launch", "auna_gazebo", "spawn_robot.launch.py" ]
     profiles: [ "spawn_robot" ]
@@ -156,16 +180,13 @@ services:
   #==============================================================================
   # GROUND TRUTH SERVICES
   #==============================================================================
-
   ground_truth_static_transform:
     <<: *package-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${GROUND_TRUTH_PACKAGES}
     image: ground_truth_static_transform:latest
-    pull_policy: build
     container_name: ground_truth_static_transform
     command: [ "ros2", "launch", "auna_ground_truth", "static_transform.launch.py", "use_sim_time:=true" ]
     profiles: [ "sim", "sim_scenario", "sim_scenario_1" ]
@@ -173,12 +194,10 @@ services:
   ground_truth:
     <<: *package-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${GROUND_TRUTH_PACKAGES}
     image: ground_truth:latest
-    pull_policy: build
     container_name: ground_truth
     command: [ "ros2", "launch", "auna_ground_truth", "ground_truth.launch.py" ]
     profiles: [ "ground_truth" ]
@@ -207,16 +226,13 @@ services:
   #==============================================================================
   # TF SERVICES
   #==============================================================================
-
   global_tf:
     <<: *package-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${TF_PACKAGES}
     image: global_tf:latest
-    pull_policy: build
     container_name: global_tf
     command: [ "ros2", "launch", "auna_tf", "global_tf.launch.py", "use_sim_time:=true" ]
     profiles: [ "sim", "sim_scenario", "sim_scenario_1" ]
@@ -224,16 +240,13 @@ services:
   #==============================================================================
   # LOCALIZATION SERVICES
   #==============================================================================
-
   localization_pose:
     <<: *package-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${TF_PACKAGES}
     image: localization_pose:latest
-    pull_policy: build
     container_name: localization_pose
     command: [ "ros2", "launch", "auna_tf", "localization_pose_publisher.launch.py", "use_sim_time:=true" ]
     profiles: [ "localization_pose" ]
@@ -262,16 +275,13 @@ services:
   #==============================================================================
   # CMD MULTIPLEXER SERVICES
   #==============================================================================
-
   cmd_multiplexer:
     <<: *package-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${CONTROL_PANEL_PACKAGES}
     image: cmd_multiplexer:latest
-    pull_policy: build
     container_name: cmd_multiplexer
     command: [ "ros2", "launch", "auna_control", "cmd_vel_multiplexer.launch.py" ]
     profiles: [ "cmd_multiplexer" ]
@@ -303,16 +313,13 @@ services:
   #==============================================================================
   # CONTROL PANEL SERVICES
   #==============================================================================
-
   control_panel:
     <<: *gui-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${CONTROL_PANEL_PACKAGES}
     image: control_panel:latest
-    pull_policy: build
     container_name: control_panel
     command: [ "ros2", "launch", "auna_control", "control_panel.launch.py" ]
     profiles: [ "control_panel" ]
@@ -341,16 +348,13 @@ services:
   #==============================================================================
   # EKF LOCALIZATION SERVICES
   #==============================================================================
-
   ekf_localization_sim:
     <<: *package-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${EKF_PACKAGES}
     image: ekf_localization:latest
-    pull_policy: build
     container_name: ekf_localization
     command: [ "ros2", "launch", "auna_ekf", "ekf_sim.launch.py" ]
     profiles: [ "ekf_localization" ]
@@ -379,16 +383,13 @@ services:
   #==============================================================================
   # NAVIGATION SERVICES
   #==============================================================================
-
   nav2_stack:
     <<: *gui-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${NAV2_PACKAGES}
     image: nav2_stack:latest
-    pull_policy: build
     container_name: nav2_stack
     command: [ "ros2", "launch", "auna_nav2", "navigation_single_robot.launch.py", "use_sim_time:=true" ]
     profiles: [ "base" ]
@@ -417,16 +418,13 @@ services:
   #==============================================================================
   # CACC CONTROLLER SERVICES
   #==============================================================================
-
   cacc_controller:
     <<: *package-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${CACC_PACKAGES}
     image: cacc_controller:latest
-    pull_policy: build
     container_name: cacc_controller
     command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "use_waypoints:=false" ]
     profiles: [ "cacc_controller" ]
@@ -455,16 +453,13 @@ services:
   #==============================================================================
   # WALL FOLLOWING SERVICES
   #==============================================================================
-
   wallfollowing:
     <<: *package-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${WALLFOLLOWING_PACKAGES}
     image: wallfollowing:latest
-    pull_policy: build
     container_name: wallfollowing
     command: [ "ros2", "launch", "auna_wallfollowing", "wallfollowing.launch.py" ]
     profiles: [ "wallfollowing" ]
@@ -493,19 +488,30 @@ services:
   #==============================================================================
   # WAYPOINT PUBLISHER SERVICES
   #==============================================================================
+<<<<<<< HEAD
 
   nav2_waypoint_publisher:
+=======
+  waypoint_publisher:
+>>>>>>> humble
     <<: *package-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${WAYPOINT_PUBLISHER_PACKAGES}
+<<<<<<< HEAD
     image: nav2_waypoint_publisher:latest
     pull_policy: build
     container_name: nav2_waypoint_publisher
     command: [ "ros2", "launch", "auna_waypoints", "nav2_waypoint_publisher.launch.py" ]
     profiles: [ "nav2_waypoint_publisher" ]
+=======
+    image: waypoint_publisher:latest
+    container_name: waypoint_publisher
+    command:
+      ["ros2", "launch", "auna_waypoints", "waypoint_publisher.launch.py"]
+    profiles: ["waypoint_publisher"]
+>>>>>>> humble
 
   nav2_waypoint_publisher_robot1:
     extends: nav2_waypoint_publisher
@@ -531,16 +537,13 @@ services:
   #==============================================================================
   # MAP SERVICES
   #==============================================================================
-
   map_server:
     <<: *package-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${NAV2_PACKAGES}
     image: map_server:latest
-    pull_policy: build
     container_name: map_server
     command: [ "ros2", "launch", "auna_nav2", "map_server.launch.py", "map_name:=${MAP_NAME}" ]
     profiles: [ "sim", "sim_scenario" ]
@@ -548,28 +551,33 @@ services:
   #==============================================================================
   # DEVELOPMENT SERVICES
   #==============================================================================
-
   development:
     <<: *dev-base
     image: development:latest
-    pull_policy: build
     container_name: development
+<<<<<<< HEAD
     command: [ "/bin/bash", "-c", "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && cd .. && /bin/bash" ]
     profiles: [ "development" ]
+=======
+    command:
+      [
+        "/bin/bash",
+        "-c",
+        "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && cd .. && /bin/bash",
+      ]
+    profiles: ["zenohd", "development"]
+>>>>>>> humble
 
   #==============================================================================
   # CONTROL & TELEOPERATION SERVICES
   #==============================================================================
-
   teleop:
     <<: *gui-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${TELEOP_PACKAGES}
     image: teleop:latest
-    pull_policy: build
     container_name: teleop
     command: [ "/bin/bash", "-c", "source /home/ubuntu/workspace/packages/install/setup.bash && cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args --params-file src/auna_teleoperation/config/key_teleop.yaml" ]
     profiles: [ "teleop", "manual_control" ]
@@ -577,30 +585,31 @@ services:
   #==============================================================================
   # CURVE FITTING SERVICES
   #==============================================================================
-
   curve_fitting:
     <<: *gui-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${WAYPOINT_PUBLISHER_PACKAGES}
     image: curve_fitting:latest
+<<<<<<< HEAD
   # Services for development and debugging
+=======
+    container_name: curve_fitting
+    command: ["ros2", "launch", "auna_waypoints", "curve_fitting.launch.py"]
+    profiles: ["curve_fitting"]
+>>>>>>> humble
 
   #==============================================================================
   # DEMO SERVICES
   #==============================================================================
-
   talker:
     <<: *package-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - INSTALL_PACKAGE_NAMES=${DEMO_PACKAGES}
     image: talker:latest
-    pull_policy: build
     container_name: talker
     command: [ "ros2", "run", "demo_nodes_cpp", "talker" ]
     profiles: [ "talker" ]
@@ -608,12 +617,10 @@ services:
   listener:
     <<: *package-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - INSTALL_PACKAGE_NAMES=${DEMO_PACKAGES}
     image: listener:latest
-    pull_policy: build
     container_name: listener
     command: [ "ros2", "run", "demo_nodes_cpp", "listener" ]
     profiles: [ "listener" ]
@@ -621,16 +628,13 @@ services:
   #==============================================================================
   # TF2 TOOLS
   #==============================================================================
-
   tf2_trees:
     <<: *package-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - INSTALL_PACKAGE_NAMES=${TF2_TOOLS_PACKAGES}
     image: tf2_trees:latest
-    pull_policy: build
     container_name: tf2_trees
     volumes:
       - .:/home/ubuntu/workspace:cached
@@ -640,16 +644,13 @@ services:
   #==============================================================================
   # RQT SERVICES
   #==============================================================================
-
   rqt_base:
     <<: *gui-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - INSTALL_PACKAGE_NAMES=${RQT_PACKAGES}
     image: rqt:latest
-    pull_policy: build
     container_name: rqt
     command: [ "rqt" ]
     profiles: [ "rqt" ]
@@ -669,16 +670,13 @@ services:
   #==============================================================================
   # COMMUNICATION SERVICES
   #==============================================================================
-
   cam_communication:
     <<: *package-base
     build:
-      <<: *build-package-base
+      <<: *build-auna
       args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
         - PACKAGE_NAMES=${COMM_PACKAGES}
     image: cam_communication:latest
-    pull_policy: build
     container_name: cam_communication
     command: [ "ros2", "launch", "auna_comm", "single_cam_communication.launch.py" ]
     profiles: [ "base" ]
@@ -707,14 +705,12 @@ services:
   #==============================================================================
   # OMNET SERVICES
   #==============================================================================
-
   omnet:
     <<: *gui-base
     build:
       context: .
       dockerfile: dockerfiles/omnet.dockerfile
     image: omnet:latest
-    pull_policy: build
     container_name: omnet
     command: [ "/bin/bash", "-c", "echo 'Hello from OMNeT++!' && exec /bin/bash" ]
     profiles: [ "omnet" ]
@@ -722,34 +718,43 @@ services:
   #==============================================================================
   # TRACING SERVICES
   #==============================================================================
-
   tracing:
     <<: *package-base
-    build:
-      <<: *build-package-base
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
     image: tracing:latest
-    pull_policy: build
     container_name: tracing
+<<<<<<< HEAD
     command: [ "/bin/bash", "-c", "ros2 trace" ]
     profiles: [ "tracing" ]
+=======
+    user: root
+    volumes:
+      - /var/run/lttng:/var/run/lttng:rw
+      - ./traces:/home/ubuntu/workspace/traces:rw
+    command:
+      [
+        "/bin/bash",
+        "-c",
+        "source /home/ubuntu/tracing/install/setup.bash && ROS_TRACE_DIR=${ROS_TRACE_DIR} ros2 trace && chown -R 1000:1000 /home/ubuntu/workspace/traces",
+      ]
+    profiles: ["tracing"]
+>>>>>>> humble
 
   analysis:
     <<: *package-base
-    build:
-      <<: *build-package-base
-      args:
-        - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
     volumes:
       - .:/home/ubuntu/workspace
     image: tracing:latest
+<<<<<<< HEAD
     pull_policy: build
     container_name: analysis
     command: [ "/bin/bash", "-c", "/bin/bash" ]
     profiles: [ "tracing" ]
+=======
+    container_name: analysis
+    command: ["/bin/bash", "-c", "/bin/bash"]
+    profiles: ["tracing"]
+>>>>>>> humble
 
-  # Add a test service to your docker-compose.yml
   test_tracing:
     <<: *package-base
     image: test_tracing:latest

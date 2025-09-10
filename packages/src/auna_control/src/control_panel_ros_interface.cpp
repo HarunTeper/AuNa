@@ -76,7 +76,18 @@ void ControlPanelROSInterface::createClientsAndSubscribers()
 
 void ControlPanelROSInterface::setNamespace(const QString & ns)
 {
-  current_namespace_ = ns.toStdString();
+  // Validate the namespace string to prevent crashes
+  std::string ns_str = ns.toStdString();
+  
+  // Check for invalid characters that could cause ROS topic/service name issues
+  if (ns_str.find(' ') != std::string::npos) {
+    if (node_) {
+      RCLCPP_WARN(node_->get_logger(), "Invalid namespace with spaces: '%s', ignoring", ns_str.c_str());
+    }
+    return;
+  }
+  
+  current_namespace_ = ns_str;
   if (node_) {
     RCLCPP_DEBUG(node_->get_logger(), "Setting namespace to: '%s'", current_namespace_.c_str());
   }

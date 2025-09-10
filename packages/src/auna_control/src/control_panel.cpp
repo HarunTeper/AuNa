@@ -1,6 +1,7 @@
 #include "auna_control/control_panel.hpp"
 
 #include <QtCore/QTimer>
+#include <QtCore/QRegExp>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QGroupBox>
 #include <QtWidgets/QHBoxLayout>
@@ -70,6 +71,7 @@ void ControlPanel::setupUI()
   layout_->addWidget(ns_group);
 
   namespace_input_ = new QLineEdit("");
+  namespace_input_->setToolTip("Enter a valid ROS namespace (alphanumeric, underscore, and forward slash only)");
   ns_layout->addWidget(namespace_input_);
 
   emergency_stop_button_ = new QPushButton("Emergency STOP");
@@ -93,12 +95,24 @@ void ControlPanel::setupUI()
 
 void ControlPanel::onNamespaceChanged(const QString & text)
 {
+  // Validate namespace - ROS names cannot contain spaces or other invalid characters
+  QString cleaned_text = text;
+  // Remove spaces and other invalid characters
+  cleaned_text.replace(QRegExp("[^a-zA-Z0-9_/]"), "");
+  
+  // If the text was modified, update the input field
+  if (cleaned_text != text) {
+    namespace_input_->blockSignals(true);
+    namespace_input_->setText(cleaned_text);
+    namespace_input_->blockSignals(false);
+  }
+  
   RCLCPP_DEBUG(
-    rclcpp::get_logger("ControlPanel"), "Namespace changed to: %s", text.toStdString().c_str());
+    rclcpp::get_logger("ControlPanel"), "Namespace changed to: %s", cleaned_text.toStdString().c_str());
   last_known_source_ = "";
   source_combo_box_->clear();
   source_combo_box_->addItem("Querying...");
-  control_panel_ros_interface_->setNamespace(text);
+  control_panel_ros_interface_->setNamespace(cleaned_text);
 }
 
 void ControlPanel::onEmergencyStopClicked()

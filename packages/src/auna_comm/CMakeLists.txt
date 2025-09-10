@@ -17,7 +17,6 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 
-# Replace auna_its_msgs with etsi_its_cam_msgs and etsi_its_msgs_utils
 find_package(etsi_its_cam_msgs REQUIRED)
 find_package(etsi_its_msgs_utils REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -47,10 +46,6 @@ ament_target_dependencies(cam_communication_node ${cam_communication_dependencie
 ament_target_dependencies(cam_communication ${cam_communication_dependencies})
 ament_target_dependencies(cam_receiver_node ${cam_communication_dependencies})
 ament_target_dependencies(cam_receiver ${cam_communication_dependencies})
-
-# Removed communication costmap
-#set(communicaton_costmap_dependencies rclcpp std_msgs auna_its_msgs nav_msgs geometry_msgs tf2 nav2_costmap_2d pluginlib nav2_util)
-#ament_target_dependencies(communciation_costmap ${communicaton_costmap_dependencies})
 
 # Link libraries
 target_link_libraries(cam_communication cam_communication_node)

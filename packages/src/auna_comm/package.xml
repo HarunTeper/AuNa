@@ -15,7 +15,6 @@
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
   
-  <!-- Replace auna_its_msgs with etsi_its_cam_msgs and etsi_its_msgs_utils -->
   <depend>etsi_its_cam_msgs</depend>
   <depend>etsi_its_msgs_utils</depend>
   <depend>geometry_msgs</depend>
