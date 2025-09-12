@@ -59,7 +59,7 @@ CaccController::CaccController() : Node("cacc_controller")
       this->cam_callback(msg);
     });
   sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    "odometry/filtered_ekf", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg) {
+    "odometry/filtered", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg) {
       if (!first_odom_received_) {
         RCLCPP_INFO(this->get_logger(), "Received first odom message");
         first_odom_received_ = true;
@@ -75,8 +75,9 @@ CaccController::CaccController() : Node("cacc_controller")
       this->pose_callback(msg);
     });
 
+  // Subscribe to waypoints relative to the node namespace (e.g., robot1/cacc/waypoints)
   sub_waypoints_ = this->create_subscription<geometry_msgs::msg::PoseArray>(
-    "/cacc/waypoints", 1,
+    "cacc/waypoints", 1,
     [this](const geometry_msgs::msg::PoseArray::SharedPtr msg) { this->waypoints_callback(msg); });
 
   pub_cmd_vel = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel/cacc", 1);
@@ -107,20 +108,20 @@ CaccController::CaccController() : Node("cacc_controller")
       this->set_time_gap(request, response);
     });
   client_set_cacc_enable_ = this->create_service<auna_msgs::srv::SetBool>(
-    "/cacc/set_cacc_enable", [this](
+    "cacc/set_cacc_enable", [this](
                                const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
                                std::shared_ptr<auna_msgs::srv::SetBool::Response> response) {
       this->set_cacc_enable(request, response);
     });
   client_set_target_velocity_ = this->create_service<auna_msgs::srv::SetFloat64>(
-    "/cacc/set_target_velocity",
+    "cacc/set_target_velocity",
     [this](
       const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
       std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response) {
       this->set_target_velocity(request, response);
     });
   client_set_extra_distance_ = this->create_service<auna_msgs::srv::SetFloat64>(
-    "/cacc/set_extra_distance",
+    "cacc/set_extra_distance",
     [this](
       const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
       std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response) {
@@ -142,6 +143,7 @@ CaccController::CaccController() : Node("cacc_controller")
   params_.standstill_distance = this->get_parameter("standstill_distance").as_double();
   params_.time_gap = this->get_parameter("time_gap").as_double();
   params_.kp = this->get_parameter("kp").as_double();
+  params_.kd = this->get_parameter("kd").as_double();
   params_.max_velocity = this->get_parameter("max_velocity").as_double();
   params_.frequency = this->get_parameter("frequency").as_int();
   params_.use_waypoints = this->get_parameter("use_waypoints").as_bool();
@@ -314,7 +316,6 @@ void CaccController::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
   } else {
     double dt = msg->header.stamp.sec - last_odom_msg_->header.stamp.sec +
                 (msg->header.stamp.nanosec - last_odom_msg_->header.stamp.nanosec) / 1e9;
-
     dt = std::min(dt, 0.01);
     odom_acceleration_ = (odom_velocity_ - last_odom_velocity_) / dt;
   }
@@ -534,6 +535,11 @@ void CaccController::update_waypoint_following()
     control_yaw_rate_ = 0.0;
   } else {
     double required_time = accumulated_lookahead_distance / target_vel_for_lookahead;
+    // Lower bound required_time to avoid large yaw rates due to tiny distances
+    const double MIN_REQUIRED_TIME = 0.05;  // seconds
+    if (required_time < MIN_REQUIRED_TIME) {
+      required_time = MIN_REQUIRED_TIME;
+    }
     control_yaw_rate_ = yaw_difference / required_time;
   }
 
@@ -572,7 +578,7 @@ void CaccController::update_waypoint_following()
   if (std::abs(control_velocity_) < 0.01) {
     control_curvature_ = 0.0;
   } else {
-    control_curvature_ = control_yaw_rate_ / params_.target_velocity;
+    control_curvature_ = control_yaw_rate_ / control_velocity_;
   }
 }
 
@@ -665,6 +671,12 @@ void CaccController::timer_callback()
   // Calculate control matrix inverse (invGam calculations)
   double term1 = params_.standstill_distance + params_.time_gap * odom_velocity_;
   double term2 = params_.time_gap - params_.time_gap * sin(alpha_) * sin(control_yaw_ - pose_yaw_);
+  // Clamp term2 away from zero to avoid near-singular matrix amplification
+  const double MIN_TERM2_FRACTION = 0.2;  // 20% of time_gap
+  double min_term2 = MIN_TERM2_FRACTION * std::max(1e-6, params_.time_gap);
+  if (std::abs(term2) < min_term2) {
+    term2 = std::copysign(min_term2, term2 == 0.0 ? 1.0 : term2);
+  }
   invGam_Det_ = term1 * term2;
 
   // Prevent division by zero with minimum threshold
