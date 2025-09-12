@@ -141,14 +141,50 @@ Once the simulation starts, you'll see both **Gazebo** (simulation) and **RViz**
 
 The framework consists of several ROS2 packages organized by functionality:
 
+### Core Simulation & Control
 - **`auna_gazebo`** - Gazebo simulation environment and robot models
-- **`auna_nav2`** - Navigation2 integration and path planning  
-- **`auna_cacc`** - Cooperative Adaptive Cruise Control
-- **`auna_wallfollowing`** - Wall-following algorithms using LIDAR
 - **`auna_control`** - Input source selection and command multiplexing
-- **`auna_teleoperation`** - Manual keyboard control
+- **`auna_ground_truth`** - Ground truth localization from simulation
+
+### Navigation & Algorithms
+- **`auna_nav2`** - Navigation2 integration and path planning
+- **`auna_cacc`** - Cooperative Adaptive Cruise Control for platooning
+- **`auna_wallfollowing`** - Wall-following algorithms using LIDAR
+- **`auna_waypoints`** - Waypoint management and route planning
+
+### Localization & Transforms
+- **`auna_ekf`** - Extended Kalman Filter for sensor fusion
+- **`auna_tf`** - Transform frame management and broadcasting
+
+### Communication & Messaging
+- **`auna_comm`** - V2X communication protocols and CAM messages
+- **`auna_msgs`** - Custom ROS2 message and service definitions
+- **`auna_its_msgs`** - ITS (Intelligent Transportation Systems) messages
+- **`auna_omnet`** - OMNeT++ network simulation integration
+
+### User Interface & Control
+- **`auna_teleoperation`** - Manual keyboard and joystick control
+
+### Utilities & Templates
+- **`auna_common`** - Shared utilities and helper functions
+- **`auna_template`** - Template package for new development
+
+### Physical Hardware Support
+- **`auna_f110`** - F1/10 race car platform integration
+- **`physical/ros-g29-force-feedback`** - Logitech G29 steering wheel support
+- **`physical/vesc`** - VESC motor controller integration
 
 ## 🤝 Contributing
+
+### Development with GitHub Copilot
+
+This repository includes comprehensive GitHub Copilot instructions to help you develop more effectively. See [`.github/copilot-instructions.md`](.github/copilot-instructions.md) for:
+- Project-specific coding patterns and conventions
+- ROS2 development guidelines
+- Multi-robot system considerations
+- Package-specific development tips
+
+### General Contributing Guidelines
 
 1. **Fork the repository**
 2. **Create a feature branch**:
