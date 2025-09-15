@@ -29,18 +29,21 @@ jobs:
         apt-get install -y python3-colcon-common-extensions
         
     - name: Install dependencies
+      shell: bash
       run: |
         cd packages
         rosdep update --rosdistro ${{ matrix.ros_distribution }}
         rosdep install --from-paths src --ignore-src -r -y
     
     - name: Build packages
+      shell: bash
       run: |
         cd packages
         source /opt/ros/${{ matrix.ros_distribution }}/setup.bash
         colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
     
     - name: Run tests
+      shell: bash
       run: |
         cd packages
         source /opt/ros/${{ matrix.ros_distribution }}/setup.bash
@@ -96,5 +99,6 @@ jobs:
         docker build -f dockerfiles/auna.dockerfile -t auna:test .
     
     - name: Test Docker container
+      shell: bash
       run: |
         docker run --rm auna:test bash -c "cd packages && source /opt/ros/humble/setup.bash && colcon list"
