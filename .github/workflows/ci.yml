@@ -15,7 +15,7 @@ jobs:
         ros_distribution: [humble]
     
     container:
-      image: ros:${{ matrix.ros_distribution }}-desktop
+      image: ros:${{ matrix.ros_distribution }}
     
     steps:
     - name: Checkout code
