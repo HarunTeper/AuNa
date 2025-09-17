@@ -109,8 +109,8 @@ CaccController::CaccController() : Node("cacc_controller")
     });
   client_set_cacc_enable_ = this->create_service<auna_msgs::srv::SetBool>(
     "cacc/set_cacc_enable", [this](
-                               const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
-                               std::shared_ptr<auna_msgs::srv::SetBool::Response> response) {
+                              const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
+                              std::shared_ptr<auna_msgs::srv::SetBool::Response> response) {
       this->set_cacc_enable(request, response);
     });
   client_set_target_velocity_ = this->create_service<auna_msgs::srv::SetFloat64>(
@@ -121,10 +121,9 @@ CaccController::CaccController() : Node("cacc_controller")
       this->set_target_velocity(request, response);
     });
   client_set_extra_distance_ = this->create_service<auna_msgs::srv::SetFloat64>(
-    "cacc/set_extra_distance",
-    [this](
-      const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
-      std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response) {
+    "cacc/set_extra_distance", [this](
+                                 const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
+                                 std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response) {
       this->set_extra_distance(request, response);
     });
 
@@ -189,15 +188,28 @@ void CaccController::waypoints_callback(const geometry_msgs::msg::PoseArray::Sha
   waypoints_y_.clear();
   waypoints_yaw_.clear();
 
+  // Store positions; orientation may be empty per new publisher spec.
   for (const auto & pose : msg->poses) {
     waypoints_x_.push_back(pose.position.x);
     waypoints_y_.push_back(pose.position.y);
+  }
 
-    tf2::Quaternion q(
-      pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
-    tf2::Matrix3x3 m(q);
-    double roll, pitch, yaw;
-    m.getRPY(roll, pitch, yaw);
+  // Compute yaw from neighboring points (circular path assumption)
+  const size_t n = waypoints_x_.size();
+  if (n == 0) {
+    return;
+  }
+  waypoints_yaw_.reserve(n);
+  if (n == 1) {
+    waypoints_yaw_.push_back(0.0);
+    return;
+  }
+  for (size_t i = 0; i < n; ++i) {
+    size_t prev = (i == 0) ? (n - 1) : (i - 1);
+    size_t next = (i + 1) % n;
+    double dx = waypoints_x_[next] - waypoints_x_[prev];
+    double dy = waypoints_y_[next] - waypoints_y_[prev];
+    double yaw = std::atan2(dy, dx);
     waypoints_yaw_.push_back(yaw);
   }
 }
@@ -586,6 +598,38 @@ void CaccController::timer_callback()
 {
   if (params_.use_waypoints) {
     update_waypoint_following();
+  } else {
+    // Pure leader-following geometry path
+    // Requires CAM input to be present
+    if (last_cam_msg_ != nullptr) {
+      // Use leader state as control reference
+      control_x_ = cam_x_;
+      control_y_ = cam_y_;
+      control_yaw_ = cam_yaw_;
+      control_yaw_rate_ = cam_yaw_rate_;
+
+      // Base velocity from leader, limited by max_velocity and >= 0
+      double base_velocity = std::max(0.0, cam_velocity_);
+      control_velocity_ = std::min(base_velocity, params_.max_velocity);
+
+      // Curvature from leader (guard small speeds)
+      if (std::abs(control_velocity_) < 0.01) {
+        control_curvature_ = 0.0;
+      } else {
+        // Use leader curvature directly if available; otherwise derive from yaw rate
+        control_curvature_ = (std::abs(cam_curvature_) > 0.0)
+                               ? cam_curvature_
+                               : (control_yaw_rate_ / control_velocity_);
+      }
+
+      // For logging
+      control_acceleration_ = (control_velocity_ - control_last_velocity_) / dt_;
+      control_last_velocity_ = control_velocity_;
+    } else {
+      RCLCPP_WARN_THROTTLE(
+        this->get_logger(), *this->get_clock(), 2000,
+        "Leader-following selected but no CAM data received yet.");
+    }
   }
 
   RCLCPP_DEBUG(this->get_logger(), "=== CACC Following Status ===");
