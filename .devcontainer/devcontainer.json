@@ -13,8 +13,6 @@
 	"remoteUser": "ubuntu",
 	// Configure workspace mount point
 	"workspaceFolder": "/home/ubuntu/workspace",
-	//Initialize command:
-	"initializeCommand": "docker compose build base",
 	// Configure VS Code extensions
 	"customizations": {
 		"vscode": {
