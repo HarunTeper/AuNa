@@ -188,29 +188,46 @@ void CaccController::waypoints_callback(const geometry_msgs::msg::PoseArray::Sha
   waypoints_y_.clear();
   waypoints_yaw_.clear();
 
-  // Store positions; orientation may be empty per new publisher spec.
+  if (msg->poses.empty()) {
+    return;
+  }
+
+  waypoints_x_.reserve(msg->poses.size());
+  waypoints_y_.reserve(msg->poses.size());
+  waypoints_yaw_.reserve(msg->poses.size());
+
   for (const auto & pose : msg->poses) {
     waypoints_x_.push_back(pose.position.x);
     waypoints_y_.push_back(pose.position.y);
-  }
 
-  // Compute yaw from neighboring points (circular path assumption)
-  const size_t n = waypoints_x_.size();
-  if (n == 0) {
-    return;
-  }
-  waypoints_yaw_.reserve(n);
-  if (n == 1) {
-    waypoints_yaw_.push_back(0.0);
-    return;
-  }
-  for (size_t i = 0; i < n; ++i) {
-    size_t prev = (i == 0) ? (n - 1) : (i - 1);
-    size_t next = (i + 1) % n;
-    double dx = waypoints_x_[next] - waypoints_x_[prev];
-    double dy = waypoints_y_[next] - waypoints_y_[prev];
-    double yaw = std::atan2(dy, dx);
+    // Extract yaw from orientation if a non-zero quaternion is supplied; otherwise push
+    // placeholder.
+    const double qx = pose.orientation.x;
+    const double qy = pose.orientation.y;
+    const double qz = pose.orientation.z;
+    const double qw = pose.orientation.w;
+    double yaw = 0.0;
+    if (!(qx == 0.0 && qy == 0.0 && qz == 0.0 && (qw == 0.0 || qw == 1.0))) {
+      tf2::Quaternion q(qx, qy, qz, qw);
+      tf2::Matrix3x3 m(q);
+      double roll, pitch;
+      m.getRPY(roll, pitch, yaw);
+    }
     waypoints_yaw_.push_back(yaw);
+  }
+  // Warn if orientations were not provided (all zero yaw) – controller will proceed with zeros.
+  bool any_non_zero = false;
+  for (double y : waypoints_yaw_) {
+    if (std::abs(y) > 1e-6) {
+      any_non_zero = true;
+      break;
+    }
+  }
+  if (!any_non_zero) {
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), 5000,
+      "Received waypoints without orientation; yaw values remain zero. Ensure publishers include "
+      "yaw.");
   }
 }
 
