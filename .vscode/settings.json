@@ -2,8 +2,10 @@
     "editor.formatOnSave": true,
     "cmake.ignoreCMakeListsMissing": true,
     "clangd.path": "/usr/bin/clangd",
+    "clangd.arguments": [
+        "--enable-config"
+    ],
     "editor.fontSize": 16,
-    // set python interpreter
     "[python]": {
         "editor.defaultFormatter": "ms-python.autopep8",
         "editor.formatOnSave": true,
