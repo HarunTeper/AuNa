@@ -41,8 +41,7 @@ AuNa/
 │   ├── auna_template/        # Template package for new development
 │   ├── auna_tf/              # Transform frame management
 │   ├── auna_wallfollowing/   # Wall-following algorithms using LIDAR
-│   ├── auna_waypoints/       # Waypoint management and processing
-│   └── physical/             # Physical hardware support (currently empty)
+│   └── auna_waypoints/       # Waypoint management and processing
 ├── dockerfiles/              # Docker configuration
 ├── tf2_trees/                # TF2 transform tree documentation
 ├── traces/                   # Simulation and execution traces
