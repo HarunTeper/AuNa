@@ -64,8 +64,6 @@ Paste relevant ROS2 logs here
 - [ ] auna_tf
 - [ ] auna_wallfollowing
 - [ ] auna_waypoints
-- [ ] physical/ros-g29-force-feedback
-- [ ] physical/vesc
 - [ ] Other: _____________
 
 ## Simulation Details

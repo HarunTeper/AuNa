@@ -39,8 +39,6 @@ Which packages would this feature likely affect?
 - [ ] auna_tf
 - [ ] auna_wallfollowing
 - [ ] auna_waypoints
-- [ ] physical/ros-g29-force-feedback
-- [ ] physical/vesc
 - [ ] New package needed
 - [ ] Other: _____________
 

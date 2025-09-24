@@ -42,9 +42,7 @@ AuNa/
 │   ├── auna_tf/              # Transform frame management
 │   ├── auna_wallfollowing/   # Wall-following algorithms using LIDAR
 │   ├── auna_waypoints/       # Waypoint management and processing
-│   └── physical/             # Physical hardware support
-│       ├── ros-g29-force-feedback/ # G29 steering wheel support
-│       └── vesc/             # VESC motor controller integration
+│   └── physical/             # Physical hardware support (currently empty)
 ├── dockerfiles/              # Docker configuration
 ├── tf2_trees/                # TF2 transform tree documentation
 ├── traces/                   # Simulation and execution traces
@@ -278,7 +276,6 @@ timer_ = this->create_wall_timer(
 
 - F1/10 race car platform-specific implementations
 - Hardware abstraction layer for physical F1/10 robots
-- VESC motor controller integration
 - Sensor integration and calibration for F1/10 platform
 
 ### auna_gazebo (Simulation)
@@ -357,20 +354,6 @@ timer_ = this->create_wall_timer(
 - Route planning and execution
 - Waypoint file parsing and validation
 - Integration with navigation stack for waypoint following
-
-### physical/ros-g29-force-feedback (G29 Steering Wheel)
-
-- Support for Logitech G29 steering wheel
-- Force feedback implementation
-- Hardware interface for manual control
-- Integration with teleoperation system
-
-### physical/vesc (VESC Motor Controller)
-
-- VESC (Vedder Electronic Speed Controller) integration
-- Motor control and feedback for F1/10 platform
-- Speed and steering control interfaces
-- Hardware abstraction for motor controllers
 
 ## Build and Testing Commands
 
