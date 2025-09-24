@@ -65,7 +65,6 @@ void GroundTruthCam::model_srv_callback(
   etsi_its_cam_msgs::access::setHeading(cam_msg, heading);
 
   // Determine the speed and drive direction
-  float old_speed = this->speed_;
   float len_x = entity->state.twist.linear.x /
                 (abs(entity->state.twist.linear.x) + abs(entity->state.twist.linear.y));
   float len_y = entity->state.twist.linear.y /
