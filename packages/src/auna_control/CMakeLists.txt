@@ -25,12 +25,14 @@ find_package(pluginlib REQUIRED)
 find_package(rviz_common REQUIRED)
 find_package(rviz_default_plugins REQUIRED)
 find_package(rviz_rendering REQUIRED)
-
-# Find Qt5 packages
 find_package(Qt5 REQUIRED COMPONENTS Widgets Core)
 
-# --- cmd_vel_multiplexer_node ---
-add_executable(cmd_vel_multiplexer_node src/cmd_vel_multiplexer_node.cpp src/cmd_vel_multiplexer_main.cpp)
+# cmd_vel_multiplexer_node executable
+add_executable(cmd_vel_multiplexer_node 
+  src/cmd_vel_multiplexer_node.cpp 
+  src/cmd_vel_multiplexer_main.cpp
+)
+
 target_include_directories(cmd_vel_multiplexer_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
@@ -45,12 +47,10 @@ ament_target_dependencies(cmd_vel_multiplexer_node
   std_srvs
   yaml-cpp
 )
-target_link_libraries(cmd_vel_multiplexer_node yaml-cpp)
-install(TARGETS cmd_vel_multiplexer_node
-  DESTINATION lib/${PROJECT_NAME}
-)
 
-# --- RViz Plugin ---
+target_link_libraries(cmd_vel_multiplexer_node yaml-cpp)
+
+# RViz Plugin
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
@@ -97,7 +97,12 @@ target_link_libraries(${PROJECT_NAME}
   rviz_common::rviz_common
 )
 
-# Install plugin library
+# Install executables
+install(TARGETS cmd_vel_multiplexer_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+# Install libraries
 install(
   TARGETS ${PROJECT_NAME}
   EXPORT export_${PROJECT_NAME}
@@ -112,6 +117,7 @@ install(
   DESTINATION include
 )
 
+# Install directories
 install(
   DIRECTORY config
   DESTINATION share/${PROJECT_NAME}
@@ -123,14 +129,14 @@ install(
 )
 
 install(
-    DIRECTORY rviz
-    DESTINATION share/${PROJECT_NAME}/
+  DIRECTORY rviz
+  DESTINATION share/${PROJECT_NAME}
 )
 
 # Export plugin description
 pluginlib_export_plugin_description_file(rviz_common plugins_description.xml)
 
-# --- General ---
+# Testing
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   set(ament_cmake_copyright_FOUND TRUE)
