@@ -2,10 +2,10 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>auna_wallfollowing</name>
-  <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="root@todo.todo">root</maintainer>
-  <license>Apache-2.0</license>
+  <version>1.0.0</version>
+  <description>AuNa Wall Following Package</description>
+  <maintainer email="harun.teper@tu-dortmund.de">Harun Teper</maintainer>
+  <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

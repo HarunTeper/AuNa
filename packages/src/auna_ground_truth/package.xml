@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>auna_ground_truth</name>
-  <version>0.0.1</version>
-  <description>Ground truth publisher node</description>
-  <maintainer email="user@example.com">User</maintainer>
-  <license>Apache-2.0</license>
+  <version>1.0.0</version>
+  <description>AuNa Ground Truth Package</description>
+  <maintainer email="harun.teper@tu-dortmund.de">Harun Teper</maintainer>
+  <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
