@@ -481,20 +481,6 @@ services:
       - ROBOT_INDEX=1
     profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
 
-  nav2_waypoint_publisher_robot2:
-    extends: nav2_waypoint_publisher
-    container_name: nav2_waypoint_publisher_robot2
-    environment:
-      - ROBOT_INDEX=2
-    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
-
-  nav2_waypoint_publisher_robot3:
-    extends: nav2_waypoint_publisher
-    container_name: nav2_waypoint_publisher_robot3
-    environment:
-      - ROBOT_INDEX=3
-    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
-
   #==============================================================================
   # MAP SERVICES
   #==============================================================================
@@ -715,17 +701,3 @@ services:
     environment:
       - ROBOT_INDEX=1
     profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
-
-  cacc_waypoint_publisher_robot2:
-    extends: cacc_waypoint_publisher
-    container_name: cacc_waypoint_publisher_robot2
-    environment:
-      - ROBOT_INDEX=2
-    profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
-
-  cacc_waypoint_publisher_robot3:
-    extends: cacc_waypoint_publisher
-    container_name: cacc_waypoint_publisher_robot3
-    environment:
-      - ROBOT_INDEX=3
-    profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
