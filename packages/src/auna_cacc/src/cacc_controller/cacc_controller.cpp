@@ -6,7 +6,6 @@
 #include <etsi_its_msgs_utils/impl/cam/cam_getters_common.h>
 
 #include <cmath>
-#include <fstream>  // Added for file logging
 
 CaccController::CaccController() : Node("cacc_controller")
 {
@@ -17,35 +16,6 @@ CaccController::CaccController() : Node("cacc_controller")
   first_cam_received_ = false;
   first_odom_received_ = false;
   first_pose_received_ = false;
-
-  // Initialize data logging
-  this->declare_parameter("enable_data_logging", true);
-  this->declare_parameter("log_file_path", "/home/vscode/workspace/cacc_log.csv");
-
-  enable_data_logging_ = false;
-  log_file_path_ = this->get_parameter("log_file_path").as_string();
-
-  if (enable_data_logging_) {
-    RCLCPP_INFO(this->get_logger(), "Data logging enabled. Writing to: %s", log_file_path_.c_str());
-    log_file_.open(log_file_path_, std::ios::out | std::ios::trunc);
-    if (log_file_.is_open()) {
-      // Write CSV header (including new debug columns)
-      log_file_
-        << "timestamp,leader_x,leader_y,leader_velocity,leader_acceleration,leader_curvature,"
-        << "follower_x,follower_y,follower_velocity,follower_acceleration,"
-        << "desired_distance,actual_distance,distance_error,"
-        << "z1,z2,z3,z4,"
-        << "alpha,s,"  // Debug values start here
-        << "invGam1,invGam2,invGam3,invGam4,"
-        << "inP1_pos_err,inP1_vel_err,inP1_geom_vel,inP1_yaw_rate,"
-        << "inP2_pos_err,inP2_vel_err,inP2_geom_vel,inP2_yaw_rate,"
-        << "commanded_accel,commanded_velocity,commanded_angular" << std::endl;
-      log_file_.flush();
-    } else {
-      RCLCPP_ERROR(this->get_logger(), "Failed to open log file: %s", log_file_path_.c_str());
-      enable_data_logging_ = false;
-    }
-  }
 
   // Add topic name debug info
   RCLCPP_INFO(this->get_logger(), "Subscribing to topics: cam_filtered, odom, global_pose");
@@ -172,14 +142,6 @@ CaccController::CaccController() : Node("cacc_controller")
     [this](std::vector<rclcpp::Parameter> parameters) -> rcl_interfaces::msg::SetParametersResult {
       return this->dynamicParametersCallback(parameters);
     });
-
-  // Add cleanup for file logging
-  rclcpp::on_shutdown([this]() {
-    if (enable_data_logging_ && log_file_.is_open()) {
-      RCLCPP_INFO(this->get_logger(), "Closing log file");
-      log_file_.close();
-    }
-  });
 }
 
 void CaccController::waypoints_callback(const geometry_msgs::msg::PoseArray::SharedPtr msg)
@@ -843,37 +805,6 @@ void CaccController::timer_callback()
     this->get_logger(), "  Acceleration: %.2f m/s², Angular velocity: %.2f rad/s", a_, w_);
   RCLCPP_INFO(this->get_logger(), "  Commanded velocity: %.2f m/s (dt=%.3fs)", v_, dt_);
   RCLCPP_INFO(this->get_logger(), "===========================");
-
-  // Log data to file if enabled
-  if (enable_data_logging_ && log_file_.is_open()) {
-    // Get current timestamp
-    auto now = this->get_clock()->now();
-    double timestamp = now.seconds() + now.nanoseconds() * 1e-9;
-
-    // Write all data to CSV, including new debug values
-    log_file_ << std::fixed << std::setprecision(6) << timestamp << "," << cam_x_ << "," << cam_y_
-              << "," << cam_velocity_ << "," << cam_acceleration_ << "," << cam_curvature_
-              << ","  // Leader state
-              << pose_x_ << "," << pose_y_ << "," << odom_velocity_ << "," << odom_acceleration_
-              << ","  // Follower state
-              << distance_term << "," << actual_distance << "," << (actual_distance - distance_term)
-              << ","                                                       // Distances
-              << z_1_ << "," << z_2_ << "," << z_3_ << "," << z_4_ << ","  // Error states
-              << dbg_alpha_ << "," << dbg_s_ << ","                        // Debug: Geometry
-              << dbg_invGam_1_ << "," << dbg_invGam_2_ << "," << dbg_invGam_3_ << ","
-              << dbg_invGam_4_ << ","  // Debug: InvGamma
-              << dbg_inP1_pos_err_ << "," << dbg_inP1_vel_err_ << "," << dbg_inP1_geom_vel_ << ","
-              << dbg_inP1_yaw_rate_ << ","  // Debug: inP1 terms
-              << dbg_inP2_pos_err_ << "," << dbg_inP2_vel_err_ << "," << dbg_inP2_geom_vel_ << ","
-              << dbg_inP2_yaw_rate_ << ","     // Debug: inP2 terms
-              << a_ << "," << v_ << "," << w_  // Final commands
-              << std::endl;
-
-    // Flush periodically to ensure data is written even if program crashes
-    if (log_counter_++ % 10 == 0) {
-      log_file_.flush();
-    }
-  }
 
   pub_cmd_vel->publish(twist_msg);
 }

@@ -11,7 +11,6 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "std_msgs/msg/float64.hpp"
 
-#include <fstream>
 #include <iomanip>  // for std::setprecision
 
 // includes for tf matrix
@@ -210,10 +209,4 @@ private:
   double dbg_inP2_vel_err_ = 0;
   double dbg_inP2_geom_vel_ = 0;
   double dbg_inP2_yaw_rate_ = 0;
-
-  // Data logging
-  bool enable_data_logging_;
-  std::string log_file_path_;
-  std::ofstream log_file_;
-  int log_counter_ = 0;
 };
