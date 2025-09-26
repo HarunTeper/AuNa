@@ -9,17 +9,30 @@ from launch_ros.actions import Node
 def generate_launch_description():
     # Package directory and default waypoint file
     pkg_dir = get_package_share_directory('auna_waypoints')
-    waypoint_file = os.path.join(
-        pkg_dir, 'config', 'racetrack_decorated', 'nav2_racetrack_waypoints.yaml')
+    world_name = os.environ.get('WORLD_NAME', 'racetrack_decorated')
+    default_waypoint_file = os.path.join(
+        pkg_dir, 'config', world_name, 'nav2_racetrack_waypoints.yaml')
 
     # Get robot index from environment variable, fallback to launch argument
     robot_index = os.environ.get('ROBOT_INDEX', '1')
 
     # Launch arguments
+    world_name_arg = DeclareLaunchArgument(
+        'world_name',
+        default_value=world_name,
+        description='Name of the world'
+    )
+
     robot_index_arg = DeclareLaunchArgument(
         'robot_index',
         default_value=robot_index,
         description='Index of the robot (e.g., 1 for robot1)'
+    )
+
+    waypoint_file_arg = DeclareLaunchArgument(
+        'waypoint_file',
+        default_value=default_waypoint_file,
+        description='Path to the waypoint file'
     )
 
     # Create namespace from robot_index
@@ -32,12 +45,14 @@ def generate_launch_description():
         name='nav2_waypoint_publisher',
         output='screen',
         parameters=[
-            {'waypoint_file': waypoint_file},
+            {'waypoint_file': LaunchConfiguration('waypoint_file')},
             {'namespace': robot_namespace},
         ]
     )
 
     return LaunchDescription([
+        world_name_arg,
         robot_index_arg,
+        waypoint_file_arg,
         nav2_waypoint_publisher_node
     ])

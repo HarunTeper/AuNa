@@ -67,7 +67,22 @@ ament_python_install_package(${PROJECT_NAME})
 # Install Python executables
 install(PROGRAMS
   scripts/curve_fitting.py
+  scripts/compute_yaw_for_waypoints.py
+  scripts/compute_yaw_central_for_waypoints.py
   DESTINATION lib/${PROJECT_NAME}
+)
+
+# Also install extensionless launcher names for ros2 run convenience
+install(PROGRAMS
+  scripts/compute_yaw_for_waypoints.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME compute_yaw_for_waypoints
+)
+
+install(PROGRAMS
+  scripts/compute_yaw_central_for_waypoints.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME compute_yaw_central_for_waypoints
 )
 
 if(BUILD_TESTING)

@@ -613,41 +613,55 @@ void CaccController::update_waypoint_following()
 
 void CaccController::timer_callback()
 {
-  if (params_.use_waypoints) {
-    update_waypoint_following();
+  // Pure leader-following (original behavior) when waypoints are disabled.
+  // Wait for first CAM before running control law to avoid uninitialized references.
+  if (!params_.use_waypoints) {
+    if (last_cam_msg_ == nullptr) {
+      RCLCPP_DEBUG(this->get_logger(), "Waiting for first CAM (use_waypoints=false)");
+      return;
+    }
   } else {
-    // Pure leader-following geometry path
-    // Requires CAM input to be present
-    if (last_cam_msg_ != nullptr) {
-      // Use leader state as control reference
-      control_x_ = cam_x_;
-      control_y_ = cam_y_;
-      control_yaw_ = cam_yaw_;
-      control_yaw_rate_ = cam_yaw_rate_;
-
-      // Base velocity from leader, limited by max_velocity and >= 0
-      double base_velocity = std::max(0.0, cam_velocity_);
-      control_velocity_ = std::min(base_velocity, params_.max_velocity);
-
-      // Curvature from leader (guard small speeds)
-      if (std::abs(control_velocity_) < 0.01) {
-        control_curvature_ = 0.0;
-      } else {
-        // Use leader curvature directly if available; otherwise derive from yaw rate
-        control_curvature_ = (std::abs(cam_curvature_) > 0.0)
-                               ? cam_curvature_
-                               : (control_yaw_rate_ / control_velocity_);
-      }
-
-      // For logging
-      control_acceleration_ = (control_velocity_ - control_last_velocity_) / dt_;
-      control_last_velocity_ = control_velocity_;
-    } else {
+    if (waypoints_x_.empty()) {
       RCLCPP_WARN_THROTTLE(
-        this->get_logger(), *this->get_clock(), 2000,
-        "Leader-following selected but no CAM data received yet.");
+        this->get_logger(), *this->get_clock(), 5000,
+        "use_waypoints=true but waypoint list is empty; skipping virtual leader update");
+    } else {
+      update_waypoint_following();
     }
   }
+  // else {
+  //   // Pure leader-following geometry path
+  //   // Requires CAM input to be present
+  //   if (last_cam_msg_ != nullptr) {
+  //     // Use leader state as control reference
+  //     control_x_ = cam_x_;
+  //     control_y_ = cam_y_;
+  //     control_yaw_ = cam_yaw_;
+  //     control_yaw_rate_ = cam_yaw_rate_;
+
+  //     // Base velocity from leader, limited by max_velocity and >= 0
+  //     double base_velocity = std::max(0.0, cam_velocity_);
+  //     control_velocity_ = std::min(base_velocity, params_.max_velocity);
+
+  //     // Curvature from leader (guard small speeds)
+  //     if (std::abs(control_velocity_) < 0.01) {
+  //       control_curvature_ = 0.0;
+  //     } else {
+  //       // Use leader curvature directly if available; otherwise derive from yaw rate
+  //       control_curvature_ = (std::abs(cam_curvature_) > 0.0)
+  //                              ? cam_curvature_
+  //                              : (control_yaw_rate_ / control_velocity_);
+  //     }
+
+  //     // For logging
+  //     control_acceleration_ = (control_velocity_ - control_last_velocity_) / dt_;
+  //     control_last_velocity_ = control_velocity_;
+  //   } else {
+  //     RCLCPP_WARN_THROTTLE(
+  //       this->get_logger(), *this->get_clock(), 2000,
+  //       "Leader-following selected but no CAM data received yet.");
+  //   }
+  // }
 
   RCLCPP_DEBUG(this->get_logger(), "=== CACC Following Status ===");
 
@@ -732,12 +746,7 @@ void CaccController::timer_callback()
   // Calculate control matrix inverse (invGam calculations)
   double term1 = params_.standstill_distance + params_.time_gap * odom_velocity_;
   double term2 = params_.time_gap - params_.time_gap * sin(alpha_) * sin(control_yaw_ - pose_yaw_);
-  // Clamp term2 away from zero to avoid near-singular matrix amplification
-  const double MIN_TERM2_FRACTION = 0.2;  // 20% of time_gap
-  double min_term2 = MIN_TERM2_FRACTION * std::max(1e-6, params_.time_gap);
-  if (std::abs(term2) < min_term2) {
-    term2 = std::copysign(min_term2, term2 == 0.0 ? 1.0 : term2);
-  }
+
   invGam_Det_ = term1 * term2;
 
   // Prevent division by zero with minimum threshold
@@ -1002,35 +1011,38 @@ rcl_interfaces::msg::SetParametersResult CaccController::dynamicParametersCallba
   std::vector<rclcpp::Parameter> parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
-
-  for (auto parameter : parameters) {
-    const auto & type = parameter.get_type();
+  for (const auto & parameter : parameters) {
+    const auto type = parameter.get_type();
     const auto & name = parameter.get_name();
-
-    // print
     RCLCPP_INFO(this->get_logger(), "Parameter '%s' was changed.", name.c_str());
 
     if (type == rclcpp::ParameterType::PARAMETER_DOUBLE) {
-      if (name == "standstill_distance") {
+      if (name == "standstill_distance")
         params_.standstill_distance = parameter.as_double();
-      } else if (name == "time_gap") {
+      else if (name == "time_gap")
         params_.time_gap = parameter.as_double();
-      } else if (name == "kp") {
+      else if (name == "kp")
         params_.kp = parameter.as_double();
-      } else if (name == "kd") {
+      else if (name == "kd")
         params_.kd = parameter.as_double();
-      } else if (name == "max_velocity") {
+      else if (name == "max_velocity")
         params_.max_velocity = parameter.as_double();
-      } else if (name == "frequency") {
-        params_.frequency = parameter.as_int();
-      } else if (name == "use_waypoints") {
-        params_.use_waypoints = parameter.as_bool();
-      } else if (name == "target_velocity") {
+      else if (name == "target_velocity")
         params_.target_velocity = parameter.as_double();
-      } else if (name == "curvature_lookahead") {
+      else if (name == "curvature_lookahead")
         params_.curvature_lookahead = parameter.as_double();
-      } else if (name == "extra_distance") {
+      else if (name == "extra_distance")
         params_.extra_distance = parameter.as_double();
+    } else if (type == rclcpp::ParameterType::PARAMETER_INTEGER) {
+      if (name == "frequency") {
+        params_.frequency = parameter.as_int();
+        if (params_.frequency > 0) {
+          dt_ = 1.0 / params_.frequency;  // keep controller timing consistent
+        }
+      }
+    } else if (type == rclcpp::ParameterType::PARAMETER_BOOL) {
+      if (name == "use_waypoints") {
+        params_.use_waypoints = parameter.as_bool();
       }
     }
   }

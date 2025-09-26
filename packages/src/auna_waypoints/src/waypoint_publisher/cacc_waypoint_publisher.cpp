@@ -53,7 +53,6 @@ private:
         try {
           values.push_back(std::stod(value));
         } catch (const std::invalid_argument & ia) {
-          RCLCPP_ERROR(this->get_logger(), "Invalid argument in CSV file: %s", ia.what());
           continue;
         }
       }
@@ -63,33 +62,17 @@ private:
         pose.position.x = values[0];
         pose.position.y = values[1];
         pose.position.z = 0.0;
+        if (values.size() >= 3) {
+          double yaw = values[2];
+          tf2::Quaternion q;
+          q.setRPY(0, 0, yaw);
+          pose.orientation = tf2::toMsg(q);
+        }
         pose_array_msg->poses.push_back(pose);
       }
     }
 
-    if (pose_array_msg->poses.size() < 2) {
-      RCLCPP_WARN(
-        this->get_logger(),
-        "Not enough waypoints to calculate orientation. Publishing without orientation.");
-    } else {
-      for (size_t i = 0; i < pose_array_msg->poses.size(); ++i) {
-        double next_x = (i + 1 < pose_array_msg->poses.size())
-                          ? pose_array_msg->poses[i + 1].position.x
-                          : pose_array_msg->poses[0].position.x;
-        double next_y = (i + 1 < pose_array_msg->poses.size())
-                          ? pose_array_msg->poses[i + 1].position.y
-                          : pose_array_msg->poses[0].position.y;
-        double prev_x = (i > 0) ? pose_array_msg->poses[i - 1].position.x
-                                : pose_array_msg->poses.back().position.x;
-        double prev_y = (i > 0) ? pose_array_msg->poses[i - 1].position.y
-                                : pose_array_msg->poses.back().position.y;
-
-        double angle = atan2(next_y - prev_y, next_x - prev_x);
-        tf2::Quaternion q;
-        q.setRPY(0, 0, angle);
-        pose_array_msg->poses[i].orientation = tf2::toMsg(q);
-      }
-    }
+    // With yaw provided in the CSV, orientations are already set. No backfill needed.
 
     if (pose_array_msg->poses.empty()) {
       RCLCPP_WARN(this->get_logger(), "No waypoints were loaded from %s", waypoint_file_.c_str());
