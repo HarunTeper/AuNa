@@ -39,15 +39,16 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_ros/transform_listener.h"
 
-class GroundTruthTransform : public rclcpp::Node {
- public:
+class GroundTruthTransform : public rclcpp::Node
+{
+public:
   GroundTruthTransform();
 
- private:
+private:
   void service_timer_callback();
   void model_srv_callback(
-      const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture
-          future);
+    const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture
+    future);
 
   tf2_ros::Buffer buffer_;
   tf2_ros::TransformListener listener_;
@@ -62,3 +63,4 @@ class GroundTruthTransform : public rclcpp::Node {
 };
 
 #endif  // AUNA_GROUND_TRUTH__GROUND_TRUTH_TRANSFORM_HPP_
+

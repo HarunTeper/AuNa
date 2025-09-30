@@ -27,15 +27,16 @@
 #include "etsi_its_cam_msgs/msg/cam.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-class OmnetCamFilter : public rclcpp::Node {
- public:
+class OmnetCamFilter : public rclcpp::Node
+{
+public:
   explicit OmnetCamFilter(int identifier);
 
- private:
+private:
   void cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg);
   void filter_service_callback(
-      const std::shared_ptr<auna_msgs::srv::Identifier::Request> request,
-      std::shared_ptr<auna_msgs::srv::Identifier::Response> response);
+    const std::shared_ptr<auna_msgs::srv::Identifier::Request> request,
+    std::shared_ptr<auna_msgs::srv::Identifier::Response> response);
   rclcpp::Publisher<etsi_its_cam_msgs::msg::CAM>::SharedPtr cam_publisher_;
   rclcpp::Subscription<etsi_its_cam_msgs::msg::CAM>::SharedPtr cam_subscriber_;
   rclcpp::Service<auna_msgs::srv::Identifier>::SharedPtr service_;
@@ -44,3 +45,4 @@ class OmnetCamFilter : public rclcpp::Node {
 };
 
 #endif  // AUNA_OMNET__OMNET_CAM_FILTER_HPP_
+

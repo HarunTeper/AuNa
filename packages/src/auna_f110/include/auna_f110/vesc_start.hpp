@@ -25,13 +25,14 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-class VescStart : public rclcpp::Node {
- public:
+class VescStart : public rclcpp::Node
+{
+public:
   VescStart();
 
- private:
+private:
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr
-      subscription_odometry_;
+    subscription_odometry_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_cmd_vel_;
   rclcpp::TimerBase::SharedPtr timer_publish_cmd_vel_;
 
@@ -40,3 +41,4 @@ class VescStart : public rclcpp::Node {
 };
 
 #endif  // AUNA_F110__VESC_START_HPP_
+

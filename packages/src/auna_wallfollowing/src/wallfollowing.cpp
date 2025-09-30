@@ -24,22 +24,25 @@
 
 using namespace std;
 
-WallFollow::WallFollow() : Node("wallfollowing") {
+WallFollow::WallFollow()
+: Node("wallfollowing")
+{
   // Declare and get parameters
   declare_parameters();
 
   // Initialize ROS2 interfaces
   scan_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
-      lidarscan_topic_, 10,
-      std::bind(&WallFollow::scan_callback, this, std::placeholders::_1));
+    lidarscan_topic_, 10,
+    std::bind(&WallFollow::scan_callback, this, std::placeholders::_1));
   drive_pub_ =
-      this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>(
-          drive_topic_, 10);
+    this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>(
+    drive_topic_, 10);
 
   RCLCPP_INFO(this->get_logger(), "WallFollow node initialized.");
 }
 
-void WallFollow::declare_parameters() {
+void WallFollow::declare_parameters()
+{
   // Declare PID parameters
   this->declare_parameter("kp", 0.25);
   this->declare_parameter("kd", 0.0);
@@ -87,13 +90,14 @@ void WallFollow::declare_parameters() {
 }
 
 double WallFollow::get_range(
-    const sensor_msgs::msg::LaserScan::ConstSharedPtr scan, double angle) {
+  const sensor_msgs::msg::LaserScan::ConstSharedPtr scan, double angle)
+{
   if (angle < scan->angle_min || angle > scan->angle_max) {
     return -1.0;
   }
 
   int index = static_cast<int>(
-      std::round((angle - scan->angle_min) / scan->angle_increment));
+    std::round((angle - scan->angle_min) / scan->angle_increment));
   if (index < 0 || index >= static_cast<int>(scan->ranges.size())) {
     return -1.0;
   }
@@ -107,8 +111,9 @@ double WallFollow::get_range(
 }
 
 double WallFollow::get_error(
-    const sensor_msgs::msg::LaserScan::ConstSharedPtr scan,
-    double desired_distance) {
+  const sensor_msgs::msg::LaserScan::ConstSharedPtr scan,
+  double desired_distance)
+{
   double a = get_range(scan, angle_a_);
   double b = get_range(scan, angle_b_);
 
@@ -127,7 +132,8 @@ double WallFollow::get_error(
   return desired_distance - Dt1;
 }
 
-void WallFollow::pid_control(double error, double velocity) {
+void WallFollow::pid_control(double error, double velocity)
+{
   double derivative = error - prev_error_;
   integral_ += error;
 
@@ -158,17 +164,20 @@ void WallFollow::pid_control(double error, double velocity) {
 }
 
 void WallFollow::scan_callback(
-    const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg) {
+  const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg)
+{
   double error = get_error(scan_msg, desired_distance_);
 
   pid_control(error, velocity_);
 }
 
-double WallFollow::radiansToDegree(const double& angleInRadians) {
+double WallFollow::radiansToDegree(const double & angleInRadians)
+{
   return angleInRadians * (180.0 / M_PI);
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char ** argv)
+{
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<WallFollow>());
   rclcpp::shutdown();

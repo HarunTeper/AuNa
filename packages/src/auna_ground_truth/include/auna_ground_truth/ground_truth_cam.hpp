@@ -36,15 +36,16 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/header.hpp"
 
-class GroundTruthCam : public rclcpp::Node {
- public:
+class GroundTruthCam : public rclcpp::Node
+{
+public:
   GroundTruthCam();
 
- private:
+private:
   void service_timer_callback();
   void model_srv_callback(
-      const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture
-          future);
+    const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture
+    future);
 
   rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedPtr modelClient_;
   rclcpp::Subscription<gazebo_msgs::msg::ModelStates>::SharedPtr subscription_;
@@ -58,3 +59,4 @@ class GroundTruthCam : public rclcpp::Node {
 };
 
 #endif  // AUNA_GROUND_TRUTH__GROUND_TRUTH_CAM_HPP_
+

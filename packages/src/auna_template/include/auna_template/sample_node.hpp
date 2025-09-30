@@ -24,3 +24,4 @@
 // TODO(HarunTeper): Add your includes and class declaration here
 
 #endif  // AUNA_TEMPLATE__SAMPLE_NODE_HPP_
+

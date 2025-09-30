@@ -32,11 +32,12 @@
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 
-class GroundTruthPosePublisher : public rclcpp::Node {
- public:
+class GroundTruthPosePublisher : public rclcpp::Node
+{
+public:
   GroundTruthPosePublisher();
 
- private:
+private:
   void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg) const;
 
   tf2_ros::Buffer buffer_;
@@ -50,3 +51,4 @@ class GroundTruthPosePublisher : public rclcpp::Node {
 };
 
 #endif  // AUNA_GROUND_TRUTH__GROUND_TRUTH_POSE_PUBLISHER_HPP_
+

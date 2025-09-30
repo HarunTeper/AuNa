@@ -36,43 +36,45 @@
 
 using Trigger = std_srvs::srv::Trigger;
 
-class ControlPanelROSInterface : public QObject {
+class ControlPanelROSInterface : public QObject
+{
   Q_OBJECT
 
- public:
-  explicit ControlPanelROSInterface(QObject* parent = nullptr);
+public:
+  explicit ControlPanelROSInterface(QObject * parent = nullptr);
   ~ControlPanelROSInterface();
 
- public Q_SLOTS:
-  void setNamespace(const QString& ns);
+public Q_SLOTS:
+  void setNamespace(const QString & ns);
   void triggerEstop(bool activate);
-  void setCmdVelSource(const QString& source);
+  void setCmdVelSource(const QString & source);
   void checkServices();
   void checkInputSources();
   void checkSourceStatus();
 
- Q_SIGNALS:
-  void estopStatusUpdated(bool isActive, const QString& message);
-  void odometryUpdated(double speed, double angular_vel, double x, double y,
-                       double z);
+Q_SIGNALS:
+  void estopStatusUpdated(bool isActive, const QString & message);
+  void odometryUpdated(
+    double speed, double angular_vel, double x, double y,
+    double z);
   void imuUpdated(double ax, double ay, double az);
   void cmdVelUpdated(double linear, double angular);
-  void inputSourcesUpdated(const QStringList& sources);
-  void sourceStatusUpdated(const QString& source);
+  void inputSourcesUpdated(const QStringList & sources);
+  void sourceStatusUpdated(const QString & source);
   void backendReady(bool ready);
 
- private:
+private:
   void initializeROS();
   void createClientsAndSubscribers();
   void spin();
 
   void onEstopSetResponse(
-      rclcpp::Client<std_srvs::srv::SetBool>::SharedFuture future);
+    rclcpp::Client<std_srvs::srv::SetBool>::SharedFuture future);
   void onEstopStatusResponse(rclcpp::Client<Trigger>::SharedFuture future);
   void onInputSourcesResponse(rclcpp::Client<Trigger>::SharedFuture future);
   void onSourceStatusResponse(rclcpp::Client<Trigger>::SharedFuture future);
   void onSetSourceResponse(
-      rclcpp::Client<auna_msgs::srv::SetString>::SharedFuture future);
+    rclcpp::Client<auna_msgs::srv::SetString>::SharedFuture future);
 
   void onOdometryReceived(const nav_msgs::msg::Odometry::SharedPtr msg);
   void onCmdVelReceived(const geometry_msgs::msg::Twist::SharedPtr msg);
@@ -87,7 +89,7 @@ class ControlPanelROSInterface : public QObject {
 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscriber_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr
-      cmd_vel_subscriber_;
+    cmd_vel_subscriber_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscriber_;
 
   std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> executor_;
@@ -97,3 +99,4 @@ class ControlPanelROSInterface : public QObject {
 };
 
 #endif  // AUNA_CONTROL__CONTROL_PANEL_ROS_INTERFACE_HPP_
+

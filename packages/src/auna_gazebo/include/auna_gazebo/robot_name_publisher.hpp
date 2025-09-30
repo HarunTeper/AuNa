@@ -25,11 +25,12 @@
 #include "gazebo_msgs/msg/model_states.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-class RobotNamePublisher : public rclcpp::Node {
- public:
+class RobotNamePublisher : public rclcpp::Node
+{
+public:
   RobotNamePublisher();
 
- private:
+private:
   void model_state_callback(const gazebo_msgs::msg::ModelStates::SharedPtr msg);
 
   rclcpp::Subscription<gazebo_msgs::msg::ModelStates>::SharedPtr subscription_;
@@ -37,3 +38,4 @@ class RobotNamePublisher : public rclcpp::Node {
 };
 
 #endif  // AUNA_GAZEBO__ROBOT_NAME_PUBLISHER_HPP_
+

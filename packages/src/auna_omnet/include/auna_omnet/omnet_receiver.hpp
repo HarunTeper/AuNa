@@ -24,17 +24,19 @@
 #include "etsi_its_cam_msgs/msg/cam.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-class OmnetReceiver : public rclcpp::Node {
- public:
+class OmnetReceiver : public rclcpp::Node
+{
+public:
   OmnetReceiver();
 
- private:
+private:
   void cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg);
 
   rclcpp::Publisher<etsi_its_cam_msgs::msg::CAM>::SharedPtr cam_publisher_;
   rclcpp::Subscription<etsi_its_cam_msgs::msg::CAM>::SharedPtr
-      omnet_subscriber_;
+    omnet_subscriber_;
   double scale_factor_ = 10;
 };
 
 #endif  // AUNA_OMNET__OMNET_RECEIVER_HPP_
+

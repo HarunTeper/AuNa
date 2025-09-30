@@ -32,11 +32,12 @@
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 
-class LocalizationPosePublisher : public rclcpp::Node {
- public:
+class LocalizationPosePublisher : public rclcpp::Node
+{
+public:
   LocalizationPosePublisher();
 
- private:
+private:
   void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg) const;
 
   tf2_ros::Buffer buffer_;
@@ -50,3 +51,4 @@ class LocalizationPosePublisher : public rclcpp::Node {
 };
 
 #endif  // AUNA_TF__LOCALIZATION_POSE_PUBLISHER_HPP_
+
