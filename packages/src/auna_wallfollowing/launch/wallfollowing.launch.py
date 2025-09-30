@@ -22,7 +22,7 @@
 from launch_ros.actions import Node, PushRosNamespace
 from launch import LaunchDescription
 from launch.actions import OpaqueFunction, DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import PathJoinSubstitution
 from launch.launch_context import LaunchContext
 from launch_ros.substitutions import FindPackageShare
 import os

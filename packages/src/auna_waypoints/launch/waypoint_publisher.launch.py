@@ -24,8 +24,7 @@
 import os
 from launch_ros.actions import Node, PushRosNamespace
 from launch import LaunchDescription
-from launch.actions import OpaqueFunction, DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
+from launch.actions import OpaqueFunction
 from launch.launch_context import LaunchContext
 from ament_index_python.packages import get_package_share_directory
 

@@ -20,7 +20,7 @@
 
 
 """Localization pose publisher launch file"""
-from launch_ros.actions import Node, SetRemap
+from launch_ros.actions import Node
 from launch.actions import GroupAction, DeclareLaunchArgument
 from launch import LaunchDescription
 from launch.substitutions import LaunchConfiguration

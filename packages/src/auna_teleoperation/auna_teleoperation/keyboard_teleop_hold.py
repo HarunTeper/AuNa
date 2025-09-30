@@ -21,8 +21,6 @@
 # THE SOFTWARE.
 
 
-import os
-import signal
 import threading
 
 import rclpy

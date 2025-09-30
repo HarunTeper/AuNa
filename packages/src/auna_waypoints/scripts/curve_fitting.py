@@ -28,7 +28,6 @@ import numpy as np
 import rclpy
 from rclpy.node import Node
 import matplotlib.pyplot as plt
-from scipy.interpolate import griddata
 
 
 class CurveFitting(Node):
