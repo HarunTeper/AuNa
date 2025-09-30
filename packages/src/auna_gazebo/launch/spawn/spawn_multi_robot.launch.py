@@ -57,15 +57,15 @@ def include_launch_description(context: LaunchContext):
             robots.append({
                 'name': robot_ns,  # has to be equal to namespace, since global_tf uses it as such
                 'namespace': robot_ns,
-                'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"]) +
-                num *
-                yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"]),
-                'y_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"]) +
-                num *
-                yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"]),
-                'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"]) +
-                num *
-                yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"]),
+                'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"])
+                + num
+                * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"]),
+                'y_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"])
+                + num
+                * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"]),
+                'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"])
+                + num
+                * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"]),
             })
     else:
         robots.append({

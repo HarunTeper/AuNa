@@ -40,7 +40,7 @@ def include_launch_description(context: LaunchContext):
 
     # Launch Configurations
     robot_index = int(os.environ.get('ROBOT_INDEX', '0'))
-    
+
     # Parameters
     name = f'robot{robot_index}'
     namespace = f'robot{robot_index}'
@@ -49,9 +49,9 @@ def include_launch_description(context: LaunchContext):
     x_pose = LaunchConfiguration('x_pose', default='0.0')
     y_pose = LaunchConfiguration('y_pose', default='0.0')
     z_pose = LaunchConfiguration('z_pose', default='0.0')
-    
+
     world_name = os.environ.get('WORLD_NAME', 'racetrack_decorated')
-    
+
     map_path = os.path.join(
         pkg_dir, "config", "map_params", f"{world_name}.yaml")
     num = int(robot_index)
@@ -148,7 +148,7 @@ def include_launch_description(context: LaunchContext):
         # ground_truth_transform,
         # ground_truth_pose_publisher,
     ])
-    
+
     launch_actions = []
     launch_actions.append(robot_launch_group)
     return launch_actions

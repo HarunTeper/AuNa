@@ -90,7 +90,7 @@ def include_launch_description(context: LaunchContext):
             output="screen",
             namespace=namespace,
             arguments=["0.21", "0", "0.135", "0", "0", "0", namespace.perform(
-                context)+"/base_link", namespace.perform(context)+"/laser"],
+                context) + "/base_link", namespace.perform(context) + "/laser"],
             remappings=remappings
         )
 

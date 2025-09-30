@@ -54,7 +54,7 @@ def include_launch_description(context: LaunchContext):
         namespaced_rviz_config_file = ReplaceString(
             source_file=rviz_config_file,
             replacements={'<robot_namespace>': ('/', namespace)})
-        base_frame = namespace.perform(context)+'/'+'base_link  '
+        base_frame = namespace.perform(context) + '/' + 'base_link  '
 
     start_rviz_cmd = Node(
         package='rviz2',
@@ -67,10 +67,10 @@ def include_launch_description(context: LaunchContext):
                     ('/goal_pose', 'goal_pose'),
                     ('/clicked_point', 'clicked_point'),
                     ('/initialpose', 'initialpose')
-                ],
-        parameters=[{'base_frame': base_frame, 
+                    ],
+        parameters=[{'base_frame': base_frame,
                     'use_sim_time': use_sim_time}
-                ]
+                    ]
     )
 
     exit_event_handler = RegisterEventHandler(
@@ -91,11 +91,10 @@ def include_launch_description(context: LaunchContext):
 
 def generate_launch_description():
     """Launch RViz2 with the default view for the navigation stack. """
-    
+
     print("hello")
     # Get the launch directory
     pkg_dir = get_package_share_directory('auna_nav2')
-
 
     # Declare the launch arguments
     declare_namespace_cmd = DeclareLaunchArgument(
@@ -114,7 +113,6 @@ def generate_launch_description():
         'use_sim_time',
         default_value='false',
         description='Use simulation (Gazebo) clock if true')
-
 
     # Create the launch description and populate
     launch_description = LaunchDescription()

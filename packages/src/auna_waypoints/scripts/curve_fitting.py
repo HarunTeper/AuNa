@@ -80,17 +80,17 @@ class CurveFitting(Node):
         accumulated_distance = 0
 
         for i in range(len(new_waypoints) - 1):
-            segment_distance = np.sqrt((new_waypoints[i+1][0] - new_waypoints[i][0]) ** 2 +
-                                    (new_waypoints[i+1][1] - new_waypoints[i][1]) ** 2)
+            segment_distance = np.sqrt((new_waypoints[i + 1][0] - new_waypoints[i][0]) ** 2
+                                       + (new_waypoints[i + 1][1] - new_waypoints[i][1]) ** 2)
             accumulated_distance += segment_distance
 
             if accumulated_distance >= self.get_parameter('interpolation_distance').value:
-                filtered_waypoints.append(new_waypoints[i+1])
+                filtered_waypoints.append(new_waypoints[i + 1])
                 accumulated_distance = 0
 
         # Check last waypoint distance to the first waypoint
-        dist_last_to_first = np.sqrt((filtered_waypoints[-1][0] - filtered_waypoints[0][0]) ** 2 +
-                                    (filtered_waypoints[-1][1] - filtered_waypoints[0][1]) ** 2)
+        dist_last_to_first = np.sqrt((filtered_waypoints[-1][0] - filtered_waypoints[0][0]) ** 2
+                                     + (filtered_waypoints[-1][1] - filtered_waypoints[0][1]) ** 2)
         if dist_last_to_first < self.get_parameter('interpolation_distance').value:
             if len(filtered_waypoints) > 1:
                 filtered_waypoints.pop()  # Remove last waypoint
@@ -118,11 +118,11 @@ class CurveFitting(Node):
         input_file = self.get_parameter('waypoint_file').value
         input_dir = os.path.dirname(input_file)
         output_file = os.path.join(input_dir, 'waypoints.csv')
-        
+
         with open(output_file, 'w', newline='', encoding='utf-8-sig') as file:
             writer = csv.writer(file)
             writer.writerows(self.interpolated_waypoints)
-        
+
         self.get_logger().info(f'Saved interpolated waypoints to: {output_file}')
 
     def calculate_angle(self, point1, point2):

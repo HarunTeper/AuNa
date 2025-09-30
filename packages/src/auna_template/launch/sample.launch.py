@@ -38,7 +38,7 @@ def include_launch_description(context: LaunchContext):
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
 
     # Paths to folders and files
-    world = os.path.join(get_package_share_directory('auna_gazebo'), 'worlds', str(context.launch_configurations['world_name'])+'.world')
+    world = os.path.join(get_package_share_directory('auna_gazebo'), 'worlds', str(context.launch_configurations['world_name']) + '.world')
 
     state = LaunchConfiguration('gazebo_ros_state', default='true')
 

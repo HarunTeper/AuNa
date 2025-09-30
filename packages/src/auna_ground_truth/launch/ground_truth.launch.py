@@ -35,7 +35,7 @@ def include_ground_truth_launches(context: LaunchContext):
     use_sim_time = LaunchConfiguration('use_sim_time')
     pkg_dir = get_package_share_directory('auna_ground_truth')
     launch_dir = os.path.join(pkg_dir, 'launch')
-    
+
     robot_index = int(os.environ.get('ROBOT_INDEX', '0'))
 
     ground_truth_transform = IncludeLaunchDescription(
@@ -65,14 +65,15 @@ def include_ground_truth_launches(context: LaunchContext):
 
     return [group_cmd]
 
+
 def generate_launch_description():
-    
+
     use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',
         default_value='true',
         description='Use simulation (Gazebo) clock if true'
     )
-    
+
     return LaunchDescription([
         use_sim_time_arg,
         OpaqueFunction(function=include_ground_truth_launches)

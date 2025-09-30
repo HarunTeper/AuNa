@@ -37,26 +37,26 @@
 class GlobalTF : public rclcpp::Node
 {
 public:
-  GlobalTF();
+GlobalTF();
 
-  void service_timer_callback();
-  void model_srv_callback(
-    const rclcpp::Client<gazebo_msgs::srv::GetModelList>::SharedFuture future);
-  void tf_callback(
-    const tf2_msgs::msg::TFMessage::SharedPtr msg, const std::string & robot_name, bool is_static);
+void service_timer_callback();
+void model_srv_callback(
+	const rclcpp::Client<gazebo_msgs::srv::GetModelList>::SharedFuture future);
+void tf_callback(
+	const tf2_msgs::msg::TFMessage::SharedPtr msg, const std::string & robot_name, bool is_static);
 
 private:
-  // TF Broadcaster
-  tf2_ros::TransformBroadcaster tf_broadcaster_;
-  tf2_ros::StaticTransformBroadcaster static_tf_broadcaster_;
+// TF Broadcaster
+tf2_ros::TransformBroadcaster tf_broadcaster_;
+tf2_ros::StaticTransformBroadcaster static_tf_broadcaster_;
 
-  // Timer and Service Client
-  rclcpp::TimerBase::SharedPtr service_timer_;
-  rclcpp::Client<gazebo_msgs::srv::GetModelList>::SharedPtr modelClient_;
+// Timer and Service Client
+rclcpp::TimerBase::SharedPtr service_timer_;
+rclcpp::Client<gazebo_msgs::srv::GetModelList>::SharedPtr modelClient_;
 
-  // Robot model vector and subscribers for local tf topics.
-  std::vector<rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr> tf_subscribers_;
-  std::vector<std::string> robot_models_;
+// Robot model vector and subscribers for local tf topics.
+std::vector<rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr> tf_subscribers_;
+std::vector<std::string> robot_models_;
 };
 
 #endif  // AUNA_TF__GLOBAL_TF_HPP_

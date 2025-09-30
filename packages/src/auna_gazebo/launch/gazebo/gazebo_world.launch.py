@@ -42,8 +42,8 @@ def include_launch_description(context: LaunchContext):
     # Get the environment variable WORLD_NAME, fallback to 'default' if not set
     world_name = os.environ.get('WORLD_NAME', 'racetrack_decorated')
     # Construct world path using resolved context
-    world = os.path.join(pkg_auna_gazebo, 'worlds', world_name +'.world')
-    
+    world = os.path.join(pkg_auna_gazebo, 'worlds', world_name + '.world')
+
     return [
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
@@ -67,7 +67,7 @@ def include_launch_description(context: LaunchContext):
 
 def generate_launch_description():
     """Return launch description"""
-    
+
     # Declare use_sim_time argument
     use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',

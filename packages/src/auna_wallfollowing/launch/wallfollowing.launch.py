@@ -58,7 +58,7 @@ def include_launch_description(context: LaunchContext):
     # Add the wallfollowing node to the launch description content
     launch_description_content.append(wallfollowing_node)
 
-    return launch_description_content   
+    return launch_description_content
 
 
 def generate_launch_description():

@@ -96,8 +96,8 @@ def insert_namespace(yaml_file: dict, namespace: str):
                 if isinstance(yaml_file[key], str) and '$(NAMESPACE)$' in yaml_file[key]:
                     yaml_file[key] = yaml_file[key].replace('$(NAMESPACE)$', namespace)
                 if isinstance(yaml_file[key], str) and '$(NAMESPACE_FRAME)$' in yaml_file[key]:
-                    yaml_file[key] = yaml_file[key].replace('$(NAMESPACE_FRAME)$', namespace+'/')
+                    yaml_file[key] = yaml_file[key].replace('$(NAMESPACE_FRAME)$', namespace + '/')
                 if isinstance(yaml_file[key], str) and '$(NAMESPACE_TOPIC)$' in yaml_file[key]:
                     yaml_file[key] = yaml_file[key].replace('$(NAMESPACE_TOPIC)$', namespace)
-                
+
     return yaml_file

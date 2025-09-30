@@ -50,9 +50,9 @@ def include_launch_description(context: LaunchContext):
         base_frame = ''
     else:
         namespaced_rviz_config_file = ReplaceString(
-                source_file=rviz_config_file,
-                replacements={'<robot_namespace>': ('/', namespace)})
-        base_frame = namespace.perform(context)+'/'+'base_link  '
+            source_file=rviz_config_file,
+            replacements={'<robot_namespace>': ('/', namespace)})
+        base_frame = namespace.perform(context) + '/' + 'base_link  '
 
     start_rviz_cmd = Node(
         package='rviz2',
@@ -82,6 +82,7 @@ def include_launch_description(context: LaunchContext):
     launch_description_content.append(exit_event_handler)
 
     return launch_description_content
+
 
 def generate_launch_description():
     """Launch RViz2 with the default view for the navigation stack. """

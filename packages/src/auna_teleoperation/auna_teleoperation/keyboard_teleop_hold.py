@@ -58,7 +58,7 @@ class HoldKeyTeleop(Teleop):
         self.running = True
         self.get_logger().info(
             f"""
-This node takes keypresses from the keyboard and publishes them 
+This node takes keypresses from the keyboard and publishes them
 as Twist messages. This is the holding mode; your keypress will
 set the maximum configured speeds, at release all speeds are reset
 

@@ -59,7 +59,7 @@ def include_launch_description(context: LaunchContext):
 
     # Names and poses of the robots
     map_path = os.path.join(gazebo_pkg_dir, "config",
-                            "map_params", world_name.perform(context)+".yaml")
+                            "map_params", world_name.perform(context) + ".yaml")
 
     namespace = namespace.perform(context)
     robot_number = int(robot_number.perform(context))
@@ -72,9 +72,9 @@ def include_launch_description(context: LaunchContext):
             robots.append({
                 'name': robot_namespace,
                 'namespace': robot_namespace,
-                'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"]),
-                'y_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"]),
-                'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"]),
+                'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"]) + num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"]),
+                'y_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"]) + num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"]),
+                'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"]) + num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"]),
             })
     else:
         robots = [{
@@ -94,7 +94,7 @@ def include_launch_description(context: LaunchContext):
             'initial_pose.z': robots[num]['z_pose'],
         }
         tmp_params_file = yaml_launch.get_yaml(os.path.join(
-            pkg_dir, 'config', 'nav2_params', params_file_name.perform(context)+".yaml"))
+            pkg_dir, 'config', 'nav2_params', params_file_name.perform(context) + ".yaml"))
         tmp_params_file = yaml_launch.substitute_values(
             tmp_params_file, param_substitutions)
         # tmp_params_file = yaml_launch.insert_namespace(
@@ -117,7 +117,7 @@ def include_launch_description(context: LaunchContext):
                 'autostart': autostart,
                 'map': map_file,
                 # Assuming map_server uses some common params
-                'params_file': os.path.join(pkg_dir, 'config', 'nav2_params', params_file_name.perform(context)+".yaml")
+                'params_file': os.path.join(pkg_dir, 'config', 'nav2_params', params_file_name.perform(context) + ".yaml")
             }.items()
         )
         launch_description_content.append(map_server_launch)

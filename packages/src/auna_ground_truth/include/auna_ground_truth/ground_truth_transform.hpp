@@ -41,23 +41,23 @@
 class GroundTruthTransform : public rclcpp::Node
 {
 public:
-  GroundTruthTransform();
+GroundTruthTransform();
 
 private:
-  void service_timer_callback();
-  void model_srv_callback(
-    const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture future);
+void service_timer_callback();
+void model_srv_callback(
+	const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture future);
 
-  tf2_ros::Buffer buffer_;
-  tf2_ros::TransformListener listener_;
-  tf2_ros::TransformBroadcaster broadcaster_;
+tf2_ros::Buffer buffer_;
+tf2_ros::TransformListener listener_;
+tf2_ros::TransformBroadcaster broadcaster_;
 
-  rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedPtr modelClient_;
-  rclcpp::TimerBase::SharedPtr service_timer_;
+rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedPtr modelClient_;
+rclcpp::TimerBase::SharedPtr service_timer_;
 
-  std::string name_;
-  double speed_;
-  int publish_milliseconds_ = 100;
+std::string name_;
+double speed_;
+int publish_milliseconds_ = 100;
 };
 
 #endif  // AUNA_GROUND_TRUTH__GROUND_TRUTH_TRANSFORM_HPP_

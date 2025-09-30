@@ -39,7 +39,7 @@ def insert_namespace(xml_file_path, namespace):
                 if namespace == "":
                     elem.attrib[key] = value.replace('$(NAMESPACE_FRAME)$', '')
                 else:
-                    elem.attrib[key] = value.replace('$(NAMESPACE_FRAME)$', namespace+'/')
+                    elem.attrib[key] = value.replace('$(NAMESPACE_FRAME)$', namespace + '/')
 
     temp_file_path = tempfile.NamedTemporaryFile(mode='w', delete=False)
     tree.write(temp_file_path.name, encoding='utf-8', xml_declaration=True)

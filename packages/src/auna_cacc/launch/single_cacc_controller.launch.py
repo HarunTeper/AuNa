@@ -36,7 +36,7 @@ def include_launch_description(context: LaunchContext):
     # Launch Argument Configurations
     cacc_config = LaunchConfiguration('cacc_config')
     waypoint_file_path = LaunchConfiguration('waypoint_file')
-    
+
     use_waypoints = os.environ.get('USE_WAYPOINTS', 'true').lower() == 'true'
     robot_index = int(os.environ.get('ROBOT_INDEX', '0'))
 

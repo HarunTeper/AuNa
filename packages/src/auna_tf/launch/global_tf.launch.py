@@ -35,7 +35,7 @@ def generate_launch_description():
         default_value='true',
         description='Use simulation (Gazebo) clock if true'
     )
-    
+
     use_sim_time = LaunchConfiguration('use_sim_time')
 
     group_cmd = GroupAction([

@@ -35,57 +35,57 @@ namespace auna_control
 
 class ControlPanel : public rviz_common::Panel
 {
-  Q_OBJECT
+Q_OBJECT
 
 public:
-  explicit ControlPanel(QWidget * parent = nullptr);
-  ~ControlPanel() override;
+explicit ControlPanel(QWidget * parent = nullptr);
+~ControlPanel() override;
 
-  void load(const rviz_common::Config & config) override;
-  void save(rviz_common::Config config) const override;
+void load(const rviz_common::Config & config) override;
+void save(rviz_common::Config config) const override;
 
 private Q_SLOTS:
-  void onNamespaceChanged(const QString & text);
-  void onEmergencyStopClicked();
-  void onSourceComboBoxChanged(int index);
+void onNamespaceChanged(const QString & text);
+void onEmergencyStopClicked();
+void onSourceComboBoxChanged(int index);
 
-  void onEstopStatusUpdated(bool isActive, const QString & message);
-  void onOdometryUpdated(double speed, double angular_vel, double x, double y, double z);
-  void onImuUpdated(double ax, double ay, double az);
-  void onCmdVelUpdated(double linear, double angular);
-  void onInputSourcesUpdated(const QStringList & sources);
-  void onSourceStatusUpdated(const QString & source);
-  void onBackendReady(bool ready);
+void onEstopStatusUpdated(bool isActive, const QString & message);
+void onOdometryUpdated(double speed, double angular_vel, double x, double y, double z);
+void onImuUpdated(double ax, double ay, double az);
+void onCmdVelUpdated(double linear, double angular);
+void onInputSourcesUpdated(const QStringList & sources);
+void onSourceStatusUpdated(const QString & source);
+void onBackendReady(bool ready);
 
 private:
-  void setupUI();
-  void setupMonitoringUI();
-  void updateMonitoringDisplay();
+void setupUI();
+void setupMonitoringUI();
+void updateMonitoringDisplay();
 
-  QVBoxLayout * layout_;
-  QLineEdit * namespace_input_;
-  QPushButton * emergency_stop_button_;
-  QLabel * status_label_;
-  QComboBox * source_combo_box_;
-  QString last_known_source_;
-  QTimer * status_timer_;
+QVBoxLayout * layout_;
+QLineEdit * namespace_input_;
+QPushButton * emergency_stop_button_;
+QLabel * status_label_;
+QComboBox * source_combo_box_;
+QString last_known_source_;
+QTimer * status_timer_;
 
-  // Monitoring UI elements
-  QLabel * speed_label_;
-  QLabel * position_label_;
-  QLabel * acceleration_label_;
-  QLabel * angular_velocity_label_;
-  QLabel * cmd_vel_label_;
+// Monitoring UI elements
+QLabel * speed_label_;
+QLabel * position_label_;
+QLabel * acceleration_label_;
+QLabel * angular_velocity_label_;
+QLabel * cmd_vel_label_;
 
-  // Monitoring data
-  double current_speed_ = 0.0;
-  double current_x_ = 0.0, current_y_ = 0.0, current_z_ = 0.0;
-  double current_accel_x_ = 0.0, current_accel_y_ = 0.0, current_accel_z_ = 0.0;
-  double current_angular_vel_ = 0.0;
-  double cmd_linear_x_ = 0.0, cmd_angular_z_ = 0.0;
+// Monitoring data
+double current_speed_ = 0.0;
+double current_x_ = 0.0, current_y_ = 0.0, current_z_ = 0.0;
+double current_accel_x_ = 0.0, current_accel_y_ = 0.0, current_accel_z_ = 0.0;
+double current_angular_vel_ = 0.0;
+double cmd_linear_x_ = 0.0, cmd_angular_z_ = 0.0;
 
-  ControlPanelROSInterface * control_panel_ros_interface_;
-  bool estop_active_;
+ControlPanelROSInterface * control_panel_ros_interface_;
+bool estop_active_;
 };
 
 }  // namespace auna_control
