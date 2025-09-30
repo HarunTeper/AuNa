@@ -29,15 +29,15 @@
 class VescStart : public rclcpp::Node
 {
 public:
-VescStart();
+  VescStart();
 
 private:
-rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr subscription_odometry_;
-rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_cmd_vel_;
-rclcpp::TimerBase::SharedPtr timer_publish_cmd_vel_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr subscription_odometry_;
+  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_cmd_vel_;
+  rclcpp::TimerBase::SharedPtr timer_publish_cmd_vel_;
 
-void callback_timer_publish_cmd_vel();
-void callback_odometry(const nav_msgs::msg::Odometry::SharedPtr msg);
+  void callback_timer_publish_cmd_vel();
+  void callback_odometry(const nav_msgs::msg::Odometry::SharedPtr msg);
 };
 
 #endif  // AUNA_F110__VESC_START_HPP_

@@ -31,11 +31,11 @@
 class CamReceiver : public rclcpp::Node
 {
 public:
-CamReceiver();
+  CamReceiver();
 
 private:
-rclcpp::Publisher<etsi_its_cam_msgs::msg::CAM>::SharedPtr publisher_;
-rclcpp::Subscription<etsi_its_cam_msgs::msg::CAM>::SharedPtr subscription_;
+  rclcpp::Publisher<etsi_its_cam_msgs::msg::CAM>::SharedPtr publisher_;
+  rclcpp::Subscription<etsi_its_cam_msgs::msg::CAM>::SharedPtr subscription_;
 };
 
 #endif  // AUNA_COMM__CAM_RECEIVER_HPP_

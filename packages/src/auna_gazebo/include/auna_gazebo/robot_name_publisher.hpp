@@ -29,13 +29,13 @@
 class RobotNamePublisher : public rclcpp::Node
 {
 public:
-RobotNamePublisher();
+  RobotNamePublisher();
 
 private:
-void model_state_callback(const gazebo_msgs::msg::ModelStates::SharedPtr msg);
+  void model_state_callback(const gazebo_msgs::msg::ModelStates::SharedPtr msg);
 
-rclcpp::Subscription<gazebo_msgs::msg::ModelStates>::SharedPtr subscription_;
-rclcpp::Publisher<auna_msgs::msg::StringArray>::SharedPtr publisher_;
+  rclcpp::Subscription<gazebo_msgs::msg::ModelStates>::SharedPtr subscription_;
+  rclcpp::Publisher<auna_msgs::msg::StringArray>::SharedPtr publisher_;
 };
 
 #endif  // AUNA_GAZEBO__ROBOT_NAME_PUBLISHER_HPP_

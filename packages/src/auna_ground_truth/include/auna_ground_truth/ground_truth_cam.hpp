@@ -38,22 +38,22 @@
 class GroundTruthCam : public rclcpp::Node
 {
 public:
-GroundTruthCam();
+  GroundTruthCam();
 
 private:
-void service_timer_callback();
-void model_srv_callback(
-	const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture future);
+  void service_timer_callback();
+  void model_srv_callback(
+    const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture future);
 
-rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedPtr modelClient_;
-rclcpp::Subscription<gazebo_msgs::msg::ModelStates>::SharedPtr subscription_;
-rclcpp::Publisher<etsi_its_cam_msgs::msg::CAM>::SharedPtr publisher_;
-rclcpp::TimerBase::SharedPtr service_timer_;
+  rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedPtr modelClient_;
+  rclcpp::Subscription<gazebo_msgs::msg::ModelStates>::SharedPtr subscription_;
+  rclcpp::Publisher<etsi_its_cam_msgs::msg::CAM>::SharedPtr publisher_;
+  rclcpp::TimerBase::SharedPtr service_timer_;
 
-std::string name_;
-double speed_;
-int publish_milliseconds_ = 100;
-double scale_factor_ = 10;
+  std::string name_;
+  double speed_;
+  int publish_milliseconds_ = 100;
+  double scale_factor_ = 10;
 };
 
 #endif  // AUNA_GROUND_TRUTH__GROUND_TRUTH_CAM_HPP_
