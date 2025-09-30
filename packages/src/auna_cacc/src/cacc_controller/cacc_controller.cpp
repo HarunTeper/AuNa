@@ -1,7 +1,6 @@
 #include "auna_cacc/cacc_controller.hpp"
 
-#include <rclcpp/logging.hpp>
-#include <rclcpp/parameter.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include <etsi_its_msgs_utils/impl/cam/cam_getters_common.h>
 
@@ -45,9 +44,9 @@ CaccController::CaccController() : Node("cacc_controller")
       this->pose_callback(msg);
     });
 
-  // Subscribe to waypoints relative to the node namespace (e.g., robot1/cacc/waypoints)
+  // Subscribe to a single shared (absolute) waypoint topic with transient local QoS
   sub_waypoints_ = this->create_subscription<geometry_msgs::msg::PoseArray>(
-    "cacc/waypoints", 1,
+    "/cacc/waypoints", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local(),
     [this](const geometry_msgs::msg::PoseArray::SharedPtr msg) { this->waypoints_callback(msg); });
 
   pub_cmd_vel = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel/cacc", 1);
@@ -125,6 +124,16 @@ CaccController::CaccController() : Node("cacc_controller")
   auto_mode_ready_ = false;
   cacc_ready_ = false;
 
+  // Initialize control (virtual leader) state so that in pure CAM-follow mode we can
+  // immediately mirror incoming CAM data without relying on waypoint updater to set them.
+  control_x_ = 0.0;
+  control_y_ = 0.0;
+  control_yaw_ = 0.0;
+  control_velocity_ = 0.0;
+  control_acceleration_ = 0.0;
+  control_yaw_rate_ = 0.0;
+  control_curvature_ = 0.0;
+
   client_set_auto_mode_ = this->create_service<auna_msgs::srv::SetBool>(
     "cacc/set_auto_mode", [this](
                             const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
@@ -151,6 +160,7 @@ void CaccController::waypoints_callback(const geometry_msgs::msg::PoseArray::Sha
   waypoints_yaw_.clear();
 
   if (msg->poses.empty()) {
+    RCLCPP_WARN(this->get_logger(), "Received empty waypoint array");
     return;
   }
 
@@ -161,36 +171,17 @@ void CaccController::waypoints_callback(const geometry_msgs::msg::PoseArray::Sha
   for (const auto & pose : msg->poses) {
     waypoints_x_.push_back(pose.position.x);
     waypoints_y_.push_back(pose.position.y);
-
-    // Extract yaw from orientation if a non-zero quaternion is supplied; otherwise push
-    // placeholder.
-    const double qx = pose.orientation.x;
-    const double qy = pose.orientation.y;
-    const double qz = pose.orientation.z;
-    const double qw = pose.orientation.w;
-    double yaw = 0.0;
-    if (!(qx == 0.0 && qy == 0.0 && qz == 0.0 && (qw == 0.0 || qw == 1.0))) {
-      tf2::Quaternion q(qx, qy, qz, qw);
-      tf2::Matrix3x3 m(q);
-      double roll, pitch;
-      m.getRPY(roll, pitch, yaw);
-    }
+    tf2::Quaternion q(
+      pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+    tf2::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
     waypoints_yaw_.push_back(yaw);
   }
-  // Warn if orientations were not provided (all zero yaw) – controller will proceed with zeros.
-  bool any_non_zero = false;
-  for (double y : waypoints_yaw_) {
-    if (std::abs(y) > 1e-6) {
-      any_non_zero = true;
-      break;
-    }
-  }
-  if (!any_non_zero) {
-    RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), 5000,
-      "Received waypoints without orientation; yaw values remain zero. Ensure publishers include "
-      "yaw.");
-  }
+
+  RCLCPP_INFO(
+    this->get_logger(), "Loaded %zu waypoints (first: %.2f, %.2f, yaw=%.2f)", waypoints_x_.size(),
+    waypoints_x_[0], waypoints_y_[0], waypoints_yaw_[0]);
 }
 
 void CaccController::setup_timer_callback()
@@ -295,6 +286,17 @@ void CaccController::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr m
   } else {
     cam_yaw_rate_ = 0.0;
     cam_curvature_ = 0.0;
+  }
+
+  // Mirror CAM leader state into control_* when not using waypoints (pure leader-follow mode)
+  if (!params_.use_waypoints) {
+    control_x_ = cam_x_;
+    control_y_ = cam_y_;
+    control_yaw_ = cam_yaw_;
+    control_velocity_ = cam_velocity_;
+    control_acceleration_ = cam_acceleration_;
+    control_yaw_rate_ = cam_yaw_rate_;
+    control_curvature_ = cam_curvature_;
   }
 }
 
@@ -563,9 +565,6 @@ void CaccController::update_waypoint_following()
   control_acceleration_ = (control_velocity_ - control_last_velocity_) / dt_;
   control_last_velocity_ = control_velocity_;
 
-  // TODO check if target_velocity or control velocity should be used
-  // cam curvature depending on auto_mode
-  // Prevent division by zero when calculating control curvature
   if (std::abs(control_velocity_) < 0.01) {
     control_curvature_ = 0.0;
   } else {
@@ -575,8 +574,6 @@ void CaccController::update_waypoint_following()
 
 void CaccController::timer_callback()
 {
-  // Pure leader-following (original behavior) when waypoints are disabled.
-  // Wait for first CAM before running control law to avoid uninitialized references.
   if (!params_.use_waypoints) {
     if (last_cam_msg_ == nullptr) {
       RCLCPP_DEBUG(this->get_logger(), "Waiting for first CAM (use_waypoints=false)");
@@ -591,39 +588,6 @@ void CaccController::timer_callback()
       update_waypoint_following();
     }
   }
-  // else {
-  //   // Pure leader-following geometry path
-  //   // Requires CAM input to be present
-  //   if (last_cam_msg_ != nullptr) {
-  //     // Use leader state as control reference
-  //     control_x_ = cam_x_;
-  //     control_y_ = cam_y_;
-  //     control_yaw_ = cam_yaw_;
-  //     control_yaw_rate_ = cam_yaw_rate_;
-
-  //     // Base velocity from leader, limited by max_velocity and >= 0
-  //     double base_velocity = std::max(0.0, cam_velocity_);
-  //     control_velocity_ = std::min(base_velocity, params_.max_velocity);
-
-  //     // Curvature from leader (guard small speeds)
-  //     if (std::abs(control_velocity_) < 0.01) {
-  //       control_curvature_ = 0.0;
-  //     } else {
-  //       // Use leader curvature directly if available; otherwise derive from yaw rate
-  //       control_curvature_ = (std::abs(cam_curvature_) > 0.0)
-  //                              ? cam_curvature_
-  //                              : (control_yaw_rate_ / control_velocity_);
-  //     }
-
-  //     // For logging
-  //     control_acceleration_ = (control_velocity_ - control_last_velocity_) / dt_;
-  //     control_last_velocity_ = control_velocity_;
-  //   } else {
-  //     RCLCPP_WARN_THROTTLE(
-  //       this->get_logger(), *this->get_clock(), 2000,
-  //       "Leader-following selected but no CAM data received yet.");
-  //   }
-  // }
 
   RCLCPP_DEBUG(this->get_logger(), "=== CACC Following Status ===");
 

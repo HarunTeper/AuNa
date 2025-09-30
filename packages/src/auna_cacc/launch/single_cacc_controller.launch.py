@@ -12,7 +12,7 @@ def include_launch_description(context: LaunchContext):
     """Return launch description (using environment variables only)."""
 
     cacc_config = LaunchConfiguration('cacc_config')
-    robot_index = int(os.environ.get('ROBOT_INDEX', '0'))
+    robot_index = int(os.environ.get('ROBOT_INDEX', '1'))
 
     # Create robot namespace based on index
     if int(robot_index) >= 0:

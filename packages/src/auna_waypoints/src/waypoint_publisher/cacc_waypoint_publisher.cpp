@@ -6,6 +6,7 @@
 #include "geometry_msgs/msg/pose_array.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
+#include <cmath>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -22,13 +23,11 @@ public:
     this->get_parameter("waypoint_file", waypoint_file_);
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(1)).transient_local();
-    std::string topic_name = namespace_.empty() ? "cacc/waypoints" : namespace_ + "/cacc/waypoints";
+    std::string topic_name = "/cacc/waypoints";
     publisher_ = this->create_publisher<geometry_msgs::msg::PoseArray>(topic_name, qos);
 
-    timer_ = this->create_wall_timer(std::chrono::milliseconds(500), [this]() {
-      publish_waypoints();
-      timer_->cancel();
-    });
+    timer_ =
+      this->create_wall_timer(std::chrono::milliseconds(500), [this]() { publish_waypoints(); });
   }
 
 private:
@@ -59,20 +58,43 @@ private:
 
       if (values.size() >= 2) {
         geometry_msgs::msg::Pose pose;
-        pose.position.x = values[0];
-        pose.position.y = values[1];
+
+        double x_orig = values[0];
+        double y_orig = values[1];
+
+        constexpr bool kApplyRotation = true;
+        constexpr double kRotationRadians = -M_PI / 2.0;
+        double xr = x_orig;
+        double yr = y_orig;
+        if (kApplyRotation) {
+          xr = x_orig * std::cos(kRotationRadians) - y_orig * std::sin(kRotationRadians);
+          yr = x_orig * std::sin(kRotationRadians) + y_orig * std::cos(kRotationRadians);
+        }
+        pose.position.x = xr;
+        pose.position.y = yr;
         pose.position.z = 0.0;
+
         if (values.size() >= 3) {
-          double yaw = values[2];
+          double yaw_orig = values[2];
+          double yaw_new = yaw_orig + (kApplyRotation ? kRotationRadians : 0.0);
+          if (yaw_new > M_PI) {
+            yaw_new -= 2.0 * M_PI;
+          }
+          if (yaw_new < -M_PI) {
+            yaw_new += 2.0 * M_PI;
+          }
+
           tf2::Quaternion q;
-          q.setRPY(0, 0, yaw);
+          q.setRPY(0, 0, yaw_new);
+          pose.orientation = tf2::toMsg(q);
+        } else {
+          tf2::Quaternion q;
+          q.setRPY(0, 0, 0);
           pose.orientation = tf2::toMsg(q);
         }
         pose_array_msg->poses.push_back(pose);
       }
     }
-
-    // With yaw provided in the CSV, orientations are already set. No backfill needed.
 
     if (pose_array_msg->poses.empty()) {
       RCLCPP_WARN(this->get_logger(), "No waypoints were loaded from %s", waypoint_file_.c_str());

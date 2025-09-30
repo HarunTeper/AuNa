@@ -21,15 +21,9 @@ def include_launch_description(context: LaunchContext):
     # Launch Argument Configurations
     namespace = LaunchConfiguration('namespace')
     log_level = LaunchConfiguration('log_level')
-    enable_cam_logging = LaunchConfiguration('enable_cam_logging')
-    cam_log_file_path = LaunchConfiguration('cam_log_file_path')
 
     # Get resolved values
     namespace_value = context.perform_substitution(namespace)
-
-    # Create unique log file path for each robot
-    robot_log_file = context.perform_substitution(
-        cam_log_file_path).replace('.log', f'_{namespace_value}.log')
 
     cam_communication_cmd = Node(
         package='auna_comm',
@@ -38,8 +32,6 @@ def include_launch_description(context: LaunchContext):
         namespace=namespace,
         parameters=[
             {'robot_index': robot_index},
-            {'enable_cam_logging': enable_cam_logging},
-            {'cam_log_file_path': robot_log_file}
         ],
         arguments=['--ros-args', '--log-level', log_level],
         output='screen'
