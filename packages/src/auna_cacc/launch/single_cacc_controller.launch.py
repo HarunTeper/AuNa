@@ -22,8 +22,15 @@ def include_launch_description(context: LaunchContext):
 
     launch_description_content = []
 
-    parameters = [yaml_launch.get_yaml_value(cacc_config.perform(
-        context), ['cacc_controller', 'ros__parameters'])]
+    param_dict = yaml_launch.get_yaml_value(
+        cacc_config.perform(context), ['cacc_controller', 'ros__parameters'])
+
+    use_waypoints_env = os.environ.get('USE_WAYPOINTS')
+    if use_waypoints_env is not None:
+        use_waypoints_bool = use_waypoints_env.lower() == 'true'
+        param_dict['use_waypoints'] = use_waypoints_bool
+
+    parameters = [param_dict]
     launch_description_content.append(PushRosNamespace(namespace))
 
     # CACC Controller Node

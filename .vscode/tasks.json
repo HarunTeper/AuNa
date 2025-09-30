@@ -207,7 +207,7 @@
         {
             "label": "ToggleCaccController",
             "type": "shell",
-            "command": "cd packages && source install/setup.bash && ros2 service call /cacc/set_cacc_enable auna_msgs/srv/SetBool \"{value: ${input:caccEnable}}\"",
+            "command": "cd packages && source install/setup.bash && ros2 service call /${input:caccNamespace}/cacc/set_cacc_enable auna_msgs/srv/SetBool \"{value: ${input:caccEnable}}\"",
             "problemMatcher": []
         },
         {

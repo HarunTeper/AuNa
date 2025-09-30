@@ -399,7 +399,7 @@ services:
         - PACKAGE_NAMES=${CACC_PACKAGES}
     image: cacc_controller:latest
     container_name: cacc_controller
-    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py", "use_waypoints:=false" ]
+    command: [ "ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py" ]
     profiles: [ "cacc_controller" ]
 
   cacc_controller_robot1:
@@ -407,6 +407,7 @@ services:
     container_name: cacc_controller_robot1
     environment:
       - ROBOT_INDEX=1
+      - USE_WAYPOINTS=true
     profiles: [ "sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1" ]
 
   cacc_controller_robot2:
@@ -414,6 +415,7 @@ services:
     container_name: cacc_controller_robot2
     environment:
       - ROBOT_INDEX=2
+      - USE_WAYPOINTS=false
     profiles: [ "sim_robot2", "physical_robot2", "sim_scenario" ]
 
   cacc_controller_robot3:
@@ -421,6 +423,7 @@ services:
     container_name: cacc_controller_robot3
     environment:
       - ROBOT_INDEX=3
+      - USE_WAYPOINTS=false
     profiles: [ "sim_robot3", "physical_robot3", "sim_scenario" ]
 
   #==============================================================================
