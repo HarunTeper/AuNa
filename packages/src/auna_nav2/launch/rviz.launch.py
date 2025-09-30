@@ -88,7 +88,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Launch RViz2 with the default view for the navigation stack. """
+    """Launch RViz2 with the default view for the navigation stack."""
     print("hello")
     # Get the launch directory
     pkg_dir = get_package_share_directory('auna_nav2')

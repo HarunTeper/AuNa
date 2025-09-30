@@ -63,7 +63,7 @@ def include_launch_description(context: LaunchContext):
     namespace = namespace.perform(context)
     robot_number = int(robot_number.perform(context))
     print(
-        f"navigation_multi_robot_launch: Spawning {robot_number} nav nodes with namespace {namespace}")
+        f"navigation_multi_robot_launch: Spawning {robot_number} nodes for robot {namespace}")
     if namespace:
         robots = []
         for num in range(robot_number):
@@ -121,7 +121,8 @@ def include_launch_description(context: LaunchContext):
                 'autostart': autostart,
                 'map': map_file,
                 # Assuming map_server uses some common params
-                'params_file': os.path.join(pkg_dir, 'config', 'nav2_params', params_file_name.perform(context) + ".yaml")
+                'params_file': os.path.join(pkg_dir, 'config', 'nav2_params',
+                                            params_file_name.perform(context) + ".yaml")
             }.items()
         )
         launch_description_content.append(map_server_launch)
@@ -157,14 +158,14 @@ def include_launch_description(context: LaunchContext):
                     'map': map_file,  # Single robot might still need map path for its costmaps
                     'namespace': robots[num]['namespace'],
                     'params_file': robot_params_file_args[num],
-                    'rviz_config': rviz_config,  # This would be for a per-robot RViz if enabled below
+                    'rviz_config': rviz_config,  # This would be for a per-robot RViz if enabled
                     'use_namespace': 'true',
                     'use_sim_time': use_sim_time,
                     'world_name': world_name,
                     'enable_slam': enable_slam,
                     'enable_localization': enable_localization,
                     'enable_navigation': enable_navigation,
-                    'enable_rviz': 'false',  # Set to 'false' if global RViz is used, or manage per-robot
+                    'enable_rviz': 'false',  # Set to 'false' for global RViz, or manage per-robot
                     'enable_map_server': 'false',  # Map server is now global
                 }.items(),
             )

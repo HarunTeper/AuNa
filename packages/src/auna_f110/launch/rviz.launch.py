@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 
-""" Launch RViz2 with the default view for the navigation stack. """
+"""Launch RViz2 with the default view for the navigation stack."""
 import os
 
 from ament_index_python.packages import get_package_share_directory
@@ -83,7 +83,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Launch RViz2 with the default view for the navigation stack. """
+    """Launch RViz2 with the default view for the navigation stack."""
     # Get the launch directory
     pkg_dir = get_package_share_directory('auna_f110')
 

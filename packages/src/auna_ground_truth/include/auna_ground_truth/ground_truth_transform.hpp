@@ -23,10 +23,6 @@
 
 #include <string>
 
-#include <tf2/LinearMath/Matrix3x3.h>
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Scalar.h>
-
 #include "gazebo_msgs/msg/entity_state.hpp"
 #include "gazebo_msgs/msg/model_states.hpp"
 #include "gazebo_msgs/srv/get_entity_state.hpp"
@@ -34,6 +30,9 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/header.hpp"
+#include "tf2/LinearMath/Matrix3x3.h"
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2/LinearMath/Scalar.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_broadcaster.h"
