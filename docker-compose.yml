@@ -564,6 +564,14 @@ services:
       ]
     profiles: ["zenohd", "development"]
 
+  lint-fix:
+    <<: *dev-base
+    image: development:latest
+    container_name: lint-fix
+    command:
+      ["/bin/bash", "-c", "/home/ubuntu/workspace/scripts/fix_all_linting.sh"]
+    profiles: ["lint", "lint-fix"]
+
   #==============================================================================
   # CONTROL & TELEOPERATION SERVICES
   #==============================================================================

@@ -37,28 +37,28 @@ add_executable(ground_truth_pose_publisher_main src/ground_truth_pose_publisher/
 add_executable(ground_truth_transform_main src/ground_truth_transform/ground_truth_transform_main.cpp)
 
 # Target dependencies
-set(ground_truth_cam_dependencies 
-  rclcpp 
-  gazebo_msgs 
-  etsi_its_cam_msgs 
-  tf2 
+set(ground_truth_cam_dependencies
+  rclcpp
+  gazebo_msgs
+  etsi_its_cam_msgs
+  tf2
   etsi_its_msgs_utils
 )
 
-set(ground_truth_pose_publisher_dependencies 
-  rclcpp 
-  geometry_msgs 
-  tf2_ros 
-  nav_msgs 
+set(ground_truth_pose_publisher_dependencies
+  rclcpp
+  geometry_msgs
+  tf2_ros
+  nav_msgs
   tf2_geometry_msgs
 )
 
-set(ground_truth_transform_dependencies 
-  rclcpp 
-  gazebo_msgs 
-  geometry_msgs 
-  tf2 
-  tf2_ros 
+set(ground_truth_transform_dependencies
+  rclcpp
+  gazebo_msgs
+  geometry_msgs
+  tf2
+  tf2_ros
   tf2_geometry_msgs
 )
 

@@ -36,22 +36,22 @@ add_executable(omnet_receiver src/omnet/omnet_receiver/omnet_receiver_main.cpp)
 add_executable(omnet_cam_filter src/omnet/omnet_cam_filter/omnet_cam_filter_main.cpp)
 
 # Target dependencies
-set(omnet_transmitter_dependencies 
-  rclcpp 
-  geometry_msgs 
-  nav_msgs 
-  etsi_its_cam_msgs 
+set(omnet_transmitter_dependencies
+  rclcpp
+  geometry_msgs
+  nav_msgs
+  etsi_its_cam_msgs
   tf2
 )
 
-set(omnet_receiver_dependencies 
-  rclcpp 
+set(omnet_receiver_dependencies
+  rclcpp
   etsi_its_cam_msgs
 )
 
-set(omnet_cam_filter_dependencies 
-  rclcpp 
-  etsi_its_cam_msgs 
+set(omnet_cam_filter_dependencies
+  rclcpp
+  etsi_its_cam_msgs
   auna_msgs
 )
 
@@ -67,7 +67,7 @@ target_link_libraries(omnet_transmitter omnet_transmitter_node)
 target_link_libraries(omnet_receiver omnet_receiver_node)
 target_link_libraries(omnet_cam_filter omnet_cam_filter_node)
 
-install(DIRECTORY 
+install(DIRECTORY
   launch
   DESTINATION share/${PROJECT_NAME}
 )
@@ -80,7 +80,7 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(TARGETS 
+install(TARGETS
   omnet_transmitter_node
   omnet_receiver_node
   omnet_cam_filter_node

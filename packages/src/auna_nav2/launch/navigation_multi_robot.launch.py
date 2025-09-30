@@ -1,3 +1,24 @@
+# Copyright 2025 Harun Teper
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -9,8 +30,7 @@ from auna_common import yaml_launch
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
-
+    """Return launch description."""
     # Package Directories
     pkg_dir = get_package_share_directory('auna_nav2')
     gazebo_pkg_dir = get_package_share_directory('auna_gazebo')
@@ -38,23 +58,27 @@ def include_launch_description(context: LaunchContext):
 
     # Names and poses of the robots
     map_path = os.path.join(gazebo_pkg_dir, "config",
-                            "map_params", world_name.perform(context)+".yaml")
+                            "map_params", world_name.perform(context) + ".yaml")
 
     namespace = namespace.perform(context)
     robot_number = int(robot_number.perform(context))
     print(
-        f"navigation_multi_robot_launch: Spawning {robot_number} nav nodes with namespace {namespace}")
+        f"navigation_multi_robot_launch: Spawning {robot_number} nodes for robot {namespace}")
     if namespace:
         robots = []
         for num in range(robot_number):
             robot_namespace = f'{namespace}{num}'
-            robots.append({
-                'name': robot_namespace,
-                'namespace': robot_namespace,
-                'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"]),
-                'y_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"]),
-                'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"])+num*yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"]),
-            })
+            x_pose = yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"]) + \
+                num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"])
+            y_pose = yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"]) + \
+                num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"])
+            z_pose = yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"]) + \
+                num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"])
+            robots.append({'name': robot_namespace,
+                           'namespace': robot_namespace,
+                           'x_pose': x_pose,
+                           'y_pose': y_pose,
+                           'z_pose': z_pose})
     else:
         robots = [{
             'name': '',
@@ -64,7 +88,8 @@ def include_launch_description(context: LaunchContext):
             'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"]),
         }]
 
-    # Create our own temporary YAML files that include substitutions and use them to create the parameter file launch configurations
+    # Create our own temporary YAML files that include substitutions and use
+    # them to create the parameter file launch configurations
     robot_params_file_args = []
     for num in range(robot_number):
         param_substitutions = {
@@ -73,7 +98,7 @@ def include_launch_description(context: LaunchContext):
             'initial_pose.z': robots[num]['z_pose'],
         }
         tmp_params_file = yaml_launch.get_yaml(os.path.join(
-            pkg_dir, 'config', 'nav2_params', params_file_name.perform(context)+".yaml"))
+            pkg_dir, 'config', 'nav2_params', params_file_name.perform(context) + ".yaml"))
         tmp_params_file = yaml_launch.substitute_values(
             tmp_params_file, param_substitutions)
         # tmp_params_file = yaml_launch.insert_namespace(
@@ -96,7 +121,8 @@ def include_launch_description(context: LaunchContext):
                 'autostart': autostart,
                 'map': map_file,
                 # Assuming map_server uses some common params
-                'params_file': os.path.join(pkg_dir, 'config', 'nav2_params', params_file_name.perform(context)+".yaml")
+                'params_file': os.path.join(pkg_dir, 'config', 'nav2_params',
+                                            params_file_name.perform(context) + ".yaml")
             }.items()
         )
         launch_description_content.append(map_server_launch)
@@ -121,7 +147,7 @@ def include_launch_description(context: LaunchContext):
 
     for num in range(robot_number):
         print(
-            f"navigation_multi_robot_launch: Nav nodes {num} namespace: {robots[num]['namespace']}")
+            f"navigation_multi_robot_launch: {num} nodes. Namespace {robots[num]['namespace']}")
         launch_description_content.extend([
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(os.path.join(
@@ -132,14 +158,14 @@ def include_launch_description(context: LaunchContext):
                     'map': map_file,  # Single robot might still need map path for its costmaps
                     'namespace': robots[num]['namespace'],
                     'params_file': robot_params_file_args[num],
-                    'rviz_config': rviz_config,  # This would be for a per-robot RViz if enabled below
+                    'rviz_config': rviz_config,  # This would be for a per-robot RViz if enabled
                     'use_namespace': 'true',
                     'use_sim_time': use_sim_time,
                     'world_name': world_name,
                     'enable_slam': enable_slam,
                     'enable_localization': enable_localization,
                     'enable_navigation': enable_navigation,
-                    'enable_rviz': 'false',  # Set to 'false' if global RViz is used, or manage per-robot
+                    'enable_rviz': 'false',  # Set to 'false' for global RViz, or manage per-robot
                     'enable_map_server': 'false',  # Map server is now global
                 }.items(),
             )
@@ -149,8 +175,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
-
+    """Return launch description."""
     # Package Directories
     pkg_dir = get_package_share_directory('auna_nav2')
 

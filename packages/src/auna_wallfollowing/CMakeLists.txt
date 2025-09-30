@@ -41,24 +41,24 @@ target_include_directories(wallfollowing PUBLIC
 )
 
 # Install executables
-install(TARGETS 
-  wallfollowing 
+install(TARGETS
+  wallfollowing
   DESTINATION lib/${PROJECT_NAME}
 )
 
 # Install directories
-install(DIRECTORY 
-  launch/ 
+install(DIRECTORY
+  launch/
   DESTINATION share/${PROJECT_NAME}/launch
 )
 
-install(DIRECTORY 
-  config/ 
+install(DIRECTORY
+  config/
   DESTINATION share/${PROJECT_NAME}/config
 )
 
-install(DIRECTORY 
-  include/ 
+install(DIRECTORY
+  include/
   DESTINATION include/
 )
 

@@ -27,8 +27,8 @@ add_library(sample_node_lib SHARED src/sample_node/sample_node.cpp)
 add_executable(sample_node src/sample_node/sample_node_main.cpp)
 
 # Target dependencies
-set(sample_node_dependencies 
-  rclcpp 
+set(sample_node_dependencies
+  rclcpp
   std_msgs
 )
 
@@ -38,15 +38,15 @@ ament_target_dependencies(sample_node_lib ${sample_node_dependencies})
 target_link_libraries(sample_node sample_node_lib)
 
 # Install directories
-install(DIRECTORY 
-  config 
-  launch 
+install(DIRECTORY
+  config
+  launch
   DESTINATION share/${PROJECT_NAME}
 )
 
 # Install executables
-install(TARGETS 
-  sample_node 
+install(TARGETS
+  sample_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -1,19 +1,42 @@
+// Copyright 2025 Harun Teper
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include "auna_wallfollowing/wallfollowing.hpp"
 
 #include <iostream>
 
 using namespace std;
 
-WallFollow::WallFollow() : Node("wallfollowing")
+WallFollow::WallFollow()
+: Node("wallfollowing")
 {
   // Declare and get parameters
   declare_parameters();
 
   // Initialize ROS2 interfaces
   scan_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
-    lidarscan_topic_, 10, std::bind(&WallFollow::scan_callback, this, std::placeholders::_1));
+    lidarscan_topic_, 10,
+    std::bind(&WallFollow::scan_callback, this, std::placeholders::_1));
   drive_pub_ =
-    this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>(drive_topic_, 10);
+    this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>(
+    drive_topic_, 10);
 
   RCLCPP_INFO(this->get_logger(), "WallFollow node initialized.");
 }
@@ -66,25 +89,37 @@ void WallFollow::declare_parameters()
   integral_ = 0.0;
 }
 
-double WallFollow::get_range(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan, double angle)
-  {
-    if (angle < scan->angle_min || angle > scan->angle_max) return -1.0;
-
-    int index = static_cast<int>(std::round((angle - scan->angle_min) / scan->angle_increment));
-    if (index < 0 || index >= static_cast<int>(scan->ranges.size())) return -1.0;
-
-    float dist = scan->ranges[index];
-    if (std::isnan(dist) || std::isinf(dist)) return -1.0;
-
-    return static_cast<double>(dist);
+double WallFollow::get_range(
+  const sensor_msgs::msg::LaserScan::ConstSharedPtr scan, double angle)
+{
+  if (angle < scan->angle_min || angle > scan->angle_max) {
+    return -1.0;
   }
 
-double WallFollow::get_error(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan, double desired_distance)
+  int index = static_cast<int>(
+    std::round((angle - scan->angle_min) / scan->angle_increment));
+  if (index < 0 || index >= static_cast<int>(scan->ranges.size())) {
+    return -1.0;
+  }
+
+  float dist = scan->ranges[index];
+  if (std::isnan(dist) || std::isinf(dist)) {
+    return -1.0;
+  }
+
+  return static_cast<double>(dist);
+}
+
+double WallFollow::get_error(
+  const sensor_msgs::msg::LaserScan::ConstSharedPtr scan,
+  double desired_distance)
 {
   double a = get_range(scan, angle_a_);
   double b = get_range(scan, angle_b_);
 
-  if (a == 0.0 || b == 0.0) return 0.0;
+  if (a == 0.0 || b == 0.0) {
+    return 0.0;
+  }
 
   double swing = angle_b_ - angle_a_;
 
@@ -108,13 +143,18 @@ void WallFollow::pid_control(double error, double velocity)
 
   prev_error_ = error;
 
-  if (angle < -max_steering_angle_) angle = -max_steering_angle_;
-  if (angle > max_steering_angle_) angle = max_steering_angle_;
+  if (angle < -max_steering_angle_) {
+    angle = -max_steering_angle_;
+  }
+  if (angle > max_steering_angle_) {
+    angle = max_steering_angle_;
+  }
 
-  if (std::abs(error) > error_threshold_)
+  if (std::abs(error) > error_threshold_) {
     velocity = min_velocity_;
-  else
+  } else {
     velocity = max_velocity_;
+  }
 
   auto drive_msg = ackermann_msgs::msg::AckermannDriveStamped();
   drive_msg.header.stamp = this->now();
@@ -123,16 +163,17 @@ void WallFollow::pid_control(double error, double velocity)
   drive_pub_->publish(drive_msg);
 }
 
-void WallFollow::scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg)
+void WallFollow::scan_callback(
+  const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg)
 {
   double error = get_error(scan_msg, desired_distance_);
 
   pid_control(error, velocity_);
 }
 
-double WallFollow::radiansToDegree(const double & angleInRadians) 
-{ 
-  return angleInRadians * (180.0 / M_PI); 
+double WallFollow::radiansToDegree(const double & angleInRadians)
+{
+  return angleInRadians * (180.0 / M_PI);
 }
 
 int main(int argc, char ** argv)

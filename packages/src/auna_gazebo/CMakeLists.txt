@@ -35,9 +35,9 @@ add_library(robot_name_publisher_node SHARED src/robot_name_publisher/robot_name
 add_executable(robot_name_publisher src/robot_name_publisher/robot_name_publisher_main.cpp)
 
 # Target dependencies
-set(robot_name_publisher_dependencies 
-  rclcpp 
-  gazebo_msgs 
+set(robot_name_publisher_dependencies
+  rclcpp
+  gazebo_msgs
   auna_msgs
 )
 
@@ -48,7 +48,7 @@ ament_target_dependencies(robot_name_publisher ${robot_name_publisher_dependenci
 target_link_libraries(robot_name_publisher robot_name_publisher_node)
 
 # Install directories
-install(DIRECTORY 
+install(DIRECTORY
   config
   launch
   models
@@ -63,7 +63,7 @@ install(TARGETS
 )
 
 # Install libraries
-install(TARGETS 
+install(TARGETS
   robot_name_publisher_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib

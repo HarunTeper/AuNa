@@ -1,4 +1,26 @@
 #!/usr/bin/env python3
+
+# Copyright 2025 Harun Teper
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+
 import atexit
 import sys
 from abc import ABC, abstractmethod
@@ -59,14 +81,16 @@ class Teleop(Node, ABC):
                 self.linear = linear
             else:
                 self.get_logger().error(
-                    f"Trying to set a linear speed {linear} outside of allowed range of [{-self.LINEAR_MAX}, {self.LINEAR_MAX}]"
+                    f"Trying to set a linear speed {linear} "
+                    f"outside of allowed range of [{-self.LINEAR_MAX}, {self.LINEAR_MAX}]"
                 )
         if angular is not None:
             if abs(angular) <= self.ANGULAR_MAX:
                 self.angular = angular
             else:
                 self.get_logger().error(
-                    f"Trying to set a angular speed {angular} outside of allowed range of [{-self.ANGULAR_MAX}, {self.ANGULAR_MAX}]"
+                    f"Trying to set a angular speed {angular} "
+                    f"outside of allowed range of [{-self.ANGULAR_MAX}, {self.ANGULAR_MAX}]"
                 )
         self._update_screen()
 

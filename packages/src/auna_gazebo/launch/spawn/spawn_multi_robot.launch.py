@@ -1,17 +1,38 @@
-"""Multiple robot spawn launch file"""
+# Copyright 2025 Harun Teper
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 
+
+"""Multiple robot spawn launch file."""
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node, PushRosNamespace
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription, GroupAction
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription
+from launch.actions import GroupAction
 from launch.launch_context import LaunchContext
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from auna_common import yaml_launch
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
+    """Return launch description."""
     # Package Directories
     pkg_dir = get_package_share_directory('auna_gazebo')
     launch_file_dir = os.path.join(pkg_dir, 'launch', 'spawn')
@@ -36,15 +57,15 @@ def include_launch_description(context: LaunchContext):
             robots.append({
                 'name': robot_ns,  # has to be equal to namespace, since global_tf uses it as such
                 'namespace': robot_ns,
-                'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"]) +
-                num *
-                yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"]),
-                'y_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"]) +
-                num *
-                yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"]),
-                'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"]) +
-                num *
-                yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"]),
+                'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"])
+                + num
+                * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"]),
+                'y_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"])
+                + num
+                * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"]),
+                'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"])
+                + num
+                * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"]),
             })
     else:
         robots.append({
@@ -94,7 +115,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
+    """Return launch description."""
     # Launch Arguments
     robot_number_arg = DeclareLaunchArgument(
         'robot_number',

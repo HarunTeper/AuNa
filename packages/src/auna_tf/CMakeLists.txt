@@ -34,22 +34,22 @@ add_executable(global_tf src/global_tf/global_tf_main.cpp)
 add_executable(localization_pose_publisher src/localization_pose_publisher/localization_pose_publisher_main.cpp)
 
 # Target dependencies
-set(global_tf_dependencies 
-  rclcpp 
-  std_msgs 
-  geometry_msgs 
-  nav_msgs 
-  tf2_ros 
-  tf2_geometry_msgs 
+set(global_tf_dependencies
+  rclcpp
+  std_msgs
+  geometry_msgs
+  nav_msgs
+  tf2_ros
+  tf2_geometry_msgs
   gazebo_msgs
 )
 
-set(localization_pose_publisher_dependencies 
-  rclcpp 
-  std_msgs 
-  geometry_msgs 
-  nav_msgs 
-  tf2_ros 
+set(localization_pose_publisher_dependencies
+  rclcpp
+  std_msgs
+  geometry_msgs
+  nav_msgs
+  tf2_ros
   tf2_geometry_msgs
 )
 
@@ -63,7 +63,7 @@ target_link_libraries(global_tf global_tf_node)
 target_link_libraries(localization_pose_publisher localization_pose_publisher_node)
 
 # Install directories
-install(DIRECTORY 
+install(DIRECTORY
   launch
   DESTINATION share/${PROJECT_NAME}
 )
@@ -76,7 +76,7 @@ install(TARGETS
 )
 
 # Install libraries
-install(TARGETS 
+install(TARGETS
   global_tf_node
   localization_pose_publisher_node
   ARCHIVE DESTINATION lib

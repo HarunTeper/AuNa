@@ -37,13 +37,13 @@ add_executable(cam_communication src/cam_communication/cam_communication_main.cp
 add_executable(cam_receiver src/cam_receiver/cam_receiver_main.cpp)
 
 # Target dependencies
-set(cam_communication_dependencies 
-  rclcpp 
-  std_msgs 
-  etsi_its_cam_msgs 
-  etsi_its_msgs_utils 
-  nav_msgs 
-  geometry_msgs 
+set(cam_communication_dependencies
+  rclcpp
+  std_msgs
+  etsi_its_cam_msgs
+  etsi_its_msgs_utils
+  nav_msgs
+  geometry_msgs
   tf2
 )
 

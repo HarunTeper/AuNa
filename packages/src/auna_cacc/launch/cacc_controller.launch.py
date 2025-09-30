@@ -1,3 +1,24 @@
+# Copyright 2025 Harun Teper
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node
@@ -10,8 +31,7 @@ from auna_common import yaml_launch
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
-
+    """Return launch description."""
     # Launch Argument Configurations
     robot_number = LaunchConfiguration('robot_number', default='2')
     namespace = LaunchConfiguration('namespace', default='robot')
@@ -25,10 +45,8 @@ def include_launch_description(context: LaunchContext):
     launch_description_content = []
 
     # Explicitly log the number of robots detected
-    launch_description_content.append(
-        LogInfo(
-            msg=f"CACC launch: Detected {robot_number_value} robots with base namespace '{ns_value}'")
-    )
+    launch_description_content.append(LogInfo(
+        msg=f"CACC launch: Detected {robot_number_value} robots with base namespace '{ns_value}'"))
     launch_description_content.append(
         LogInfo(
             msg=f"Starting CACC controllers for all {robot_number_value} robots")
@@ -67,8 +85,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
-
+    """Return launch description."""
     # Package Directories
     pkg_dir = get_package_share_directory('auna_cacc')
 

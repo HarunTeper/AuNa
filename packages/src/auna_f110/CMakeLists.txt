@@ -35,9 +35,9 @@ add_library(vesc_start_node SHARED src/vesc_start/vesc_start.cpp)
 add_executable(vesc_start src/vesc_start/vesc_start_main.cpp)
 
 # Target dependencies
-set(vesc_start_dependencies 
-  rclcpp 
-  geometry_msgs 
+set(vesc_start_dependencies
+  rclcpp
+  geometry_msgs
   nav_msgs
 )
 
@@ -53,14 +53,14 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(TARGETS 
+install(TARGETS
   vesc_start_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
 
-install(DIRECTORY 
+install(DIRECTORY
   launch
   config
   rviz
