@@ -2,9 +2,9 @@ name: ROS2 CI
 
 on:
   push:
-    branches: [ main, humble ]
+    branches: [ main, humble, humble_formatting ]
   pull_request:
-    branches: [ main, humble ]
+    branches: [ main, humble, humble_formatting ]
 
 jobs:
   build-and-test:
