@@ -68,30 +68,17 @@ def include_launch_description(context: LaunchContext):
         robots = []
         for num in range(robot_number):
             robot_namespace = f'{namespace}{num}'
+            x_pose = yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"]) + \
+                num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"])
+            y_pose = yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"]) + \
+                num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"])
+            z_pose = yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"]) + \
+                num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"])
             robots.append({'name': robot_namespace,
                            'namespace': robot_namespace,
-                           'x_pose': yaml_launch.get_yaml_value(map_path,
-                                                                ["spawn",
-                                                                 "offset",
-                                                                 "x"]) + num * yaml_launch.get_yaml_value(map_path,
-                                                                                                          ["spawn",
-                                                                                                           "linear",
-                                                                                                           "x"]),
-                           'y_pose': yaml_launch.get_yaml_value(map_path,
-                                                                ["spawn",
-                                                                 "offset",
-                                                                 "y"]) + num * yaml_launch.get_yaml_value(map_path,
-                                                                                                          ["spawn",
-                                                                                                           "linear",
-                                                                                                           "y"]),
-                           'z_pose': yaml_launch.get_yaml_value(map_path,
-                                                                ["spawn",
-                                                                 "offset",
-                                                                 "z"]) + num * yaml_launch.get_yaml_value(map_path,
-                                                                                                          ["spawn",
-                                                                                                           "linear",
-                                                                                                           "z"]),
-                           })
+                           'x_pose': x_pose,
+                           'y_pose': y_pose,
+                           'z_pose': z_pose})
     else:
         robots = [{
             'name': '',

@@ -29,12 +29,11 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 
-class WallFollow : public rclcpp::Node
-{
-public:
+class WallFollow : public rclcpp::Node {
+ public:
   WallFollow();
 
-private:
+ private:
   // PID parameters
   double kp_;
   double kd_;
@@ -63,7 +62,7 @@ private:
 
   // ROS2 interfaces
   rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr
-    drive_pub_;
+      drive_pub_;
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_sub_;
 
   /**
@@ -72,9 +71,8 @@ private:
    * @param angle Angle in radians
    * @return Range measurement or -1.0 if invalid
    */
-  double get_range(
-    const sensor_msgs::msg::LaserScan::ConstSharedPtr scan,
-    double angle);
+  double get_range(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan,
+                   double angle);
 
   /**
    * @brief Calculate error between desired and actual distance to wall
@@ -82,9 +80,8 @@ private:
    * @param desired_distance Desired distance to maintain from wall
    * @return Error value
    */
-  double get_error(
-    const sensor_msgs::msg::LaserScan::ConstSharedPtr scan,
-    double desired_distance);
+  double get_error(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan,
+                   double desired_distance);
 
   /**
    * @brief PID control for wall following
@@ -98,14 +95,14 @@ private:
    * @param scan_msg Laser scan message
    */
   void scan_callback(
-    const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg);
+      const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg);
 
   /**
    * @brief Convert radians to degrees
    * @param angleInRadians Angle in radians
    * @return Angle in degrees
    */
-  double radiansToDegree(const double & angleInRadians);
+  double radiansToDegree(const double& angleInRadians);
 
   /**
    * @brief Declare and get parameters from parameter server
@@ -114,4 +111,3 @@ private:
 };
 
 #endif  // AUNA_WALLFOLLOWING__WALLFOLLOWING_HPP_
-

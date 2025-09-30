@@ -21,6 +21,8 @@
 #ifndef AUNA_GROUND_TRUTH__GROUND_TRUTH_TRANSFORM_HPP_
 #define AUNA_GROUND_TRUTH__GROUND_TRUTH_TRANSFORM_HPP_
 
+#include <string>
+
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Scalar.h>
@@ -37,16 +39,15 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_ros/transform_listener.h"
 
-class GroundTruthTransform : public rclcpp::Node
-{
-public:
+class GroundTruthTransform : public rclcpp::Node {
+ public:
   GroundTruthTransform();
 
-private:
+ private:
   void service_timer_callback();
   void model_srv_callback(
-    const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture
-    future);
+      const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture
+          future);
 
   tf2_ros::Buffer buffer_;
   tf2_ros::TransformListener listener_;
@@ -61,4 +62,3 @@ private:
 };
 
 #endif  // AUNA_GROUND_TRUTH__GROUND_TRUTH_TRANSFORM_HPP_
-

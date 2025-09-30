@@ -34,31 +34,30 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/LinearMath/Scalar.h"
 
-class CamCommunication : public rclcpp::Node
-{
-public:
+class CamCommunication : public rclcpp::Node {
+ public:
   CamCommunication();
   static constexpr std::chrono::milliseconds T_GenCamMin{
-    100};    // 100ms = 10Hz max
+      100};  // 100ms = 10Hz max
   static constexpr std::chrono::milliseconds T_GenCamMax{
-    1000};    // 1000ms = 1Hz min
+      1000};  // 1000ms = 1Hz min
   static constexpr std::chrono::milliseconds T_CheckCamGen{
-    100};    // Check interval
+      100};  // Check interval
 
-private:
+ private:
   // subscriber and publisher, timer for cam messages
   rclcpp::Subscription<etsi_its_cam_msgs::msg::CAM>::SharedPtr cam_subscriber_;
   rclcpp::Publisher<etsi_its_cam_msgs::msg::CAM>::SharedPtr cam_publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
   // subscriber for pose and odom messages
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr
-    pose_subscriber_;
+      pose_subscriber_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscriber_;
 
   // callback functions
   void cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg);
   void timer_callback();
-  void publish_cam_msg(const std::string & trigger);
+  void publish_cam_msg(const std::string& trigger);
 
   // filter index variable
   int filter_index_ = 0;
@@ -105,4 +104,3 @@ private:
   std::ofstream cam_log_file_;
 };
 #endif  // AUNA_COMM__CAM_COMMUNICATION_HPP_
-

@@ -23,7 +23,8 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription, LaunchContext
-from launch.actions import DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription, GroupAction
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import IncludeLaunchDescription, GroupAction
 from launch_ros.actions import PushRosNamespace
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration

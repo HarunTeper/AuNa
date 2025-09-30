@@ -21,6 +21,8 @@
 #ifndef AUNA_OMNET__OMNET_TRANSMITTER_HPP_
 #define AUNA_OMNET__OMNET_TRANSMITTER_HPP_
 
+#include <string>
+
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Scalar.h>
@@ -31,12 +33,11 @@
 #include "rclcpp/clock.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-class OmnetTransmitter : public rclcpp::Node
-{
-public:
-  OmnetTransmitter(const std::string & robot_name);
+class OmnetTransmitter : public rclcpp::Node {
+ public:
+  explicit OmnetTransmitter(const std::string& robot_name);
 
-private:
+ private:
   void cam_callback();
   void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
   void pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
@@ -45,7 +46,7 @@ private:
 
   rclcpp::Publisher<etsi_its_cam_msgs::msg::CAM>::SharedPtr publisher;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr
-    pose_subscriber;
+      pose_subscriber;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscriber;
 
   std::string robot_name_;
@@ -64,4 +65,3 @@ private:
 };
 
 #endif  // AUNA_OMNET__OMNET_TRANSMITTER_HPP_
-

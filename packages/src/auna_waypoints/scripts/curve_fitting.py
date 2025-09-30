@@ -34,7 +34,7 @@ class CurveFitting(Node):
     """Curve Fitting Node."""
 
     def __init__(self):
-        """Initializes the node."""
+        """Initialize the node."""
         super().__init__('waypoint_publisher')
         self.declare_parameter('waypoint_file', 'waypoints.csv')
         self.declare_parameter('interpolation_distance', 0.1)
@@ -49,7 +49,7 @@ class CurveFitting(Node):
         self.plot_interpolated_waypoints()
 
     def read_csv(self):
-        """Reads the waypoints from the csv file and swaps if swap_xy is true."""
+        """Read the waypoints from the csv file and swaps if swap_xy is true."""
         self.waypoints = []
         with open(self.get_parameter('waypoint_file').value, 'r', encoding='utf-8-sig') as file:
             reader = csv.reader(file)
@@ -60,7 +60,7 @@ class CurveFitting(Node):
                     self.waypoints.append((float(row[0]), float(row[1])))
 
     def interpolate_waypoints(self):
-        """Interpolates the waypoints based on the distance between them."""
+        """Interpolate the waypoints based on the distance between them."""
         waypoints = np.array(self.waypoints)
         x = waypoints[:, 0]
         y = waypoints[:, 1]
@@ -98,7 +98,7 @@ class CurveFitting(Node):
         self.interpolated_waypoints = filtered_waypoints
 
     def plot_interpolated_waypoints(self):
-        """Plots the interpolated waypoints."""
+        """Plot the interpolated waypoints."""
         x_interpolated, y_interpolated = zip(*self.interpolated_waypoints)
 
         plt.figure(figsize=(8, 6))
@@ -113,7 +113,7 @@ class CurveFitting(Node):
         plt.show()
 
     def save_interpolated_waypoints(self):
-        """Saves the interpolated waypoints to a csv file."""
+        """Save the interpolated waypoints to a csv file."""
         # Get the input file path and construct the output path
         input_file = self.get_parameter('waypoint_file').value
         input_dir = os.path.dirname(input_file)
@@ -126,18 +126,18 @@ class CurveFitting(Node):
         self.get_logger().info(f'Saved interpolated waypoints to: {output_file}')
 
     def calculate_angle(self, point1, point2):
-        """Calculates the angle between two points."""
+        """Calculate the angle between two points."""
         delta_x = point2[0] - point1[0]
         delta_y = point2[1] - point1[1]
         return np.arctan2(delta_y, delta_x)
 
     def print_angles_between_waypoints(self):
-        """Calculates and prints the angles between consecutive waypoints relative to the angle of the two points before."""
+        """Calculate the angles between consecutive waypoints."""
         if len(self.interpolated_waypoints) < 3:
             self.get_logger().info('Not enough waypoints to calculate angles.')
             return
 
-        self.get_logger().info('Angles between consecutive waypoints (relative to angle of two points before):')
+        self.get_logger().info('Angles between consecutive waypoints:')
 
         # Calculate the angle between the first two waypoints as the starting angle
         start_angle = self.calculate_angle(

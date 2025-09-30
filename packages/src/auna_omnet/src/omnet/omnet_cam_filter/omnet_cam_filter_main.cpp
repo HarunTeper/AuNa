@@ -20,8 +20,7 @@
 
 #include "auna_omnet/omnet_cam_filter.hpp"
 
-int main(int argc, char * argv[])
-{
+int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
   // Set prefix for topic and frame_id, if first argument is non-empty.
   if (argc > 1) {

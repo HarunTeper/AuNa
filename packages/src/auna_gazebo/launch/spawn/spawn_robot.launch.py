@@ -25,7 +25,8 @@ from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import SetRemap, PushRosNamespace
 from launch import LaunchDescription
 from launch.substitutions import LaunchConfiguration
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import GroupAction, OpaqueFunction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.launch_context import LaunchContext
 from auna_common import yaml_launch

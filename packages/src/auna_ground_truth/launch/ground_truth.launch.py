@@ -21,7 +21,8 @@
 
 """Ground truth launch file."""
 from launch import LaunchDescription
-from launch.actions import GroupAction, DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription
+from launch.actions import GroupAction, DeclareLaunchArgument
+from launch.actions import OpaqueFunction, IncludeLaunchDescription
 from launch.substitutions import LaunchConfiguration
 from launch.launch_context import LaunchContext
 from launch_ros.actions import PushRosNamespace, SetRemap

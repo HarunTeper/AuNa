@@ -81,14 +81,16 @@ class Teleop(Node, ABC):
                 self.linear = linear
             else:
                 self.get_logger().error(
-                    f"Trying to set a linear speed {linear} outside of allowed range of [{-self.LINEAR_MAX}, {self.LINEAR_MAX}]"
+                    f"Trying to set a linear speed {linear} "
+                    f"outside of allowed range of [{-self.LINEAR_MAX}, {self.LINEAR_MAX}]"
                 )
         if angular is not None:
             if abs(angular) <= self.ANGULAR_MAX:
                 self.angular = angular
             else:
                 self.get_logger().error(
-                    f"Trying to set a angular speed {angular} outside of allowed range of [{-self.ANGULAR_MAX}, {self.ANGULAR_MAX}]"
+                    f"Trying to set a angular speed {angular} "
+                    f"outside of allowed range of [{-self.ANGULAR_MAX}, {self.ANGULAR_MAX}]"
                 )
         self._update_screen()
 

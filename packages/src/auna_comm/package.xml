@@ -14,7 +14,6 @@
 
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
-  
   <depend>etsi_its_cam_msgs</depend>
   <depend>etsi_its_msgs_utils</depend>
   <depend>geometry_msgs</depend>

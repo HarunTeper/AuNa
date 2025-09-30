@@ -21,7 +21,6 @@
 #ifndef AUNA_TEMPLATE__SAMPLE_NODE_HPP_
 #define AUNA_TEMPLATE__SAMPLE_NODE_HPP_
 
-// TODO: Add your includes and class declaration here
+// TODO(HarunTeper): Add your includes and class declaration here
 
 #endif  // AUNA_TEMPLATE__SAMPLE_NODE_HPP_
-
