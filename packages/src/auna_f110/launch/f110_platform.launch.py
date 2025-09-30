@@ -31,7 +31,6 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     """Return launch description."""
-
     # Paths to folders and files
     auna_physical_pkg_dir = get_package_share_directory('auna_f110')
     auna_physical_launch_file_dir = os.path.join(

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef AUNA_OMNET__OMNET_TRANSMITTER__HPP_
-#define AUNA_OMNET__OMNET_TRANSMITTER__HPP_
+#ifndef AUNA_OMNET__OMNET_TRANSMITTER_HPP_
+#define AUNA_OMNET__OMNET_TRANSMITTER_HPP_
 
 #include "rclcpp/clock.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -63,4 +63,5 @@ private:
   double scale_factor_ = 10.0;
 };
 
-#endif  // AUNA_OMNET__OMNET_TRANSMITTER__HPP_
+#endif  // AUNA_OMNET__OMNET_TRANSMITTER_HPP_
+

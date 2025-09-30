@@ -36,7 +36,6 @@ from launch.launch_context import LaunchContext
 
 def include_launch_description(context: LaunchContext):
     """Return launch description."""
-
     # Create the launch configuration variables
     namespace = LaunchConfiguration('namespace')
     rviz_config_file = LaunchConfiguration('rviz_config')

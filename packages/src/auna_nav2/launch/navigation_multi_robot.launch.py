@@ -31,7 +31,6 @@ from auna_common import yaml_launch
 
 def include_launch_description(context: LaunchContext):
     """Return launch description."""
-
     # Package Directories
     pkg_dir = get_package_share_directory('auna_nav2')
     gazebo_pkg_dir = get_package_share_directory('auna_gazebo')
@@ -189,7 +188,6 @@ def include_launch_description(context: LaunchContext):
 
 def generate_launch_description():
     """Return launch description."""
-
     # Package Directories
     pkg_dir = get_package_share_directory('auna_nav2')
 

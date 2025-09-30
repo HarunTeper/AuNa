@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef AUNA_TF__GLOBAL_TF__HPP_
-#define AUNA_TF__GLOBAL_TF__HPP_
+#ifndef AUNA_TF__GLOBAL_TF_HPP_
+#define AUNA_TF__GLOBAL_TF_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/static_transform_broadcaster.h"
@@ -59,4 +59,5 @@ private:
   std::vector<std::string> robot_models_;
 };
 
-#endif  // AUNA_TF__GLOBAL_TF__HPP_
+#endif  // AUNA_TF__GLOBAL_TF_HPP_
+

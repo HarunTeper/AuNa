@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef AUNA_CONTROL__CONTROL_PANEL__HPP_
-#define AUNA_CONTROL__CONTROL_PANEL__HPP_
+#ifndef AUNA_CONTROL__CONTROL_PANEL_HPP_
+#define AUNA_CONTROL__CONTROL_PANEL_HPP_
 
 #include "auna_control/control_panel_ros_interface.hpp"
 
@@ -90,4 +90,5 @@ private:
 
 }  // namespace auna_control
 
-#endif  // AUNA_CONTROL__CONTROL_PANEL__HPP_
+#endif  // AUNA_CONTROL__CONTROL_PANEL_HPP_
+

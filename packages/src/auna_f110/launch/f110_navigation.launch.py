@@ -29,7 +29,6 @@ from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
     """Return launch description."""
-
     # Package Directories
     navigation_pkg_dir = get_package_share_directory('auna_nav2')
 

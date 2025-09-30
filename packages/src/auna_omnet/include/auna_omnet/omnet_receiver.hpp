@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef AUNA_OMNET__OMNET_RECEIVER__HPP_
-#define AUNA_OMNET__OMNET_RECEIVER__HPP_
+#ifndef AUNA_OMNET__OMNET_RECEIVER_HPP_
+#define AUNA_OMNET__OMNET_RECEIVER_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -38,4 +38,5 @@ private:
   double scale_factor_ = 10;
 };
 
-#endif  // AUNA_OMNET__OMNET_RECEIVER__HPP_
+#endif  // AUNA_OMNET__OMNET_RECEIVER_HPP_
+

@@ -19,8 +19,8 @@
 // THE SOFTWARE.
 
 
-#ifndef AUNA_COMM__CAM_COMMUNICATION__HPP_
-#define AUNA_COMM__CAM_COMMUNICATION__HPP_
+#ifndef AUNA_COMM__CAM_COMMUNICATION_HPP_
+#define AUNA_COMM__CAM_COMMUNICATION_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -99,4 +99,5 @@ private:
   std::string cam_log_file_path_;
   std::ofstream cam_log_file_;
 };
-#endif  // AUNA_COMM__CAM_COMMUNICATION__HPP_
+#endif  // AUNA_COMM__CAM_COMMUNICATION_HPP_
+

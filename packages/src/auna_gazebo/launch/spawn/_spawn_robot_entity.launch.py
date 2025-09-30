@@ -28,7 +28,6 @@ from launch.actions import DeclareLaunchArgument
 
 def generate_launch_description():
     """Return launch description."""
-
     # Launch Argument Configurations
     name = LaunchConfiguration('name')
     urdf_namespace = LaunchConfiguration('urdf_namespace')

@@ -32,7 +32,6 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     """Launch the localization nodes in the nav2 stack."""
-
     # Get the launch directory
     pkg_dir = get_package_share_directory('auna_nav2')
     bringup_dir = get_package_share_directory('auna_nav2')

@@ -31,7 +31,6 @@ from launch.substitutions import LaunchConfiguration
 
 def include_launch_description(context: LaunchContext):
     """Return launch description."""
-
     # Package Directories
     auna_comm_pkg_dir = get_package_share_directory('auna_comm')
     auna_cacc_pkg_dir = get_package_share_directory('auna_cacc')

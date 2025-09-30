@@ -30,7 +30,6 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     """Return launch description."""
-
     # Package Directories
     pkg_dir = get_package_share_directory('auna_waypoints')
 

@@ -32,7 +32,6 @@ from launch.substitutions import LaunchConfiguration
 
 def include_launch_description(context: LaunchContext):
     """Return launch description."""
-
     # Package Directories
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
 
@@ -68,7 +67,6 @@ def include_launch_description(context: LaunchContext):
 
 def generate_launch_description():
     """Return launch description."""
-
     # Launch Arguments
     world_arg = DeclareLaunchArgument(
         'world_name',

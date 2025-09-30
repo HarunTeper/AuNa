@@ -32,7 +32,6 @@ from auna_common import yaml_launch
 
 def include_launch_description(context: LaunchContext):
     """Return launch description."""
-
     # Launch configurations
     namespace = LaunchConfiguration('namespace')
     vesc_config = LaunchConfiguration('vesc_config')
@@ -87,7 +86,6 @@ def include_launch_description(context: LaunchContext):
 
 def generate_launch_description():
     """Return launch description."""
-
     # Package Directories
     pkg_dir = get_package_share_directory('auna_f110')
 

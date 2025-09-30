@@ -28,7 +28,6 @@ from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
     """Return launch description."""
-
     # Declare use_sim_time argument
     use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',

@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef AUNA_WAYPOINTS__WAYPOINT_PUBLISHER__HPP_
-#define AUNA_WAYPOINTS__WAYPOINT_PUBLISHER__HPP_
+#ifndef AUNA_PHYSICAL__WAYPOINT_PUBLISHER_HPP_
+#define AUNA_PHYSICAL__WAYPOINT_PUBLISHER_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
@@ -73,4 +73,5 @@ private:
   int number_of_waypoints_ = 20;
 };
 
-#endif  // AUNA_WAYPOINTS__WAYPOINT_PUBLISHER__HPP_
+#endif  // AUNA_PHYSICAL__WAYPOINT_PUBLISHER_HPP_
+

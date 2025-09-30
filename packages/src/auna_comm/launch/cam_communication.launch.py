@@ -28,7 +28,6 @@ from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
     """Return launch description."""
-
     # Launch Argument Configurations
     robot_index = LaunchConfiguration('robot_index')
     filter_index = LaunchConfiguration('filter_index')

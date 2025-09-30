@@ -28,7 +28,6 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     """Return launch description."""
-
     # Launch Arguments
     filter_index_arg = DeclareLaunchArgument(
         'filter_index',

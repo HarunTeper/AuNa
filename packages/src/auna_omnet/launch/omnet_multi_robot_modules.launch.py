@@ -31,7 +31,6 @@ from launch.substitutions import LaunchConfiguration
 
 def include_launch_description(context: LaunchContext):
     """Return launch description."""
-
     # Package Directories
     pkg_dir = get_package_share_directory('auna_omnet')
 
@@ -62,7 +61,6 @@ def include_launch_description(context: LaunchContext):
 
 def generate_launch_description():
     """Return launch description."""
-
     # Launch Arguments
     robot_number_arg = DeclareLaunchArgument(
         'robot_number',

@@ -35,7 +35,6 @@ from launch_ros.actions import SetRemap
 
 def generate_launch_description():
     """Launch all the navigation nodes."""
-
     # Get the launch directory
     bringup_dir = get_package_share_directory('auna_nav2')
     config_dir = os.path.join(bringup_dir, 'config', 'nav2_params')
