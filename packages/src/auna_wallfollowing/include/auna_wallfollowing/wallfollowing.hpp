@@ -19,8 +19,8 @@
 // THE SOFTWARE.
 
 
-#ifndef AUNA_WALLFOLLOWING__WALLFOLLOWING_HPP_
-#define AUNA_WALLFOLLOWING__WALLFOLLOWING_HPP_
+#ifndef AUNA_WALLFOLLOWING__WALLFOLLOWING__HPP_
+#define AUNA_WALLFOLLOWING__WALLFOLLOWING__HPP_
 
 #include "rclcpp/rclcpp.hpp"
 #include "ackermann_msgs/msg/ackermann_drive_stamped.hpp"
@@ -108,4 +108,4 @@ private:
   void declare_parameters();
 };
 
-#endif  // AUNA_WALLFOLLOWING__WALLFOLLOWING_HPP_
+#endif  // AUNA_WALLFOLLOWING__WALLFOLLOWING__HPP_

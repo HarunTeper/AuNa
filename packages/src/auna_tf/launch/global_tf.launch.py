@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 
-"""Localization pose publisher launch file"""
+"""Localization pose publisher launch file."""
 from launch_ros.actions import Node
 from launch.actions import GroupAction, DeclareLaunchArgument
 from launch import LaunchDescription
@@ -27,7 +27,7 @@ from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
-    """Return launch description"""
+    """Return launch description."""
 
     # Declare use_sim_time argument
     use_sim_time_arg = DeclareLaunchArgument(

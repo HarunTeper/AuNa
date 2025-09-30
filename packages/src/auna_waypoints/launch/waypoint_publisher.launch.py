@@ -19,8 +19,7 @@
 # THE SOFTWARE.
 
 
-"""Single car omnet module launch file"""
-
+"""Single car omnet module launch file."""
 import os
 from launch_ros.actions import Node, PushRosNamespace
 from launch import LaunchDescription
@@ -30,8 +29,7 @@ from ament_index_python.packages import get_package_share_directory
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
-
+    """Return launch description."""
     launch_description_content = []
 
     # Get robot_index and construct namespace
@@ -67,7 +65,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
+    """Return launch description."""
     # Launch Description
     launch_description = LaunchDescription()
 

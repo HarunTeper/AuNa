@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 
-"""Gazebo world launch file"""
+"""Gazebo world launch file."""
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node
@@ -31,7 +31,7 @@ from launch.substitutions import LaunchConfiguration
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
+    """Return launch description."""
     # Package Directories
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
     pkg_auna_gazebo = get_package_share_directory('auna_gazebo')
@@ -66,7 +66,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
+    """Return launch description."""
 
     # Declare use_sim_time argument
     use_sim_time_arg = DeclareLaunchArgument(

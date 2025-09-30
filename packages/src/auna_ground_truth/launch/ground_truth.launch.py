@@ -19,8 +19,7 @@
 # THE SOFTWARE.
 
 
-"""Ground truth launch file"""
-
+"""Ground truth launch file."""
 from launch import LaunchDescription
 from launch.actions import GroupAction, DeclareLaunchArgument, OpaqueFunction, IncludeLaunchDescription
 from launch.substitutions import LaunchConfiguration
@@ -39,13 +38,19 @@ def include_ground_truth_launches(context: LaunchContext):
     robot_index = int(os.environ.get('ROBOT_INDEX', '0'))
 
     ground_truth_transform = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(launch_dir, 'ground_truth_transform.launch.py')),
-        launch_arguments={'use_sim_time': use_sim_time}.items()
-    )
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                launch_dir,
+                'ground_truth_transform.launch.py')),
+        launch_arguments={
+            'use_sim_time': use_sim_time}.items())
     ground_truth_pose_publisher = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(launch_dir, 'ground_truth_pose_publisher.launch.py')),
-        launch_arguments={'use_sim_time': use_sim_time}.items()
-    )
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                launch_dir,
+                'ground_truth_pose_publisher.launch.py')),
+        launch_arguments={
+            'use_sim_time': use_sim_time}.items())
     ground_truth_cam = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(launch_dir, 'ground_truth_cam.launch.py')),
         launch_arguments={'use_sim_time': use_sim_time}.items()

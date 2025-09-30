@@ -34,7 +34,8 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-ControlPanelROSInterface::ControlPanelROSInterface(QObject * parent) : QObject(parent)
+ControlPanelROSInterface::ControlPanelROSInterface(QObject * parent)
+: QObject(parent)
 {
   initializeROS();
 }
@@ -56,7 +57,7 @@ void ControlPanelROSInterface::initializeROS()
   createClientsAndSubscribers();
   executor_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
   executor_->add_node(node_);
-  spinner_thread_ = std::make_unique<std::thread>([this]() { spin(); });
+  spinner_thread_ = std::make_unique<std::thread>([this]() {spin();});
 }
 
 void ControlPanelROSInterface::spin()
@@ -99,15 +100,17 @@ void ControlPanelROSInterface::setNamespace(const QString & ns)
 {
   // Validate the namespace string to prevent crashes
   std::string ns_str = ns.toStdString();
-  
+
   // Check for invalid characters that could cause ROS topic/service name issues
   if (ns_str.find(' ') != std::string::npos) {
     if (node_) {
-      RCLCPP_WARN(node_->get_logger(), "Invalid namespace with spaces: '%s', ignoring", ns_str.c_str());
+      RCLCPP_WARN(
+        node_->get_logger(), "Invalid namespace with spaces: '%s', ignoring",
+        ns_str.c_str());
     }
     return;
   }
-  
+
   current_namespace_ = ns_str;
   if (node_) {
     RCLCPP_DEBUG(node_->get_logger(), "Setting namespace to: '%s'", current_namespace_.c_str());

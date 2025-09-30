@@ -17,7 +17,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 
 # Install directories
-install(DIRECTORY 
+install(DIRECTORY
   behavior_trees
   config
   launch

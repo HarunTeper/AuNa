@@ -33,7 +33,7 @@ from nav2_common.launch import RewrittenYaml, ReplaceString
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
+    """Return launch description."""
 
     # Package Directories
     pkg_dir = get_package_share_directory('auna_nav2')
@@ -151,7 +151,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
+    """Return launch description."""
 
     # # Package Directories
     pkg_dir = get_package_share_directory('auna_nav2')

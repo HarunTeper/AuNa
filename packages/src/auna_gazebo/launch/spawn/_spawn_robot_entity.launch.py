@@ -19,8 +19,7 @@
 # THE SOFTWARE.
 
 
-"""Spawn robot launch file"""
-
+"""Spawn robot launch file."""
 from launch_ros.actions import Node
 from launch import LaunchDescription
 from launch.substitutions import LaunchConfiguration
@@ -28,7 +27,7 @@ from launch.actions import DeclareLaunchArgument
 
 
 def generate_launch_description():
-    """Return launch description"""
+    """Return launch description."""
 
     # Launch Argument Configurations
     name = LaunchConfiguration('name')

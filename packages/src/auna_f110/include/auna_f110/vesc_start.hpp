@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef AUNA_F110__VESC_START_HPP_
-#define AUNA_F110__VESC_START_HPP_
+#ifndef AUNA_F110__VESC_START__HPP_
+#define AUNA_F110__VESC_START__HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -40,4 +40,4 @@ private:
   void callback_odometry(const nav_msgs::msg::Odometry::SharedPtr msg);
 };
 
-#endif  // AUNA_F110__VESC_START_HPP_
+#endif  // AUNA_F110__VESC_START__HPP_

@@ -25,12 +25,13 @@
 #include <etsi_its_cam_msgs/msg/detail/high_frequency_container__struct.hpp>
 
 // Create the publisher, timer and service client
-GroundTruthCam::GroundTruthCam() : Node("ground_truth_cam_node")
+GroundTruthCam::GroundTruthCam()
+: Node("ground_truth_cam_node")
 {
   publisher_ = this->create_publisher<etsi_its_cam_msgs::msg::CAM>("ground_truth_cam", 2);
   modelClient_ = this->create_client<gazebo_msgs::srv::GetEntityState>("/get_entity_state");
   service_timer_ = this->create_wall_timer(
-    std::chrono::milliseconds(publish_milliseconds_), [this]() { service_timer_callback(); });
+    std::chrono::milliseconds(publish_milliseconds_), [this]() {service_timer_callback();});
   std::string ns = this->get_namespace();
   if (!ns.empty()) {
     this->name_ = ns.substr(1);  // Remove the first character (typically a slash)
@@ -87,16 +88,16 @@ void GroundTruthCam::model_srv_callback(
 
   // Determine the speed and drive direction
   float len_x = entity->state.twist.linear.x /
-                (abs(entity->state.twist.linear.x) + abs(entity->state.twist.linear.y));
+    (abs(entity->state.twist.linear.x) + abs(entity->state.twist.linear.y));
   float len_y = entity->state.twist.linear.y /
-                (abs(entity->state.twist.linear.x) + abs(entity->state.twist.linear.y));
+    (abs(entity->state.twist.linear.x) + abs(entity->state.twist.linear.y));
   float len_h = sqrt(pow(len_x, 2) + pow(len_y, 2));
   float velocity_heading = acos(len_x / len_h) * 180 / M_PI;
   velocity_heading = (len_y >= 0) * velocity_heading + (len_y < 0) * (360 - velocity_heading);
 
   // Calculate speed and acceleration
   this->speed_ = sqrt(pow(entity->state.twist.linear.x, 2) + pow(entity->state.twist.linear.y, 2)) *
-                 scale_factor_;
+    scale_factor_;
   // float vdot = (this->speed_ - old_speed) / ((double)publish_milliseconds_ / 1000) *
   // scale_factor_;
 

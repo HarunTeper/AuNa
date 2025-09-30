@@ -215,7 +215,15 @@ RUN sudo apt-get update \
     cmake \
     vim \
     nano \
+    uncrustify \
+    python3-flake8 \
+    python3-autopep8 \
     && sudo rm -rf /var/lib/apt/lists/*
+
+# Install additional Python linting tools
+RUN pip3 install --no-cache-dir \
+    autoflake \
+    pydocstyle
 
 # Enhanced development aliases
 RUN echo 'alias cb="colcon build --symlink-install"' >> /home/ubuntu/.bashrc \

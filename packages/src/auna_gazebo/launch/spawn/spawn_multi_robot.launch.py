@@ -19,8 +19,7 @@
 # THE SOFTWARE.
 
 
-"""Multiple robot spawn launch file"""
-
+"""Multiple robot spawn launch file."""
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node, PushRosNamespace
@@ -32,7 +31,7 @@ from auna_common import yaml_launch
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
+    """Return launch description."""
     # Package Directories
     pkg_dir = get_package_share_directory('auna_gazebo')
     launch_file_dir = os.path.join(pkg_dir, 'launch', 'spawn')
@@ -115,7 +114,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
+    """Return launch description."""
     # Launch Arguments
     robot_number_arg = DeclareLaunchArgument(
         'robot_number',

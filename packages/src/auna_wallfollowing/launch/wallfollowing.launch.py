@@ -29,8 +29,7 @@ import os
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
-
+    """Return launch description."""
     launch_description_content = []
 
     # Get robot_index and construct namespace
@@ -62,7 +61,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
+    """Return launch description."""
     # Launch Description
     launch_description = LaunchDescription()
 

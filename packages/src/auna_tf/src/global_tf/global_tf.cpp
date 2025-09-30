@@ -24,10 +24,11 @@
 #include "rclcpp/rclcpp.hpp"  // Ensure rclcpp is included for logging macros
 
 // Create a service callback to the Gazebo models to get the current robot names.
-GlobalTF::GlobalTF() : Node("global_tf_node"), tf_broadcaster_(this), static_tf_broadcaster_(this)
+GlobalTF::GlobalTF()
+: Node("global_tf_node"), tf_broadcaster_(this), static_tf_broadcaster_(this)
 {
   service_timer_ =
-    this->create_wall_timer(std::chrono::milliseconds(100), [this]() { service_timer_callback(); });
+    this->create_wall_timer(std::chrono::milliseconds(100), [this]() {service_timer_callback();});
   modelClient_ = this->create_client<gazebo_msgs::srv::GetModelList>("/get_model_list");
 }
 
@@ -61,26 +62,29 @@ void GlobalTF::model_srv_callback(
     if (model_name.find("robot") != std::string::npos) {
       // For each model name, check if already added. If not, add subscribers for local tf topics.
       if (
-        std::find(robot_models_.begin(), robot_models_.end(), model_name) == robot_models_.end()) {
+        std::find(robot_models_.begin(), robot_models_.end(), model_name) == robot_models_.end())
+      {
         robot_models_.push_back(model_name);
         RCLCPP_INFO(
           this->get_logger(), "GLOBAL_TF: Creating TF subscriptions for robot: %s",
           model_name.c_str());
 
         // Use capturing lambda to pass the robot name to the callback
-        tf_subscribers_.push_back(this->create_subscription<tf2_msgs::msg::TFMessage>(
-          "/" + model_name + "/tf", rclcpp::QoS(10),  // Increased QoS depth
-          [this, robot_name = model_name](const tf2_msgs::msg::TFMessage::SharedPtr msg) {
-            tf_callback(msg, robot_name, false);  // Dynamic transform
-          }));
+        tf_subscribers_.push_back(
+          this->create_subscription<tf2_msgs::msg::TFMessage>(
+            "/" + model_name + "/tf", rclcpp::QoS(10), // Increased QoS depth
+            [this, robot_name = model_name](const tf2_msgs::msg::TFMessage::SharedPtr msg) {
+              tf_callback(msg, robot_name, false); // Dynamic transform
+            }));
         // Define QoS profile for static transforms (compatible with transient_local)
         auto static_qos =
           rclcpp::QoS(rclcpp::KeepLast(10)).transient_local();  // Increased QoS depth
-        tf_subscribers_.push_back(this->create_subscription<tf2_msgs::msg::TFMessage>(
-          "/" + model_name + "/tf_static", static_qos,
-          [this, robot_name = model_name](const tf2_msgs::msg::TFMessage::SharedPtr msg) {
-            tf_callback(msg, robot_name, true);  // Static transform
-          }));
+        tf_subscribers_.push_back(
+          this->create_subscription<tf2_msgs::msg::TFMessage>(
+            "/" + model_name + "/tf_static", static_qos,
+            [this, robot_name = model_name](const tf2_msgs::msg::TFMessage::SharedPtr msg) {
+              tf_callback(msg, robot_name, true); // Static transform
+            }));
       }
     }
   }
@@ -112,23 +116,21 @@ void GlobalTF::tf_callback(
     if (original_header == "map" && original_child == "odom") {
       modified.header.frame_id = "map";
       modified.child_frame_id = robot_name + "/odom";
-    }
-    else if (original_header == "gazebo_world" && original_child == "odom") {
+    } else if (original_header == "gazebo_world" && original_child == "odom") {
       modified.header.frame_id = "gazebo_world";
       modified.child_frame_id = robot_name + "/odom";
-    }
-    else if (original_header == "gazebo_world" && original_child == "map") {
+    } else if (original_header == "gazebo_world" && original_child == "map") {
       modified.header.frame_id = "gazebo_world";
       modified.child_frame_id = "map";
-    }
-    else if (original_header == "gazebo_world" && original_child == "ground_truth_base_link") {
+    } else if (original_header == "gazebo_world" && original_child == "ground_truth_base_link") {
       modified.header.frame_id = "gazebo_world";
       modified.child_frame_id = robot_name + "/ground_truth_base_link";
     }
     // Case 3: odom -> base_link transform (Typically dynamic)
     else if (
       original_header == "odom" &&
-      (original_child == "base_link" || original_child == "base_footprint")) {
+      (original_child == "base_link" || original_child == "base_footprint"))
+    {
       modified.header.frame_id = robot_name + "/odom";
       modified.child_frame_id = robot_name + "/" + original_child;
     }

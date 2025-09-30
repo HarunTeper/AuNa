@@ -21,11 +21,12 @@
 
 #include "auna_gazebo/robot_name_publisher.hpp"
 
-RobotNamePublisher::RobotNamePublisher() : Node("robot_name_publisher_node")
+RobotNamePublisher::RobotNamePublisher()
+: Node("robot_name_publisher_node")
 {
   subscription_ = this->create_subscription<gazebo_msgs::msg::ModelStates>(
     "/model_states", 2,
-    [this](const gazebo_msgs::msg::ModelStates::SharedPtr msg) { model_state_callback(msg); });
+    [this](const gazebo_msgs::msg::ModelStates::SharedPtr msg) {model_state_callback(msg);});
   publisher_ = this->create_publisher<auna_msgs::msg::StringArray>("/robot_names", 2);
 }
 

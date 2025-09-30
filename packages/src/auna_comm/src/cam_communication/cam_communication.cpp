@@ -29,7 +29,8 @@
 #include <fstream>  // Added for file logging
 #include <iomanip>  // For setprecision
 
-CamCommunication::CamCommunication() : Node("cam_communication")
+CamCommunication::CamCommunication()
+: Node("cam_communication")
 {
   // Declare and get parameters with input validation
   this->declare_parameter("filter_index", 0);
@@ -71,7 +72,7 @@ CamCommunication::CamCommunication() : Node("cam_communication")
       cam_log_file_ << "=== CAM Message Log for Robot " << robot_index_ << " ("
                     << (robot_index_ == 0 ? "LEADER" : "FOLLOWER") << ") ===" << std::endl;
       cam_log_file_ << "Timestamp,Action,StationID,GenDeltaTime,Longitude,Latitude,Heading,Speed,"
-                       "Acceleration,YawRate,Curvature,Details"
+        "Acceleration,YawRate,Curvature,Details"
                     << std::endl;
       cam_log_file_.flush();
     } else {
@@ -115,17 +116,19 @@ CamCommunication::CamCommunication() : Node("cam_communication")
   // Subscribers
   cam_subscriber_ = this->create_subscription<etsi_its_cam_msgs::msg::CAM>(
     "/cam", qos_cam,
-    [this](etsi_its_cam_msgs::msg::CAM::SharedPtr msg) { this->cam_callback(msg); });
+    [this](etsi_its_cam_msgs::msg::CAM::SharedPtr msg) {this->cam_callback(msg);});
 
   pose_subscriber_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
     "global_pose", 2,
-    [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) { this->pose_callback(msg); });
+    [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) {this->pose_callback(msg);});
 
   odom_subscriber_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    "odometry/filtered", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg) { this->odom_callback(msg); });
+    "odometry/filtered", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg) {
+      this->odom_callback(msg);
+    });
 
   // Timer for checking CAM generation conditions
-  timer_ = this->create_wall_timer(T_CheckCamGen, [this]() { this->timer_callback(); });
+  timer_ = this->create_wall_timer(T_CheckCamGen, [this]() {this->timer_callback();});
 
   // Initialize timing
   last_cam_msg_time_ = this->now();
@@ -138,14 +141,15 @@ CamCommunication::CamCommunication() : Node("cam_communication")
     robot_index_, T_GenCamMin.count(), T_GenCamMax.count(), T_CheckCamGen.count());
 
   // Add cleanup for file logging
-  rclcpp::on_shutdown([this]() {
-    if (enable_cam_logging_ && cam_log_file_.is_open()) {
-      RCLCPP_INFO(this->get_logger(), "Closing CAM log file");
-      cam_log_file_ << "=== Log closed at " << std::fixed << std::setprecision(3)
-                    << this->now().seconds() << " ===" << std::endl;
-      cam_log_file_.close();
-    }
-  });
+  rclcpp::on_shutdown(
+    [this]() {
+      if (enable_cam_logging_ && cam_log_file_.is_open()) {
+        RCLCPP_INFO(this->get_logger(), "Closing CAM log file");
+        cam_log_file_ << "=== Log closed at " << std::fixed << std::setprecision(3)
+                      << this->now().seconds() << " ===" << std::endl;
+        cam_log_file_.close();
+      }
+    });
 }
 
 void CamCommunication::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg)
@@ -157,8 +161,8 @@ void CamCommunication::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr
     this->get_logger(), "[Robot%d] RX CAM from Robot%d | Speed: %.2f m/s | Gen time: %u | %s",
     robot_index_, received_station_id,
     msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency.speed
-        .speed_value.value /
-      100.0,
+    .speed_value.value /
+    100.0,
     msg->cam.generation_delta_time.value,
     received_station_id == this->filter_index_ ? "PROCESSING" : "IGNORING");
 
@@ -169,8 +173,8 @@ void CamCommunication::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr
 
     // Get speed value in m/s
     double speed_value = msg->cam.cam_parameters.high_frequency_container
-                           .basic_vehicle_container_high_frequency.speed.speed_value.value /
-                         100.0;
+      .basic_vehicle_container_high_frequency.speed.speed_value.value /
+      100.0;
 
     // Get position values
     double longitude =
@@ -180,26 +184,26 @@ void CamCommunication::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr
 
     // Get heading value
     uint16_t raw_heading = msg->cam.cam_parameters.high_frequency_container
-                             .basic_vehicle_container_high_frequency.heading.heading_value.value;
-    double heading_degrees = (raw_heading == etsi_its_cam_msgs::msg::HeadingValue::UNAVAILABLE)
-                               ? 0.0
-                               : (raw_heading % 3600) / 10.0;
+      .basic_vehicle_container_high_frequency.heading.heading_value.value;
+    double heading_degrees = (raw_heading == etsi_its_cam_msgs::msg::HeadingValue::UNAVAILABLE) ?
+      0.0 :
+      (raw_heading % 3600) / 10.0;
 
     // Get yaw rate and determine if available
     int16_t raw_yaw_rate = msg->cam.cam_parameters.high_frequency_container
-                             .basic_vehicle_container_high_frequency.yaw_rate.yaw_rate_value.value;
-    std::string yaw_rate_str = (raw_yaw_rate == etsi_its_cam_msgs::msg::YawRateValue::UNAVAILABLE)
-                                 ? "UNAVAILABLE"
-                                 : std::to_string(raw_yaw_rate / 100.0);
+      .basic_vehicle_container_high_frequency.yaw_rate.yaw_rate_value.value;
+    std::string yaw_rate_str = (raw_yaw_rate == etsi_its_cam_msgs::msg::YawRateValue::UNAVAILABLE) ?
+      "UNAVAILABLE" :
+      std::to_string(raw_yaw_rate / 100.0);
 
     // Get curvature and determine if available
     int16_t raw_curvature =
       msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency
-        .curvature.curvature_value.value;
+      .curvature.curvature_value.value;
     std::string curvature_str =
-      (raw_curvature == etsi_its_cam_msgs::msg::CurvatureValue::UNAVAILABLE)
-        ? "UNAVAILABLE"
-        : std::to_string(raw_curvature / 10000.0);
+      (raw_curvature == etsi_its_cam_msgs::msg::CurvatureValue::UNAVAILABLE) ?
+      "UNAVAILABLE" :
+      std::to_string(raw_curvature / 10000.0);
 
     // Additional details to include
     std::string processing =
@@ -218,7 +222,7 @@ void CamCommunication::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr
   if (received_station_id == this->filter_index_) {
     // Get heading value and properly handle potential out-of-range values
     uint16_t raw_heading = msg->cam.cam_parameters.high_frequency_container
-                             .basic_vehicle_container_high_frequency.heading.heading_value.value;
+      .basic_vehicle_container_high_frequency.heading.heading_value.value;
 
     double heading_degrees;
     if (raw_heading == etsi_its_cam_msgs::msg::HeadingValue::UNAVAILABLE) {
@@ -239,8 +243,8 @@ void CamCommunication::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr
       msg->cam.cam_parameters.basic_container.reference_position.latitude.value / 10000000.0,
       heading_degrees, raw_heading,
       msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency
-          .yaw_rate.yaw_rate_value.value /
-        100.0);
+      .yaw_rate.yaw_rate_value.value /
+      100.0);
   }
 }
 
@@ -259,17 +263,17 @@ void CamCommunication::timer_callback()
 
   // 4 degrees heading change
   double heading_diff = std::abs(this->heading_ - last_cam_msg_heading_) * 180.0 / M_PI;
-  if (heading_diff > 4.0) dynamics_trigger = true;
+  if (heading_diff > 4.0) {dynamics_trigger = true;}
 
   // 4 meters position change
   double position_diff = std::sqrt(
     std::pow(this->longitude_ - last_cam_msg_longitude_, 2) +
     std::pow(this->latitude_ - last_cam_msg_latitude_, 2));
-  if (position_diff > 4.0) dynamics_trigger = true;
+  if (position_diff > 4.0) {dynamics_trigger = true;}
 
   // 0.5 m/s speed change
   double speed_diff = std::abs(this->speed_ - last_cam_msg_speed_);
-  if (speed_diff > 0.5) dynamics_trigger = true;
+  if (speed_diff > 0.5) {dynamics_trigger = true;}
 
   // Condition 2: Maximum time exceeded
   auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -433,7 +437,8 @@ void CamCommunication::publish_cam_msg(const std::string & trigger)
     // Extract curvature value or mark as unavailable
     std::string curvature_str = "UNAVAILABLE";
     if (
-      vhf.curvature.curvature_value.value != etsi_its_cam_msgs::msg::CurvatureValue::UNAVAILABLE) {
+      vhf.curvature.curvature_value.value != etsi_its_cam_msgs::msg::CurvatureValue::UNAVAILABLE)
+    {
       curvature_str = std::to_string(vhf.curvature.curvature_value.value / 10000.0);
     }
 
@@ -483,7 +488,7 @@ void CamCommunication::odom_callback(const nav_msgs::msg::Odometry::SharedPtr ms
       pow(last_odom_msg_->twist.twist.linear.y, 2));  // absolute speed without direction
 
     double dt = msg->header.stamp.sec - last_odom_msg_->header.stamp.sec +
-                (msg->header.stamp.nanosec - last_odom_msg_->header.stamp.nanosec) / 1e9;
+      (msg->header.stamp.nanosec - last_odom_msg_->header.stamp.nanosec) / 1e9;
 
     if (dt < 0.001) {
       // Prevent division by very small numbers

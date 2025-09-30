@@ -28,8 +28,8 @@ find_package(rviz_rendering REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Widgets Core)
 
 # cmd_vel_multiplexer_node executable
-add_executable(cmd_vel_multiplexer_node 
-  src/cmd_vel_multiplexer_node.cpp 
+add_executable(cmd_vel_multiplexer_node
+  src/cmd_vel_multiplexer_node.cpp
   src/cmd_vel_multiplexer_main.cpp
 )
 

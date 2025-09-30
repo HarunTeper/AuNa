@@ -39,7 +39,8 @@
 namespace auna_control
 {
 
-ControlPanel::ControlPanel(QWidget * parent) : Panel(parent), estop_active_(false)
+ControlPanel::ControlPanel(QWidget * parent)
+: Panel(parent), estop_active_(false)
 {
   layout_ = new QVBoxLayout();
   setupUI();
@@ -92,7 +93,8 @@ void ControlPanel::setupUI()
   layout_->addWidget(ns_group);
 
   namespace_input_ = new QLineEdit("");
-  namespace_input_->setToolTip("Enter a valid ROS namespace (alphanumeric, underscore, and forward slash only)");
+  namespace_input_->setToolTip(
+    "Enter a valid ROS namespace (alphanumeric, underscore, and forward slash only)");
   ns_layout->addWidget(namespace_input_);
 
   emergency_stop_button_ = new QPushButton("Emergency STOP");
@@ -108,7 +110,7 @@ void ControlPanel::setupUI()
   layout_->addWidget(source_combo_box_);
 
   layout_->addStretch(1);
-  QTimer::singleShot(0, [this]() { namespace_input_->setFocus(); });
+  QTimer::singleShot(0, [this]() {namespace_input_->setFocus();});
   this->setFocusPolicy(Qt::StrongFocus);
   setupMonitoringUI();
   setLayout(layout_);
@@ -120,16 +122,17 @@ void ControlPanel::onNamespaceChanged(const QString & text)
   QString cleaned_text = text;
   // Remove spaces and other invalid characters
   cleaned_text.replace(QRegExp("[^a-zA-Z0-9_/]"), "");
-  
+
   // If the text was modified, update the input field
   if (cleaned_text != text) {
     namespace_input_->blockSignals(true);
     namespace_input_->setText(cleaned_text);
     namespace_input_->blockSignals(false);
   }
-  
+
   RCLCPP_DEBUG(
-    rclcpp::get_logger("ControlPanel"), "Namespace changed to: %s", cleaned_text.toStdString().c_str());
+    rclcpp::get_logger("ControlPanel"), "Namespace changed to: %s",
+    cleaned_text.toStdString().c_str());
   last_known_source_ = "";
   source_combo_box_->clear();
   source_combo_box_->addItem("Querying...");
@@ -309,21 +312,24 @@ void ControlPanel::updateMonitoringDisplay()
   // Use QString::number() for more reliable formatting
   speed_label_->setText(QString::number(current_speed_, 'f', 2));
 
-  position_label_->setText(QString("%1, %2, %3")
-                             .arg(QString::number(current_x_, 'f', 2))
-                             .arg(QString::number(current_y_, 'f', 2))
-                             .arg(QString::number(current_z_, 'f', 2)));
+  position_label_->setText(
+    QString("%1, %2, %3")
+    .arg(QString::number(current_x_, 'f', 2))
+    .arg(QString::number(current_y_, 'f', 2))
+    .arg(QString::number(current_z_, 'f', 2)));
 
-  acceleration_label_->setText(QString("%1, %2, %3")
-                                 .arg(QString::number(current_accel_x_, 'f', 2))
-                                 .arg(QString::number(current_accel_y_, 'f', 2))
-                                 .arg(QString::number(current_accel_z_, 'f', 2)));
+  acceleration_label_->setText(
+    QString("%1, %2, %3")
+    .arg(QString::number(current_accel_x_, 'f', 2))
+    .arg(QString::number(current_accel_y_, 'f', 2))
+    .arg(QString::number(current_accel_z_, 'f', 2)));
 
   angular_velocity_label_->setText(QString::number(current_angular_vel_, 'f', 2));
 
-  cmd_vel_label_->setText(QString("%1, %2")
-                            .arg(QString::number(cmd_linear_x_, 'f', 2))
-                            .arg(QString::number(cmd_angular_z_, 'f', 2)));
+  cmd_vel_label_->setText(
+    QString("%1, %2")
+    .arg(QString::number(cmd_linear_x_, 'f', 2))
+    .arg(QString::number(cmd_angular_z_, 'f', 2)));
 }
 
 }  // namespace auna_control

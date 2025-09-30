@@ -21,7 +21,7 @@
 # THE SOFTWARE.
 
 
-"""Curve Fitting Node"""
+"""Curve Fitting Node."""
 import csv
 import os
 import numpy as np
@@ -31,10 +31,10 @@ import matplotlib.pyplot as plt
 
 
 class CurveFitting(Node):
-    """Curve Fitting Node"""
+    """Curve Fitting Node."""
 
     def __init__(self):
-        """Initializes the node"""
+        """Initializes the node."""
         super().__init__('waypoint_publisher')
         self.declare_parameter('waypoint_file', 'waypoints.csv')
         self.declare_parameter('interpolation_distance', 0.1)
@@ -49,7 +49,7 @@ class CurveFitting(Node):
         self.plot_interpolated_waypoints()
 
     def read_csv(self):
-        """Reads the waypoints from the csv file and swaps if swap_xy is true"""
+        """Reads the waypoints from the csv file and swaps if swap_xy is true."""
         self.waypoints = []
         with open(self.get_parameter('waypoint_file').value, 'r', encoding='utf-8-sig') as file:
             reader = csv.reader(file)
@@ -60,14 +60,15 @@ class CurveFitting(Node):
                     self.waypoints.append((float(row[0]), float(row[1])))
 
     def interpolate_waypoints(self):
-        """Interpolates the waypoints based on the distance between them"""
+        """Interpolates the waypoints based on the distance between them."""
         waypoints = np.array(self.waypoints)
         x = waypoints[:, 0]
         y = waypoints[:, 1]
         t = np.arange(len(waypoints))
 
         # Fine-grained sampling of waypoints
-        num_points = len(self.waypoints) * 1000  # Increase the number of points for fine-grained sampling
+        # Increase the number of points for fine-grained sampling
+        num_points = len(self.waypoints) * 1000
         t_fine = np.linspace(0, len(waypoints) - 1, num_points)
         x_fine = np.interp(t_fine, t, x)
         y_fine = np.interp(t_fine, t, y)
@@ -97,7 +98,7 @@ class CurveFitting(Node):
         self.interpolated_waypoints = filtered_waypoints
 
     def plot_interpolated_waypoints(self):
-        """Plots the interpolated waypoints"""
+        """Plots the interpolated waypoints."""
         x_interpolated, y_interpolated = zip(*self.interpolated_waypoints)
 
         plt.figure(figsize=(8, 6))
@@ -112,7 +113,7 @@ class CurveFitting(Node):
         plt.show()
 
     def save_interpolated_waypoints(self):
-        """Saves the interpolated waypoints to a csv file"""
+        """Saves the interpolated waypoints to a csv file."""
         # Get the input file path and construct the output path
         input_file = self.get_parameter('waypoint_file').value
         input_dir = os.path.dirname(input_file)
@@ -125,13 +126,13 @@ class CurveFitting(Node):
         self.get_logger().info(f'Saved interpolated waypoints to: {output_file}')
 
     def calculate_angle(self, point1, point2):
-        """Calculates the angle between two points"""
+        """Calculates the angle between two points."""
         delta_x = point2[0] - point1[0]
         delta_y = point2[1] - point1[1]
         return np.arctan2(delta_y, delta_x)
 
     def print_angles_between_waypoints(self):
-        """Calculates and prints the angles between consecutive waypoints relative to the angle of the two points before"""
+        """Calculates and prints the angles between consecutive waypoints relative to the angle of the two points before."""
         if len(self.interpolated_waypoints) < 3:
             self.get_logger().info('Not enough waypoints to calculate angles.')
             return
@@ -166,7 +167,8 @@ class CurveFitting(Node):
             elif relative_angle < -np.pi:
                 relative_angle += 2 * np.pi
 
-            self.get_logger().info(f'Waypoint {i} to {i + 1}: {np.degrees(relative_angle):.2f} degrees')
+            self.get_logger().info(
+                f'Waypoint {i} to {i + 1}: {np.degrees(relative_angle):.2f} degrees')
 
             # Update the previous angle for the next iteration
             previous_angle = angle

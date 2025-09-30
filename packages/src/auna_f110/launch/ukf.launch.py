@@ -19,8 +19,7 @@
 # THE SOFTWARE.
 
 
-"""Sensor launch file"""
-
+"""Sensor launch file."""
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -32,7 +31,7 @@ from auna_common import yaml_launch
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
+    """Return launch description."""
 
     # Launch configuration
     namespace = LaunchConfiguration('namespace')
@@ -68,7 +67,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
+    """Return launch description."""
 
     # Launch arguments
     namespace_arg = DeclareLaunchArgument('namespace', default_value='robot')

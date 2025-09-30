@@ -30,7 +30,7 @@ from auna_common import yaml_launch
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
+    """Return launch description."""
 
     # Package Directories
     pkg_dir = get_package_share_directory('auna_nav2')
@@ -69,13 +69,30 @@ def include_launch_description(context: LaunchContext):
         robots = []
         for num in range(robot_number):
             robot_namespace = f'{namespace}{num}'
-            robots.append({
-                'name': robot_namespace,
-                'namespace': robot_namespace,
-                'x_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"]) + num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"]),
-                'y_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"]) + num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"]),
-                'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"]) + num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"]),
-            })
+            robots.append({'name': robot_namespace,
+                           'namespace': robot_namespace,
+                           'x_pose': yaml_launch.get_yaml_value(map_path,
+                                                                ["spawn",
+                                                                 "offset",
+                                                                 "x"]) + num * yaml_launch.get_yaml_value(map_path,
+                                                                                                          ["spawn",
+                                                                                                           "linear",
+                                                                                                           "x"]),
+                           'y_pose': yaml_launch.get_yaml_value(map_path,
+                                                                ["spawn",
+                                                                 "offset",
+                                                                 "y"]) + num * yaml_launch.get_yaml_value(map_path,
+                                                                                                          ["spawn",
+                                                                                                           "linear",
+                                                                                                           "y"]),
+                           'z_pose': yaml_launch.get_yaml_value(map_path,
+                                                                ["spawn",
+                                                                 "offset",
+                                                                 "z"]) + num * yaml_launch.get_yaml_value(map_path,
+                                                                                                          ["spawn",
+                                                                                                           "linear",
+                                                                                                           "z"]),
+                           })
     else:
         robots = [{
             'name': '',
@@ -85,7 +102,8 @@ def include_launch_description(context: LaunchContext):
             'z_pose': yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"]),
         }]
 
-    # Create our own temporary YAML files that include substitutions and use them to create the parameter file launch configurations
+    # Create our own temporary YAML files that include substitutions and use
+    # them to create the parameter file launch configurations
     robot_params_file_args = []
     for num in range(robot_number):
         param_substitutions = {
@@ -170,7 +188,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
+    """Return launch description."""
 
     # Package Directories
     pkg_dir = get_package_share_directory('auna_nav2')

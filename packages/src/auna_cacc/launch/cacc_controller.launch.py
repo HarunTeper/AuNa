@@ -31,7 +31,7 @@ from auna_common import yaml_launch
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
+    """Return launch description."""
 
     # Launch Argument Configurations
     robot_number = LaunchConfiguration('robot_number', default='2')
@@ -46,10 +46,8 @@ def include_launch_description(context: LaunchContext):
     launch_description_content = []
 
     # Explicitly log the number of robots detected
-    launch_description_content.append(
-        LogInfo(
-            msg=f"CACC launch: Detected {robot_number_value} robots with base namespace '{ns_value}'")
-    )
+    launch_description_content.append(LogInfo(
+        msg=f"CACC launch: Detected {robot_number_value} robots with base namespace '{ns_value}'"))
     launch_description_content.append(
         LogInfo(
             msg=f"Starting CACC controllers for all {robot_number_value} robots")
@@ -88,7 +86,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
+    """Return launch description."""
 
     # Package Directories
     pkg_dir = get_package_share_directory('auna_cacc')

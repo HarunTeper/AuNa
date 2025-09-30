@@ -21,8 +21,7 @@
 # THE SOFTWARE.
 
 
-"""Yaml file load functions"""
-
+"""Yaml file load functions."""
 import tempfile
 from typing import Dict
 import typing
@@ -30,7 +29,7 @@ import yaml
 
 
 def get_yaml(file_path):
-    """Opens yaml from file path"""
+    """Opens yaml from file path."""
     with open(file_path, "rb") as stream:
         try:
             return yaml.safe_load(stream)
@@ -39,8 +38,7 @@ def get_yaml(file_path):
 
 
 def get_yaml_value(file_path, keys):
-    """Gets value from yaml file using keys"""
-
+    """Gets value from yaml file using keys."""
     with open(file_path, "rb") as stream:
         try:
             yaml_file = yaml.safe_load(stream)
@@ -60,7 +58,7 @@ def get_yaml_value(file_path, keys):
 
 
 def get_temp_file(yaml_file: yaml):
-    """Return temp file path of cloned yaml file"""
+    """Return temp file path of cloned yaml file."""
     temp_file_path = tempfile.NamedTemporaryFile(mode='w', delete=False)
     yaml.safe_dump(yaml_file, temp_file_path)
     temp_file_path.close()
@@ -68,7 +66,7 @@ def get_temp_file(yaml_file: yaml):
 
 
 def substitute_values(yaml_file: dict, substitutions: Dict[str, typing.Any]):
-    """Substitures values in keys of substitutions if the keys are in the yaml_file"""
+    """Substitures values in keys of substitutions if the keys are in the yaml_file."""
     for key in yaml_file:
         if isinstance(yaml_file[key], dict):
             substitute_values(yaml_file[key], substitutions)
@@ -80,7 +78,7 @@ def substitute_values(yaml_file: dict, substitutions: Dict[str, typing.Any]):
 
 
 def insert_namespace(yaml_file: dict, namespace: str):
-    """Substitutes the tag '$(NAMESPACE)$' with the given namespace in the yaml"""
+    """Substitutes the tag '$(NAMESPACE)$' with the given namespace in the yaml."""
     for key in yaml_file:
         if isinstance(yaml_file[key], dict):
             insert_namespace(yaml_file[key], namespace)

@@ -25,7 +25,8 @@
 
 using namespace std;
 
-WallFollow::WallFollow() : Node("wallfollowing")
+WallFollow::WallFollow()
+: Node("wallfollowing")
 {
   // Declare and get parameters
   declare_parameters();
@@ -88,24 +89,26 @@ void WallFollow::declare_parameters()
 }
 
 double WallFollow::get_range(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan, double angle)
-  {
-    if (angle < scan->angle_min || angle > scan->angle_max) return -1.0;
+{
+  if (angle < scan->angle_min || angle > scan->angle_max) {return -1.0;}
 
-    int index = static_cast<int>(std::round((angle - scan->angle_min) / scan->angle_increment));
-    if (index < 0 || index >= static_cast<int>(scan->ranges.size())) return -1.0;
+  int index = static_cast<int>(std::round((angle - scan->angle_min) / scan->angle_increment));
+  if (index < 0 || index >= static_cast<int>(scan->ranges.size())) {return -1.0;}
 
-    float dist = scan->ranges[index];
-    if (std::isnan(dist) || std::isinf(dist)) return -1.0;
+  float dist = scan->ranges[index];
+  if (std::isnan(dist) || std::isinf(dist)) {return -1.0;}
 
-    return static_cast<double>(dist);
-  }
+  return static_cast<double>(dist);
+}
 
-double WallFollow::get_error(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan, double desired_distance)
+double WallFollow::get_error(
+  const sensor_msgs::msg::LaserScan::ConstSharedPtr scan,
+  double desired_distance)
 {
   double a = get_range(scan, angle_a_);
   double b = get_range(scan, angle_b_);
 
-  if (a == 0.0 || b == 0.0) return 0.0;
+  if (a == 0.0 || b == 0.0) {return 0.0;}
 
   double swing = angle_b_ - angle_a_;
 
@@ -129,13 +132,14 @@ void WallFollow::pid_control(double error, double velocity)
 
   prev_error_ = error;
 
-  if (angle < -max_steering_angle_) angle = -max_steering_angle_;
-  if (angle > max_steering_angle_) angle = max_steering_angle_;
+  if (angle < -max_steering_angle_) {angle = -max_steering_angle_;}
+  if (angle > max_steering_angle_) {angle = max_steering_angle_;}
 
-  if (std::abs(error) > error_threshold_)
+  if (std::abs(error) > error_threshold_) {
     velocity = min_velocity_;
-  else
+  } else {
     velocity = max_velocity_;
+  }
 
   auto drive_msg = ackermann_msgs::msg::AckermannDriveStamped();
   drive_msg.header.stamp = this->now();
@@ -151,9 +155,9 @@ void WallFollow::scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr
   pid_control(error, velocity_);
 }
 
-double WallFollow::radiansToDegree(const double & angleInRadians) 
-{ 
-  return angleInRadians * (180.0 / M_PI); 
+double WallFollow::radiansToDegree(const double & angleInRadians)
+{
+  return angleInRadians * (180.0 / M_PI);
 }
 
 int main(int argc, char ** argv)

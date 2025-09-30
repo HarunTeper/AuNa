@@ -19,8 +19,7 @@
 # THE SOFTWARE.
 
 
-"""Multiple cars omnet module launch file"""
-
+"""Multiple cars omnet module launch file."""
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -33,7 +32,7 @@ from launch_ros.actions import PushRosNamespace, Node
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
+    """Return launch description."""
 
     # Package Directories
     pkg_dir = get_package_share_directory('auna_comm')
@@ -95,7 +94,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
+    """Return launch description."""
 
     # Launch Arguments
     robot_number_arg = DeclareLaunchArgument(

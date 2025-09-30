@@ -19,8 +19,7 @@
 # THE SOFTWARE.
 
 
-"""Single robot spawn launch file"""
-
+"""Single robot spawn launch file."""
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import SetRemap, PushRosNamespace
@@ -33,7 +32,7 @@ from auna_common import yaml_launch
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
+    """Return launch description."""
     # Package Directories
     pkg_dir = get_package_share_directory('auna_gazebo')
     spawn_launch_file_dir = os.path.join(pkg_dir, 'launch', 'spawn')

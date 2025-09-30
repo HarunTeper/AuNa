@@ -19,8 +19,7 @@
 # THE SOFTWARE.
 
 
-"""Lidar sensor launch file"""
-
+"""Lidar sensor launch file."""
 import os
 import yaml
 from ament_index_python.packages import get_package_share_directory
@@ -39,7 +38,7 @@ from auna_common import yaml_launch
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
+    """Return launch description."""
 
     # File Paths
     config_file_path = os.path.join(get_package_share_directory(
@@ -137,7 +136,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
+    """Return launch description."""
 
     # Launch arguments
     autostart_arg = DeclareLaunchArgument('auto_start', default_value='true')

@@ -26,7 +26,8 @@
 #include <etsi_its_cam_msgs/msg/cam.hpp>
 #include <std_msgs/msg/string.hpp>
 
-CamReceiver::CamReceiver() : Node("cam_receiver")
+CamReceiver::CamReceiver()
+: Node("cam_receiver")
 {
   // Parameters
   this->declare_parameter<int>("filter_index", 0);

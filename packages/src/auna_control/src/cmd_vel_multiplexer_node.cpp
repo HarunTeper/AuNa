@@ -119,33 +119,33 @@ CmdVelMultiplexerNode::CmdVelMultiplexerNode()
 
   set_source_service_ = this->create_service<SetString>(
     "toggle_cmd_vel_source", std::bind(
-                               &CmdVelMultiplexerNode::toggleSourceCallback, this,
-                               std::placeholders::_1, std::placeholders::_2));
+      &CmdVelMultiplexerNode::toggleSourceCallback, this,
+      std::placeholders::_1, std::placeholders::_2));
 
   set_estop_service_ = this->create_service<SetBool>(
     "/trigger_emergency_stop", std::bind(
-                                 &CmdVelMultiplexerNode::setEstopCallback, this,
-                                 std::placeholders::_1, std::placeholders::_2));
+      &CmdVelMultiplexerNode::setEstopCallback, this,
+      std::placeholders::_1, std::placeholders::_2));
 
   get_estop_status_service_ = this->create_service<Trigger>(
     "/get_estop_status", std::bind(
-                           &CmdVelMultiplexerNode::getEstopStatusCallback, this,
-                           std::placeholders::_1, std::placeholders::_2));
+      &CmdVelMultiplexerNode::getEstopStatusCallback, this,
+      std::placeholders::_1, std::placeholders::_2));
 
   get_source_status_service_ = this->create_service<Trigger>(
     "get_source_status", std::bind(
-                           &CmdVelMultiplexerNode::getSourceStatusCallback, this,
-                           std::placeholders::_1, std::placeholders::_2));
+      &CmdVelMultiplexerNode::getSourceStatusCallback, this,
+      std::placeholders::_1, std::placeholders::_2));
 
   get_input_sources_service_ = this->create_service<Trigger>(
     "get_input_sources", std::bind(
-                           &CmdVelMultiplexerNode::getInputSourcesCallback, this,
-                           std::placeholders::_1, std::placeholders::_2));
+      &CmdVelMultiplexerNode::getInputSourcesCallback, this,
+      std::placeholders::_1, std::placeholders::_2));
 
   debug_state_service_ = this->create_service<Trigger>(
     "debug_state", std::bind(
-                     &CmdVelMultiplexerNode::debugStateCallback, this, std::placeholders::_1,
-                     std::placeholders::_2));
+      &CmdVelMultiplexerNode::debugStateCallback, this, std::placeholders::_1,
+      std::placeholders::_2));
 
   updatePublishTimer();
 
@@ -367,7 +367,7 @@ void CmdVelMultiplexerNode::publishTimerCallback()
 }
 
 void CmdVelMultiplexerNode::getEstopStatusCallback(
-  const std::shared_ptr<Trigger::Request> /*request*/, std::shared_ptr<Trigger::Response> response)
+  const std::shared_ptr<Trigger::Request>/*request*/, std::shared_ptr<Trigger::Response> response)
 {
   RCLCPP_DEBUG(this->get_logger(), "getEstopStatusCallback called");
   response->success = true;
@@ -375,7 +375,7 @@ void CmdVelMultiplexerNode::getEstopStatusCallback(
 }
 
 void CmdVelMultiplexerNode::getSourceStatusCallback(
-  const std::shared_ptr<Trigger::Request> /*request*/, std::shared_ptr<Trigger::Response> response)
+  const std::shared_ptr<Trigger::Request>/*request*/, std::shared_ptr<Trigger::Response> response)
 {
   RCLCPP_DEBUG(this->get_logger(), "getSourceStatusCallback called");
   response->success = true;
@@ -383,7 +383,7 @@ void CmdVelMultiplexerNode::getSourceStatusCallback(
 }
 
 void CmdVelMultiplexerNode::getInputSourcesCallback(
-  const std::shared_ptr<Trigger::Request> /*request*/, std::shared_ptr<Trigger::Response> response)
+  const std::shared_ptr<Trigger::Request>/*request*/, std::shared_ptr<Trigger::Response> response)
 {
   RCLCPP_DEBUG(this->get_logger(), "getInputSourcesCallback called");
   response->success = true;
@@ -395,7 +395,7 @@ void CmdVelMultiplexerNode::getInputSourcesCallback(
 }
 
 void CmdVelMultiplexerNode::debugStateCallback(
-  const std::shared_ptr<Trigger::Request> /*request*/, std::shared_ptr<Trigger::Response> response)
+  const std::shared_ptr<Trigger::Request>/*request*/, std::shared_ptr<Trigger::Response> response)
 {
   RCLCPP_DEBUG(this->get_logger(), "debugStateCallback called");
   response->success = true;
@@ -407,7 +407,7 @@ void CmdVelMultiplexerNode::debugStateCallback(
 
   for (const auto & [source_name, ackermann_msg] : last_received_msgs_) {
     debug_info += "  " + source_name + ": speed=" + std::to_string(ackermann_msg.drive.speed) +
-                  ", steering_angle=" + std::to_string(ackermann_msg.drive.steering_angle) + "\n";
+      ", steering_angle=" + std::to_string(ackermann_msg.drive.steering_angle) + "\n";
   }
 
   response->message = debug_info;

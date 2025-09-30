@@ -30,7 +30,7 @@ GroundTruthPosePublisher::GroundTruthPosePublisher()
 {
   publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("gazebo_pose", 2);
 
-  timer_ = this->create_wall_timer(std::chrono::milliseconds(10), [this]() { timer_callback(); });
+  timer_ = this->create_wall_timer(std::chrono::milliseconds(10), [this]() {timer_callback();});
 
   RCLCPP_INFO(this->get_logger(), "Publishing to topic: 'gazebo_pose'");
 }

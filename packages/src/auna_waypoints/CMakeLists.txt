@@ -35,12 +35,12 @@ add_library(waypoint_publisher_node SHARED src/waypoint_publisher/waypoint_publi
 add_executable(waypoint_publisher src/waypoint_publisher/waypoint_publisher_main.cpp)
 
 # Target dependencies
-set(waypoint_publisher_dependencies 
-  rclcpp 
-  geometry_msgs 
-  nav2_msgs 
-  rclcpp_action 
-  tf2_ros 
+set(waypoint_publisher_dependencies
+  rclcpp
+  geometry_msgs
+  nav2_msgs
+  rclcpp_action
+  tf2_ros
   tf2_geometry_msgs
 )
 
@@ -51,7 +51,7 @@ ament_target_dependencies(waypoint_publisher ${waypoint_publisher_dependencies})
 target_link_libraries(waypoint_publisher waypoint_publisher_node)
 
 # Install directories
-install(DIRECTORY 
+install(DIRECTORY
   launch
   config
   DESTINATION share/${PROJECT_NAME}
@@ -69,7 +69,7 @@ install(PROGRAMS
 )
 
 # Install libraries
-install(TARGETS 
+install(TARGETS
   waypoint_publisher_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib

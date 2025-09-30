@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef AUNA_CACC__CACC_CONTROLLER_HPP_
-#define AUNA_CACC__CACC_CONTROLLER_HPP_
+#ifndef AUNA_CACC__CACC_CONTROLLER__HPP_
+#define AUNA_CACC__CACC_CONTROLLER__HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -244,4 +244,4 @@ private:
     pub_waypoints_pose_array_;     // Added publisher
 };
 
-#endif  // AUNA_CACC__CACC_CONTROLLER_HPP_
+#endif  // AUNA_CACC__CACC_CONTROLLER__HPP_

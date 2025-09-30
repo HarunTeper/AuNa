@@ -82,7 +82,7 @@ Max Angular Speed: +/-{self.ANGULAR_MAX} rad/s
         )
 
     def close(self):
-        """Properly clean up resources"""
+        """Properly clean up resources."""
         self.running = False
         if hasattr(self, 'key_listener'):
             if self.key_listener.is_alive():

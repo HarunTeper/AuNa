@@ -20,7 +20,6 @@
 
 
 """ Launch RViz2 with the default view for the navigation stack. """
-
 import os
 
 from ament_index_python.packages import get_package_share_directory
@@ -36,7 +35,7 @@ from launch.launch_context import LaunchContext
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
+    """Return launch description."""
 
     # Create the launch configuration variables
     namespace = LaunchConfiguration('namespace')

@@ -27,16 +27,17 @@
 #include <string>      // For std::string, std::stoul
 
 // Create subscribers to get robot data and publisher to send to Artery and OMNeT++
-OmnetTransmitter::OmnetTransmitter(const std::string & robot_name) : Node("omnet_transmitter_node")
+OmnetTransmitter::OmnetTransmitter(const std::string & robot_name)
+: Node("omnet_transmitter_node")
 {
   pose_subscriber = this->create_subscription<geometry_msgs::msg::PoseStamped>(
     "global_pose", 2,
-    [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) { pose_callback(msg); });
+    [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) {pose_callback(msg);});
   odom_subscriber = this->create_subscription<nav_msgs::msg::Odometry>(
-    "odom", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg) { odom_callback(msg); });
+    "odom", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg) {odom_callback(msg);});
 
   timer = this->create_wall_timer(
-    std::chrono::milliseconds(100), [this]() { cam_callback(); });  // Set a default timer period
+    std::chrono::milliseconds(100), [this]() {cam_callback();});    // Set a default timer period
   publisher = this->create_publisher<etsi_its_cam_msgs::msg::CAM>("cam_out", 2);
 
   this->robot_name_ = robot_name;

@@ -30,7 +30,7 @@ GroundTruthTransform::GroundTruthTransform()
 {
   modelClient_ = this->create_client<gazebo_msgs::srv::GetEntityState>("/get_entity_state");
   service_timer_ = this->create_wall_timer(
-    std::chrono::milliseconds(publish_milliseconds_), [this]() { service_timer_callback(); });
+    std::chrono::milliseconds(publish_milliseconds_), [this]() {service_timer_callback();});
   std::string ns = this->get_namespace();
   if (!ns.empty()) {
     this->name_ = ns.substr(1);  // Remove the first character (typically a slash)

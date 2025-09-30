@@ -19,8 +19,7 @@
 # THE SOFTWARE.
 
 
-"""Single car omnet module launch file"""
-
+"""Single car omnet module launch file."""
 import os
 from launch.actions import LogInfo
 from launch_ros.actions import Node
@@ -30,11 +29,11 @@ from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
-    """Return launch description"""
-
+    """Return launch description."""
     communication_type = os.environ.get('COMMUNICATION_TYPE', 'cam')
     if communication_type != 'omnet':
-        return LaunchDescription([LogInfo(msg="COMMUNICATION_TYPE is not 'omnet', skipping OMNeT nodes.")])
+        return LaunchDescription(
+            [LogInfo(msg="COMMUNICATION_TYPE is not 'omnet', skipping OMNeT nodes.")])
 
     # Launch Argument Configurations
     namespace = LaunchConfiguration('namespace')

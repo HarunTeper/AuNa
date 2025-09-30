@@ -19,8 +19,7 @@
 # THE SOFTWARE.
 
 
-"""Launch file for complete CACC system with CAM communication and controller"""
-
+"""Launch file for complete CACC system with CAM communication and controller."""
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -31,7 +30,7 @@ from launch.substitutions import LaunchConfiguration
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
+    """Return launch description."""
 
     # Package Directories
     auna_comm_pkg_dir = get_package_share_directory('auna_comm')
@@ -71,8 +70,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
-
+    """Return launch description."""
     default_config = os.path.join(
         get_package_share_directory('auna_comm'),
         'config',

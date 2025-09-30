@@ -19,8 +19,7 @@
 # THE SOFTWARE.
 
 
-"""Sensor launch file"""
-
+"""Sensor launch file."""
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node
@@ -32,7 +31,7 @@ from auna_common import yaml_launch
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
+    """Return launch description."""
 
     # Launch configurations
     namespace = LaunchConfiguration('namespace')
@@ -87,7 +86,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
+    """Return launch description."""
 
     # Package Directories
     pkg_dir = get_package_share_directory('auna_f110')

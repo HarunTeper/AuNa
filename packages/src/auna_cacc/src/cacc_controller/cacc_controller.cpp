@@ -28,7 +28,8 @@
 #include <cmath>
 #include <fstream>  // Added for file logging
 
-CaccController::CaccController() : Node("cacc_controller")
+CaccController::CaccController()
+: Node("cacc_controller")
 {
   // Add startup logging
   RCLCPP_INFO(this->get_logger(), "Starting CACC controller, waiting for required messages");
@@ -120,14 +121,14 @@ CaccController::CaccController() : Node("cacc_controller")
     });
   client_set_time_gap_ = this->create_service<auna_msgs::srv::SetFloat64>(
     "cacc/set_time_gap", [this](
-                           const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
-                           std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response) {
+      const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
+      std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response) {
       this->set_time_gap(request, response);
     });
   client_set_cacc_enable_ = this->create_service<auna_msgs::srv::SetBool>(
     "/cacc/set_cacc_enable", [this](
-                               const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
-                               std::shared_ptr<auna_msgs::srv::SetBool::Response> response) {
+      const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
+      std::shared_ptr<auna_msgs::srv::SetBool::Response> response) {
       this->set_cacc_enable(request, response);
     });
   client_set_target_velocity_ = this->create_service<auna_msgs::srv::SetFloat64>(
@@ -176,15 +177,15 @@ CaccController::CaccController() : Node("cacc_controller")
 
   client_set_auto_mode_ = this->create_service<auna_msgs::srv::SetBool>(
     "cacc/set_auto_mode", [this](
-                            const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
-                            std::shared_ptr<auna_msgs::srv::SetBool::Response> response) {
+      const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
+      std::shared_ptr<auna_msgs::srv::SetBool::Response> response) {
       this->set_auto_mode(request, response);
     });
 
   timer_ = this->create_wall_timer(
-    std::chrono::milliseconds(1000 / params_.frequency), [this]() { this->timer_callback(); });
+    std::chrono::milliseconds(1000 / params_.frequency), [this]() {this->timer_callback();});
   setup_timer_ = this->create_wall_timer(
-    std::chrono::milliseconds(1000), [this]() { this->setup_timer_callback(); });
+    std::chrono::milliseconds(1000), [this]() {this->setup_timer_callback();});
   timer_->cancel();
 
   if (params_.use_waypoints) {
@@ -197,12 +198,13 @@ CaccController::CaccController() : Node("cacc_controller")
     });
 
   // Add cleanup for file logging
-  rclcpp::on_shutdown([this]() {
-    if (enable_data_logging_ && log_file_.is_open()) {
-      RCLCPP_INFO(this->get_logger(), "Closing log file");
-      log_file_.close();
-    }
-  });
+  rclcpp::on_shutdown(
+    [this]() {
+      if (enable_data_logging_ && log_file_.is_open()) {
+        RCLCPP_INFO(this->get_logger(), "Closing log file");
+        log_file_.close();
+      }
+    });
 }
 
 void CaccController::read_waypoints_from_csv()
@@ -314,8 +316,8 @@ void CaccController::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr m
   cam_x_ = msg->cam.cam_parameters.basic_container.reference_position.longitude.value / 10000000.0;
   cam_y_ = msg->cam.cam_parameters.basic_container.reference_position.latitude.value / 10000000.0;
   cam_velocity_ = msg->cam.cam_parameters.high_frequency_container
-                    .basic_vehicle_container_high_frequency.speed.speed_value.value /
-                  100.0;  // Convert from 0.01 m/s to m/s
+    .basic_vehicle_container_high_frequency.speed.speed_value.value /
+    100.0;                // Convert from 0.01 m/s to m/s
 
   // Calculate acceleration
   if (last_cam_msg_ == nullptr) {
@@ -349,7 +351,7 @@ void CaccController::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr m
 
   // Properly handle the heading value with bounds checking
   uint16_t heading_value = msg->cam.cam_parameters.high_frequency_container
-                             .basic_vehicle_container_high_frequency.heading.heading_value.value;
+    .basic_vehicle_container_high_frequency.heading.heading_value.value;
 
   if (heading_value == etsi_its_cam_msgs::msg::HeadingValue::UNAVAILABLE) {
     RCLCPP_WARN(this->get_logger(), "Heading value is UNAVAILABLE");
@@ -375,10 +377,11 @@ void CaccController::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr m
 
   if (
     msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency.yaw_rate
-        .yaw_rate_value.value != etsi_its_cam_msgs::msg::YawRateValue::UNAVAILABLE &&
-    cam_velocity_ > 0.1) {
+    .yaw_rate_value.value != etsi_its_cam_msgs::msg::YawRateValue::UNAVAILABLE &&
+    cam_velocity_ > 0.1)
+  {
     double raw_yaw = msg->cam.cam_parameters.high_frequency_container
-                       .basic_vehicle_container_high_frequency.yaw_rate.yaw_rate_value.value;
+      .basic_vehicle_container_high_frequency.yaw_rate.yaw_rate_value.value;
     cam_yaw_rate_ = (raw_yaw / 100.0) * (M_PI / 180.0);  // Convert from 0.01 degrees/s to radians/s
     RCLCPP_DEBUG(
       this->get_logger(), "Yaw rate conversion: raw=%.2f → %.4f rad/s", raw_yaw, cam_yaw_rate_);
@@ -392,12 +395,12 @@ void CaccController::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr m
 void CaccController::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
   odom_velocity_ = sqrt(pow(msg->twist.twist.linear.x, 2) + pow(msg->twist.twist.linear.y, 2)) *
-                   ((msg->twist.twist.linear.x < 0) ? -1 : 1);
+    ((msg->twist.twist.linear.x < 0) ? -1 : 1);
   if (last_odom_msg_ == nullptr) {
     odom_acceleration_ = 0.0;
   } else {
     double dt = msg->header.stamp.sec - last_odom_msg_->header.stamp.sec +
-                (msg->header.stamp.nanosec - last_odom_msg_->header.stamp.nanosec) / 1e9;
+      (msg->header.stamp.nanosec - last_odom_msg_->header.stamp.nanosec) / 1e9;
 
     dt = std::min(dt, 0.01);
     odom_acceleration_ = (odom_velocity_ - last_odom_velocity_) / dt;
@@ -781,14 +784,14 @@ void CaccController::timer_callback()
   dbg_inP1_pos_err_ = z_1_ * params_.kp;
   dbg_inP1_vel_err_ = cos(alpha_) * z_3_ + sin(alpha_) * z_4_;
   dbg_inP1_geom_vel_ = (1 - cos(alpha_)) * control_velocity_ * cos(control_yaw_) -
-                       sin(alpha_) * control_velocity_ * sin(control_yaw_);
+    sin(alpha_) * control_velocity_ * sin(control_yaw_);
   dbg_inP1_yaw_rate_ = cos(control_yaw_) * s_ * control_yaw_rate_;
   inP_1_ = dbg_inP1_pos_err_ + dbg_inP1_vel_err_ + dbg_inP1_geom_vel_ + dbg_inP1_yaw_rate_;
 
   dbg_inP2_pos_err_ = z_2_ * params_.kd;
   dbg_inP2_vel_err_ = sin(alpha_) * z_3_ + cos(alpha_) * z_4_;
   dbg_inP2_geom_vel_ = sin(alpha_) * control_velocity_ * cos(control_yaw_) +
-                       (1 - cos(alpha_)) * control_velocity_ * sin(control_yaw_);
+    (1 - cos(alpha_)) * control_velocity_ * sin(control_yaw_);
   dbg_inP2_yaw_rate_ = sin(control_yaw_) * s_ * control_yaw_rate_;
   inP_2_ = dbg_inP2_pos_err_ + dbg_inP2_vel_err_ + dbg_inP2_geom_vel_ + dbg_inP2_yaw_rate_;
 

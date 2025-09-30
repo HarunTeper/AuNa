@@ -25,10 +25,11 @@
 #include <string>  // Potentially for std::to_string if direct int to string for robot_name is needed later
 
 // Create a publisher and subscriber
-OmnetReceiver::OmnetReceiver() : Node("omnet_receiver_node")
+OmnetReceiver::OmnetReceiver()
+: Node("omnet_receiver_node")
 {
   omnet_subscriber_ = this->create_subscription<etsi_its_cam_msgs::msg::CAM>(
-    "cam_in", 2, [this](const etsi_its_cam_msgs::msg::CAM::SharedPtr msg) { cam_callback(msg); });
+    "cam_in", 2, [this](const etsi_its_cam_msgs::msg::CAM::SharedPtr msg) {cam_callback(msg);});
   // Publisher type corrected in the header, this initialization should now match.
   cam_publisher_ = this->create_publisher<etsi_its_cam_msgs::msg::CAM>("cam", 2);
 }
@@ -85,7 +86,8 @@ void OmnetReceiver::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr ms
 
   if (
     msg->cam.cam_parameters.high_frequency_container.choice ==
-    etsi_its_cam_msgs::msg::HighFrequencyContainer::CHOICE_BASIC_VEHICLE_CONTAINER_HIGH_FREQUENCY) {
+    etsi_its_cam_msgs::msg::HighFrequencyContainer::CHOICE_BASIC_VEHICLE_CONTAINER_HIGH_FREQUENCY)
+  {
     auto & cacc_vhf =
       cacc_msg.cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency;
     auto const & msg_vhf =

@@ -30,7 +30,7 @@ from launch.launch_context import LaunchContext
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
+    """Return launch description."""
     robot_index = int(os.environ.get('ROBOT_INDEX', '0'))
 
     # Individual components

@@ -21,15 +21,13 @@
 # THE SOFTWARE.
 
 
-"""XML file load functions"""
-
+"""XML file load functions."""
 import xml.etree.ElementTree as ET
 import tempfile
 
 
 def insert_namespace(xml_file_path, namespace):
-    """Inserts namespace into xml file"""
-
+    """Inserts namespace into xml file."""
     with open(xml_file_path, encoding='latin-1') as f:
         tree = ET.parse(f)
         root = tree.getroot()

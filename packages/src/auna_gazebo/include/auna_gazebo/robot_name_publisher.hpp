@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef AUNA_GAZEBO__ROBOT_NAME_PUBLISHER_HPP_
-#define AUNA_GAZEBO__ROBOT_NAME_PUBLISHER_HPP_
+#ifndef AUNA_GAZEBO__ROBOT_NAME_PUBLISHER__HPP_
+#define AUNA_GAZEBO__ROBOT_NAME_PUBLISHER__HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -38,4 +38,4 @@ private:
   rclcpp::Publisher<auna_msgs::msg::StringArray>::SharedPtr publisher_;
 };
 
-#endif  // AUNA_GAZEBO__ROBOT_NAME_PUBLISHER_HPP_
+#endif  // AUNA_GAZEBO__ROBOT_NAME_PUBLISHER__HPP_

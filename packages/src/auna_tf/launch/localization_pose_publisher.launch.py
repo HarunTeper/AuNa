@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 
-"""Localization pose publisher launch file"""
+"""Localization pose publisher launch file."""
 import os
 from launch_ros.actions import Node, SetRemap
 from launch.actions import GroupAction, DeclareLaunchArgument, OpaqueFunction
@@ -30,7 +30,7 @@ from launch.launch_context import LaunchContext
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
+    """Return launch description."""
     robot_index = int(os.environ.get('ROBOT_INDEX', '0'))
 
     # Launch Configurations
@@ -61,8 +61,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
-
+    """Return launch description."""
     use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',
         default_value='true',

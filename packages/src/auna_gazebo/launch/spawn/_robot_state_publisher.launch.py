@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 
-"""Robot state publisher launch file"""
+"""Robot state publisher launch file."""
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node
@@ -29,7 +29,7 @@ from launch.actions import DeclareLaunchArgument
 
 
 def generate_launch_description():
-    """Return launch description"""
+    """Return launch description."""
     # Package Directories
     pkg_dir = get_package_share_directory('auna_gazebo')
 

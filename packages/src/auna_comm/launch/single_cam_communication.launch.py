@@ -19,8 +19,7 @@
 # THE SOFTWARE.
 
 
-"""Single robot communication launch file"""
-
+"""Single robot communication launch file."""
 import os
 from launch.actions import LogInfo
 from launch_ros.actions import Node
@@ -31,8 +30,7 @@ from launch.launch_context import LaunchContext
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description"""
-
+    """Return launch description."""
     communication_type = os.environ.get('COMMUNICATION_TYPE', 'cam')
     if communication_type != 'cam':
         return [LogInfo(msg="COMMUNICATION_TYPE is not 'cam', skipping CAM nodes.")]
@@ -81,8 +79,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
-
+    """Return launch description."""
     namespace_arg = DeclareLaunchArgument(
         'namespace',
         default_value='robot0',

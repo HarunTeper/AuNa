@@ -19,8 +19,8 @@
 // THE SOFTWARE.
 
 
-#ifndef AUNA_COMM__CAM_RECEIVER_HPP_
-#define AUNA_COMM__CAM_RECEIVER_HPP_
+#ifndef AUNA_COMM__CAM_RECEIVER__HPP_
+#define AUNA_COMM__CAM_RECEIVER__HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -38,4 +38,4 @@ private:
   rclcpp::Subscription<etsi_its_cam_msgs::msg::CAM>::SharedPtr subscription_;
 };
 
-#endif  // AUNA_COMM__CAM_RECEIVER_HPP_
+#endif  // AUNA_COMM__CAM_RECEIVER__HPP_

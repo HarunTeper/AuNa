@@ -20,7 +20,6 @@
 
 
 """Launch all the navigation nodes."""
-
 import os
 
 from ament_index_python.packages import get_package_share_directory
@@ -41,7 +40,8 @@ def generate_launch_description():
     bringup_dir = get_package_share_directory('auna_nav2')
     config_dir = os.path.join(bringup_dir, 'config', 'nav2_params')
 
-    # Get bringup dir from nav2_bringup package to use includes launch files instead of copied ones.
+    # Get bringup dir from nav2_bringup package to use includes launch files
+    # instead of copied ones.
     nav2_bringup_dir = get_package_share_directory('nav2_bringup')
     nav2_launch_dir = os.path.join(nav2_bringup_dir, 'launch')
 

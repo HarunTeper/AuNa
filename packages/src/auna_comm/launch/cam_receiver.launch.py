@@ -19,8 +19,7 @@
 # THE SOFTWARE.
 
 
-"""Launch file for the CAM receiver node"""
-
+"""Launch file for the CAM receiver node."""
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
@@ -28,7 +27,7 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    """Return launch description"""
+    """Return launch description."""
 
     # Launch Arguments
     filter_index_arg = DeclareLaunchArgument(
