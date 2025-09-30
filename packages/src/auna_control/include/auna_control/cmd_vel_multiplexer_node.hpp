@@ -70,30 +70,42 @@ public:
   CmdVelMultiplexerNode();
 
 private:
-  void twist_callback(const TwistStamped::SharedPtr msg, const std::string & source_name);
-  void twist_regular_callback(const Twist::SharedPtr msg, const std::string & source_name);
+  void twist_callback(
+    const TwistStamped::SharedPtr msg,
+    const std::string & source_name);
+  void twist_regular_callback(
+    const Twist::SharedPtr msg,
+    const std::string & source_name);
   void ackermann_callback(
-    const AckermannDriveStamped::SharedPtr msg, const std::string & source_name);
+    const AckermannDriveStamped::SharedPtr msg,
+    const std::string & source_name);
   void toggleSourceCallback(
     const std::shared_ptr<SetString::Request> request,
     std::shared_ptr<SetString::Response> response);
   void setEstopCallback(
-    const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response);
+    const std::shared_ptr<SetBool::Request> request,
+    std::shared_ptr<SetBool::Response> response);
   void publishTimerCallback();
   AckermannDriveStamped createZeroAckermann();
   void getEstopStatusCallback(
-    const std::shared_ptr<Trigger::Request> request, std::shared_ptr<Trigger::Response> response);
+    const std::shared_ptr<Trigger::Request> request,
+    std::shared_ptr<Trigger::Response> response);
   void getSourceStatusCallback(
-    const std::shared_ptr<Trigger::Request> request, std::shared_ptr<Trigger::Response> response);
+    const std::shared_ptr<Trigger::Request> request,
+    std::shared_ptr<Trigger::Response> response);
   void getInputSourcesCallback(
-    const std::shared_ptr<Trigger::Request> request, std::shared_ptr<Trigger::Response> response);
+    const std::shared_ptr<Trigger::Request> request,
+    std::shared_ptr<Trigger::Response> response);
   void debugStateCallback(
-    const std::shared_ptr<Trigger::Request> request, std::shared_ptr<Trigger::Response> response);
+    const std::shared_ptr<Trigger::Request> request,
+    std::shared_ptr<Trigger::Response> response);
   rcl_interfaces::msg::SetParametersResult parameters_callback(
     const std::vector<rclcpp::Parameter> & parameters);
 
-  AckermannDriveStamped twist_to_ackermann(const TwistStamped::SharedPtr & twist_msg);
-  AckermannDriveStamped twist_regular_to_ackermann(const Twist::SharedPtr & twist_msg);
+  AckermannDriveStamped twist_to_ackermann(
+    const TwistStamped::SharedPtr & twist_msg);
+  AckermannDriveStamped twist_regular_to_ackermann(
+    const Twist::SharedPtr & twist_msg);
   TwistStamped ackermann_to_twist(const AckermannDriveStamped & ackermann_msg);
   Twist ackermann_to_twist_regular(const AckermannDriveStamped & ackermann_msg);
 
@@ -113,11 +125,16 @@ private:
   bool convert_yaw_to_steering_angle_;
   std::map<std::string, AckermannDriveStamped> last_received_msgs_;
 
-  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr parameters_callback_handle_;
-  std::map<std::string, rclcpp::Publisher<Twist>::SharedPtr> twist_regular_publishers_;
-  std::map<std::string, rclcpp::Publisher<TwistStamped>::SharedPtr> twist_publishers_;
-  std::map<std::string, rclcpp::Publisher<AckermannDriveStamped>::SharedPtr> ackermann_publishers_;
-  std::map<std::string, rclcpp::SubscriptionBase::SharedPtr> cmd_vel_subscribers_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr
+    parameters_callback_handle_;
+  std::map<std::string, rclcpp::Publisher<Twist>::SharedPtr>
+  twist_regular_publishers_;
+  std::map<std::string, rclcpp::Publisher<TwistStamped>::SharedPtr>
+  twist_publishers_;
+  std::map<std::string, rclcpp::Publisher<AckermannDriveStamped>::SharedPtr>
+  ackermann_publishers_;
+  std::map<std::string, rclcpp::SubscriptionBase::SharedPtr>
+  cmd_vel_subscribers_;
   rclcpp::Service<SetString>::SharedPtr set_source_service_;
   rclcpp::Service<SetBool>::SharedPtr set_estop_service_;
   rclcpp::TimerBase::SharedPtr publish_timer_;

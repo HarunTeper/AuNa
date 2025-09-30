@@ -23,13 +23,19 @@
 #include <string>
 #include <vector>
 
-// Create a publisher, subscriber and prefix. Initialize the transform buffer and listener.
+// Create a publisher, subscriber and prefix. Initialize the transform buffer
+// and listener.
 GroundTruthPosePublisher::GroundTruthPosePublisher()
-: Node("localization_pose_publisher_node"), buffer_(this->get_clock()), listener_(buffer_)
+: Node("localization_pose_publisher_node"),
+  buffer_(this->get_clock()),
+  listener_(buffer_)
 {
-  publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("gazebo_pose", 2);
+  publisher_ =
+    this->create_publisher<geometry_msgs::msg::PoseStamped>("gazebo_pose", 2);
 
-  timer_ = this->create_wall_timer(std::chrono::milliseconds(10), [this]() {timer_callback();});
+  timer_ = this->create_wall_timer(
+    std::chrono::milliseconds(10),
+    [this]() {timer_callback();});
 
   RCLCPP_INFO(this->get_logger(), "Publishing to topic: 'gazebo_pose'");
 }
@@ -41,7 +47,9 @@ void GroundTruthPosePublisher::timer_callback()
   std::string base_frame = "ground_truth_base_link";
 
   try {
-    transformStamped = this->buffer_.lookupTransform(map_frame, base_frame, tf2::TimePointZero);
+    transformStamped = this->buffer_.lookupTransform(
+      map_frame, base_frame,
+      tf2::TimePointZero);
   } catch (tf2::TransformException & ex) {
     // Suppress error output
     return;

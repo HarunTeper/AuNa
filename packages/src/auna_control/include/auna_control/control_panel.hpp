@@ -50,7 +50,9 @@ private Q_SLOTS:
   void onSourceComboBoxChanged(int index);
 
   void onEstopStatusUpdated(bool isActive, const QString & message);
-  void onOdometryUpdated(double speed, double angular_vel, double x, double y, double z);
+  void onOdometryUpdated(
+    double speed, double angular_vel, double x, double y,
+    double z);
   void onImuUpdated(double ax, double ay, double az);
   void onCmdVelUpdated(double linear, double angular);
   void onInputSourcesUpdated(const QStringList & sources);

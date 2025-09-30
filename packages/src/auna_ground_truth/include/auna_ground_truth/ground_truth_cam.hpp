@@ -42,7 +42,8 @@ public:
 private:
   void service_timer_callback();
   void model_srv_callback(
-    const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture future);
+    const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture
+    future);
 
   rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedPtr modelClient_;
   rclcpp::Subscription<gazebo_msgs::msg::ModelStates>::SharedPtr subscription_;

@@ -32,9 +32,11 @@ WallFollow::WallFollow()
 
   // Initialize ROS2 interfaces
   scan_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
-    lidarscan_topic_, 10, std::bind(&WallFollow::scan_callback, this, std::placeholders::_1));
+    lidarscan_topic_, 10,
+    std::bind(&WallFollow::scan_callback, this, std::placeholders::_1));
   drive_pub_ =
-    this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>(drive_topic_, 10);
+    this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>(
+    drive_topic_, 10);
 
   RCLCPP_INFO(this->get_logger(), "WallFollow node initialized.");
 }
@@ -87,13 +89,15 @@ void WallFollow::declare_parameters()
   integral_ = 0.0;
 }
 
-double WallFollow::get_range(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan, double angle)
+double WallFollow::get_range(
+  const sensor_msgs::msg::LaserScan::ConstSharedPtr scan, double angle)
 {
   if (angle < scan->angle_min || angle > scan->angle_max) {
     return -1.0;
   }
 
-  int index = static_cast<int>(std::round((angle - scan->angle_min) / scan->angle_increment));
+  int index = static_cast<int>(
+    std::round((angle - scan->angle_min) / scan->angle_increment));
   if (index < 0 || index >= static_cast<int>(scan->ranges.size())) {
     return -1.0;
   }
@@ -107,7 +111,8 @@ double WallFollow::get_range(const sensor_msgs::msg::LaserScan::ConstSharedPtr s
 }
 
 double WallFollow::get_error(
-  const sensor_msgs::msg::LaserScan::ConstSharedPtr scan, double desired_distance)
+  const sensor_msgs::msg::LaserScan::ConstSharedPtr scan,
+  double desired_distance)
 {
   double a = get_range(scan, angle_a_);
   double b = get_range(scan, angle_b_);
@@ -158,7 +163,8 @@ void WallFollow::pid_control(double error, double velocity)
   drive_pub_->publish(drive_msg);
 }
 
-void WallFollow::scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg)
+void WallFollow::scan_callback(
+  const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg)
 {
   double error = get_error(scan_msg, desired_distance_);
 

@@ -50,7 +50,8 @@ namespace auna_control
 {
 
 CmdVelMultiplexerNode::CmdVelMultiplexerNode()
-: Node("cmd_vel_multiplexer_node", rclcpp::NodeOptions().allow_undeclared_parameters(true))
+: Node("cmd_vel_multiplexer_node",
+    rclcpp::NodeOptions().allow_undeclared_parameters(true))
 {
   RCLCPP_INFO(this->get_logger(), "Initializing CmdVelMultiplexerNode...");
 
@@ -60,7 +61,9 @@ CmdVelMultiplexerNode::CmdVelMultiplexerNode()
 
   this->declare_parameter("publish_rate", 20.0, param_descriptor);
   this->declare_parameter("wheelbase", 0.32, param_descriptor);
-  this->declare_parameter("convert_yaw_to_steering_angle", false, param_descriptor);
+  this->declare_parameter(
+    "convert_yaw_to_steering_angle", false,
+    param_descriptor);
   this->declare_parameter("topic_file", "", param_descriptor);
   this->declare_parameter("initial_source", "OFF", param_descriptor);
 
@@ -69,7 +72,8 @@ CmdVelMultiplexerNode::CmdVelMultiplexerNode()
     RCLCPP_ERROR(this->get_logger(), "topic_file parameter is not set.");
     RCLCPP_FATAL(
       this->get_logger(),
-      "Shutting down CmdVelMultiplexerNode due to missing topic_file parameter.");
+      "Shutting down CmdVelMultiplexerNode due to missing "
+      "topic_file parameter.");
     rclcpp::shutdown();
     return;
   }
@@ -81,10 +85,12 @@ CmdVelMultiplexerNode::CmdVelMultiplexerNode()
   double publish_rate = this->get_parameter("publish_rate").as_double();
   publish_rate_ = publish_rate;
   wheelbase_ = this->get_parameter("wheelbase").as_double();
-  convert_yaw_to_steering_angle_ = this->get_parameter("convert_yaw_to_steering_angle").as_bool();
+  convert_yaw_to_steering_angle_ =
+    this->get_parameter("convert_yaw_to_steering_angle").as_bool();
 
   // Determine initial source after parsing inputs
-  std::string requested_initial_source = this->get_parameter("initial_source").as_string();
+  std::string requested_initial_source =
+    this->get_parameter("initial_source").as_string();
   current_source_ = "OFF";
   if (requested_initial_source != "OFF") {
     bool found = false;
@@ -93,14 +99,16 @@ CmdVelMultiplexerNode::CmdVelMultiplexerNode()
         found = true;
         current_source_ = requested_initial_source;
         RCLCPP_INFO(
-          this->get_logger(), "Initial cmd_vel source set to '%s'", current_source_.c_str());
+          this->get_logger(), "Initial cmd_vel source set to '%s'",
+          current_source_.c_str());
         break;
       }
     }
     if (!found) {
       RCLCPP_WARN(
         this->get_logger(),
-        "initial_source parameter '%s' not found in input sources. Starting with OFF.",
+        "initial_source parameter '%s' not found in input sources. "
+        "Starting with OFF.",
         requested_initial_source.c_str());
       RCLCPP_INFO(this->get_logger(), "Initial cmd_vel source set to OFF");
     }
@@ -110,47 +118,55 @@ CmdVelMultiplexerNode::CmdVelMultiplexerNode()
   estop_active_ = false;
 
   parameters_callback_handle_ = this->add_on_set_parameters_callback(
-    std::bind(&CmdVelMultiplexerNode::parameters_callback, this, std::placeholders::_1));
+    std::bind(
+      &CmdVelMultiplexerNode::parameters_callback, this,
+      std::placeholders::_1));
 
   setupPublishers();
   setupSubscribers();
 
   set_source_service_ = this->create_service<SetString>(
-    "toggle_cmd_vel_source", std::bind(
+    "toggle_cmd_vel_source",
+    std::bind(
       &CmdVelMultiplexerNode::toggleSourceCallback, this,
       std::placeholders::_1, std::placeholders::_2));
 
   set_estop_service_ = this->create_service<SetBool>(
-    "/trigger_emergency_stop", std::bind(
+    "/trigger_emergency_stop",
+    std::bind(
       &CmdVelMultiplexerNode::setEstopCallback, this,
       std::placeholders::_1, std::placeholders::_2));
 
   get_estop_status_service_ = this->create_service<Trigger>(
-    "/get_estop_status", std::bind(
+    "/get_estop_status",
+    std::bind(
       &CmdVelMultiplexerNode::getEstopStatusCallback, this,
       std::placeholders::_1, std::placeholders::_2));
 
   get_source_status_service_ = this->create_service<Trigger>(
-    "get_source_status", std::bind(
+    "get_source_status",
+    std::bind(
       &CmdVelMultiplexerNode::getSourceStatusCallback, this,
       std::placeholders::_1, std::placeholders::_2));
 
   get_input_sources_service_ = this->create_service<Trigger>(
-    "get_input_sources", std::bind(
+    "get_input_sources",
+    std::bind(
       &CmdVelMultiplexerNode::getInputSourcesCallback, this,
       std::placeholders::_1, std::placeholders::_2));
 
   debug_state_service_ = this->create_service<Trigger>(
     "debug_state", std::bind(
-      &CmdVelMultiplexerNode::debugStateCallback, this, std::placeholders::_1,
-      std::placeholders::_2));
+      &CmdVelMultiplexerNode::debugStateCallback, this,
+      std::placeholders::_1, std::placeholders::_2));
 
   updatePublishTimer();
 
   RCLCPP_INFO(this->get_logger(), "CmdVelMultiplexerNode initialized.");
 }
 
-void CmdVelMultiplexerNode::parseInputSourcesFromYAML(const YAML::Node & config)
+void CmdVelMultiplexerNode::parseInputSourcesFromYAML(
+  const YAML::Node & config)
 {
   input_sources_.clear();
   const YAML::Node inputs = config["cmd_vel_multiplexer_node"]["inputs"];
@@ -160,12 +176,14 @@ void CmdVelMultiplexerNode::parseInputSourcesFromYAML(const YAML::Node & config)
     std::string type = input["type"].as<std::string>();
     input_sources_.push_back({name, topic, type});
     RCLCPP_DEBUG(
-      this->get_logger(), "Added input source: %s, topic: %s, type: %s", name.c_str(),
+      this->get_logger(),
+      "Added input source: %s, topic: %s, type: %s", name.c_str(),
       topic.c_str(), type.c_str());
   }
 }
 
-void CmdVelMultiplexerNode::parseOutputTopicsFromYAML(const YAML::Node & config)
+void CmdVelMultiplexerNode::parseOutputTopicsFromYAML(
+  const YAML::Node & config)
 {
   output_topics_.clear();
   const YAML::Node outputs = config["cmd_vel_multiplexer_node"]["outputs"];
@@ -175,7 +193,8 @@ void CmdVelMultiplexerNode::parseOutputTopicsFromYAML(const YAML::Node & config)
     std::string type = output["type"].as<std::string>();
     output_topics_.push_back({name, topic, type});
     RCLCPP_DEBUG(
-      this->get_logger(), "Added output topic: %s, topic: %s, type: %s", name.c_str(),
+      this->get_logger(),
+      "Added output topic: %s, topic: %s, type: %s", name.c_str(),
       topic.c_str(), type.c_str());
   }
 }
@@ -200,25 +219,31 @@ void CmdVelMultiplexerNode::setupSubscribers()
 {
   for (const auto & source : input_sources_) {
     if (source.type == "TwistStamped") {
-      cmd_vel_subscribers_[source.name] = this->create_subscription<TwistStamped>(
-        source.topic, 10, [this, source_name = source.name](const TwistStamped::SharedPtr msg) {
+      cmd_vel_subscribers_[source.name] =
+        this->create_subscription<TwistStamped>(
+        source.topic, 10,
+        [this,
+        source_name = source.name](const TwistStamped::SharedPtr msg) {
           this->twist_callback(msg, source_name);
         });
     } else if (source.type == "Twist") {
       cmd_vel_subscribers_[source.name] = this->create_subscription<Twist>(
-        source.topic, 10, [this, source_name = source.name](const Twist::SharedPtr msg) {
+        source.topic, 10,
+        [this, source_name = source.name](const Twist::SharedPtr msg) {
           this->twist_regular_callback(msg, source_name);
         });
     } else if (source.type == "AckermannDriveStamped") {
-      cmd_vel_subscribers_[source.name] = this->create_subscription<AckermannDriveStamped>(
+      cmd_vel_subscribers_[source.name] =
+        this->create_subscription<AckermannDriveStamped>(
         source.topic, 10,
-        [this, source_name = source.name](const AckermannDriveStamped::SharedPtr msg) {
+        [this, source_name = source.name](
+          const AckermannDriveStamped::SharedPtr msg) {
           this->ackermann_callback(msg, source_name);
         });
     }
     RCLCPP_DEBUG(
-      this->get_logger(), "Subscribing to source '%s' on topic: %s", source.name.c_str(),
-      source.topic.c_str());
+      this->get_logger(), "Subscribing to source '%s' on topic: %s",
+      source.name.c_str(), source.topic.c_str());
     last_received_msgs_[source.name] = createZeroAckermann();
   }
 }
@@ -228,12 +253,15 @@ void CmdVelMultiplexerNode::twist_regular_callback(
 {
   RCLCPP_DEBUG(
     this->get_logger(),
-    "Received Twist (regular) message from source: %s, linear.x: %f, angular.z: %f",
+    "Received Twist (regular) message from source: %s, linear.x: "
+    "%f, angular.z: %f",
     source_name.c_str(), msg->linear.x, msg->angular.z);
   last_received_msgs_[source_name] = twist_regular_to_ackermann(msg);
   RCLCPP_DEBUG(
-    this->get_logger(), "Stored in last_received_msgs_[%s]: speed=%f, steering_angle=%f",
-    source_name.c_str(), last_received_msgs_[source_name].drive.speed,
+    this->get_logger(),
+    "Stored in last_received_msgs_[%s]: speed=%f, steering_angle=%f",
+    source_name.c_str(),
+    last_received_msgs_[source_name].drive.speed,
     last_received_msgs_[source_name].drive.steering_angle);
 }
 
@@ -248,30 +276,38 @@ AckermannDriveStamped CmdVelMultiplexerNode::twist_regular_to_ackermann(
 }
 
 void CmdVelMultiplexerNode::twist_callback(
-  const TwistStamped::SharedPtr msg, const std::string & source_name)
+  const TwistStamped::SharedPtr msg,
+  const std::string & source_name)
 {
   RCLCPP_DEBUG(
-    this->get_logger(), "Received Twist message from source: %s, linear.x: %f, angular.z: %f",
+    this->get_logger(),
+    "Received Twist message from source: %s, linear.x: %f, angular.z: %f",
     source_name.c_str(), msg->twist.linear.x, msg->twist.angular.z);
   last_received_msgs_[source_name] = twist_to_ackermann(msg);
   RCLCPP_DEBUG(
-    this->get_logger(), "Stored in last_received_msgs_[%s]: speed=%f, steering_angle=%f",
-    source_name.c_str(), last_received_msgs_[source_name].drive.speed,
+    this->get_logger(),
+    "Stored in last_received_msgs_[%s]: speed=%f, steering_angle=%f",
+    source_name.c_str(),
+    last_received_msgs_[source_name].drive.speed,
     last_received_msgs_[source_name].drive.steering_angle);
 }
 
 void CmdVelMultiplexerNode::ackermann_callback(
-  const AckermannDriveStamped::SharedPtr msg, const std::string & source_name)
+  const AckermannDriveStamped::SharedPtr msg,
+  const std::string & source_name)
 {
   RCLCPP_DEBUG(
     this->get_logger(),
-    "Received Ackermann message from source: %s, speed: %f, steering_angle: %f",
-    source_name.c_str(), msg->drive.speed, msg->drive.steering_angle);
+    "Received Ackermann message from source: %s, speed: %f, "
+    "steering_angle: %f",
+    source_name.c_str(), msg->drive.speed,
+    msg->drive.steering_angle);
   last_received_msgs_[source_name] = *msg;
 }
 
 void CmdVelMultiplexerNode::toggleSourceCallback(
-  const std::shared_ptr<SetString::Request> request, std::shared_ptr<SetString::Response> response)
+  const std::shared_ptr<SetString::Request> request,
+  std::shared_ptr<SetString::Response> response)
 {
   RCLCPP_DEBUG(this->get_logger(), "toggleSourceCallback called");
   std::string requested_source = request->data;
@@ -293,23 +329,30 @@ void CmdVelMultiplexerNode::toggleSourceCallback(
       response->message = "Velocity source set to: " + current_source_;
     } else {
       response->success = false;
-      response->message = "Requested source '" + requested_source + "' not in input_sources";
+      response->message =
+        "Requested source '" + requested_source + "' not in input_sources";
     }
   }
   RCLCPP_DEBUG(this->get_logger(), "%s", response->message.c_str());
 }
 
 void CmdVelMultiplexerNode::setEstopCallback(
-  const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response)
+  const std::shared_ptr<SetBool::Request> request,
+  std::shared_ptr<SetBool::Response> response)
 {
   RCLCPP_DEBUG(this->get_logger(), "setEstopCallback called");
   estop_active_ = request->data;
   response->success = true;
-  response->message = estop_active_ ? "Emergency stop ACTIVATED" : "Emergency stop DEACTIVATED";
+  response->message =
+    estop_active_ ? "Emergency stop ACTIVATED" : "Emergency stop DEACTIVATED";
   if (estop_active_) {
-    RCLCPP_WARN(this->get_logger(), "Namespaced E-Stop Service: %s", response->message.c_str());
+    RCLCPP_WARN(
+      this->get_logger(), "Namespaced E-Stop Service: %s",
+      response->message.c_str());
   } else {
-    RCLCPP_DEBUG(this->get_logger(), "Namespaced E-Stop Service: %s", response->message.c_str());
+    RCLCPP_DEBUG(
+      this->get_logger(), "Namespaced E-Stop Service: %s",
+      response->message.c_str());
   }
 }
 
@@ -318,7 +361,8 @@ void CmdVelMultiplexerNode::publishTimerCallback()
   AckermannDriveStamped msg_to_publish;
 
   RCLCPP_DEBUG(
-    this->get_logger(), "publishTimerCallback: current_source_='%s', estop_active_=%s",
+    this->get_logger(),
+    "publishTimerCallback: current_source_='%s', estop_active_=%s",
     current_source_.c_str(), estop_active_ ? "true" : "false");
 
   if (estop_active_) {
@@ -327,17 +371,21 @@ void CmdVelMultiplexerNode::publishTimerCallback()
   } else {
     bool has_message = last_received_msgs_.count(current_source_);
     RCLCPP_DEBUG(
-      this->get_logger(), "has_message for source '%s': %s", current_source_.c_str(),
-      has_message ? "true" : "false");
+      this->get_logger(), "has_message for source '%s': %s",
+      current_source_.c_str(), has_message ? "true" : "false");
 
     if (current_source_ != "OFF" && has_message) {
       msg_to_publish = last_received_msgs_[current_source_];
       RCLCPP_DEBUG(
-        this->get_logger(), "Using message from source '%s': speed=%f, steering_angle=%f",
-        current_source_.c_str(), msg_to_publish.drive.speed, msg_to_publish.drive.steering_angle);
+        this->get_logger(),
+        "Using message from source '%s': speed=%f, steering_angle=%f",
+        current_source_.c_str(), msg_to_publish.drive.speed,
+        msg_to_publish.drive.steering_angle);
     } else {
       msg_to_publish = createZeroAckermann();
-      RCLCPP_DEBUG(this->get_logger(), "Source is OFF or no message available, publishing zero");
+      RCLCPP_DEBUG(
+        this->get_logger(),
+        "Source is OFF or no message available, publishing zero");
     }
   }
 
@@ -345,7 +393,8 @@ void CmdVelMultiplexerNode::publishTimerCallback()
     double linear_velocity = msg_to_publish.drive.speed;
     double yaw_rate = msg_to_publish.drive.steering_angle;
     if (std::abs(linear_velocity) > 1e-2) {
-      msg_to_publish.drive.steering_angle = std::atan(wheelbase_ * yaw_rate / linear_velocity);
+      msg_to_publish.drive.steering_angle =
+        std::atan(wheelbase_ * yaw_rate / linear_velocity);
     } else {
       msg_to_publish.drive.steering_angle = 0.0;
     }
@@ -361,20 +410,25 @@ void CmdVelMultiplexerNode::publishTimerCallback()
     publisher->publish(msg_to_publish);
   }
   RCLCPP_DEBUG(
-    this->get_logger(), "Publishing message with speed: %f, steering_angle: %f (source: %s)",
-    msg_to_publish.drive.speed, msg_to_publish.drive.steering_angle, current_source_.c_str());
+    this->get_logger(),
+    "Publishing message with speed: %f, steering_angle: %f (source: %s)",
+    msg_to_publish.drive.speed, msg_to_publish.drive.steering_angle,
+    current_source_.c_str());
 }
 
 void CmdVelMultiplexerNode::getEstopStatusCallback(
-  const std::shared_ptr<Trigger::Request>/*request*/, std::shared_ptr<Trigger::Response> response)
+  const std::shared_ptr<Trigger::Request>/*request*/,
+  std::shared_ptr<Trigger::Response> response)
 {
   RCLCPP_DEBUG(this->get_logger(), "getEstopStatusCallback called");
   response->success = true;
-  response->message = estop_active_ ? "Emergency stop is ACTIVE" : "Emergency stop is INACTIVE";
+  response->message =
+    estop_active_ ? "Emergency stop is ACTIVE" : "Emergency stop is INACTIVE";
 }
 
 void CmdVelMultiplexerNode::getSourceStatusCallback(
-  const std::shared_ptr<Trigger::Request>/*request*/, std::shared_ptr<Trigger::Response> response)
+  const std::shared_ptr<Trigger::Request>/*request*/,
+  std::shared_ptr<Trigger::Response> response)
 {
   RCLCPP_DEBUG(this->get_logger(), "getSourceStatusCallback called");
   response->success = true;
@@ -382,7 +436,8 @@ void CmdVelMultiplexerNode::getSourceStatusCallback(
 }
 
 void CmdVelMultiplexerNode::getInputSourcesCallback(
-  const std::shared_ptr<Trigger::Request>/*request*/, std::shared_ptr<Trigger::Response> response)
+  const std::shared_ptr<Trigger::Request>/*request*/,
+  std::shared_ptr<Trigger::Response> response)
 {
   RCLCPP_DEBUG(this->get_logger(), "getInputSourcesCallback called");
   response->success = true;
@@ -394,25 +449,30 @@ void CmdVelMultiplexerNode::getInputSourcesCallback(
 }
 
 void CmdVelMultiplexerNode::debugStateCallback(
-  const std::shared_ptr<Trigger::Request>/*request*/, std::shared_ptr<Trigger::Response> response)
+  const std::shared_ptr<Trigger::Request>/*request*/,
+  std::shared_ptr<Trigger::Response> response)
 {
   RCLCPP_DEBUG(this->get_logger(), "debugStateCallback called");
   response->success = true;
 
   std::string debug_info = "Debug State:\n";
   debug_info += "current_source_: " + current_source_ + "\n";
-  debug_info += "estop_active_: " + std::string(estop_active_ ? "true" : "false") + "\n";
+  debug_info +=
+    "estop_active_: " + std::string(estop_active_ ? "true" : "false") + "\n";
   debug_info += "last_received_msgs_ contents:\n";
 
   for (const auto & [source_name, ackermann_msg] : last_received_msgs_) {
-    debug_info += "  " + source_name + ": speed=" + std::to_string(ackermann_msg.drive.speed) +
-      ", steering_angle=" + std::to_string(ackermann_msg.drive.steering_angle) + "\n";
+    debug_info += "  " + source_name +
+      ": speed=" + std::to_string(ackermann_msg.drive.speed) +
+      ", steering_angle=" +
+      std::to_string(ackermann_msg.drive.steering_angle) + "\n";
   }
 
   response->message = debug_info;
 }
 
-rcl_interfaces::msg::SetParametersResult CmdVelMultiplexerNode::parameters_callback(
+rcl_interfaces::msg::SetParametersResult
+CmdVelMultiplexerNode::parameters_callback(
   const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
@@ -420,15 +480,20 @@ rcl_interfaces::msg::SetParametersResult CmdVelMultiplexerNode::parameters_callb
   for (const auto & parameter : parameters) {
     if (parameter.get_name() == "publish_rate") {
       publish_rate_ = parameter.as_double();
-      RCLCPP_DEBUG(this->get_logger(), "Publish rate parameter set to: %f", publish_rate_);
+      RCLCPP_DEBUG(
+        this->get_logger(), "Publish rate parameter set to: %f",
+        publish_rate_);
       updatePublishTimer();
     } else if (parameter.get_name() == "wheelbase") {
       wheelbase_ = parameter.as_double();
-      RCLCPP_DEBUG(this->get_logger(), "Wheelbase parameter set to: %f", wheelbase_);
+      RCLCPP_DEBUG(
+        this->get_logger(), "Wheelbase parameter set to: %f",
+        wheelbase_);
     } else if (parameter.get_name() == "convert_yaw_to_steering_angle") {
       convert_yaw_to_steering_angle_ = parameter.as_bool();
       RCLCPP_DEBUG(
-        this->get_logger(), "convert_yaw_to_steering_angle parameter set to: %s",
+        this->get_logger(),
+        "convert_yaw_to_steering_angle parameter set to: %s",
         convert_yaw_to_steering_angle_ ? "true" : "false");
     }
   }
@@ -453,7 +518,8 @@ AckermannDriveStamped CmdVelMultiplexerNode::twist_to_ackermann(
   return ackermann_msg;
 }
 
-TwistStamped CmdVelMultiplexerNode::ackermann_to_twist(const AckermannDriveStamped & ackermann_msg)
+TwistStamped CmdVelMultiplexerNode::ackermann_to_twist(
+  const AckermannDriveStamped & ackermann_msg)
 {
   TwistStamped twist_msg;
   twist_msg.header = ackermann_msg.header;
@@ -484,7 +550,9 @@ void CmdVelMultiplexerNode::updatePublishTimer()
     std::chrono::duration_cast<std::chrono::nanoseconds>(publish_period),
     std::bind(&CmdVelMultiplexerNode::publishTimerCallback, this));
 
-  RCLCPP_DEBUG(this->get_logger(), "Updated publish timer with rate: %f Hz", publish_rate_);
+  RCLCPP_DEBUG(
+    this->get_logger(), "Updated publish timer with rate: %f Hz",
+    publish_rate_);
 }
 
 }  // namespace auna_control

@@ -41,9 +41,11 @@ public:
 
   void service_timer_callback();
   void model_srv_callback(
-    const rclcpp::Client<gazebo_msgs::srv::GetModelList>::SharedFuture future);
+    const rclcpp::Client<gazebo_msgs::srv::GetModelList>::SharedFuture
+    future);
   void tf_callback(
-    const tf2_msgs::msg::TFMessage::SharedPtr msg, const std::string & robot_name, bool is_static);
+    const tf2_msgs::msg::TFMessage::SharedPtr msg,
+    const std::string & robot_name, bool is_static);
 
 private:
   // TF Broadcaster
@@ -55,7 +57,8 @@ private:
   rclcpp::Client<gazebo_msgs::srv::GetModelList>::SharedPtr modelClient_;
 
   // Robot model vector and subscribers for local tf topics.
-  std::vector<rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr> tf_subscribers_;
+  std::vector<rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr>
+  tf_subscribers_;
   std::vector<std::string> robot_models_;
 };
 

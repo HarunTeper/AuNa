@@ -33,7 +33,8 @@
 #include "tf2_ros/transform_listener.h"
 
 using NavigateThroughPoses = nav2_msgs::action::NavigateThroughPoses;
-using GoalHandleNavigateThroughPoses = rclcpp_action::ClientGoalHandle<NavigateThroughPoses>;
+using GoalHandleNavigateThroughPoses =
+  rclcpp_action::ClientGoalHandle<NavigateThroughPoses>;
 
 class WaypointPublisher : public rclcpp::Node
 {
@@ -56,12 +57,15 @@ private:
   void publish_waypoints();
 
   // action client and callbacks
-  rclcpp_action::Client<nav2_msgs::action::NavigateThroughPoses>::SharedPtr client_ptr_;
-  void goal_response_callback(GoalHandleNavigateThroughPoses::SharedPtr goal_handle);
+  rclcpp_action::Client<nav2_msgs::action::NavigateThroughPoses>::SharedPtr
+    client_ptr_;
+  void goal_response_callback(
+    GoalHandleNavigateThroughPoses::SharedPtr goal_handle);
   void feedback_callback(
     GoalHandleNavigateThroughPoses::SharedPtr,
     const std::shared_ptr<const NavigateThroughPoses::Feedback> feedback);
-  void result_callback(const GoalHandleNavigateThroughPoses::WrappedResult & result);
+  void result_callback(
+    const GoalHandleNavigateThroughPoses::WrappedResult & result);
 
   // waypoint data
   std::vector<geometry_msgs::msg::PoseStamped> poses_;

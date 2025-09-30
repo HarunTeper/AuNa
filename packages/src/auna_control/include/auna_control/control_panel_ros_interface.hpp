@@ -54,7 +54,9 @@ public Q_SLOTS:
 
 Q_SIGNALS:
   void estopStatusUpdated(bool isActive, const QString & message);
-  void odometryUpdated(double speed, double angular_vel, double x, double y, double z);
+  void odometryUpdated(
+    double speed, double angular_vel, double x, double y,
+    double z);
   void imuUpdated(double ax, double ay, double az);
   void cmdVelUpdated(double linear, double angular);
   void inputSourcesUpdated(const QStringList & sources);
@@ -66,11 +68,13 @@ private:
   void createClientsAndSubscribers();
   void spin();
 
-  void onEstopSetResponse(rclcpp::Client<std_srvs::srv::SetBool>::SharedFuture future);
+  void onEstopSetResponse(
+    rclcpp::Client<std_srvs::srv::SetBool>::SharedFuture future);
   void onEstopStatusResponse(rclcpp::Client<Trigger>::SharedFuture future);
   void onInputSourcesResponse(rclcpp::Client<Trigger>::SharedFuture future);
   void onSourceStatusResponse(rclcpp::Client<Trigger>::SharedFuture future);
-  void onSetSourceResponse(rclcpp::Client<auna_msgs::srv::SetString>::SharedFuture future);
+  void onSetSourceResponse(
+    rclcpp::Client<auna_msgs::srv::SetString>::SharedFuture future);
 
   void onOdometryReceived(const nav_msgs::msg::Odometry::SharedPtr msg);
   void onCmdVelReceived(const geometry_msgs::msg::Twist::SharedPtr msg);
@@ -84,7 +88,8 @@ private:
   rclcpp::Client<auna_msgs::srv::SetString>::SharedPtr set_source_client_;
 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscriber_;
-  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_subscriber_;
+  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr
+    cmd_vel_subscriber_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscriber_;
 
   std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> executor_;

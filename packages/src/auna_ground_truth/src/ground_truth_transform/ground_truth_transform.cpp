@@ -27,18 +27,23 @@ GroundTruthTransform::GroundTruthTransform()
   listener_(buffer_),
   broadcaster_(this)
 {
-  modelClient_ = this->create_client<gazebo_msgs::srv::GetEntityState>("/get_entity_state");
-  service_timer_ = this->create_wall_timer(
-    std::chrono::milliseconds(publish_milliseconds_), [this]() {service_timer_callback();});
+  modelClient_ = this->create_client<gazebo_msgs::srv::GetEntityState>(
+    "/get_entity_state");
+  service_timer_ =
+    this->create_wall_timer(
+    std::chrono::milliseconds(publish_milliseconds_),
+    [this]() {service_timer_callback();});
   std::string ns = this->get_namespace();
   if (!ns.empty()) {
-    this->name_ = ns.substr(1);  // Remove the first character (typically a slash)
+    this->name_ =
+      ns.substr(1);    // Remove the first character (typically a slash)
   } else {
     this->name_ = ns;  // Keep it empty if namespace is empty
   }
 
   RCLCPP_INFO(
-    this->get_logger(), "Ground truth localization node initialized with namespace: %s",
+    this->get_logger(),
+    "Ground truth localization node initialized with namespace: %s",
     name_.c_str());
 }
 
@@ -50,18 +55,25 @@ void GroundTruthTransform::service_timer_callback()
   while (!modelClient_->wait_for_service(std::chrono::seconds(5))) {
     if (!rclcpp::ok()) {
       RCLCPP_ERROR(
-        rclcpp::get_logger("rclcpp"), "Interrupted while waiting for the service. Exiting.");
+        rclcpp::get_logger("rclcpp"),
+        "Interrupted while waiting for the service. Exiting.");
       return;
     }
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "service not available, waiting again...");
+    RCLCPP_INFO(
+      rclcpp::get_logger("rclcpp"),
+      "service not available, waiting again...");
   }
   auto result = modelClient_->async_send_request(
-    request, std::bind(&GroundTruthTransform::model_srv_callback, this, std::placeholders::_1));
+    request, std::bind(
+      &GroundTruthTransform::model_srv_callback, this,
+      std::placeholders::_1));
 }
 
-// Publish the transform from gazebo_world to ground_truth_base_link using the pose from the future
+// Publish the transform from gazebo_world to ground_truth_base_link using the
+// pose from the future
 void GroundTruthTransform::model_srv_callback(
-  const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture future)
+  const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture
+  future)
 {
   auto result = future.get();
   auto entity = result.get();

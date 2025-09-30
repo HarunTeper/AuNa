@@ -44,7 +44,8 @@ private:
   rclcpp::TimerBase::SharedPtr timer;
 
   rclcpp::Publisher<etsi_its_cam_msgs::msg::CAM>::SharedPtr publisher;
-  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_subscriber;
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr
+    pose_subscriber;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscriber;
 
   std::string robot_name_;

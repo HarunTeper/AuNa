@@ -21,13 +21,16 @@
 #ifndef AUNA_CACC__CACC_CONTROLLER_HPP_
 #define AUNA_CACC__CACC_CONTROLLER_HPP_
 
-#include <etsi_its_msgs_utils/cam_access.hpp>
 #include <fstream>
 #include <iomanip>  // for std::setprecision
+#include <memory>   // for std::shared_ptr
+#include <string>   // for std::string
+#include <vector>   // for std::vector
 
 #include "auna_msgs/srv/set_bool.hpp"
 #include "auna_msgs/srv/set_float64.hpp"
 #include "etsi_its_cam_msgs/msg/cam.hpp"
+#include "etsi_its_msgs_utils/cam_access.hpp"
 #include "geometry_msgs/msg/pose_array.hpp"  // Added include for PoseArray
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
@@ -66,27 +69,34 @@ private:
   // node variables
   rclcpp::Subscription<etsi_its_cam_msgs::msg::CAM>::SharedPtr sub_cam_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
-  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_pose_stamped_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr
+    sub_pose_stamped_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd_vel;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::TimerBase::SharedPtr setup_timer_;
 
   // service for standstill_distance and time_gap
-  rclcpp::Service<auna_msgs::srv::SetFloat64>::SharedPtr client_set_standstill_distance_;
+  rclcpp::Service<auna_msgs::srv::SetFloat64>::SharedPtr
+    client_set_standstill_distance_;
   rclcpp::Service<auna_msgs::srv::SetFloat64>::SharedPtr client_set_time_gap_;
 
   // service for target_velocity and extra_distance
-  rclcpp::Service<auna_msgs::srv::SetFloat64>::SharedPtr client_set_target_velocity_;
-  rclcpp::Service<auna_msgs::srv::SetFloat64>::SharedPtr client_set_extra_distance_;
+  rclcpp::Service<auna_msgs::srv::SetFloat64>::SharedPtr
+    client_set_target_velocity_;
+  rclcpp::Service<auna_msgs::srv::SetFloat64>::SharedPtr
+    client_set_extra_distance_;
 
   // service for cacc_enable
   rclcpp::Service<auna_msgs::srv::SetBool>::SharedPtr client_set_cacc_enable_;
 
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_x_lookahead_point_;
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_y_lookahead_point_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_closest_pose_waypoint_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_target_waypoint_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_closest_cam_waypoint_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr
+    pub_closest_pose_waypoint_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr
+    pub_target_waypoint_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr
+    pub_closest_cam_waypoint_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_cacc_pose_;
 
   // pub_cam_ publisher for cam
@@ -159,7 +169,8 @@ private:
   void read_waypoints_from_csv();
   void update_waypoint_following();
   void publish_waypoint_pose(
-    const rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr & publisher,
+    const rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr &
+    publisher,
     int waypoint_index);
 
   // callback functions
@@ -191,7 +202,8 @@ private:
 
   rcl_interfaces::msg::SetParametersResult dynamicParametersCallback(
     std::vector<rclcpp::Parameter> parameters);
-  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr dyn_params_handler_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr
+    dyn_params_handler_;
   Parameters params_;
 
   double s_ = 0;
@@ -239,7 +251,7 @@ private:
   int log_counter_ = 0;
 
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr
-    pub_waypoints_pose_array_;  // Added publisher
+    pub_waypoints_pose_array_;    // Added publisher
 };
 
 #endif  // AUNA_CACC__CACC_CONTROLLER_HPP_

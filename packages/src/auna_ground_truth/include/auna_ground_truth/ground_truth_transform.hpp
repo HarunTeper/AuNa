@@ -45,7 +45,8 @@ public:
 private:
   void service_timer_callback();
   void model_srv_callback(
-    const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture future);
+    const rclcpp::Client<gazebo_msgs::srv::GetEntityState>::SharedFuture
+    future);
 
   tf2_ros::Buffer buffer_;
   tf2_ros::TransformListener listener_;
