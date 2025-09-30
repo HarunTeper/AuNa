@@ -21,9 +21,8 @@
 #ifndef AUNA_OMNET__OMNET_RECEIVER_HPP_
 #define AUNA_OMNET__OMNET_RECEIVER_HPP_
 
-#include "rclcpp/rclcpp.hpp"
-
 #include "etsi_its_cam_msgs/msg/cam.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 class OmnetReceiver : public rclcpp::Node
 {

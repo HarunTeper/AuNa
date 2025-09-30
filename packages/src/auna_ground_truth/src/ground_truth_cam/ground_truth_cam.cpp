@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 #include "auna_ground_truth/ground_truth_cam.hpp"
 
 #include <etsi_its_cam_msgs/msg/detail/heading__struct.hpp>
@@ -96,7 +95,8 @@ void GroundTruthCam::model_srv_callback(
   velocity_heading = (len_y >= 0) * velocity_heading + (len_y < 0) * (360 - velocity_heading);
 
   // Calculate speed and acceleration
-  this->speed_ = sqrt(pow(entity->state.twist.linear.x, 2) + pow(entity->state.twist.linear.y, 2)) *
+  this->speed_ =
+    sqrt(pow(entity->state.twist.linear.x, 2) + pow(entity->state.twist.linear.y, 2)) *
     scale_factor_;
   // float vdot = (this->speed_ - old_speed) / ((double)publish_milliseconds_ / 1000) *
   // scale_factor_;

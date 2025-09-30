@@ -18,15 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 #ifndef AUNA_COMM__CAM_RECEIVER_HPP_
 #define AUNA_COMM__CAM_RECEIVER_HPP_
 
-#include "rclcpp/rclcpp.hpp"
+#include <memory>
 
 #include "etsi_its_cam_msgs/msg/cam.hpp"
-
-#include <memory>
+#include "rclcpp/rclcpp.hpp"
 
 class CamReceiver : public rclcpp::Node
 {

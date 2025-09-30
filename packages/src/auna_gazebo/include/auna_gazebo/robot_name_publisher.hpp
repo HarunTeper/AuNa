@@ -21,10 +21,9 @@
 #ifndef AUNA_GAZEBO__ROBOT_NAME_PUBLISHER_HPP_
 #define AUNA_GAZEBO__ROBOT_NAME_PUBLISHER_HPP_
 
-#include "rclcpp/rclcpp.hpp"
-
 #include "auna_msgs/msg/string_array.hpp"
 #include "gazebo_msgs/msg/model_states.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 class RobotNamePublisher : public rclcpp::Node
 {

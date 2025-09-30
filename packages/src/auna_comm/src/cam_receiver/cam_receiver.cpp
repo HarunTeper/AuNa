@@ -18,12 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 #include "auna_comm/cam_receiver.hpp"
 
-#include <rclcpp/rclcpp.hpp>
-
 #include <etsi_its_cam_msgs/msg/cam.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 
 CamReceiver::CamReceiver()

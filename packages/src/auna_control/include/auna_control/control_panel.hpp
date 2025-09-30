@@ -21,14 +21,14 @@
 #ifndef AUNA_CONTROL__CONTROL_PANEL_HPP_
 #define AUNA_CONTROL__CONTROL_PANEL_HPP_
 
-#include "auna_control/control_panel_ros_interface.hpp"
-
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
 #include <rviz_common/panel.hpp>
+
+#include "auna_control/control_panel_ros_interface.hpp"
 
 namespace auna_control
 {
@@ -70,14 +70,14 @@ private:
   QString last_known_source_;
   QTimer * status_timer_;
 
-// Monitoring UI elements
+  // Monitoring UI elements
   QLabel * speed_label_;
   QLabel * position_label_;
   QLabel * acceleration_label_;
   QLabel * angular_velocity_label_;
   QLabel * cmd_vel_label_;
 
-// Monitoring data
+  // Monitoring data
   double current_speed_ = 0.0;
   double current_x_ = 0.0, current_y_ = 0.0, current_z_ = 0.0;
   double current_accel_x_ = 0.0, current_accel_y_ = 0.0, current_accel_z_ = 0.0;

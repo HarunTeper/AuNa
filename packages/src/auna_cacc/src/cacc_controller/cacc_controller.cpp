@@ -18,15 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 #include "auna_cacc/cacc_controller.hpp"
-
-#include <rclcpp/logging.hpp>
 
 #include <etsi_its_msgs_utils/impl/cam/cam_getters_common.h>
 
 #include <cmath>
 #include <fstream>  // Added for file logging
+#include <rclcpp/logging.hpp>
 
 CaccController::CaccController()
 : Node("cacc_controller")
@@ -47,7 +45,8 @@ CaccController::CaccController()
   log_file_path_ = this->get_parameter("log_file_path").as_string();
 
   if (enable_data_logging_) {
-    RCLCPP_INFO(this->get_logger(), "Data logging enabled. Writing to: %s", log_file_path_.c_str());
+    RCLCPP_INFO(
+      this->get_logger(), "Data logging enabled. Writing to: %s", log_file_path_.c_str());
     log_file_.open(log_file_path_, std::ios::out | std::ios::trunc);
     if (log_file_.is_open()) {
       // Write CSV header (including new debug columns)
@@ -376,13 +375,14 @@ void CaccController::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr m
   last_cam_velocity_ = cam_velocity_;
 
   if (
-    msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency.yaw_rate
-    .yaw_rate_value.value != etsi_its_cam_msgs::msg::YawRateValue::UNAVAILABLE &&
+    msg->cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency
+    .yaw_rate.yaw_rate_value.value != etsi_its_cam_msgs::msg::YawRateValue::UNAVAILABLE &&
     cam_velocity_ > 0.1)
   {
     double raw_yaw = msg->cam.cam_parameters.high_frequency_container
       .basic_vehicle_container_high_frequency.yaw_rate.yaw_rate_value.value;
-    cam_yaw_rate_ = (raw_yaw / 100.0) * (M_PI / 180.0);  // Convert from 0.01 degrees/s to radians/s
+    cam_yaw_rate_ =
+      (raw_yaw / 100.0) * (M_PI / 180.0);  // Convert from 0.01 degrees/s to radians/s
     RCLCPP_DEBUG(
       this->get_logger(), "Yaw rate conversion: raw=%.2f → %.4f rad/s", raw_yaw, cam_yaw_rate_);
     cam_curvature_ = cam_yaw_rate_ / cam_velocity_;
@@ -861,8 +861,8 @@ void CaccController::timer_callback()
               << ","  // Leader state
               << pose_x_ << "," << pose_y_ << "," << odom_velocity_ << "," << odom_acceleration_
               << ","  // Follower state
-              << distance_term << "," << actual_distance << "," << (actual_distance - distance_term)
-              << ","                                                       // Distances
+              << distance_term << "," << actual_distance << ","
+              << (actual_distance - distance_term) << ","                  // Distances
               << z_1_ << "," << z_2_ << "," << z_3_ << "," << z_4_ << ","  // Error states
               << dbg_alpha_ << "," << dbg_s_ << ","                        // Debug: Geometry
               << dbg_invGam_1_ << "," << dbg_invGam_2_ << "," << dbg_invGam_3_ << ","

@@ -18,18 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 #include "auna_control/cmd_vel_multiplexer_node.hpp"
-
-#include "rclcpp/rclcpp.hpp"
-
-#include "ackermann_msgs/msg/ackermann_drive_stamped.hpp"
-#include "auna_msgs/srv/set_string.hpp"
-#include "geometry_msgs/msg/twist.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "std_msgs/msg/bool.hpp"
-#include "std_srvs/srv/set_bool.hpp"
-#include "std_srvs/srv/trigger.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -38,6 +27,15 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "ackermann_msgs/msg/ackermann_drive_stamped.hpp"
+#include "auna_msgs/srv/set_string.hpp"
+#include "geometry_msgs/msg/twist.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/bool.hpp"
+#include "std_srvs/srv/set_bool.hpp"
+#include "std_srvs/srv/trigger.hpp"
 
 using namespace std::chrono_literals;
 using SetBool = std_srvs::srv::SetBool;
@@ -266,7 +264,8 @@ void CmdVelMultiplexerNode::ackermann_callback(
   const AckermannDriveStamped::SharedPtr msg, const std::string & source_name)
 {
   RCLCPP_DEBUG(
-    this->get_logger(), "Received Ackermann message from source: %s, speed: %f, steering_angle: %f",
+    this->get_logger(),
+    "Received Ackermann message from source: %s, speed: %f, steering_angle: %f",
     source_name.c_str(), msg->drive.speed, msg->drive.steering_angle);
   last_received_msgs_[source_name] = *msg;
 }
@@ -463,7 +462,8 @@ TwistStamped CmdVelMultiplexerNode::ackermann_to_twist(const AckermannDriveStamp
   return twist_msg;
 }
 
-Twist CmdVelMultiplexerNode::ackermann_to_twist_regular(const AckermannDriveStamped & ackermann_msg)
+Twist CmdVelMultiplexerNode::ackermann_to_twist_regular(
+  const AckermannDriveStamped & ackermann_msg)
 {
   Twist twist_msg;
   twist_msg.linear.x = ackermann_msg.drive.speed;

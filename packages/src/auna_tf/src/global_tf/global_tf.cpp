@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 #include "auna_tf/global_tf.hpp"
 
 #include "rclcpp/rclcpp.hpp"  // Ensure rclcpp is included for logging macros
@@ -27,8 +26,8 @@
 GlobalTF::GlobalTF()
 : Node("global_tf_node"), tf_broadcaster_(this), static_tf_broadcaster_(this)
 {
-  service_timer_ =
-    this->create_wall_timer(std::chrono::milliseconds(100), [this]() {service_timer_callback();});
+  service_timer_ = this->create_wall_timer(
+    std::chrono::milliseconds(100), [this]() {service_timer_callback();});
   modelClient_ = this->create_client<gazebo_msgs::srv::GetModelList>("/get_model_list");
 }
 

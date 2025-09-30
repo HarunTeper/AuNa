@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 #include "auna_omnet/omnet_receiver.hpp"
 
 #include <cmath>  // Required for M_PI, floor, fmod (though floor might not be needed with simpler heading)
@@ -86,7 +85,8 @@ void OmnetReceiver::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr ms
 
   if (
     msg->cam.cam_parameters.high_frequency_container.choice ==
-    etsi_its_cam_msgs::msg::HighFrequencyContainer::CHOICE_BASIC_VEHICLE_CONTAINER_HIGH_FREQUENCY)
+    etsi_its_cam_msgs::msg::HighFrequencyContainer::
+    CHOICE_BASIC_VEHICLE_CONTAINER_HIGH_FREQUENCY)
   {
     auto & cacc_vhf =
       cacc_msg.cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency;
@@ -122,11 +122,14 @@ void OmnetReceiver::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr ms
 
     // Longitudinal Acceleration (ETSI unit: 0.1 m/s^2)
     // Original logic: (float)value / 10 / scale_factor_
-    cacc_vhf.longitudinal_acceleration.longitudinal_acceleration_value.value = static_cast<int16_t>(
-      static_cast<float>(msg_vhf.longitudinal_acceleration.longitudinal_acceleration_value.value) /
+    cacc_vhf.longitudinal_acceleration.longitudinal_acceleration_value.value =
+      static_cast<int16_t>(
+      static_cast<float>(
+        msg_vhf.longitudinal_acceleration.longitudinal_acceleration_value.value) /
       10.0f / scale_factor_);
     cacc_vhf.longitudinal_acceleration.longitudinal_acceleration_confidence.value =
-      msg_vhf.longitudinal_acceleration.longitudinal_acceleration_confidence.value;  // Pass through
+      msg_vhf.longitudinal_acceleration.longitudinal_acceleration_confidence
+      .value;    // Pass through
 
     // Pass through other VHF fields directly as their structure is the same
     // and scaling was not applied to these in the original auna_its_msgs mapping for receiver.

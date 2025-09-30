@@ -18,17 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 #include "auna_control/control_panel.hpp"
 
-#include <QtCore/QTimer>
 #include <QtCore/QRegExp>
+#include <QtCore/QTimer>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QGroupBox>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QWidget>
-
 #include <cmath>
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -176,12 +174,13 @@ void ControlPanel::onEstopStatusUpdated(bool isActive, const QString & message)
   }
 }
 
-void ControlPanel::onOdometryUpdated(double speed, double angular_vel, double x, double y, double z)
+void ControlPanel::onOdometryUpdated(
+  double speed, double angular_vel, double x, double y, double z)
 {
   RCLCPP_DEBUG(
     rclcpp::get_logger("ControlPanel"),
-    "Odometry updated: speed=%.2f, angular_vel=%.2f, pos=(%.2f, %.2f, %.2f)", speed, angular_vel, x,
-    y, z);
+    "Odometry updated: speed=%.2f, angular_vel=%.2f, pos=(%.2f, %.2f, %.2f)", speed, angular_vel,
+    x, y, z);
   current_speed_ = speed;
   current_angular_vel_ = angular_vel;
   current_x_ = x;

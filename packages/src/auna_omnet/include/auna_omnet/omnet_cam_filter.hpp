@@ -21,10 +21,9 @@
 #ifndef AUNA_OMNET__OMNET_CAM_FILTER_HPP_
 #define AUNA_OMNET__OMNET_CAM_FILTER_HPP_
 
-#include "rclcpp/rclcpp.hpp"
-
 #include "auna_msgs/srv/identifier.hpp"
 #include "etsi_its_cam_msgs/msg/cam.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 class OmnetCamFilter : public rclcpp::Node
 {

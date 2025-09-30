@@ -18,14 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 #include "auna_comm/cam_communication.hpp"
 
-#include <etsi_its_msgs_utils/cam_access.hpp>
-
-#include <etsi_its_cam_msgs/msg/cam.hpp>
-
 #include <cmath>
+#include <etsi_its_cam_msgs/msg/cam.hpp>
+#include <etsi_its_msgs_utils/cam_access.hpp>
 #include <fstream>  // Added for file logging
 #include <iomanip>  // For setprecision
 
@@ -123,9 +120,8 @@ CamCommunication::CamCommunication()
     [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) {this->pose_callback(msg);});
 
   odom_subscriber_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    "odometry/filtered", 2, [this](const nav_msgs::msg::Odometry::SharedPtr msg) {
-      this->odom_callback(msg);
-    });
+    "odometry/filtered", 2,
+    [this](const nav_msgs::msg::Odometry::SharedPtr msg) {this->odom_callback(msg);});
 
   // Timer for checking CAM generation conditions
   timer_ = this->create_wall_timer(T_CheckCamGen, [this]() {this->timer_callback();});
@@ -263,17 +259,23 @@ void CamCommunication::timer_callback()
 
   // 4 degrees heading change
   double heading_diff = std::abs(this->heading_ - last_cam_msg_heading_) * 180.0 / M_PI;
-  if (heading_diff > 4.0) {dynamics_trigger = true;}
+  if (heading_diff > 4.0) {
+    dynamics_trigger = true;
+  }
 
   // 4 meters position change
   double position_diff = std::sqrt(
     std::pow(this->longitude_ - last_cam_msg_longitude_, 2) +
     std::pow(this->latitude_ - last_cam_msg_latitude_, 2));
-  if (position_diff > 4.0) {dynamics_trigger = true;}
+  if (position_diff > 4.0) {
+    dynamics_trigger = true;
+  }
 
   // 0.5 m/s speed change
   double speed_diff = std::abs(this->speed_ - last_cam_msg_speed_);
-  if (speed_diff > 0.5) {dynamics_trigger = true;}
+  if (speed_diff > 0.5) {
+    dynamics_trigger = true;
+  }
 
   // Condition 2: Maximum time exceeded
   auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -384,7 +386,8 @@ void CamCommunication::publish_cam_msg(const std::string & trigger)
 
   // Vehicle Length and Width (Section B.35, B.36)
   // Length: 0.1 meter precision
-  vhf.vehicle_length.vehicle_length_value.value = static_cast<uint16_t>(this->vehicle_length_ * 10);
+  vhf.vehicle_length.vehicle_length_value.value =
+    static_cast<uint16_t>(this->vehicle_length_ * 10);
   vhf.vehicle_length.vehicle_length_confidence_indication.value =
     etsi_its_cam_msgs::msg::VehicleLengthConfidenceIndication::UNAVAILABLE;
   // Width: 0.1 meter precision
@@ -444,9 +447,9 @@ void CamCommunication::publish_cam_msg(const std::string & trigger)
 
     // Create detailed log entry of CAM message
     cam_log_file_ << std::fixed << std::setprecision(6) << timestamp << ","
-                  << "TX," << this->robot_index_ << "," << gen_delta_time << "," << this->longitude_
-                  << "," << this->latitude_ << "," << (heading_value / 10.0) << ","
-                  << (vhf.speed.speed_value.value / 100.0) << ","
+                  << "TX," << this->robot_index_ << "," << gen_delta_time << ","
+                  << this->longitude_ << "," << this->latitude_ << "," << (heading_value / 10.0)
+                  << "," << (vhf.speed.speed_value.value / 100.0) << ","
                   << (vhf.longitudinal_acceleration.longitudinal_acceleration_value.value / 10.0)
                   << "," << yaw_rate_str << "," << curvature_str << ","
                   << "Drive direction: " << vhf.drive_direction.value << " Speed: " << this->speed_
@@ -461,13 +464,14 @@ void CamCommunication::publish_cam_msg(const std::string & trigger)
     this->get_logger(),
     "[Robot%d] TX CAM | Gen time: %u | Speed: %.2f m/s | Accel: %.2f m/s² | Yaw rate: %.2f°/s | "
     "Pos: (%.2f, %.2f)",
-    robot_index_, gen_delta_time, this->speed_, this->acceleration_, this->yaw_rate_ * 180.0 / M_PI,
-    this->longitude_, this->latitude_);
+    robot_index_, gen_delta_time, this->speed_, this->acceleration_,
+    this->yaw_rate_ * 180.0 / M_PI, this->longitude_, this->latitude_);
 
   // More detailed info at DEBUG level
   RCLCPP_DEBUG(
-    this->get_logger(), "[Robot%d] TX CAM details | Heading: %.2f° | Curvature: %.6f | Trigger: %s",
-    robot_index_, this->heading_ * 180.0 / M_PI, this->curvature_, trigger.c_str());
+    this->get_logger(),
+    "[Robot%d] TX CAM details | Heading: %.2f° | Curvature: %.6f | Trigger: %s", robot_index_,
+    this->heading_ * 180.0 / M_PI, this->curvature_, trigger.c_str());
 
   // Update last message information for trigger condition checking
   last_cam_msg_time_ = this->now();

@@ -21,17 +21,6 @@
 #ifndef AUNA_CONTROL__CMD_VEL_MULTIPLEXER_NODE_HPP_
 #define AUNA_CONTROL__CMD_VEL_MULTIPLEXER_NODE_HPP_
 
-#include "rclcpp/rclcpp.hpp"
-#include "yaml-cpp/yaml.h"
-
-#include "ackermann_msgs/msg/ackermann_drive_stamped.hpp"
-#include "auna_msgs/srv/set_string.hpp"
-#include "geometry_msgs/msg/twist.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "std_msgs/msg/bool.hpp"
-#include "std_srvs/srv/set_bool.hpp"
-#include "std_srvs/srv/trigger.hpp"
-
 #include <algorithm>
 #include <cctype>
 #include <functional>
@@ -39,6 +28,16 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "ackermann_msgs/msg/ackermann_drive_stamped.hpp"
+#include "auna_msgs/srv/set_string.hpp"
+#include "geometry_msgs/msg/twist.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/bool.hpp"
+#include "std_srvs/srv/set_bool.hpp"
+#include "std_srvs/srv/trigger.hpp"
+#include "yaml-cpp/yaml.h"
 
 using SetBool = std_srvs::srv::SetBool;
 using AckermannDriveStamped = ackermann_msgs::msg::AckermannDriveStamped;
@@ -98,7 +97,7 @@ private:
   TwistStamped ackermann_to_twist(const AckermannDriveStamped & ackermann_msg);
   Twist ackermann_to_twist_regular(const AckermannDriveStamped & ackermann_msg);
 
-// Parameter parsing methods
+  // Parameter parsing methods
   void parseInputSourcesFromYAML(const YAML::Node & config);
   void parseOutputTopicsFromYAML(const YAML::Node & config);
   void setupPublishers();

@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 #include "auna_wallfollowing/wallfollowing.hpp"
 
 #include <iostream>
@@ -90,25 +89,32 @@ void WallFollow::declare_parameters()
 
 double WallFollow::get_range(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan, double angle)
 {
-  if (angle < scan->angle_min || angle > scan->angle_max) {return -1.0;}
+  if (angle < scan->angle_min || angle > scan->angle_max) {
+    return -1.0;
+  }
 
   int index = static_cast<int>(std::round((angle - scan->angle_min) / scan->angle_increment));
-  if (index < 0 || index >= static_cast<int>(scan->ranges.size())) {return -1.0;}
+  if (index < 0 || index >= static_cast<int>(scan->ranges.size())) {
+    return -1.0;
+  }
 
   float dist = scan->ranges[index];
-  if (std::isnan(dist) || std::isinf(dist)) {return -1.0;}
+  if (std::isnan(dist) || std::isinf(dist)) {
+    return -1.0;
+  }
 
   return static_cast<double>(dist);
 }
 
 double WallFollow::get_error(
-  const sensor_msgs::msg::LaserScan::ConstSharedPtr scan,
-  double desired_distance)
+  const sensor_msgs::msg::LaserScan::ConstSharedPtr scan, double desired_distance)
 {
   double a = get_range(scan, angle_a_);
   double b = get_range(scan, angle_b_);
 
-  if (a == 0.0 || b == 0.0) {return 0.0;}
+  if (a == 0.0 || b == 0.0) {
+    return 0.0;
+  }
 
   double swing = angle_b_ - angle_a_;
 
@@ -132,8 +138,12 @@ void WallFollow::pid_control(double error, double velocity)
 
   prev_error_ = error;
 
-  if (angle < -max_steering_angle_) {angle = -max_steering_angle_;}
-  if (angle > max_steering_angle_) {angle = max_steering_angle_;}
+  if (angle < -max_steering_angle_) {
+    angle = -max_steering_angle_;
+  }
+  if (angle > max_steering_angle_) {
+    angle = max_steering_angle_;
+  }
 
   if (std::abs(error) > error_threshold_) {
     velocity = min_velocity_;

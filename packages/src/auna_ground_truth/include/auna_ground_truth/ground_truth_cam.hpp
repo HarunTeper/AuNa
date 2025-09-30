@@ -21,19 +21,18 @@
 #ifndef AUNA_GROUND_TRUTH__GROUND_TRUTH_CAM_HPP_
 #define AUNA_GROUND_TRUTH__GROUND_TRUTH_CAM_HPP_
 
-#include "rclcpp/rclcpp.hpp"
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Scalar.h>
 
+#include <etsi_its_cam_msgs/msg/cam.hpp>
 #include <etsi_its_msgs_utils/cam_access.hpp>  // access functions
 
 #include "gazebo_msgs/msg/entity_state.hpp"
 #include "gazebo_msgs/msg/model_states.hpp"
 #include "gazebo_msgs/srv/get_entity_state.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/header.hpp"
-#include <etsi_its_cam_msgs/msg/cam.hpp>
-
-#include <tf2/LinearMath/Matrix3x3.h>
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Scalar.h>
 
 class GroundTruthCam : public rclcpp::Node
 {

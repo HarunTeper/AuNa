@@ -21,10 +21,9 @@
 #ifndef AUNA_F110__VESC_START_HPP_
 #define AUNA_F110__VESC_START_HPP_
 
-#include "rclcpp/rclcpp.hpp"
-
 #include "geometry_msgs/msg/twist.hpp"
 #include "nav_msgs/msg/odometry.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 class VescStart : public rclcpp::Node
 {

@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 #include "auna_control/cmd_vel_multiplexer_node.hpp"
 #include "rclcpp/rclcpp.hpp"
 

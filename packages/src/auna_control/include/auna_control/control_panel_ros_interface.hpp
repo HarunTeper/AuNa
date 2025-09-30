@@ -18,13 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 #ifndef AUNA_CONTROL__CONTROL_PANEL_ROS_INTERFACE_HPP_
 #define AUNA_CONTROL__CONTROL_PANEL_ROS_INTERFACE_HPP_
 
 #include <QObject>
 #include <QString>
+#include <memory>
 #include <rclcpp/rclcpp.hpp>
+#include <thread>
 
 #include "auna_msgs/srv/set_string.hpp"
 #include "geometry_msgs/msg/twist.hpp"
@@ -32,9 +33,6 @@
 #include "sensor_msgs/msg/imu.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 #include "std_srvs/srv/trigger.hpp"
-
-#include <memory>
-#include <thread>
 
 using Trigger = std_srvs::srv::Trigger;
 

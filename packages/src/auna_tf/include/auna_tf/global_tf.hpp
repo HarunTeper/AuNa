@@ -26,13 +26,13 @@
 #include "tf2_ros/transform_broadcaster.h"
 
 // #include "gazebo_msgs/srv/get_model_list.hpp"
+#include "gazebo_msgs/srv/get_model_list.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "std_msgs/msg/header.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
-#include "gazebo_msgs/srv/get_model_list.hpp"
 
 class GlobalTF : public rclcpp::Node
 {
@@ -46,15 +46,15 @@ public:
     const tf2_msgs::msg::TFMessage::SharedPtr msg, const std::string & robot_name, bool is_static);
 
 private:
-// TF Broadcaster
+  // TF Broadcaster
   tf2_ros::TransformBroadcaster tf_broadcaster_;
   tf2_ros::StaticTransformBroadcaster static_tf_broadcaster_;
 
-// Timer and Service Client
+  // Timer and Service Client
   rclcpp::TimerBase::SharedPtr service_timer_;
   rclcpp::Client<gazebo_msgs::srv::GetModelList>::SharedPtr modelClient_;
 
-// Robot model vector and subscribers for local tf topics.
+  // Robot model vector and subscribers for local tf topics.
   std::vector<rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr> tf_subscribers_;
   std::vector<std::string> robot_models_;
 };

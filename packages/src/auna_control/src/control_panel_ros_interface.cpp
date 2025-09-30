@@ -18,16 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
 #include "auna_control/control_panel_ros_interface.hpp"
 
 #include <QStringList>
 #include <QTimer>
-#include <rclcpp/rclcpp.hpp>
-
 #include <chrono>
 #include <cmath>
 #include <functional>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 
 #ifndef M_PI
@@ -105,8 +103,7 @@ void ControlPanelROSInterface::setNamespace(const QString & ns)
   if (ns_str.find(' ') != std::string::npos) {
     if (node_) {
       RCLCPP_WARN(
-        node_->get_logger(), "Invalid namespace with spaces: '%s', ignoring",
-        ns_str.c_str());
+        node_->get_logger(), "Invalid namespace with spaces: '%s', ignoring", ns_str.c_str());
     }
     return;
   }
@@ -139,7 +136,8 @@ void ControlPanelROSInterface::triggerEstop(bool activate)
       node_->get_logger(), "Sending E-Stop %s request", activate ? "activate" : "deactivate");
   }
   estop_set_client_->async_send_request(
-    request, std::bind(&ControlPanelROSInterface::onEstopSetResponse, this, std::placeholders::_1));
+    request,
+    std::bind(&ControlPanelROSInterface::onEstopSetResponse, this, std::placeholders::_1));
 }
 
 void ControlPanelROSInterface::setCmdVelSource(const QString & source)
@@ -264,8 +262,9 @@ void ControlPanelROSInterface::onOdometryReceived(const nav_msgs::msg::Odometry:
   if (node_) {
     RCLCPP_DEBUG(
       node_->get_logger(),
-      "Received odometry: speed=%.2f, angular_vel=%.2f, pos=(%.2f, %.2f, %.2f)", speed, angular_vel,
-      msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
+      "Received odometry: speed=%.2f, angular_vel=%.2f, pos=(%.2f, %.2f, %.2f)", speed,
+      angular_vel, msg->pose.pose.position.x, msg->pose.pose.position.y,
+      msg->pose.pose.position.z);
   }
   emit odometryUpdated(
     speed, angular_vel, msg->pose.pose.position.x, msg->pose.pose.position.y,
