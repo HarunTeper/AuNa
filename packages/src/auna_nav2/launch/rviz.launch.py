@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 
-""" Launch RViz2 with the default view for the navigation stack. """
+"""Launch RViz2 with the default view for the navigation stack."""
 import os
 
 from ament_index_python.packages import get_package_share_directory

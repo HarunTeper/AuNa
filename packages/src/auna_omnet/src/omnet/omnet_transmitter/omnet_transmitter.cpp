@@ -63,14 +63,13 @@ void OmnetTransmitter::cam_callback()
   if (!robot_name_.empty()) {
     try {
       std::size_t last_char_pos = robot_name_.find_last_not_of("0123456789");
+      std::size_t first_char_pos = robot_name_.find_first_not_of("0123456789");
       if (last_char_pos != std::string::npos &&
         last_char_pos < robot_name_.length() - 1)
       {
         station_id_val = static_cast<uint32_t>(
           std::stoul(robot_name_.substr(last_char_pos + 1)));
-      } else if (robot_name_.find_first_not_of("0123456789") ==
-        std::string::npos)
-      {
+      } else if (first_char_pos == std::string::npos) {
         // If robot_name_ is purely numeric
         station_id_val = static_cast<uint32_t>(std::stoul(robot_name_));
       } else {  // Fallback to hash if not ending in a number or not purely

@@ -147,7 +147,7 @@ def include_launch_description(context: LaunchContext):
 
     for num in range(robot_number):
         print(
-            f"navigation_multi_robot_launch: Nav nodes {num} namespace: {robots[num]['namespace']}")
+            f"navigation_multi_robot_launch: {num} nodes. Namespace {robots[num]['namespace']}")
         launch_description_content.extend([
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(os.path.join(
