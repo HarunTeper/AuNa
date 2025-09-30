@@ -114,4 +114,3 @@ private:
 };
 
 #endif  // AUNA_WALLFOLLOWING__WALLFOLLOWING_HPP_
-

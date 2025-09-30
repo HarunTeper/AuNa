@@ -38,4 +38,3 @@ private:
 };
 
 #endif  // AUNA_GAZEBO__ROBOT_NAME_PUBLISHER_HPP_
-

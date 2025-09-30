@@ -147,4 +147,3 @@ private:
 }  // namespace auna_control
 
 #endif  // AUNA_CONTROL__CMD_VEL_MULTIPLEXER_NODE_HPP_
-

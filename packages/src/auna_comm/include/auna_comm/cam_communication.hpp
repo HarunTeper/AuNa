@@ -105,4 +105,3 @@ private:
   std::ofstream cam_log_file_;
 };
 #endif  // AUNA_COMM__CAM_COMMUNICATION_HPP_
-

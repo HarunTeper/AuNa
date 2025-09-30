@@ -51,4 +51,3 @@ private:
 };
 
 #endif  // AUNA_TF__LOCALIZATION_POSE_PUBLISHER_HPP_
-

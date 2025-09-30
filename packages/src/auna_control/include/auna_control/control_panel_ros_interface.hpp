@@ -99,4 +99,3 @@ private:
 };
 
 #endif  // AUNA_CONTROL__CONTROL_PANEL_ROS_INTERFACE_HPP_
-

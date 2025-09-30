@@ -41,4 +41,3 @@ private:
 };
 
 #endif  // AUNA_F110__VESC_START_HPP_
-

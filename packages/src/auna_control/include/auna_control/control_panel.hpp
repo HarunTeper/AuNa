@@ -93,4 +93,3 @@ private:
 }  // namespace auna_control
 
 #endif  // AUNA_CONTROL__CONTROL_PANEL_HPP_
-

@@ -59,4 +59,3 @@ private:
 };
 
 #endif  // AUNA_GROUND_TRUTH__GROUND_TRUTH_CAM_HPP_
-

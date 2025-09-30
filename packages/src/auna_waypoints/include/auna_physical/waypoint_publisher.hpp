@@ -79,4 +79,3 @@ private:
 };
 
 #endif  // AUNA_PHYSICAL__WAYPOINT_PUBLISHER_HPP_
-

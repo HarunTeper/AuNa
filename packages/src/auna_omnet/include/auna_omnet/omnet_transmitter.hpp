@@ -66,4 +66,3 @@ private:
 };
 
 #endif  // AUNA_OMNET__OMNET_TRANSMITTER_HPP_
-

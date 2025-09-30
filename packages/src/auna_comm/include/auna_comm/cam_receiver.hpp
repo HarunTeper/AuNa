@@ -37,4 +37,3 @@ private:
 };
 
 #endif  // AUNA_COMM__CAM_RECEIVER_HPP_
-

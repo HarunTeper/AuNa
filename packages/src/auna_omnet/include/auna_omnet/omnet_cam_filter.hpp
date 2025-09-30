@@ -45,4 +45,3 @@ private:
 };
 
 #endif  // AUNA_OMNET__OMNET_CAM_FILTER_HPP_
-

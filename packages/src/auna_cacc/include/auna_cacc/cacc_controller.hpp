@@ -255,4 +255,3 @@ private:
 };
 
 #endif  // AUNA_CACC__CACC_CONTROLLER_HPP_
-

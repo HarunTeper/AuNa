@@ -51,4 +51,3 @@ private:
 };
 
 #endif  // AUNA_GROUND_TRUTH__GROUND_TRUTH_POSE_PUBLISHER_HPP_
-

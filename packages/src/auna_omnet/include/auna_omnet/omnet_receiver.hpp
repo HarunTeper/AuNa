@@ -39,4 +39,3 @@ private:
 };
 
 #endif  // AUNA_OMNET__OMNET_RECEIVER_HPP_
-

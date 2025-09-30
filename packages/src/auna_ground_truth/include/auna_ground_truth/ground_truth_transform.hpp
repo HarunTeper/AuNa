@@ -63,4 +63,3 @@ private:
 };
 
 #endif  // AUNA_GROUND_TRUTH__GROUND_TRUTH_TRANSFORM_HPP_
-

@@ -66,4 +66,3 @@ private:
 };
 
 #endif  // AUNA_TF__GLOBAL_TF_HPP_
-
