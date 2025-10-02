@@ -18,10 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "auna_physical/waypoint_publisher.hpp"
+#include "auna_waypoints/nav2_waypoint_publisher.hpp"
 
-int main(int argc, char * argv[])
-{
+int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
   auto node = std::make_shared<WaypointPublisher>();
   rclcpp::spin(node);

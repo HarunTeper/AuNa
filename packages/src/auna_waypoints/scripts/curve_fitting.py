@@ -35,7 +35,7 @@ class CurveFitting(Node):
 
     def __init__(self):
         """Initialize the node."""
-        super().__init__('waypoint_publisher')
+        super().__init__('curve_fitting_node')
         self.declare_parameter('waypoint_file', 'waypoints.csv')
         self.declare_parameter('interpolation_distance', 0.1)
         self.declare_parameter('swap_xy', False)

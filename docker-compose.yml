@@ -503,7 +503,7 @@ services:
     image: waypoint_publisher:latest
     container_name: waypoint_publisher
     command:
-      ["ros2", "launch", "auna_waypoints", "waypoint_publisher.launch.py"]
+      ["ros2", "launch", "auna_waypoints", "nav2_waypoint_publisher.launch.py"]
     profiles: ["waypoint_publisher"]
 
   waypoint_publisher_robot1:

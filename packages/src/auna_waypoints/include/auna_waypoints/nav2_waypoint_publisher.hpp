@@ -18,14 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef AUNA_PHYSICAL__WAYPOINT_PUBLISHER_HPP_
-#define AUNA_PHYSICAL__WAYPOINT_PUBLISHER_HPP_
+#ifndef AUNA_WAYPOINTS__NAV2_WAYPOINT_PUBLISHER_HPP_
+#define AUNA_WAYPOINTS__NAV2_WAYPOINT_PUBLISHER_HPP_
 
 #include <algorithm>
 #include <fstream>
 #include <memory>
 #include <string>
 #include <vector>
+
+#include <yaml-cpp/yaml.h>
 
 #include "geometry_msgs/msg/pose_array.hpp"
 #include "nav2_msgs/action/navigate_through_poses.hpp"
@@ -37,14 +39,13 @@
 
 using NavigateThroughPoses = nav2_msgs::action::NavigateThroughPoses;
 using GoalHandleNavigateThroughPoses =
-  rclcpp_action::ClientGoalHandle<NavigateThroughPoses>;
+    rclcpp_action::ClientGoalHandle<NavigateThroughPoses>;
 
-class WaypointPublisher : public rclcpp::Node
-{
-public:
+class WaypointPublisher : public rclcpp::Node {
+ public:
   WaypointPublisher();
 
-private:
+ private:
   // create a namespace variable
   std::string namespace_;
 
@@ -61,14 +62,14 @@ private:
 
   // action client and callbacks
   rclcpp_action::Client<nav2_msgs::action::NavigateThroughPoses>::SharedPtr
-    client_ptr_;
+      client_ptr_;
   void goal_response_callback(
-    GoalHandleNavigateThroughPoses::SharedPtr goal_handle);
+      GoalHandleNavigateThroughPoses::SharedPtr goal_handle);
   void feedback_callback(
-    GoalHandleNavigateThroughPoses::SharedPtr,
-    const std::shared_ptr<const NavigateThroughPoses::Feedback> feedback);
+      GoalHandleNavigateThroughPoses::SharedPtr,
+      const std::shared_ptr<const NavigateThroughPoses::Feedback> feedback);
   void result_callback(
-    const GoalHandleNavigateThroughPoses::WrappedResult & result);
+      const GoalHandleNavigateThroughPoses::WrappedResult& result);
 
   // waypoint data
   std::vector<geometry_msgs::msg::PoseStamped> poses_;
@@ -79,4 +80,4 @@ private:
   int number_of_waypoints_ = 20;
 };
 
-#endif  // AUNA_PHYSICAL__WAYPOINT_PUBLISHER_HPP_
+#endif  // AUNA_WAYPOINTS__NAV2_WAYPOINT_PUBLISHER_HPP_

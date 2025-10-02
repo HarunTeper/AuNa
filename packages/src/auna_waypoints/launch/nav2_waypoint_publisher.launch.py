@@ -43,12 +43,12 @@ def include_launch_description(context: LaunchContext):
     map_name = os.environ.get('MAP_NAME', 'default')
 
     # Config files
-    waypoints = os.path.join(pkg_dir, 'config', map_name, 'waypoints.csv')
+    waypoints = os.path.join(pkg_dir, 'config', map_name, 'nav2_waypoints.yaml')
 
-    waypoint_publisher_node = Node(
+    nav2_waypoint_publisher_node = Node(
         package='auna_waypoints',
-        executable='waypoint_publisher',
-        name='waypoint_publisher',
+        executable='nav2_waypoint_publisher',
+        name='nav2_waypoint_publisher',
         parameters=[{'waypoint_file': waypoints}],
         output='screen',
         remappings=[('/tf', 'tf'),
@@ -58,8 +58,8 @@ def include_launch_description(context: LaunchContext):
     push_ns = PushRosNamespace(namespace)
     launch_description_content.append(push_ns)
 
-    # Add the waypoint_publisher node to the launch description content
-    launch_description_content.append(waypoint_publisher_node)
+    # Add the nav2_waypoint_publisher node to the launch description content
+    launch_description_content.append(nav2_waypoint_publisher_node)
 
     return launch_description_content
 
