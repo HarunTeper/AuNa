@@ -39,24 +39,74 @@ WaypointPublisher::WaypointPublisher()
 
   std::ifstream file(waypoint_file_, std::ifstream::in);
   std::string line;
+  bool first_line = true;
   if (file.is_open()) {
     while (std::getline(file, line)) {
+      // Remove carriage return characters (Windows line endings)
+      line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+
+      // Handle BOM (Byte Order Mark) and other non-printable characters at the
+      // beginning of file
+      if (first_line) {
+        // Remove UTF-8 BOM (EF BB BF) and other potential non-printable
+        // characters
+        while (!line.empty() &&
+          (static_cast<unsigned char>(line[0]) > 127 ||
+          line[0] == '\xEF' || line[0] == '\xBB' || line[0] == '\xBF' ||
+          (line[0] >= 0 && line[0] < 32 && line[0] != '\t')))
+        {
+          line.erase(0, 1);
+        }
+        first_line = false;
+      }
+
+      // Skip empty lines or lines with only whitespace
+      if (line.empty() ||
+        line.find_first_not_of(" \t\n\r") == std::string::npos)
+      {
+        continue;
+      }
+
       std::istringstream iss(line);
       std::string x, y;
       std::getline(iss, x, ',');
       std::getline(iss, y, ',');
 
-      geometry_msgs::msg::PoseStamped pose;
-      pose.header.frame_id = "map";
-      pose.pose.position.x = std::stof(x);
-      pose.pose.position.y = std::stof(y);
-      pose.pose.position.z = 0;
+      // Trim whitespace from x and y coordinates
+      x.erase(0, x.find_first_not_of(" \t"));
+      x.erase(x.find_last_not_of(" \t") + 1);
+      y.erase(0, y.find_first_not_of(" \t"));
+      y.erase(y.find_last_not_of(" \t") + 1);
 
-      double heading = 0;
-      pose.pose.orientation =
-        tf2::toMsg(tf2::Quaternion(tf2::Vector3(0, 0, 1), heading));
+      // Skip if either coordinate is empty after trimming
+      if (x.empty() || y.empty()) {
+        continue;
+      }
 
-      poses_.push_back(pose);
+      try {
+        geometry_msgs::msg::PoseStamped pose;
+        pose.header.frame_id = "map";
+        pose.pose.position.x = std::stof(x);
+        pose.pose.position.y = std::stof(y);
+        pose.pose.position.z = 0;
+
+        double heading = 0;
+        pose.pose.orientation =
+          tf2::toMsg(tf2::Quaternion(tf2::Vector3(0, 0, 1), heading));
+
+        poses_.push_back(pose);
+      } catch (const std::invalid_argument & e) {
+        RCLCPP_WARN(
+          this->get_logger(), "Invalid waypoint data in line: '%s'",
+          line.c_str());
+        continue;
+      } catch (const std::out_of_range & e) {
+        RCLCPP_WARN(
+          this->get_logger(),
+          "Waypoint coordinate out of range in line: '%s'",
+          line.c_str());
+        continue;
+      }
     }
   } else {
     RCLCPP_ERROR(this->get_logger(), "Unable to open file");
@@ -95,6 +145,14 @@ WaypointPublisher::WaypointPublisher()
 
 void WaypointPublisher::timer_callback()
 {
+  // Check if the action client is available and ready
+  if (!client_ptr_->wait_for_action_server(std::chrono::seconds(0))) {
+    RCLCPP_WARN(
+      this->get_logger(),
+      "Action server not available, skipping waypoint publishing");
+    return;
+  }
+
   if (remaining_number_of_poses_ < number_of_waypoints_ * 0.5) {
     publish_waypoints();
   }
@@ -128,19 +186,19 @@ void WaypointPublisher::publish_waypoints()
 
   RCLCPP_INFO(this->get_logger(), "Sending goal");
   this->client_ptr_->async_send_goal(goal_msg, send_goal_options);
-  remaining_number_of_poses_ = number_of_waypoints_;
 }
 
 void WaypointPublisher::goal_response_callback(
   GoalHandleNavigateThroughPoses::SharedPtr goal_handle)
 {
+  RCLCPP_INFO(this->get_logger(), "Received goal response callback");
   if (!goal_handle) {
     RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
-    publish_waypoints();
   } else {
     RCLCPP_INFO(
       this->get_logger(),
       "Goal accepted by server, waiting for result");
+    remaining_number_of_poses_ = number_of_waypoints_;
   }
 }
 

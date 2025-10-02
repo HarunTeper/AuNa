@@ -21,6 +21,7 @@
 #ifndef AUNA_PHYSICAL__WAYPOINT_PUBLISHER_HPP_
 #define AUNA_PHYSICAL__WAYPOINT_PUBLISHER_HPP_
 
+#include <algorithm>
 #include <fstream>
 #include <memory>
 #include <string>
