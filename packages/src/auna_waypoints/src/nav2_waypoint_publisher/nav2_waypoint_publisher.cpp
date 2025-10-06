@@ -20,6 +20,10 @@
 
 #include "auna_waypoints/nav2_waypoint_publisher.hpp"
 
+#define _USE_MATH_DEFINES
+#include <cmath>
+#include <limits>
+
 WaypointPublisher::WaypointPublisher()
     : Node("nav2_waypoint_publisher"),
       tf_buffer_(this->get_clock()),
@@ -29,6 +33,13 @@ WaypointPublisher::WaypointPublisher()
 
   this->client_ptr_ = rclcpp_action::create_client<NavigateThroughPoses>(
       this, "navigate_through_poses");
+
+  // Initialize waypoint array publisher with transient_local QoS
+  rclcpp::QoS qos_profile = rclcpp::QoS(rclcpp::KeepLast(1));
+  qos_profile.transient_local();
+  this->waypoint_array_publisher_ =
+      this->create_publisher<geometry_msgs::msg::PoseArray>("nav2_waypoints",
+                                                            qos_profile);
 
   this->declare_parameter<std::string>("namespace", "");
   this->get_parameter<std::string>("namespace", namespace_);
@@ -111,6 +122,9 @@ WaypointPublisher::WaypointPublisher()
   RCLCPP_INFO(this->get_logger(), "Loaded %zu waypoints from file: %s",
               poses_.size(), waypoint_file_.c_str());
 
+  // Publish the complete waypoint array
+  publish_waypoint_array();
+
   // to start from zero at first iteration
   current_pose_index_ = -number_of_waypoints_;
 }
@@ -138,9 +152,25 @@ void WaypointPublisher::publish_waypoints() {
     return;
   }
 
-  current_pose_index_ = (current_pose_index_ + number_of_waypoints_ -
-                         remaining_number_of_poses_) %
-                        static_cast<int>(poses_.size());
+  // Get robot's current pose
+  geometry_msgs::msg::PoseStamped robot_pose = get_robot_pose();
+
+  // Find nearest waypoint with matching orientation
+  int nearest_index = find_nearest_waypoint_with_orientation(robot_pose);
+  if (nearest_index >= 0) {
+    current_pose_index_ = nearest_index;
+    RCLCPP_INFO(this->get_logger(),
+                "Selected nearest waypoint with matching orientation: %d",
+                current_pose_index_);
+  } else {
+    // Fallback to original logic if no suitable waypoint found
+    current_pose_index_ = (current_pose_index_ + number_of_waypoints_ -
+                           remaining_number_of_poses_) %
+                          static_cast<int>(poses_.size());
+    RCLCPP_WARN(
+        this->get_logger(),
+        "No waypoint with matching orientation found, using fallback logic");
+  }
 
   auto goal_msg = NavigateThroughPoses::Goal();
   for (int i = current_pose_index_;
@@ -200,4 +230,91 @@ void WaypointPublisher::result_callback(
       return;
   }
   RCLCPP_INFO(this->get_logger(), "Navigation finished");
+}
+
+void WaypointPublisher::publish_waypoint_array() {
+  geometry_msgs::msg::PoseArray waypoint_array;
+  waypoint_array.header.frame_id = "map";
+  waypoint_array.header.stamp = this->get_clock()->now();
+
+  for (const auto& pose : poses_) {
+    waypoint_array.poses.push_back(pose.pose);
+  }
+
+  waypoint_array_publisher_->publish(waypoint_array);
+  RCLCPP_INFO(this->get_logger(), "Published waypoint array with %zu waypoints",
+              waypoint_array.poses.size());
+}
+
+geometry_msgs::msg::PoseStamped WaypointPublisher::get_robot_pose() {
+  geometry_msgs::msg::PoseStamped robot_pose;
+
+  try {
+    // Get transform from map to base_link
+    geometry_msgs::msg::TransformStamped transform_stamped =
+        tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero);
+
+    // Convert transform to pose
+    robot_pose.header = transform_stamped.header;
+    robot_pose.pose.position.x = transform_stamped.transform.translation.x;
+    robot_pose.pose.position.y = transform_stamped.transform.translation.y;
+    robot_pose.pose.position.z = transform_stamped.transform.translation.z;
+    robot_pose.pose.orientation = transform_stamped.transform.rotation;
+
+  } catch (tf2::TransformException& ex) {
+    RCLCPP_WARN(this->get_logger(), "Could not get robot pose: %s", ex.what());
+    // Return empty pose on failure
+    robot_pose.header.frame_id = "map";
+    robot_pose.header.stamp = this->get_clock()->now();
+  }
+
+  return robot_pose;
+}
+
+int WaypointPublisher::find_nearest_waypoint_with_orientation(
+    const geometry_msgs::msg::PoseStamped& robot_pose) {
+  if (poses_.empty() || robot_pose.header.frame_id.empty()) {
+    return -1;
+  }
+
+  // Get robot's yaw angle
+  double robot_yaw = tf2::getYaw(robot_pose.pose.orientation);
+
+  double min_distance = std::numeric_limits<double>::max();
+  int best_index = -1;
+
+  for (size_t i = 0; i < poses_.size(); ++i) {
+    // Calculate distance to waypoint
+    double dx = poses_[i].pose.position.x - robot_pose.pose.position.x;
+    double dy = poses_[i].pose.position.y - robot_pose.pose.position.y;
+    double distance = std::sqrt(dx * dx + dy * dy);
+
+    // Get waypoint's yaw angle
+    double waypoint_yaw = tf2::getYaw(poses_[i].pose.orientation);
+
+    // Check if orientations are within ±90 degrees
+    double angle_diff = std::abs(angle_difference(robot_yaw, waypoint_yaw));
+    if (angle_diff <= M_PI / 2.0) {  // 90 degrees in radians
+      if (distance < min_distance) {
+        min_distance = distance;
+        best_index = static_cast<int>(i);
+      }
+    }
+  }
+
+  return best_index;
+}
+
+double WaypointPublisher::normalize_angle(double angle) {
+  while (angle > M_PI) {
+    angle -= 2.0 * M_PI;
+  }
+  while (angle < -M_PI) {
+    angle += 2.0 * M_PI;
+  }
+  return angle;
+}
+
+double WaypointPublisher::angle_difference(double angle1, double angle2) {
+  return normalize_angle(angle1 - angle2);
 }

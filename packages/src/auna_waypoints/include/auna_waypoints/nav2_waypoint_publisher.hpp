@@ -22,6 +22,7 @@
 #define AUNA_WAYPOINTS__NAV2_WAYPOINT_PUBLISHER_HPP_
 
 #include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -30,9 +31,12 @@
 #include <yaml-cpp/yaml.h>
 
 #include "geometry_msgs/msg/pose_array.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav2_msgs/action/navigate_through_poses.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2/utils.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
@@ -59,6 +63,18 @@ class WaypointPublisher : public rclcpp::Node {
 
   // publish waypoints
   void publish_waypoints();
+
+  // waypoint array publisher
+  rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr
+      waypoint_array_publisher_;
+  void publish_waypoint_array();
+
+  // helper functions
+  geometry_msgs::msg::PoseStamped get_robot_pose();
+  int find_nearest_waypoint_with_orientation(
+      const geometry_msgs::msg::PoseStamped& robot_pose);
+  double normalize_angle(double angle);
+  double angle_difference(double angle1, double angle2);
 
   // action client and callbacks
   rclcpp_action::Client<nav2_msgs::action::NavigateThroughPoses>::SharedPtr

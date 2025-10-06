@@ -494,36 +494,36 @@ services:
   #==============================================================================
   # WAYPOINT PUBLISHER SERVICES
   #==============================================================================
-  waypoint_publisher:
+  nav2_waypoint_publisher:
     <<: *package-base
     build:
       <<: *build-auna
       args:
         - PACKAGE_NAMES=${WAYPOINT_PUBLISHER_PACKAGES}
-    image: waypoint_publisher:latest
-    container_name: waypoint_publisher
+    image: nav2_waypoint_publisher:latest
+    container_name: nav2_waypoint_publisher
     command:
       ["ros2", "launch", "auna_waypoints", "nav2_waypoint_publisher.launch.py"]
-    profiles: ["waypoint_publisher"]
+    profiles: ["nav2_waypoint_publisher"]
 
-  waypoint_publisher_robot1:
-    extends: waypoint_publisher
-    container_name: waypoint_publisher_robot1
+  nav2_waypoint_publisher_robot1:
+    extends: nav2_waypoint_publisher
+    container_name: nav2_waypoint_publisher_robot1
     environment:
       - ROBOT_INDEX=1
     profiles:
       ["sim_robot1", "physical_robot1", "sim_scenario", "sim_scenario_1"]
 
-  waypoint_publisher_robot2:
-    extends: waypoint_publisher
-    container_name: waypoint_publisher_robot2
+  nav2_waypoint_publisher_robot2:
+    extends: nav2_waypoint_publisher
+    container_name: nav2_waypoint_publisher_robot2
     environment:
       - ROBOT_INDEX=2
     profiles: ["sim_robot2", "physical_robot2", "sim_scenario"]
 
-  waypoint_publisher_robot3:
-    extends: waypoint_publisher
-    container_name: waypoint_publisher_robot3
+  nav2_waypoint_publisher_robot3:
+    extends: nav2_waypoint_publisher
+    container_name: nav2_waypoint_publisher_robot3
     environment:
       - ROBOT_INDEX=3
     profiles: ["sim_robot3", "physical_robot3", "sim_scenario"]
