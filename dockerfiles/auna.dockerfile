@@ -201,7 +201,7 @@ CMD ["/bin/bash"]
 #------------------------------------------------------------------------------
 # DEVELOPMENT STAGE - Development tools and full source access
 #------------------------------------------------------------------------------
-FROM build-stage AS development
+FROM dependency-stage AS development
 
 # Additional development tools
 RUN sudo apt-get update \
