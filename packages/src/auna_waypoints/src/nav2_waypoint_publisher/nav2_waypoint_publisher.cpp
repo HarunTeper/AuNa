@@ -20,10 +20,6 @@
 
 #include "auna_waypoints/nav2_waypoint_publisher.hpp"
 
-#define _USE_MATH_DEFINES
-#include <cmath>
-#include <limits>
-
 WaypointPublisher::WaypointPublisher()
 : Node("nav2_waypoint_publisher"),
   tf_buffer_(this->get_clock()),
@@ -109,7 +105,6 @@ WaypointPublisher::WaypointPublisher()
 
       poses_.push_back(pose);
     }
-
   } catch (const YAML::Exception & e) {
     RCLCPP_ERROR(
       this->get_logger(), "Failed to parse YAML waypoint file: %s",
@@ -285,7 +280,6 @@ geometry_msgs::msg::PoseStamped WaypointPublisher::get_robot_pose()
     robot_pose.pose.position.y = transform_stamped.transform.translation.y;
     robot_pose.pose.position.z = transform_stamped.transform.translation.z;
     robot_pose.pose.orientation = transform_stamped.transform.rotation;
-
   } catch (tf2::TransformException & ex) {
     RCLCPP_WARN(this->get_logger(), "Could not get robot pose: %s", ex.what());
     // Return empty pose on failure
