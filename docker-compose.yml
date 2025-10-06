@@ -118,25 +118,13 @@ services:
     container_name: gazebo
     command:
       [
-        "/bin/bash",
-        "-c",
-        "ros2 launch auna_gazebo gazebo_world.launch.py use_sim_time:=true",
+        "ros2",
+        "launch",
+        "auna_gazebo",
+        "gazebo_world.launch.py",
+        "use_sim_time:=true",
       ]
-    profiles: ["sim", "sim_scenario", "sim_scenario_1"]
-
-  gazebo_racing:
-    extends: gazebo
-    container_name: gazebo
-    environment:
-      - WORLD_NAME=racetrack_decorated
-    profiles: ["racing"]
-
-  gazebo_platooning:
-    extends: gazebo
-    container_name: gazebo
-    environment:
-      - WORLD_NAME=arena
-    profiles: ["platooning"]
+    profiles: ["sim", "sim_scenario", "sim_scenario_1", "racing", "platooning"]
 
   #=============================================================================
   # ROBOT SPAWNING SERVICES
@@ -580,7 +568,7 @@ services:
       [
         "/bin/bash",
         "-c",
-        "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && cd .. && /bin/bash",
+        "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && cd .. && exec /bin/bash",
       ]
     profiles: ["zenohd", "development"]
 
@@ -588,8 +576,7 @@ services:
     <<: *dev-base
     image: development:latest
     container_name: lint-fix
-    command:
-      ["/bin/bash", "-c", "/home/ubuntu/workspace/scripts/fix_all_linting.sh"]
+    command: ["/bin/bash", "/home/ubuntu/workspace/scripts/fix_all_linting.sh"]
     profiles: ["lint", "lint-fix"]
 
   #==============================================================================
@@ -607,7 +594,7 @@ services:
       [
         "/bin/bash",
         "-c",
-        "source /home/ubuntu/workspace/packages/install/setup.bash && cd packages && source install/setup.bash && ros2 run auna_teleoperation keyboard_teleop_hold --ros-args --params-file src/auna_teleoperation/config/key_teleop.yaml",
+        "source /home/ubuntu/workspace/packages/install/setup.bash && cd packages && source install/setup.bash && exec ros2 run auna_teleoperation keyboard_teleop_hold --ros-args --params-file src/auna_teleoperation/config/key_teleop.yaml",
       ]
     profiles: ["teleop", "manual_control"]
 
@@ -665,9 +652,9 @@ services:
       - .:/home/ubuntu/workspace:cached
     command:
       [
-        "bash",
+        "/bin/bash",
         "-c",
-        "mkdir -p tf2_trees && cd tf2_trees &&ros2 run tf2_tools view_frames && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot1/tf -r /tf_static:=/robot1/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot2/tf -r /tf_static:=/robot2/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot3/tf -r /tf_static:=/robot3/tf_static",
+        "mkdir -p tf2_trees && cd tf2_trees && ros2 run tf2_tools view_frames && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot1/tf -r /tf_static:=/robot1/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot2/tf -r /tf_static:=/robot2/tf_static && ros2 run tf2_tools view_frames --ros-args -r /tf:=/robot3/tf -r /tf_static:=/robot3/tf_static",
       ]
     profiles: ["tf2_trees"]
 
@@ -743,7 +730,7 @@ services:
       dockerfile: dockerfiles/omnet.dockerfile
     image: omnet:latest
     container_name: omnet
-    command: ["/bin/bash", "-c", "echo 'Hello from OMNeT++!' && exec /bin/bash"]
+    command: ["/bin/bash"]
     profiles: ["omnet"]
 
   #==============================================================================
@@ -761,7 +748,7 @@ services:
       [
         "/bin/bash",
         "-c",
-        "source /home/ubuntu/tracing/install/setup.bash && ROS_TRACE_DIR=${ROS_TRACE_DIR} ros2 trace && chown -R 1000:1000 /home/ubuntu/workspace/traces",
+        "source /home/ubuntu/tracing/install/setup.bash && ROS_TRACE_DIR=${ROS_TRACE_DIR} exec ros2 trace && chown -R 1000:1000 /home/ubuntu/workspace/traces",
       ]
     profiles: ["tracing"]
 
@@ -771,7 +758,7 @@ services:
       - .:/home/ubuntu/workspace
     image: tracing:latest
     container_name: analysis
-    command: ["/bin/bash", "-c", "/bin/bash"]
+    command: ["/bin/bash"]
     profiles: ["tracing"]
 
   test_tracing:
@@ -782,6 +769,6 @@ services:
       [
         "/bin/bash",
         "-c",
-        "while true; do ros2 topic pub /test_topic std_msgs/String 'data: hello'; sleep 0.01; done",
+        'exec bash -c ''while true; do ros2 topic pub /test_topic std_msgs/String "data: hello"; sleep 0.01; done''',
       ]
     profiles: ["test_tracing"]
