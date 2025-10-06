@@ -35,7 +35,7 @@ add_library(nav2_waypoint_publisher_node SHARED
 
 # Create executables
 add_executable(nav2_waypoint_publisher
-               src/nav2_waypoint_publisher/nav2_waypoint_publisher_main.cpp)
+                src/nav2_waypoint_publisher/nav2_waypoint_publisher_main.cpp)
 
 # Target dependencies
 set(nav2_waypoint_publisher_dependencies
