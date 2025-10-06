@@ -20,7 +20,8 @@
 
 #include "auna_waypoints/nav2_waypoint_publisher.hpp"
 
-int main(int argc, char* argv[]) {
+int main(int argc, char * argv[])
+{
   rclcpp::init(argc, argv);
   auto node = std::make_shared<WaypointPublisher>();
   rclcpp::spin(node);

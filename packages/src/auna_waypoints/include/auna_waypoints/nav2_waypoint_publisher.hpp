@@ -43,13 +43,14 @@
 
 using NavigateThroughPoses = nav2_msgs::action::NavigateThroughPoses;
 using GoalHandleNavigateThroughPoses =
-    rclcpp_action::ClientGoalHandle<NavigateThroughPoses>;
+  rclcpp_action::ClientGoalHandle<NavigateThroughPoses>;
 
-class WaypointPublisher : public rclcpp::Node {
- public:
+class WaypointPublisher : public rclcpp::Node
+{
+public:
   WaypointPublisher();
 
- private:
+private:
   // create a namespace variable
   std::string namespace_;
 
@@ -66,26 +67,26 @@ class WaypointPublisher : public rclcpp::Node {
 
   // waypoint array publisher
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr
-      waypoint_array_publisher_;
+    waypoint_array_publisher_;
   void publish_waypoint_array();
 
   // helper functions
   geometry_msgs::msg::PoseStamped get_robot_pose();
   int find_nearest_waypoint_with_orientation(
-      const geometry_msgs::msg::PoseStamped& robot_pose);
+    const geometry_msgs::msg::PoseStamped & robot_pose);
   double normalize_angle(double angle);
   double angle_difference(double angle1, double angle2);
 
   // action client and callbacks
   rclcpp_action::Client<nav2_msgs::action::NavigateThroughPoses>::SharedPtr
-      client_ptr_;
+    client_ptr_;
   void goal_response_callback(
-      GoalHandleNavigateThroughPoses::SharedPtr goal_handle);
+    GoalHandleNavigateThroughPoses::SharedPtr goal_handle);
   void feedback_callback(
-      GoalHandleNavigateThroughPoses::SharedPtr,
-      const std::shared_ptr<const NavigateThroughPoses::Feedback> feedback);
+    GoalHandleNavigateThroughPoses::SharedPtr,
+    const std::shared_ptr<const NavigateThroughPoses::Feedback> feedback);
   void result_callback(
-      const GoalHandleNavigateThroughPoses::WrappedResult& result);
+    const GoalHandleNavigateThroughPoses::WrappedResult & result);
 
   // waypoint data
   std::vector<geometry_msgs::msg::PoseStamped> poses_;
