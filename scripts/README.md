@@ -4,11 +4,75 @@ This directory contains scripts for code quality, linting, and maintenance of th
 
 ## Table of Contents
 
+- [Quick Start](#quick-start)
+- [Combined Quality Checks](#combined-quality-checks)
 - [Copyright Management](#copyright-management)
 - [Linting and Code Quality](#linting-and-code-quality)
-- [Quick Start](#quick-start)
 - [What Gets Fixed](#what-gets-fixed)
 - [Recommended Workflow](#recommended-workflow)
+
+---
+
+## Quick Start
+
+### ⭐ All-in-One Quality Checks (Recommended)
+
+Run copyright headers, linting, and tests in one command:
+
+```bash
+# Run all quality checks with default settings
+./scripts/run_quality_checks.sh
+
+# Specify custom author and license
+./scripts/run_quality_checks.sh "Your Name" "MIT"
+```
+
+This will:
+1. ✅ Add missing copyright headers
+2. ✅ Apply all linting fixes
+3. ✅ Build and run all tests
+4. ✅ Provide a summary of changes
+
+**This is the recommended approach before committing or creating a pull request.**
+
+---
+
+## Combined Quality Checks
+
+### `run_quality_checks.sh` ⭐ Recommended
+
+All-in-one script that runs the complete quality check pipeline: copyright headers → linting → tests.
+
+**Usage:**
+
+```bash
+# Use default author and license
+./scripts/run_quality_checks.sh
+
+# Specify custom author and license
+./scripts/run_quality_checks.sh "Your Name" "MIT"
+```
+
+**What it does:**
+
+1. **Step 1: Copyright Headers** - Adds missing MIT License headers using `ament_copyright`
+2. **Step 2: Linting** - Fixes Python (PEP8, imports, formatting) and C++ (uncrustify, includes) issues
+3. **Step 3: Tests** - Builds all packages and runs the complete test suite
+
+**Features:**
+
+- ✅ Runs everything in the correct order
+- ✅ Uses Docker for consistent environment
+- ✅ Stops on first failure with clear error messages
+- ✅ Provides detailed summary at the end
+- ✅ Same tools and checks as CI/CD pipeline
+
+**When to use:**
+
+- Before committing changes
+- Before creating a pull request
+- After making significant code changes
+- When CI/CD checks are failing
 
 ---
 
@@ -25,7 +89,7 @@ Add MIT License copyright headers to all ROS2 package files using the official `
 ./scripts/add_copyright.sh
 
 # Specify custom author and license
-./scripts/add_copyright.sh "Your Name" "MIT"
+./scripts/add_copyright.sh "Your Name" "mit"
 ```
 
 **Features:**
@@ -40,47 +104,9 @@ Add MIT License copyright headers to all ROS2 package files using the official `
 
 - `python3-ament-copyright` package (auto-installed if missing)
 
-### `add_copyright_ci.sh`
-
-Non-interactive version for CI/CD pipelines. Same functionality as `add_copyright.sh` but suitable for automation.
-
-**Usage:**
-
-```bash
-./scripts/add_copyright_ci.sh "Harun Teper" "MIT"
-```
-
 ---
 
 ## Linting and Code Quality
-
-### `docker_lint_runner.sh` ⭐ Recommended
-
-Convenience wrapper script that uses Docker Compose to run linting fixes in an isolated environment.
-
-**Usage:**
-
-```bash
-# Run with cached image
-./scripts/docker_lint_runner.sh
-
-# Force rebuild of Docker image
-./scripts/docker_lint_runner.sh --rebuild
-```
-
-**What it does:**
-
-1. Builds the development Docker image with all linting tools pre-installed
-2. Runs the comprehensive `fix_all_linting.sh` script inside the container
-3. Applies fixes to your local workspace files
-4. Provides next-step instructions
-
-**Advantages:**
-
-- ✅ No local installation of linting tools required
-- ✅ Consistent environment across all developers
-- ✅ Same tools as CI/CD pipeline
-- ✅ Easy to use - just one command
 
 ### `fix_all_linting.sh`
 
@@ -137,23 +163,33 @@ ament-cpplint
 
 ---
 
-## Quick Start
+## Individual Tool Usage
 
-### Option 1: Docker (Recommended) 🐳
+### Option 1: Run Complete Quality Checks (Recommended) �
 
 ```bash
-# One-command fix for everything
-./scripts/docker_lint_runner.sh
+# One command for copyright + linting + tests
+./scripts/run_quality_checks.sh
 
 # Review changes
 git diff
 
 # Commit if satisfied
 git add .
-git commit -m "fix: apply automatic linting fixes"
+git commit -m "chore: apply quality checks and fix linting"
 ```
 
-### Option 2: Manual Execution
+### Option 2: Run Linting Only
+
+```bash
+# Run linting directly in Docker container
+docker compose run --rm development bash -c "/home/ubuntu/workspace/scripts/fix_all_linting.sh"
+
+# OR use the Docker Compose profile
+docker compose --profile linting up linting
+```
+
+### Option 3: Manual Execution
 
 ```bash
 # Run locally (requires tools installed)
@@ -165,14 +201,14 @@ cd /home/ubuntu/workspace
 ./scripts/fix_all_linting.sh
 ```
 
-### Option 3: Using Docker Compose Profiles
+### Option 4: Using Docker Compose Profiles
 
 ```bash
 # Build development image
 docker compose build development
 
 # Run linting fixes via docker-compose profile
-docker compose --profile lint-fix up lint-fix
+docker compose --profile linting up linting
 
 # Build and run all tests
 docker compose --profile test up test
@@ -237,61 +273,75 @@ Some issues still require human attention:
 # 1. Make your code changes
 # ... edit files ...
 
-# 2. Run automatic linting fixes
-./scripts/docker_lint_runner.sh
+# 2. Run complete quality checks (copyright + linting + tests)
+./scripts/run_quality_checks.sh
 
 # 3. Review the changes
 git diff
 
-# 4. Test that code still builds
-docker compose run --rm development bash -c "cd packages && colcon build --symlink-install"
+# 4. Fix any remaining issues manually (if needed)
 
-# 5. Run tests
-docker compose run --rm development bash -c "cd packages && colcon test"
-# Or use the test profile for build + test in one command
-docker compose --profile test up test
-
-# 6. Check for remaining linting issues
-docker compose run --rm development bash -c "cd packages && \
-  ament_cpplint src/ && \
-  ament_pep257 src/ && \
-  ament_copyright src/"
-
-# 7. Fix any remaining issues manually
-
-# 8. Commit your changes
+# 5. Commit your changes
 git add .
 git commit -m "feat: your feature description
 
-- Applied automatic linting fixes
-- Resolved remaining style issues"
+- Applied quality checks
+- Fixed linting issues"
+```
+
+**Alternative: Step-by-step approach**
+
+If you prefer to run steps individually:
+
+```bash
+# 1. Make your code changes
+# ... edit files ...
+
+# 2. Add copyright headers
+./scripts/add_copyright.sh
+
+# 3. Run linting fixes
+docker compose run --rm development bash -c "/home/ubuntu/workspace/scripts/fix_all_linting.sh"
+
+# 4. Run tests
+docker compose --profile test up test
+
+# 5. Review and commit
+git diff
+git add .
+git commit -m "chore: apply quality checks"
 ```
 
 ### Before Creating a Pull Request
 
 ```bash
-# Run full linting check
-./scripts/docker_lint_runner.sh
-
-# Build and test in one command (recommended)
-docker compose --profile test up test
-
-# OR do it step by step:
-# Verify build
-docker compose run --rm development bash -c "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
-
-# Run all tests
-docker compose run --rm development bash -c "cd packages && colcon test"
-
-# Check test results
-docker compose run --rm development bash -c "cd packages && colcon test-result --verbose"
+# Run complete quality checks (all-in-one)
+./scripts/run_quality_checks.sh
 
 # Review all changes
 git diff
 
 # Commit and push
 git add .
-git commit -m "fix: apply linting and formatting fixes"
+git commit -m "chore: apply quality checks and fix linting"
+git push
+```
+
+**For more detailed control:**
+
+```bash
+# Run individual steps with verification
+./scripts/add_copyright.sh
+docker compose run --rm development bash -c "/home/ubuntu/workspace/scripts/fix_all_linting.sh"
+docker compose --profile test up test
+
+# Check test results in detail
+docker compose run --rm development bash -c "cd packages && colcon test-result --verbose"
+
+# Review and push
+git diff
+git add .
+git commit -m "chore: apply quality checks"
 git push
 ```
 
@@ -325,10 +375,22 @@ The scripts are designed to work in CI/CD pipelines:
 
 ### Troubleshooting
 
+**Issue: Quality checks fail**
+```bash
+# Run steps individually to identify the problem
+./scripts/add_copyright.sh
+docker compose --profile linting up linting
+docker compose --profile test up test
+```
+
 **Issue: Tools not found**
 ```bash
+**Issue: Tools not found**
+
+```bash
 # Use Docker to ensure all tools are available
-./scripts/docker_lint_runner.sh
+docker compose run --rm development bash -c "/home/ubuntu/workspace/scripts/fix_all_linting.sh"
+```
 ```
 
 **Issue: Permission denied**
@@ -340,14 +402,25 @@ chmod +x scripts/*.sh
 **Issue: Docker image build fails**
 ```bash
 # Rebuild from scratch
-./scripts/docker_lint_runner.sh --rebuild
+docker compose build --no-cache development
 ```
 
 **Issue: Changes aren't applied**
 ```bash
 # Ensure you're running from workspace root
 cd /path/to/AuNa
-./scripts/docker_lint_runner.sh
+./scripts/run_quality_checks.sh
+```
+
+**Issue: Tests fail after linting**
+```bash
+# Check detailed test results
+docker compose run --rm development bash -c "cd packages && colcon test-result --verbose"
+
+# Review what changed
+git diff
+
+# You may need to manually fix some issues
 ```
 
 ### Getting Help

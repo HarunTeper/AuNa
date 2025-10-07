@@ -588,12 +588,12 @@ services:
       ]
     profiles: ["zenohd", "development"]
 
-  lint-fix:
+  linting:
     <<: *dev-base
     image: development:latest
-    container_name: lint-fix
+    container_name: linting
     command: ["/bin/bash", "/home/ubuntu/workspace/scripts/fix_all_linting.sh"]
-    profiles: ["lint", "lint-fix"]
+    profiles: ["linting"]
 
   test:
     <<: *dev-base
