@@ -12,7 +12,7 @@ def generate_launch_description():
     # Prefer precomputed yaw files if present, otherwise fall back to plain waypoints
     waypoints_dir = os.path.join(pkg_dir, 'config', world_name)
     default_waypoint_file = os.path.join(
-        waypoints_dir, 'waypoints_with_yaw_central.csv')
+        waypoints_dir, 'cacc_waypoints.yaml')
 
     world_name_arg = DeclareLaunchArgument(
         'world_name',

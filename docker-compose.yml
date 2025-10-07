@@ -550,7 +550,7 @@ services:
     container_name: cacc_waypoint_publisher
     command:
       ["ros2", "launch", "auna_waypoints", "cacc_waypoint_publisher.launch.py"]
-    profiles: ["cacc_waypoint_publisher"]
+    profiles: ["sim", "sim_scenario", "sim_scenario_1", "platooning"]
 
   #==============================================================================
   # MAP SERVICES

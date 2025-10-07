@@ -56,6 +56,7 @@ ament_target_dependencies(cacc_waypoint_publisher
 target_link_libraries(nav2_waypoint_publisher nav2_waypoint_publisher_node)
 target_link_libraries(nav2_waypoint_publisher_node yaml-cpp)
 target_link_libraries(cacc_waypoint_publisher cacc_waypoint_publisher_node)
+target_link_libraries(cacc_waypoint_publisher_node yaml-cpp)
 
 # Install Cpp executables
 install(TARGETS nav2_waypoint_publisher cacc_waypoint_publisher

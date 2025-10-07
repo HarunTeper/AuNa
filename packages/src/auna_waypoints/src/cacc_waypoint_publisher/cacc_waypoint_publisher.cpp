@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "rclcpp/qos.hpp"
+#include "yaml-cpp/yaml.h"
 
 CaccWaypointPublisher::CaccWaypointPublisher()
     : Node("cacc_waypoint_publisher") {
@@ -43,10 +44,13 @@ CaccWaypointPublisher::CaccWaypointPublisher()
 }
 
 void CaccWaypointPublisher::publish_waypoints() {
-  std::ifstream file(waypoint_file_);
-  if (!file.is_open()) {
-    RCLCPP_ERROR(this->get_logger(), "Failed to open waypoint file: %s",
-                 waypoint_file_.c_str());
+  YAML::Node waypoints;
+  try {
+    waypoints = YAML::LoadFile(waypoint_file_);
+  } catch (const YAML::Exception& e) {
+    RCLCPP_ERROR(this->get_logger(),
+                 "Failed to load waypoint file: %s. Error: %s",
+                 waypoint_file_.c_str(), e.what());
     return;
   }
 
@@ -54,59 +58,62 @@ void CaccWaypointPublisher::publish_waypoints() {
   pose_array_msg->header.frame_id = "map";
   pose_array_msg->header.stamp = this->now();
 
-  std::string line;
-  while (std::getline(file, line)) {
-    std::stringstream ss(line);
-    std::string value;
-    std::vector<double> values;
-    while (std::getline(ss, value, ',')) {
-      try {
-        values.push_back(std::stod(value));
-      } catch (const std::invalid_argument& ia) {
-        continue;
+  constexpr bool kApplyRotation = true;
+  constexpr double kRotationRadians = -M_PI / 2.0;
+
+  for (const auto& waypoint_node : waypoints) {
+    geometry_msgs::msg::Pose pose;
+
+    // Read position
+    double x_orig = waypoint_node["position"]["x"].as<double>();
+    double y_orig = waypoint_node["position"]["y"].as<double>();
+    double z = waypoint_node["position"]["z"].as<double>();
+
+    // Apply rotation if needed
+    double xr = x_orig;
+    double yr = y_orig;
+    if (kApplyRotation) {
+      xr = x_orig * std::cos(kRotationRadians) -
+           y_orig * std::sin(kRotationRadians);
+      yr = x_orig * std::sin(kRotationRadians) +
+           y_orig * std::cos(kRotationRadians);
+    }
+    pose.position.x = xr;
+    pose.position.y = yr;
+    pose.position.z = z;
+
+    // Read orientation
+    double qx = waypoint_node["orientation"]["x"].as<double>();
+    double qy = waypoint_node["orientation"]["y"].as<double>();
+    double qz = waypoint_node["orientation"]["z"].as<double>();
+    double qw = waypoint_node["orientation"]["w"].as<double>();
+
+    // Apply rotation to orientation if needed
+    if (kApplyRotation) {
+      // Convert quaternion to yaw, apply rotation, convert back
+      tf2::Quaternion q_orig(qx, qy, qz, qw);
+      double roll, pitch, yaw;
+      tf2::Matrix3x3(q_orig).getRPY(roll, pitch, yaw);
+
+      double yaw_new = yaw + kRotationRadians;
+      if (yaw_new > M_PI) {
+        yaw_new -= 2.0 * M_PI;
       }
+      if (yaw_new < -M_PI) {
+        yaw_new += 2.0 * M_PI;
+      }
+
+      tf2::Quaternion q_new;
+      q_new.setRPY(0, 0, yaw_new);
+      pose.orientation = tf2::toMsg(q_new);
+    } else {
+      pose.orientation.x = qx;
+      pose.orientation.y = qy;
+      pose.orientation.z = qz;
+      pose.orientation.w = qw;
     }
 
-    if (values.size() >= 2) {
-      geometry_msgs::msg::Pose pose;
-
-      double x_orig = values[0];
-      double y_orig = values[1];
-
-      constexpr bool kApplyRotation = true;
-      constexpr double kRotationRadians = -M_PI / 2.0;
-      double xr = x_orig;
-      double yr = y_orig;
-      if (kApplyRotation) {
-        xr = x_orig * std::cos(kRotationRadians) -
-             y_orig * std::sin(kRotationRadians);
-        yr = x_orig * std::sin(kRotationRadians) +
-             y_orig * std::cos(kRotationRadians);
-      }
-      pose.position.x = xr;
-      pose.position.y = yr;
-      pose.position.z = 0.0;
-
-      if (values.size() >= 3) {
-        double yaw_orig = values[2];
-        double yaw_new = yaw_orig + (kApplyRotation ? kRotationRadians : 0.0);
-        if (yaw_new > M_PI) {
-          yaw_new -= 2.0 * M_PI;
-        }
-        if (yaw_new < -M_PI) {
-          yaw_new += 2.0 * M_PI;
-        }
-
-        tf2::Quaternion q;
-        q.setRPY(0, 0, yaw_new);
-        pose.orientation = tf2::toMsg(q);
-      } else {
-        tf2::Quaternion q;
-        q.setRPY(0, 0, 0);
-        pose.orientation = tf2::toMsg(q);
-      }
-      pose_array_msg->poses.push_back(pose);
-    }
+    pose_array_msg->poses.push_back(pose);
   }
 
   if (pose_array_msg->poses.empty()) {

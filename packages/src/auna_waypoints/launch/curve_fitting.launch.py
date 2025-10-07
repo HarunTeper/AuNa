@@ -43,11 +43,14 @@ def generate_launch_description():
     interpolation_distance = LaunchConfiguration('interpolation_distance')
     plot_results = LaunchConfiguration('plot_results')
     swap_xy = LaunchConfiguration('swap_xy')
+    output_file = LaunchConfiguration('output_file')
+    reverse_order = LaunchConfiguration('reverse_order')
+    is_closed_loop = LaunchConfiguration('is_closed_loop')
 
     # Launch Arguments
     interpolation_distance_arg = DeclareLaunchArgument(
         'interpolation_distance',
-        default_value='1.0',
+        default_value='0.1',
         description='Distance between waypoints to filter'
     )
     plot_results_arg = DeclareLaunchArgument(
@@ -57,8 +60,23 @@ def generate_launch_description():
     )
     swap_xy_arg = DeclareLaunchArgument(
         'swap_xy',
-        default_value='False',
+        default_value='True',
         description='Swap the x and y coordinates of the waypoints'
+    )
+    output_file_arg = DeclareLaunchArgument(
+        'output_file',
+        default_value='cacc_waypoints',
+        description='Output filename (without extension)'
+    )
+    reverse_order_arg = DeclareLaunchArgument(
+        'reverse_order',
+        default_value='True',
+        description='Reverse the order of waypoints (change direction)'
+    )
+    is_closed_loop_arg = DeclareLaunchArgument(
+        'is_closed_loop',
+        default_value='True',
+        description='Whether the waypoints form a closed loop (racetrack)'
     )
 
     # Nodes and other launch files
@@ -69,7 +87,10 @@ def generate_launch_description():
         parameters=[{'waypoint_file': waypoints,
                      'interpolation_distance': interpolation_distance,
                      'plot_results': plot_results,
-                     'swap_xy': swap_xy}],
+                     'swap_xy': swap_xy,
+                     'output_file': output_file,
+                     'reverse_order': reverse_order,
+                     'is_closed_loop': is_closed_loop}],
         output='screen',
         remappings=[('/tf', 'tf'),
                     ('/tf_static', 'tf_static')]
@@ -81,6 +102,9 @@ def generate_launch_description():
     launch_description.add_action(interpolation_distance_arg)
     launch_description.add_action(plot_results_arg)
     launch_description.add_action(swap_xy_arg)
+    launch_description.add_action(output_file_arg)
+    launch_description.add_action(reverse_order_arg)
+    launch_description.add_action(is_closed_loop_arg)
 
     launch_description.add_action(curve_fitting_node)
     return launch_description

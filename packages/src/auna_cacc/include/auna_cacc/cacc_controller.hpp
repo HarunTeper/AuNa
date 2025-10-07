@@ -73,7 +73,6 @@ class CaccController : public rclcpp::Node {
   rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr sub_waypoints_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd_vel;
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::TimerBase::SharedPtr setup_timer_;
 
   // service for standstill_distance and time_gap
   rclcpp::Service<auna_msgs::srv::SetFloat64>::SharedPtr
@@ -85,9 +84,6 @@ class CaccController : public rclcpp::Node {
       client_set_target_velocity_;
   rclcpp::Service<auna_msgs::srv::SetFloat64>::SharedPtr
       client_set_extra_distance_;
-
-  // service for cacc_enable
-  rclcpp::Service<auna_msgs::srv::SetBool>::SharedPtr client_set_cacc_enable_;
 
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_x_lookahead_point_;
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_y_lookahead_point_;
@@ -151,14 +147,9 @@ class CaccController : public rclcpp::Node {
   std::vector<double> waypoints_y_;
   std::vector<double> waypoints_yaw_;
 
-  // auto mode
-  bool auto_mode_;
-  bool auto_mode_ready_;
-  bool cacc_ready_;
+  // Flags to track if we're in leader (no CAM) or follower (CAM) mode
+  bool is_leader_mode_;
   double target_velocity_;
-
-  // ros2 service server for auto_mode
-  rclcpp::Service<auna_msgs::srv::SetBool>::SharedPtr client_set_auto_mode_;
 
   // Flags to track first message reception
   bool first_cam_received_;
@@ -178,7 +169,6 @@ class CaccController : public rclcpp::Node {
   void pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
   void waypoints_callback(const geometry_msgs::msg::PoseArray::SharedPtr msg);
   void timer_callback();
-  void setup_timer_callback();
 
   // service callback functions
   void set_standstill_distance(
@@ -187,12 +177,6 @@ class CaccController : public rclcpp::Node {
   void set_time_gap(
       const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
       std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response);
-  void set_cacc_enable(
-      const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
-      std::shared_ptr<auna_msgs::srv::SetBool::Response> response);
-  void set_auto_mode(
-      const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
-      std::shared_ptr<auna_msgs::srv::SetBool::Response> response);
   void set_target_velocity(
       const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
       std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response);
@@ -244,3 +228,5 @@ class CaccController : public rclcpp::Node {
   double dbg_inP2_geom_vel_ = 0;
   double dbg_inP2_yaw_rate_ = 0;
 };
+
+#endif  // AUNA_CACC__CACC_CONTROLLER_HPP_

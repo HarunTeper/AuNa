@@ -113,12 +113,6 @@ CaccController::CaccController() : Node("cacc_controller") {
              std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response) {
         this->set_time_gap(request, response);
       });
-  client_set_cacc_enable_ = this->create_service<auna_msgs::srv::SetBool>(
-      "cacc/set_cacc_enable",
-      [this](const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
-             std::shared_ptr<auna_msgs::srv::SetBool::Response> response) {
-        this->set_cacc_enable(request, response);
-      });
   client_set_target_velocity_ =
       this->create_service<auna_msgs::srv::SetFloat64>(
           "cacc/set_target_velocity",
@@ -161,9 +155,7 @@ CaccController::CaccController() : Node("cacc_controller") {
   params_.extra_distance = this->get_parameter("extra_distance").as_double();
 
   dt_ = 1.0 / params_.frequency;
-  auto_mode_ = false;
-  auto_mode_ready_ = false;
-  cacc_ready_ = false;
+  is_leader_mode_ = true;  // Start assuming leader mode (no CAM messages)
 
   // Initialize control (virtual leader) state so that in pure CAM-follow mode
   // we can immediately mirror incoming CAM data without relying on waypoint
@@ -176,20 +168,9 @@ CaccController::CaccController() : Node("cacc_controller") {
   control_yaw_rate_ = 0.0;
   control_curvature_ = 0.0;
 
-  client_set_auto_mode_ = this->create_service<auna_msgs::srv::SetBool>(
-      "cacc/set_auto_mode",
-      [this](const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
-             std::shared_ptr<auna_msgs::srv::SetBool::Response> response) {
-        this->set_auto_mode(request, response);
-      });
-
   timer_ = this->create_wall_timer(
       std::chrono::milliseconds(1000 / params_.frequency),
       [this]() { this->timer_callback(); });
-  setup_timer_ =
-      this->create_wall_timer(std::chrono::milliseconds(1000),
-                              [this]() { this->setup_timer_callback(); });
-  timer_->cancel();
 
   dyn_params_handler_ = this->add_on_set_parameters_callback(
       [this](std::vector<rclcpp::Parameter> parameters)
@@ -227,28 +208,6 @@ void CaccController::waypoints_callback(
   RCLCPP_INFO(
       this->get_logger(), "Loaded %zu waypoints (first: %.2f, %.2f, yaw=%.2f)",
       waypoints_x_.size(), waypoints_x_[0], waypoints_y_[0], waypoints_yaw_[0]);
-}
-
-void CaccController::setup_timer_callback() {
-  // if all last messages exist, start timer
-  if (last_cam_msg_ != nullptr && last_odom_msg_ != nullptr &&
-      last_pose_msg_ != nullptr) {
-    RCLCPP_INFO(this->get_logger(), "CACC controller ready");
-    setup_timer_->cancel();
-    cacc_ready_ = true;
-  }
-  if (last_odom_msg_ != nullptr && last_pose_msg_ != nullptr) {
-    if (!auto_mode_ready_) {
-      RCLCPP_INFO(this->get_logger(), "Auto mode ready");
-      auto_mode_ready_ = true;
-    }
-  }
-  // Add debug log to show we're still waiting
-  RCLCPP_DEBUG(this->get_logger(),
-               "Waiting for messages - CAM: %s, Odom: %s, Pose: %s",
-               (last_cam_msg_ != nullptr ? "received" : "waiting"),
-               (last_odom_msg_ != nullptr ? "received" : "waiting"),
-               (last_pose_msg_ != nullptr ? "received" : "waiting"));
 }
 
 void CaccController::cam_callback(
@@ -650,6 +609,31 @@ void CaccController::update_waypoint_following() {
 }
 
 void CaccController::timer_callback() {
+  // Early return if we don't have required basic messages
+  if (!last_odom_msg_ || !last_pose_msg_) {
+    RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
+                          "Waiting for required messages - Odom: %s, Pose: %s",
+                          (last_odom_msg_ != nullptr ? "received" : "waiting"),
+                          (last_pose_msg_ != nullptr ? "received" : "waiting"));
+    return;
+  }
+
+  // Dynamically determine mode based on CAM message availability
+  bool previous_mode = is_leader_mode_;
+  is_leader_mode_ = (last_cam_msg_ == nullptr);
+
+  // Log mode changes
+  if (previous_mode != is_leader_mode_) {
+    if (is_leader_mode_) {
+      RCLCPP_INFO(this->get_logger(),
+                  "Switching to LEADER mode (no CAM messages)");
+    } else {
+      RCLCPP_INFO(this->get_logger(),
+                  "Switching to FOLLOWER mode (CAM messages detected)");
+    }
+  }
+
+  // Handle waypoint-based or direct CAM following
   if (!params_.use_waypoints) {
     if (last_cam_msg_ == nullptr) {
       RCLCPP_DEBUG(this->get_logger(),
@@ -745,13 +729,13 @@ void CaccController::timer_callback() {
   z_4_ = control_velocity_ * sin(control_yaw_) -
          odom_velocity_ * sin(pose_yaw_ + alpha_);
 
-  RCLCPP_INFO(this->get_logger(), "Error States:");
-  RCLCPP_INFO(this->get_logger(),
-              "  Position errors - longitudinal: %.2f m, lateral: %.2f m", z_1_,
-              z_2_);
-  RCLCPP_INFO(this->get_logger(),
-              "  Velocity errors - longitudinal: %.2f m/s, lateral: %.2f m/s",
-              z_3_, z_4_);
+  RCLCPP_DEBUG(this->get_logger(), "Error States:");
+  RCLCPP_DEBUG(this->get_logger(),
+               "  Position errors - longitudinal: %.2f m, lateral: %.2f m",
+               z_1_, z_2_);
+  RCLCPP_DEBUG(this->get_logger(),
+               "  Velocity errors - longitudinal: %.2f m/s, lateral: %.2f m/s",
+               z_3_, z_4_);
 
   // Calculate control matrix inverse (invGam calculations)
   double term1 =
@@ -817,58 +801,69 @@ void CaccController::timer_callback() {
   a_ = invGam_1_ * inP_1_ + invGam_2_ * inP_2_;
   w_ = invGam_3_ * inP_1_ + invGam_4_ * inP_2_;
 
-  RCLCPP_INFO(this->get_logger(), "Control Contributions:");
-  RCLCPP_INFO(this->get_logger(),
-              "  Position error contribution: %.2f m/s² (gain kp=%.2f)",
-              z_1_ * params_.kp, params_.kp);
-  RCLCPP_INFO(this->get_logger(),
-              "  Velocity error contribution: %.2f m/s² (z3=%.2f, z4=%.2f)",
-              cos(alpha_) * z_3_ + sin(alpha_) * z_4_, z_3_, z_4_);
+  RCLCPP_DEBUG(this->get_logger(), "Control Contributions:");
+  RCLCPP_DEBUG(this->get_logger(),
+               "  Position error contribution: %.2f m/s² (gain kp=%.2f)",
+               z_1_ * params_.kp, params_.kp);
+  RCLCPP_DEBUG(this->get_logger(),
+               "  Velocity error contribution: %.2f m/s² (z3=%.2f, z4=%.2f)",
+               cos(alpha_) * z_3_ + sin(alpha_) * z_4_, z_3_, z_4_);
 
   // Additional diagnostic logs for turns
   if (std::abs(control_curvature_) > 0.01) {
-    RCLCPP_INFO(this->get_logger(), "Sharp Turn Detected:");
-    RCLCPP_INFO(this->get_logger(),
-                "  Leader yaw rate: %.2f rad/s, Leader velocity: %.2f m/s",
-                control_yaw_rate_, control_velocity_);
-    RCLCPP_INFO(this->get_logger(),
-                "  Curvature effect on acceleration: %.2f m/s²",
-                (cos(control_yaw_) * s_ * control_yaw_rate_));
+    RCLCPP_DEBUG(this->get_logger(), "Sharp Turn Detected:");
+    RCLCPP_DEBUG(this->get_logger(),
+                 "  Leader yaw rate: %.2f rad/s, Leader velocity: %.2f m/s",
+                 control_yaw_rate_, control_velocity_);
+    RCLCPP_DEBUG(this->get_logger(),
+                 "  Curvature effect on acceleration: %.2f m/s²",
+                 (cos(control_yaw_) * s_ * control_yaw_rate_));
   }
 
   last_time_ = rclcpp::Clock().now();
 
-  // Update velocity
-  v_ = last_velocity_ + a_ * dt_;
+  // Update velocity using current odometry as base instead of pure integration
+  // This prevents drift and instability from accumulated integration errors
+  v_ = odom_velocity_ + a_ * dt_;
 
-  // Check if we're reversing and log specifically about that
-  if (v_ < 0 || a_ < -0.5) {
-    RCLCPP_WARN(
+  // Clamp velocity to reasonable bounds (both positive and negative)
+  // Prevent negative velocities (no reverse) and respect max velocity
+  v_ = std::max(0.0, std::min(v_, params_.max_velocity));
+
+  // Additional safety: limit acceleration to prevent jumps
+  const double MAX_ACCEL =
+      5.0;  // m/s² - maximum allowed acceleration magnitude
+  double accel_limit = MAX_ACCEL * dt_;
+  double velocity_change = v_ - odom_velocity_;
+  if (std::abs(velocity_change) > accel_limit) {
+    v_ = odom_velocity_ + std::copysign(accel_limit, velocity_change);
+    RCLCPP_DEBUG(
         this->get_logger(),
-        "Negative velocity/deceleration detected: v=%.2f m/s, a=%.2f m/s²", v_,
-        a_);
-    RCLCPP_WARN(this->get_logger(),
-                "  Leader-follower velocity difference: %.2f m/s",
-                control_velocity_ - odom_velocity_);
-  }
-
-  if (v_ > params_.max_velocity) {
-    v_ = params_.max_velocity;
+        "Acceleration limited: requested change %.2f m/s, limited to %.2f m/s",
+        velocity_change, std::copysign(accel_limit, velocity_change));
   }
 
   last_velocity_ = v_;
+
+  // Log warnings for extreme cases
+  if (v_ < 0.01 && odom_velocity_ > 0.1) {
+    RCLCPP_WARN(
+        this->get_logger(),
+        "Commanding stop: current velocity=%.2f m/s, commanded=%.2f m/s",
+        odom_velocity_, v_);
+  }
 
   geometry_msgs::msg::Twist twist_msg;
   twist_msg.linear.x = v_;
   twist_msg.angular.z = w_;
 
-  RCLCPP_INFO(this->get_logger(), "Final Controls:");
-  RCLCPP_INFO(this->get_logger(),
-              "  Acceleration: %.2f m/s², Angular velocity: %.2f rad/s", a_,
-              w_);
-  RCLCPP_INFO(this->get_logger(), "  Commanded velocity: %.2f m/s (dt=%.3fs)",
-              v_, dt_);
-  RCLCPP_INFO(this->get_logger(), "===========================");
+  RCLCPP_DEBUG(this->get_logger(), "Final Controls:");
+  RCLCPP_DEBUG(this->get_logger(),
+               "  Acceleration: %.2f m/s², Angular velocity: %.2f rad/s", a_,
+               w_);
+  RCLCPP_DEBUG(this->get_logger(), "  Commanded velocity: %.2f m/s (dt=%.3fs)",
+               v_, dt_);
+  RCLCPP_DEBUG(this->get_logger(), "===========================");
 
   pub_cmd_vel->publish(twist_msg);
 }
@@ -927,80 +922,6 @@ void CaccController::set_time_gap(
     std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response) {
   RCLCPP_INFO(this->get_logger(), "Setting time gap to %f", request->value);
   params_.time_gap = request->value;
-  response->success = true;
-}
-
-void CaccController::set_cacc_enable(
-    const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
-    std::shared_ptr<auna_msgs::srv::SetBool::Response> response) {
-  if (!cacc_ready_) {
-    RCLCPP_ERROR(this->get_logger(),
-                 "CACC controller not ready yet. Missing required messages.");
-    response->success = false;
-    return;
-  }
-
-  if (request->value) {
-    RCLCPP_INFO(this->get_logger(), "Enabling CACC controller");
-    last_cam_velocity_ = 0;
-    last_odom_velocity_ = 0;
-    last_velocity_ = 0;
-    last_time_ = rclcpp::Clock().now();
-    timer_->reset();
-  } else {
-    RCLCPP_INFO(this->get_logger(), "Disabling CACC controller");
-
-    geometry_msgs::msg::Twist twist_msg;
-
-    twist_msg.linear.x = 0.0;
-    twist_msg.angular.z = 0.0;
-
-    pub_cmd_vel->publish(twist_msg);
-
-    timer_->cancel();
-  }
-  response->success = true;
-}
-
-// service server callback for auto_mode
-void CaccController::set_auto_mode(
-    const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
-    std::shared_ptr<auna_msgs::srv::SetBool::Response> response) {
-  // Check if an actual CAM message is received - cannot be in auto mode if real
-  // CAMs are being received
-  if (last_cam_msg_ != nullptr) {
-    RCLCPP_ERROR(this->get_logger(),
-                 "CACC controller is already running with real CAM messages");
-    response->success = false;
-    return;
-  }
-
-  // Check if both odom and pose are ready
-  if (!auto_mode_ready_) {
-    RCLCPP_ERROR(this->get_logger(),
-                 "Auto mode not ready yet. Missing required messages.");
-    response->success = false;
-    return;
-  }
-
-  if (request->value) {
-    RCLCPP_INFO(this->get_logger(), "Enabling auto mode");
-    auto_mode_ = true;
-    timer_->reset();
-    setup_timer_->cancel();
-  } else {
-    RCLCPP_INFO(this->get_logger(), "Disabling auto mode");
-
-    geometry_msgs::msg::Twist twist_msg;
-
-    twist_msg.linear.x = 0.0;
-    twist_msg.angular.z = 0.0;
-
-    pub_cmd_vel->publish(twist_msg);
-
-    auto_mode_ = false;
-    timer_->cancel();
-  }
   response->success = true;
 }
 
