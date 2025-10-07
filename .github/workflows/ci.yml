@@ -70,21 +70,84 @@ jobs:
     
     - name: Install linting tools
       run: |
-        pip install cpplint flake8 black
+        pip install black isort ruff autoflake docformatter flake8
+        apt-get update && apt-get install -y clang-format uncrustify ros-humble-ament-cpplint
+    
+    - name: Check C++ formatting (clang-format)
+      run: |
+        # Check if C++ files are properly formatted with clang-format
+        CPP_FILES=$(find packages/src -name "*.cpp" -o -name "*.hpp" -o -name "*.cxx" -o -name "*.hh" -type f)
+        if [ -n "$CPP_FILES" ]; then
+          for file in $CPP_FILES; do
+            if ! clang-format --style=file --dry-run --Werror "$file" > /dev/null 2>&1; then
+              echo "❌ $file is not properly formatted"
+              clang-format --style=file --dry-run --Werror "$file"
+            fi
+          done
+        fi
+      continue-on-error: true
+
+    - name: Check C++ style (uncrustify)
+      run: |
+        # Check if C++ files conform to uncrustify style
+        CPP_FILES=$(find packages/src -name "*.cpp" -o -name "*.hpp" -o -name "*.cxx" -o -name "*.hh" -type f)
+        if [ -n "$CPP_FILES" ] && [ -f "scripts/uncrustify.cfg" ]; then
+          for file in $CPP_FILES; do
+            if ! uncrustify -c scripts/uncrustify.cfg --check "$file" > /dev/null 2>&1; then
+              echo "❌ $file does not conform to uncrustify style"
+            fi
+          done
+        fi
+      continue-on-error: true
     
     - name: Lint C++ code
       run: |
-        find packages/src -name "*.cpp" -o -name "*.hpp" | xargs cpplint --filter=-build/include_subdir
+        # Source ROS2 environment for ament_cpplint
+        source /opt/ros/humble/setup.bash
+        # Use ament_cpplint (ROS2 version) instead of regular cpplint
+        find packages/src -name "*.cpp" -o -name "*.hpp" -o -name "*.cxx" -o -name "*.hh" | xargs ament_cpplint
       continue-on-error: true
     
-    - name: Lint Python code
+    - name: Check Python import sorting (isort)
       run: |
-        find packages/src -name "*.py" | xargs flake8 --max-line-length=100
+        PY_FILES=$(find packages/src -name "*.py" -type f)
+        if [ -n "$PY_FILES" ]; then
+          isort --profile black --line-length 99 --check-only --diff $PY_FILES
+        fi
       continue-on-error: true
     
-    - name: Check Python formatting
+    - name: Check Python formatting (black)
       run: |
-        find packages/src -name "*.py" | xargs black --check --line-length=100
+        find packages/src -name "*.py" | xargs black --check --line-length=99
+      continue-on-error: true
+    
+    - name: Lint Python code (ruff)
+      run: |
+        PY_FILES=$(find packages/src -name "*.py" -type f)
+        if [ -n "$PY_FILES" ]; then
+          ruff check --no-cache $PY_FILES
+        fi
+      continue-on-error: true
+    
+    - name: Check for unused imports/variables (autoflake)
+      run: |
+        PY_FILES=$(find packages/src -name "*.py" -type f)
+        if [ -n "$PY_FILES" ]; then
+          for file in $PY_FILES; do
+            if ! autoflake --check --remove-all-unused-imports --remove-unused-variables "$file" > /dev/null 2>&1; then
+              echo "❌ $file has unused imports or variables"
+              autoflake --check --remove-all-unused-imports --remove-unused-variables "$file"
+            fi
+          done
+        fi
+      continue-on-error: true
+    
+    - name: Check Python docstring formatting (docformatter)
+      run: |
+        PY_FILES=$(find packages/src -name "*.py" -type f)
+        if [ -n "$PY_FILES" ]; then
+          docformatter --check --wrap-summaries 99 --wrap-descriptions 99 $PY_FILES
+        fi
       continue-on-error: true
 
   docker-build:
