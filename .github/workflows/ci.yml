@@ -101,4 +101,4 @@ jobs:
     - name: Test Docker container
       shell: bash
       run: |
-        docker run --rm auna:test bash -c "cd packages && source /opt/ros/humble/setup.bash && colcon list"
+        docker run --rm auna:test bash -c "source /opt/ros/humble/setup.bash && colcon list"
