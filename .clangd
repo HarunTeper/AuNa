@@ -4,6 +4,13 @@ CompileFlags:
     - "-I/opt/ros/humble/include"
     - "-I/opt/ros/humble/include/rclcpp"
     - "-I${workspaceFolder}/packages/install/include"
-  CompilationDatabase: "packages/build"
+    - "-I/home/ubuntu/workspace/packages/install/include"
+    # libstdc++ for gcc-11
+    - "-I/usr/include/c++/11"
+    - "-I/usr/include/x86_64-linux-gnu/c++/11"
+    # libstdc++ for gcc-12 (keep both just in case)
+    - "-I/usr/include/c++/12"
+    - "-I/usr/include/x86_64-linux-gnu/c++/12"
+  CompilationDatabase: "/home/ubuntu/workspace/packages/build"
 Index:
   Background: Build
