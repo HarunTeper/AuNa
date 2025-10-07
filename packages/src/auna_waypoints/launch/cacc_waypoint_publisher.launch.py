@@ -11,23 +11,13 @@ def generate_launch_description():
     world_name = os.environ.get('WORLD_NAME', 'racetrack_decorated')
     # Prefer precomputed yaw files if present, otherwise fall back to plain waypoints
     waypoints_dir = os.path.join(pkg_dir, 'config', world_name)
-    yaw_central_path = os.path.join(
+    default_waypoint_file = os.path.join(
         waypoints_dir, 'waypoints_with_yaw_central.csv')
-    default_waypoint_file = yaw_central_path
-
-    # Get robot index from environment variable, fallback to launch argument
-    robot_index = os.environ.get('ROBOT_INDEX', '1')
 
     world_name_arg = DeclareLaunchArgument(
         'world_name',
         default_value=world_name,
         description='Name of the world'
-    )
-
-    robot_index_arg = DeclareLaunchArgument(
-        'robot_index',
-        default_value=robot_index,
-        description='Index of the robot (e.g., 1 for robot1)'
     )
 
     waypoint_file_arg = DeclareLaunchArgument(
@@ -36,11 +26,8 @@ def generate_launch_description():
         description='Path to the waypoint file'
     )
 
-    robot_namespace = ['robot', LaunchConfiguration('robot_index')]
-
     return LaunchDescription([
         world_name_arg,
-        robot_index_arg,
         waypoint_file_arg,
         Node(
             package='auna_waypoints',
@@ -48,8 +35,7 @@ def generate_launch_description():
             name='cacc_waypoint_publisher',
             output='screen',
             parameters=[
-                {'waypoint_file': LaunchConfiguration('waypoint_file')},
-                {'namespace': robot_namespace}
+                {'waypoint_file': LaunchConfiguration('waypoint_file')}
             ]
         )
     ])

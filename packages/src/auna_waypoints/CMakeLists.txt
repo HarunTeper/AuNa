@@ -28,12 +28,14 @@ include_directories(include)
 # Add libraries
 add_library(nav2_waypoint_publisher_node SHARED
             src/nav2_waypoint_publisher/nav2_waypoint_publisher.cpp)
+add_library(cacc_waypoint_publisher_node SHARED
+            src/cacc_waypoint_publisher/cacc_waypoint_publisher.cpp)
 
 # Create executables
 add_executable(nav2_waypoint_publisher
                src/nav2_waypoint_publisher/nav2_waypoint_publisher_main.cpp)
 add_executable(cacc_waypoint_publisher
-               src/waypoint_publisher/cacc_waypoint_publisher.cpp)
+               src/cacc_waypoint_publisher/cacc_waypoint_publisher_main.cpp)
 
 # Target dependencies
 set(nav2_waypoint_publisher_dependencies
@@ -45,19 +47,22 @@ ament_target_dependencies(nav2_waypoint_publisher_node
                           ${nav2_waypoint_publisher_dependencies})
 ament_target_dependencies(nav2_waypoint_publisher
                           ${nav2_waypoint_publisher_dependencies})
+ament_target_dependencies(cacc_waypoint_publisher_node
+                          ${cacc_waypoint_publisher_dependencies})
 ament_target_dependencies(cacc_waypoint_publisher
                           ${cacc_waypoint_publisher_dependencies})
 
 # Link libraries
 target_link_libraries(nav2_waypoint_publisher nav2_waypoint_publisher_node)
 target_link_libraries(nav2_waypoint_publisher_node yaml-cpp)
+target_link_libraries(cacc_waypoint_publisher cacc_waypoint_publisher_node)
 
 # Install Cpp executables
 install(TARGETS nav2_waypoint_publisher cacc_waypoint_publisher
         DESTINATION lib/${PROJECT_NAME})
 
 install(
-  TARGETS nav2_waypoint_publisher_node
+  TARGETS nav2_waypoint_publisher_node cacc_waypoint_publisher_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
