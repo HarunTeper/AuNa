@@ -171,8 +171,6 @@ The framework consists of several ROS2 packages organized by functionality:
 
 ### Physical Hardware Support
 - **`auna_f110`** - F1/10 race car platform integration
-- **`physical/ros-g29-force-feedback`** - Logitech G29 steering wheel support
-- **`physical/vesc`** - VESC motor controller integration
 
 ## 🤝 Contributing
 

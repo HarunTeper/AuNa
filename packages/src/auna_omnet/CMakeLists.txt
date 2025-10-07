@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(auna_omnet)
 
-# Default to C++14
+# Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -13,7 +13,6 @@ endif()
 # Find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
-
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(auna_msgs REQUIRED)
@@ -21,10 +20,9 @@ find_package(etsi_its_cam_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
-
 find_package(std_msgs REQUIRED)
 
-# Include Cpp "include" directory
+# Include directories
 include_directories(include)
 
 # Add libraries
@@ -32,19 +30,35 @@ add_library(omnet_transmitter_node SHARED src/omnet/omnet_transmitter/omnet_tran
 add_library(omnet_receiver_node SHARED src/omnet/omnet_receiver/omnet_receiver.cpp)
 add_library(omnet_cam_filter_node SHARED src/omnet/omnet_cam_filter/omnet_cam_filter.cpp)
 
-# Create Cpp executable
+# Create executables
 add_executable(omnet_transmitter src/omnet/omnet_transmitter/omnet_transmitter_main.cpp)
 add_executable(omnet_receiver src/omnet/omnet_receiver/omnet_receiver_main.cpp)
 add_executable(omnet_cam_filter src/omnet/omnet_cam_filter/omnet_cam_filter_main.cpp)
 
 # Target dependencies
-set(omnet_transmitter_dependencies rclcpp geometry_msgs nav_msgs etsi_its_cam_msgs tf2)
+set(omnet_transmitter_dependencies
+  rclcpp
+  geometry_msgs
+  nav_msgs
+  etsi_its_cam_msgs
+  tf2
+)
+
+set(omnet_receiver_dependencies
+  rclcpp
+  etsi_its_cam_msgs
+)
+
+set(omnet_cam_filter_dependencies
+  rclcpp
+  etsi_its_cam_msgs
+  auna_msgs
+)
+
 ament_target_dependencies(omnet_transmitter_node ${omnet_transmitter_dependencies})
 ament_target_dependencies(omnet_transmitter ${omnet_transmitter_dependencies})
-set(omnet_receiver_dependencies rclcpp etsi_its_cam_msgs)
 ament_target_dependencies(omnet_receiver_node ${omnet_receiver_dependencies})
 ament_target_dependencies(omnet_receiver ${omnet_receiver_dependencies})
-set(omnet_cam_filter_dependencies rclcpp etsi_its_cam_msgs auna_msgs)
 ament_target_dependencies(omnet_cam_filter_node ${omnet_cam_filter_dependencies})
 ament_target_dependencies(omnet_cam_filter ${omnet_cam_filter_dependencies})
 
@@ -53,12 +67,12 @@ target_link_libraries(omnet_transmitter omnet_transmitter_node)
 target_link_libraries(omnet_receiver omnet_receiver_node)
 target_link_libraries(omnet_cam_filter omnet_cam_filter_node)
 
-install(DIRECTORY 
+install(DIRECTORY
   launch
   DESTINATION share/${PROJECT_NAME}
 )
 
-# Install Cpp executables
+# Install executables
 install(TARGETS
   omnet_transmitter
   omnet_receiver
@@ -66,7 +80,7 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(TARGETS 
+install(TARGETS
   omnet_transmitter_node
   omnet_receiver_node
   omnet_cam_filter_node
@@ -78,6 +92,7 @@ install(TARGETS
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})
 
+# Testing
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()

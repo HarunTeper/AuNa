@@ -15,7 +15,7 @@ jobs:
         ros_distribution: [humble]
     
     container:
-      image: ros:${{ matrix.ros_distribution }}-desktop
+      image: ros:${{ matrix.ros_distribution }}
     
     steps:
     - name: Checkout code
@@ -29,18 +29,21 @@ jobs:
         apt-get install -y python3-colcon-common-extensions
         
     - name: Install dependencies
+      shell: bash
       run: |
         cd packages
         rosdep update --rosdistro ${{ matrix.ros_distribution }}
         rosdep install --from-paths src --ignore-src -r -y
     
     - name: Build packages
+      shell: bash
       run: |
         cd packages
         source /opt/ros/${{ matrix.ros_distribution }}/setup.bash
         colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
     
     - name: Run tests
+      shell: bash
       run: |
         cd packages
         source /opt/ros/${{ matrix.ros_distribution }}/setup.bash
@@ -53,36 +56,6 @@ jobs:
         colcon test-result --verbose
       if: always()
 
-  lint:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-    
-    - name: Install linting tools
-      run: |
-        pip install cpplint flake8 black
-    
-    - name: Lint C++ code
-      run: |
-        find packages/src -name "*.cpp" -o -name "*.hpp" | xargs cpplint --filter=-build/include_subdir
-      continue-on-error: true
-    
-    - name: Lint Python code
-      run: |
-        find packages/src -name "*.py" | xargs flake8 --max-line-length=100
-      continue-on-error: true
-    
-    - name: Check Python formatting
-      run: |
-        find packages/src -name "*.py" | xargs black --check --line-length=100
-      continue-on-error: true
 
   docker-build:
     runs-on: ubuntu-latest
@@ -96,5 +69,6 @@ jobs:
         docker build -f dockerfiles/auna.dockerfile -t auna:test .
     
     - name: Test Docker container
+      shell: bash
       run: |
-        docker run --rm auna:test bash -c "cd packages && source /opt/ros/humble/setup.bash && colcon list"
+        docker run --rm auna:test bash -c "source /opt/ros/humble/setup.bash && colcon list"

@@ -5,7 +5,7 @@
   <version>1.0.0</version>
   <description>AuNa F110 Package</description>
   <maintainer email="harun.teper@tu-dortmund.de">Harun Teper</maintainer>
-  <license>TODO</license>
+  <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
@@ -21,7 +21,7 @@
   <depend>tf2_ros</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>auna_common</depend>
-   <depend>teleop_twist_joy</depend>
+  <depend>teleop_twist_joy</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

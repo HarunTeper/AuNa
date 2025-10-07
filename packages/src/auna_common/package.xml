@@ -5,7 +5,7 @@
   <version>1.0.0</version>
   <description>AuNa Common Package</description>
   <maintainer email="harun.teper@tu-dortmund.de">Harun Teper</maintainer>
-  <license>TODO</license>
+  <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>

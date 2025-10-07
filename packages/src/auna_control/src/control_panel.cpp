@@ -1,13 +1,32 @@
+// Copyright 2025 Harun Teper
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 #include "auna_control/control_panel.hpp"
 
-#include <QtCore/QTimer>
 #include <QtCore/QRegExp>
+#include <QtCore/QTimer>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QGroupBox>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QWidget>
-
 #include <cmath>
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -18,41 +37,51 @@
 namespace auna_control
 {
 
-ControlPanel::ControlPanel(QWidget * parent) : Panel(parent), estop_active_(false)
+ControlPanel::ControlPanel(QWidget * parent)
+: Panel(parent), estop_active_(false)
 {
   layout_ = new QVBoxLayout();
   setupUI();
 
   control_panel_ros_interface_ = new ControlPanelROSInterface(this);
   RCLCPP_DEBUG(rclcpp::get_logger("ControlPanel"), "ControlPanel constructed");
-  connect(namespace_input_, &QLineEdit::textChanged, this, &ControlPanel::onNamespaceChanged);
   connect(
-    emergency_stop_button_, &QPushButton::clicked, this, &ControlPanel::onEmergencyStopClicked);
+    namespace_input_, &QLineEdit::textChanged, this,
+    &ControlPanel::onNamespaceChanged);
   connect(
-    source_combo_box_, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+    emergency_stop_button_, &QPushButton::clicked, this,
+    &ControlPanel::onEmergencyStopClicked);
+  connect(
+    source_combo_box_,
+    QOverload<int>::of(&QComboBox::currentIndexChanged), this,
     &ControlPanel::onSourceComboBoxChanged);
 
   connect(
-    control_panel_ros_interface_, &ControlPanelROSInterface::estopStatusUpdated, this,
+    control_panel_ros_interface_,
+    &ControlPanelROSInterface::estopStatusUpdated, this,
     &ControlPanel::onEstopStatusUpdated);
   connect(
-    control_panel_ros_interface_, &ControlPanelROSInterface::odometryUpdated, this,
+    control_panel_ros_interface_,
+    &ControlPanelROSInterface::odometryUpdated, this,
     &ControlPanel::onOdometryUpdated);
   connect(
-    control_panel_ros_interface_, &ControlPanelROSInterface::imuUpdated, this,
-    &ControlPanel::onImuUpdated);
+    control_panel_ros_interface_, &ControlPanelROSInterface::imuUpdated,
+    this, &ControlPanel::onImuUpdated);
   connect(
-    control_panel_ros_interface_, &ControlPanelROSInterface::cmdVelUpdated, this,
+    control_panel_ros_interface_,
+    &ControlPanelROSInterface::cmdVelUpdated, this,
     &ControlPanel::onCmdVelUpdated);
   connect(
-    control_panel_ros_interface_, &ControlPanelROSInterface::inputSourcesUpdated, this,
+    control_panel_ros_interface_,
+    &ControlPanelROSInterface::inputSourcesUpdated, this,
     &ControlPanel::onInputSourcesUpdated);
   connect(
-    control_panel_ros_interface_, &ControlPanelROSInterface::sourceStatusUpdated, this,
+    control_panel_ros_interface_,
+    &ControlPanelROSInterface::sourceStatusUpdated, this,
     &ControlPanel::onSourceStatusUpdated);
   connect(
-    control_panel_ros_interface_, &ControlPanelROSInterface::backendReady, this,
-    &ControlPanel::onBackendReady);
+    control_panel_ros_interface_, &ControlPanelROSInterface::backendReady,
+    this, &ControlPanel::onBackendReady);
 
   status_timer_ = new QTimer(this);
   connect(
@@ -71,11 +100,14 @@ void ControlPanel::setupUI()
   layout_->addWidget(ns_group);
 
   namespace_input_ = new QLineEdit("");
-  namespace_input_->setToolTip("Enter a valid ROS namespace (alphanumeric, underscore, and forward slash only)");
+  namespace_input_->setToolTip(
+    "Enter a valid ROS namespace (alphanumeric, underscore, and forward "
+    "slash only)");
   ns_layout->addWidget(namespace_input_);
 
   emergency_stop_button_ = new QPushButton("Emergency STOP");
-  emergency_stop_button_->setStyleSheet("background-color: red; color: white; font-weight: bold;");
+  emergency_stop_button_->setStyleSheet(
+    "background-color: red; color: white; font-weight: bold;");
   emergency_stop_button_->setCheckable(true);
   layout_->addWidget(emergency_stop_button_);
 
@@ -87,7 +119,7 @@ void ControlPanel::setupUI()
   layout_->addWidget(source_combo_box_);
 
   layout_->addStretch(1);
-  QTimer::singleShot(0, [this]() { namespace_input_->setFocus(); });
+  QTimer::singleShot(0, [this]() {namespace_input_->setFocus();});
   this->setFocusPolicy(Qt::StrongFocus);
   setupMonitoringUI();
   setLayout(layout_);
@@ -95,20 +127,22 @@ void ControlPanel::setupUI()
 
 void ControlPanel::onNamespaceChanged(const QString & text)
 {
-  // Validate namespace - ROS names cannot contain spaces or other invalid characters
+  // Validate namespace - ROS names cannot contain spaces or other invalid
+  // characters
   QString cleaned_text = text;
   // Remove spaces and other invalid characters
   cleaned_text.replace(QRegExp("[^a-zA-Z0-9_/]"), "");
-  
+
   // If the text was modified, update the input field
   if (cleaned_text != text) {
     namespace_input_->blockSignals(true);
     namespace_input_->setText(cleaned_text);
     namespace_input_->blockSignals(false);
   }
-  
+
   RCLCPP_DEBUG(
-    rclcpp::get_logger("ControlPanel"), "Namespace changed to: %s", cleaned_text.toStdString().c_str());
+    rclcpp::get_logger("ControlPanel"), "Namespace changed to: %s",
+    cleaned_text.toStdString().c_str());
   last_known_source_ = "";
   source_combo_box_->clear();
   source_combo_box_->addItem("Querying...");
@@ -118,7 +152,8 @@ void ControlPanel::onNamespaceChanged(const QString & text)
 void ControlPanel::onEmergencyStopClicked()
 {
   RCLCPP_DEBUG(
-    rclcpp::get_logger("ControlPanel"), "Emergency stop button clicked. Current estop_active_: %d",
+    rclcpp::get_logger("ControlPanel"),
+    "Emergency stop button clicked. Current estop_active_: %d",
     estop_active_);
   control_panel_ros_interface_->triggerEstop(!estop_active_);
   emergency_stop_button_->setEnabled(false);
@@ -127,16 +162,20 @@ void ControlPanel::onEmergencyStopClicked()
 
 void ControlPanel::onSourceComboBoxChanged(int index)
 {
-  RCLCPP_DEBUG(rclcpp::get_logger("ControlPanel"), "Source combo box changed. Index: %d", index);
+  RCLCPP_DEBUG(
+    rclcpp::get_logger("ControlPanel"),
+    "Source combo box changed. Index: %d", index);
   if (index >= 0) {
-    control_panel_ros_interface_->setCmdVelSource(source_combo_box_->itemText(index));
+    control_panel_ros_interface_->setCmdVelSource(
+      source_combo_box_->itemText(index));
   }
 }
 
 void ControlPanel::onEstopStatusUpdated(bool isActive, const QString & message)
 {
   RCLCPP_DEBUG(
-    rclcpp::get_logger("ControlPanel"), "E-Stop status updated: %d, message: %s", isActive,
+    rclcpp::get_logger("ControlPanel"),
+    "E-Stop status updated: %d, message: %s", isActive,
     message.toStdString().c_str());
   estop_active_ = isActive;
   emergency_stop_button_->setEnabled(true);
@@ -152,12 +191,14 @@ void ControlPanel::onEstopStatusUpdated(bool isActive, const QString & message)
   }
 }
 
-void ControlPanel::onOdometryUpdated(double speed, double angular_vel, double x, double y, double z)
+void ControlPanel::onOdometryUpdated(
+  double speed, double angular_vel, double x,
+  double y, double z)
 {
   RCLCPP_DEBUG(
     rclcpp::get_logger("ControlPanel"),
-    "Odometry updated: speed=%.2f, angular_vel=%.2f, pos=(%.2f, %.2f, %.2f)", speed, angular_vel, x,
-    y, z);
+    "Odometry updated: speed=%.2f, angular_vel=%.2f, pos=(%.2f, %.2f, %.2f)",
+    speed, angular_vel, x, y, z);
   current_speed_ = speed;
   current_angular_vel_ = angular_vel;
   current_x_ = x;
@@ -169,7 +210,8 @@ void ControlPanel::onOdometryUpdated(double speed, double angular_vel, double x,
 void ControlPanel::onImuUpdated(double ax, double ay, double az)
 {
   RCLCPP_DEBUG(
-    rclcpp::get_logger("ControlPanel"), "IMU updated: ax=%.2f, ay=%.2f, az=%.2f", ax, ay, az);
+    rclcpp::get_logger("ControlPanel"),
+    "IMU updated: ax=%.2f, ay=%.2f, az=%.2f", ax, ay, az);
   current_accel_x_ = ax;
   current_accel_y_ = ay;
   current_accel_z_ = az;
@@ -179,8 +221,8 @@ void ControlPanel::onImuUpdated(double ax, double ay, double az)
 void ControlPanel::onCmdVelUpdated(double linear, double angular)
 {
   RCLCPP_DEBUG(
-    rclcpp::get_logger("ControlPanel"), "CmdVel updated: linear=%.2f, angular=%.2f", linear,
-    angular);
+    rclcpp::get_logger("ControlPanel"),
+    "CmdVel updated: linear=%.2f, angular=%.2f", linear, angular);
   cmd_linear_x_ = linear;
   cmd_angular_z_ = angular;
   updateMonitoringDisplay();
@@ -204,7 +246,8 @@ void ControlPanel::onInputSourcesUpdated(const QStringList & sources)
 void ControlPanel::onSourceStatusUpdated(const QString & source)
 {
   RCLCPP_DEBUG(
-    rclcpp::get_logger("ControlPanel"), "Source status updated: %s", source.toStdString().c_str());
+    rclcpp::get_logger("ControlPanel"), "Source status updated: %s",
+    source.toStdString().c_str());
   last_known_source_ = source;
   int idx = source_combo_box_->findText(source);
   if (idx >= 0) {
@@ -288,21 +331,25 @@ void ControlPanel::updateMonitoringDisplay()
   // Use QString::number() for more reliable formatting
   speed_label_->setText(QString::number(current_speed_, 'f', 2));
 
-  position_label_->setText(QString("%1, %2, %3")
-                             .arg(QString::number(current_x_, 'f', 2))
-                             .arg(QString::number(current_y_, 'f', 2))
-                             .arg(QString::number(current_z_, 'f', 2)));
+  position_label_->setText(
+    QString("%1, %2, %3")
+    .arg(QString::number(current_x_, 'f', 2))
+    .arg(QString::number(current_y_, 'f', 2))
+    .arg(QString::number(current_z_, 'f', 2)));
 
-  acceleration_label_->setText(QString("%1, %2, %3")
-                                 .arg(QString::number(current_accel_x_, 'f', 2))
-                                 .arg(QString::number(current_accel_y_, 'f', 2))
-                                 .arg(QString::number(current_accel_z_, 'f', 2)));
+  acceleration_label_->setText(
+    QString("%1, %2, %3")
+    .arg(QString::number(current_accel_x_, 'f', 2))
+    .arg(QString::number(current_accel_y_, 'f', 2))
+    .arg(QString::number(current_accel_z_, 'f', 2)));
 
-  angular_velocity_label_->setText(QString::number(current_angular_vel_, 'f', 2));
+  angular_velocity_label_->setText(
+    QString::number(current_angular_vel_, 'f', 2));
 
-  cmd_vel_label_->setText(QString("%1, %2")
-                            .arg(QString::number(cmd_linear_x_, 'f', 2))
-                            .arg(QString::number(cmd_angular_z_, 'f', 2)));
+  cmd_vel_label_->setText(
+    QString("%1, %2")
+    .arg(QString::number(cmd_linear_x_, 'f', 2))
+    .arg(QString::number(cmd_angular_z_, 'f', 2)));
 }
 
 }  // namespace auna_control

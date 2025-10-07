@@ -32,8 +32,6 @@ Please delete options that are not relevant:
 - [ ] auna_tf
 - [ ] auna_wallfollowing
 - [ ] auna_waypoints
-- [ ] physical/ros-g29-force-feedback
-- [ ] physical/vesc
 - [ ] Other: _____________
 
 ## Testing
