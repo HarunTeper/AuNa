@@ -595,6 +595,18 @@ services:
     command: ["/bin/bash", "/home/ubuntu/workspace/scripts/fix_all_linting.sh"]
     profiles: ["lint", "lint-fix"]
 
+  test:
+    <<: *dev-base
+    image: development:latest
+    container_name: test
+    command:
+      [
+        "/bin/bash",
+        "-c",
+        "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && colcon test && colcon test-result --verbose",
+      ]
+    profiles: ["test"]
+
   #==============================================================================
   # CONTROL & TELEOPERATION SERVICES
   #==============================================================================

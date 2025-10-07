@@ -216,12 +216,14 @@ RUN sudo apt-get update \
     vim \
     nano \
     uncrustify \
-    python3-flake8 \
     python3-autopep8 \
     && sudo rm -rf /var/lib/apt/lists/*
 
-# Install additional Python linting tools
-RUN pip3 install --no-cache-dir \
+# Install Python linting tools via pip for compatibility
+# Using pip instead of apt for flake8 ensures compatible versions
+RUN pip3 install --no-cache-dir --upgrade \
+    flake8>=6.0.0 \
+    pycodestyle>=2.11.0 \
     autoflake \
     pydocstyle
 

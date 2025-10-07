@@ -20,12 +20,6 @@
 
 #include "auna_cacc/cacc_controller.hpp"
 
-#include <rclcpp/rclcpp.hpp>
-
-#include <etsi_its_msgs_utils/impl/cam/cam_getters_common.h>
-
-#include <cmath>
-
 CaccController::CaccController()
 : Node("cacc_controller")
 {

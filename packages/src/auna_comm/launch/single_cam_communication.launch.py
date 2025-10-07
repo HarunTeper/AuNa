@@ -34,7 +34,8 @@ def include_launch_description(context: LaunchContext):
     communication_type = os.environ.get('COMMUNICATION_TYPE', 'cam')
     if communication_type != 'cam':
         return [LogInfo(msg="COMMUNICATION_TYPE is not 'cam', skipping CAM nodes.")]
-    # Project uses 1-based ROBOT_INDEX in compose (1=leader). Followers should filter leader=robot_index-1
+    # Project uses 1-based ROBOT_INDEX in compose (1=leader).
+    # Followers should filter leader=robot_index-1
     robot_index = int(os.environ.get('ROBOT_INDEX', '1'))
 
     # Launch Argument Configurations
@@ -76,7 +77,7 @@ def include_launch_description(context: LaunchContext):
 
 
 def generate_launch_description():
-    """Return launch description"""
+    """Return launch description."""
     # Determine default namespace from ROBOT_INDEX so docker-compose spawns namespaced nodes
     robot_index_env = os.environ.get('ROBOT_INDEX', '0')
     default_namespace = f'robot{robot_index_env}'

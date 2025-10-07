@@ -63,7 +63,7 @@ class CurveFitting(Node):
                     self.waypoints.append((float(row[1]), float(row[0])))
                 else:
                     self.waypoints.append((float(row[0]), float(row[1])))
-        
+
         # Reverse waypoint order if requested
         if self.get_parameter('reverse_order').value:
             self.waypoints.reverse()
@@ -83,7 +83,7 @@ class CurveFitting(Node):
         # Get closed loop setting from parameter
         is_closed_loop = self.get_parameter('is_closed_loop').value
         target_distance = self.get_parameter('interpolation_distance').value
-        
+
         # Parametric spline interpolation
         # s=0 forces the spline to pass through all points (no smoothing)
         # k=3 uses cubic splines for smooth curves
@@ -91,10 +91,10 @@ class CurveFitting(Node):
         try:
             if is_closed_loop:
                 # For closed loops, use periodic spline
-                tck, u = splprep([x, y], s=0, k=min(3, len(x)-1), per=True)
+                tck, u = splprep([x, y], s=0, k=min(3, len(x) - 1), per=True)
             else:
                 # For open paths, use regular spline
-                tck, u = splprep([x, y], s=0, k=min(3, len(x)-1), per=False)
+                tck, u = splprep([x, y], s=0, k=min(3, len(x) - 1), per=False)
         except Exception as e:
             self.get_logger().error(f'Spline interpolation failed: {e}')
             self.interpolated_waypoints = self.waypoints
@@ -104,17 +104,17 @@ class CurveFitting(Node):
         num_eval_points = 10000  # High resolution for accurate length calculation
         u_fine = np.linspace(0, 1, num_eval_points)
         x_fine, y_fine = splev(u_fine, tck)
-        
+
         # Calculate cumulative distance along the spline
         dx = np.diff(x_fine)
         dy = np.diff(y_fine)
         distances = np.sqrt(dx**2 + dy**2)
         cumulative_distance = np.concatenate(([0], np.cumsum(distances)))
         total_length = cumulative_distance[-1]
-        
+
         # Calculate number of waypoints based on desired spacing
         num_waypoints = max(int(total_length / target_distance), len(self.waypoints))
-        
+
         # For closed loops, we want to exclude the endpoint (it's the same as start)
         # For open paths, we want to include both endpoints
         if is_closed_loop:
@@ -123,19 +123,19 @@ class CurveFitting(Node):
         else:
             # Include both start and end
             target_distances = np.linspace(0, total_length, num_waypoints, endpoint=True)
-        
+
         # Map distances back to parameter values
         u_interpolated = np.interp(target_distances, cumulative_distance, u_fine)
-        
+
         # Evaluate spline at these parameter values
         x_interpolated, y_interpolated = splev(u_interpolated, tck)
-        
+
         # Store interpolated waypoints
         self.interpolated_waypoints = list(zip(x_interpolated, y_interpolated))
-        
+
         self.get_logger().info(
-            f'Interpolated {len(self.waypoints)} waypoints to {len(self.interpolated_waypoints)} points '
-            f'(total length: {total_length:.2f}m, spacing: {target_distance:.2f}m, '
+            f'Interpolated {len(self.waypoints)} waypoints to {len(self.interpolated_waypoints)} '
+            f'points (total length: {total_length:.2f}m, spacing: {target_distance:.2f}m, '
             f'closed_loop: {is_closed_loop})'
         )
 
@@ -143,40 +143,40 @@ class CurveFitting(Node):
         """Plot the interpolated waypoints."""
         if not self.get_parameter('plot_results').value:
             return
-            
+
         if not self.interpolated_waypoints:
             self.get_logger().warn('No waypoints to plot')
             return
-            
+
         x_orig, y_orig = zip(*self.waypoints)
         x_interpolated, y_interpolated = zip(*self.interpolated_waypoints)
 
         plt.figure(figsize=(14, 10))
-        
+
         # Get closed loop setting from parameter
         is_closed = self.get_parameter('is_closed_loop').value
         target_distance = self.get_parameter('interpolation_distance').value
-        
+
         # Plot original waypoints as red markers with larger size
         if is_closed:
             # For closed loops, connect last to first
-            plt.plot(list(x_orig) + [x_orig[0]], list(y_orig) + [y_orig[0]], 
-                    'r-', linewidth=2, alpha=0.3, label='Original Path', zorder=1)
+            plt.plot(list(x_orig) + [x_orig[0]], list(y_orig) + [y_orig[0]],
+                     'r-', linewidth=2, alpha=0.3, label='Original Path', zorder=1)
         plt.plot(x_orig, y_orig, 'ro', markersize=10, label='Original Waypoints', zorder=3)
-        
+
         # Add numbered labels to original waypoints
         for i, (x, y) in enumerate(self.waypoints):
-            plt.annotate(str(i), (x, y), 
-                        textcoords="offset points", 
-                        xytext=(8, 8), 
-                        ha='left',
-                        fontsize=9, 
-                        fontweight='bold',
-                        color='darkred',
-                        bbox=dict(boxstyle='round,pad=0.3', facecolor='white', 
-                                 edgecolor='darkred', alpha=0.8),
-                        zorder=6)
-        
+            plt.annotate(str(i), (x, y),
+                         textcoords="offset points",
+                         xytext=(8, 8),
+                         ha='left',
+                         fontsize=9,
+                         fontweight='bold',
+                         color='darkred',
+                         bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
+                                   edgecolor='darkred', alpha=0.8),
+                         zorder=6)
+
         # Add arrows for original waypoints to show direction
         for i in range(len(x_orig)):
             next_i = (i + 1) % len(x_orig) if is_closed else min(i + 1, len(x_orig) - 1)
@@ -186,28 +186,29 @@ class CurveFitting(Node):
                 # Place arrow at midpoint between waypoints
                 mid_x = x_orig[i] + dx * 0.5
                 mid_y = y_orig[i] + dy * 0.5
-                plt.arrow(mid_x, mid_y, dx * 0.15, dy * 0.15, 
-                         head_width=0.3, head_length=0.2, fc='darkred', ec='darkred', 
-                         alpha=0.7, zorder=4, width=0.05)
-        
+                plt.arrow(mid_x, mid_y, dx * 0.15, dy * 0.15,
+                          head_width=0.3, head_length=0.2, fc='darkred', ec='darkred',
+                          alpha=0.7, zorder=4, width=0.05)
+
         # Plot interpolated waypoints as smaller blue dots
-        plt.plot(x_interpolated, y_interpolated, 'b.', markersize=3, label='Interpolated Points', zorder=2)
-        
+        plt.plot(x_interpolated, y_interpolated, 'b.', markersize=3,
+                 label='Interpolated Points', zorder=2)
+
         # Draw line connecting interpolated points to show the path
         if is_closed:
             # For closed loops, connect last point back to first
-            plt.plot(list(x_interpolated) + [x_interpolated[0]], 
-                    list(y_interpolated) + [y_interpolated[0]], 
-                    'g-', linewidth=1.5, alpha=0.7, label='Interpolated Path (Closed)', zorder=1)
+            plt.plot(list(x_interpolated) + [x_interpolated[0]],
+                     list(y_interpolated) + [y_interpolated[0]],
+                     'g-', linewidth=1.5, alpha=0.7, label='Interpolated Path (Closed)', zorder=1)
         else:
-            plt.plot(x_interpolated, y_interpolated, 'g-', linewidth=1.5, alpha=0.7, 
-                    label='Interpolated Path', zorder=1)
-        
+            plt.plot(x_interpolated, y_interpolated, 'g-', linewidth=1.5, alpha=0.7,
+                     label='Interpolated Path', zorder=1)
+
         # Add direction arrows for interpolated waypoints (sample every N points to avoid clutter)
         num_waypoints = len(x_interpolated)
         # Show approximately 20-30 arrows regardless of total waypoint count
         arrow_step = max(1, num_waypoints // 25)
-        
+
         for i in range(0, num_waypoints, arrow_step):
             next_i = (i + 1) % num_waypoints if is_closed else min(i + 1, num_waypoints - 1)
             if i < num_waypoints - 1 or is_closed:
@@ -217,14 +218,15 @@ class CurveFitting(Node):
                 length = np.sqrt(dx**2 + dy**2)
                 if length > 0:
                     scale = min(0.5, target_distance * 2)  # Scale based on waypoint spacing
-                    plt.arrow(x_interpolated[i], y_interpolated[i], 
-                             dx * scale / length, dy * scale / length,
-                             head_width=0.15, head_length=0.1, fc='blue', ec='blue', 
-                             alpha=0.6, zorder=5, width=0.03)
+                    plt.arrow(x_interpolated[i], y_interpolated[i],
+                              dx * scale / length, dy * scale / length,
+                              head_width=0.15, head_length=0.1, fc='blue', ec='blue',
+                              alpha=0.6, zorder=5, width=0.03)
 
         plt.xlabel('X [m]')
         plt.ylabel('Y [m]')
-        title = f'Spline Interpolation: {len(self.waypoints)} → {len(self.interpolated_waypoints)} waypoints'
+        title = f'Spline Interpolation: {len(self.waypoints)} '
+        title += f'→ {len(self.interpolated_waypoints)} waypoints'
         if is_closed:
             title += ' (Closed Loop)'
         if self.get_parameter('reverse_order').value:
@@ -241,7 +243,7 @@ class CurveFitting(Node):
         # Get the input file path and construct the output path
         input_file = self.get_parameter('waypoint_file').value
         input_dir = os.path.dirname(input_file)
-        
+
         # Replace 'install' with 'src' in the path to save to source directory
         if '/install/' in input_dir:
             input_dir = input_dir.replace('/install/', '/src/')
@@ -251,13 +253,13 @@ class CurveFitting(Node):
             if 'auna_waypoints' in parts:
                 pkg_idx = parts.index('auna_waypoints')
                 # Keep everything up to and including the first occurrence of package name
-                input_dir = '/'.join(parts[:pkg_idx+1])
+                input_dir = '/'.join(parts[:pkg_idx + 1])
                 # Add back the config subdirectory
-                remaining = '/'.join(parts[pkg_idx+1:])
+                remaining = '/'.join(parts[pkg_idx + 1:])
                 if remaining.startswith('share/auna_waypoints/'):
                     remaining = remaining.replace('share/auna_waypoints/', '')
                 input_dir = os.path.join(input_dir, remaining)
-        
+
         output_filename = self.get_parameter('output_file').value
         output_file = os.path.join(input_dir, f'{output_filename}.yaml')
 
@@ -268,13 +270,13 @@ class CurveFitting(Node):
             next_idx = (i + 1) % len(self.interpolated_waypoints)
             next_x, next_y = self.interpolated_waypoints[next_idx]
             yaw = np.arctan2(next_y - y, next_x - x)
-            
+
             # Convert yaw to quaternion
             # For 2D navigation, only z-axis rotation (yaw) is needed
             # Quaternion for rotation around z-axis: q = [0, 0, sin(yaw/2), cos(yaw/2)]
             qz = np.sin(yaw / 2.0)
             qw = np.cos(yaw / 2.0)
-            
+
             waypoint = {
                 'position': {
                     'x': float(x),
@@ -293,7 +295,8 @@ class CurveFitting(Node):
         with open(output_file, 'w', encoding='utf-8') as file:
             yaml.dump(waypoints_yaml, file, default_flow_style=False, sort_keys=False)
 
-        self.get_logger().info(f'Saved {len(waypoints_yaml)} interpolated waypoints to: {output_file}')
+        self.get_logger().info(f'Saved {len(waypoints_yaml)} '
+                               f'interpolated waypoints to: {output_file}')
 
     def calculate_angle(self, point1, point2):
         """Calculate the angle between two points."""

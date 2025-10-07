@@ -21,6 +21,7 @@
 #ifndef AUNA_CACC__CACC_CONTROLLER_HPP_
 #define AUNA_CACC__CACC_CONTROLLER_HPP_
 
+#include <cmath>
 #include <fstream>
 #include <iomanip>  // for std::setprecision
 #include <memory>   // for std::shared_ptr
@@ -31,14 +32,13 @@
 #include "auna_msgs/srv/set_float64.hpp"
 #include "etsi_its_cam_msgs/msg/cam.hpp"
 #include "etsi_its_msgs_utils/cam_access.hpp"
+#include "etsi_its_msgs_utils/impl/cam/cam_getters_common.h"
 #include "geometry_msgs/msg/pose_array.hpp"  // Added include for PoseArray
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/float64.hpp"
-
-#include <iomanip>  // for std::setprecision
 
 // includes for tf matrix
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
