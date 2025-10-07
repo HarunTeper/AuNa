@@ -38,7 +38,7 @@ fi
 
 echo ""
 echo "Running linting fixes..."
-$COMPOSE_CMD --profile lint-fix up lint-fix
+$COMPOSE_CMD --profile linting up linting
 
 echo ""
 echo "Linting fixes completed!"

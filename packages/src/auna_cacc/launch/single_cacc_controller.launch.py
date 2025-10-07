@@ -30,13 +30,9 @@ from auna_common import yaml_launch
 
 
 def include_launch_description(context: LaunchContext):
-    """Return launch description."""
-    # Launch Argument Configurations
+    """Return launch description (using environment variables only)."""
     cacc_config = LaunchConfiguration('cacc_config')
-    waypoint_file_path = LaunchConfiguration('waypoint_file')
-
-    use_waypoints = os.environ.get('USE_WAYPOINTS', 'true').lower() == 'true'
-    robot_index = int(os.environ.get('ROBOT_INDEX', '0'))
+    robot_index = int(os.environ.get('ROBOT_INDEX', '1'))
 
     # Create robot namespace based on index
     if int(robot_index) >= 0:
@@ -46,22 +42,27 @@ def include_launch_description(context: LaunchContext):
 
     launch_description_content = []
 
-    parameters = [yaml_launch.get_yaml_value(cacc_config.perform(
-        context), ['cacc_controller', 'ros__parameters'])]
-    if use_waypoints:
-        parameters.append({'waypoint_file': waypoint_file_path})
+    param_dict = yaml_launch.get_yaml_value(
+        cacc_config.perform(context), ['cacc_controller', 'ros__parameters'])
 
+    use_waypoints_env = os.environ.get('USE_WAYPOINTS')
+    if use_waypoints_env is not None:
+        use_waypoints_bool = use_waypoints_env.lower() == 'true'
+        param_dict['use_waypoints'] = use_waypoints_bool
+
+    parameters = [param_dict]
     launch_description_content.append(PushRosNamespace(namespace))
 
-    launch_description_content.append(
-        Node(
-            package='auna_cacc',
-            executable='cacc_controller',
-            name='cacc_controller',
-            output='screen',
-            parameters=parameters
-        )
+    # CACC Controller Node
+    cacc_controller_node = Node(
+        package='auna_cacc',
+        executable='cacc_controller',
+        name='cacc_controller',
+        output='screen',
+        parameters=parameters,
     )
+
+    launch_description_content.append(cacc_controller_node)
 
     return launch_description_content
 
@@ -75,26 +76,17 @@ def generate_launch_description():
     cacc_config_file_path = os.path.join(
         pkg_dir, 'config', 'cacc_controller.yaml')
 
-    # Waypoint files
-    waypoint_file_path = os.path.join(pkg_dir, 'config', 'waypoints.csv')
-
     # Launch Arguments
     cacc_config_arg = DeclareLaunchArgument(
         'cacc_config',
         default_value=cacc_config_file_path,
         description='Path to cacc config file'
     )
-    waypoint_file_path_arg = DeclareLaunchArgument(
-        'waypoint_file',
-        default_value=waypoint_file_path,
-        description='Path to waypoint file'
-    )
 
     # Launch Description
     launch_description = LaunchDescription()
 
     launch_description.add_action(cacc_config_arg)
-    launch_description.add_action(waypoint_file_path_arg)
 
     launch_description.add_action(OpaqueFunction(
         function=include_launch_description))

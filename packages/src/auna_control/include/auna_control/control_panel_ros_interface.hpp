@@ -24,7 +24,7 @@
 #include <QObject>
 #include <QString>
 #include <memory>
-#include <rclcpp/rclcpp.hpp>
+#include <string>
 #include <thread>
 
 #include "auna_msgs/srv/set_string.hpp"
@@ -33,6 +33,7 @@
 #include "sensor_msgs/msg/imu.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 #include "std_srvs/srv/trigger.hpp"
+#include <rclcpp/rclcpp.hpp>
 
 using Trigger = std_srvs::srv::Trigger;
 

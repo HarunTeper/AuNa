@@ -501,7 +501,7 @@ services:
     profiles: ["sim_robot3", "sim_scenario", "platooning"]
 
   #==============================================================================
-  # WAYPOINT PUBLISHER SERVICES
+  # NAV2 WAYPOINT PUBLISHER SERVICES
   #==============================================================================
   nav2_waypoint_publisher:
     <<: *package-base
@@ -535,6 +535,22 @@ services:
     environment:
       - ROBOT_INDEX=3
     profiles: ["sim_robot3", "sim_scenario"]
+
+  #==============================================================================
+  # CACC WAYPOINT PUBLISHER SERVICES
+  #==============================================================================
+  cacc_waypoint_publisher:
+    <<: *package-base
+    build:
+      <<: *build-auna
+      args:
+        - PACKAGE_NAMES=${WAYPOINT_PUBLISHER_PACKAGES}
+    image: cacc_waypoint_publisher:latest
+    pull_policy: build
+    container_name: cacc_waypoint_publisher
+    command:
+      ["ros2", "launch", "auna_waypoints", "cacc_waypoint_publisher.launch.py"]
+    profiles: ["sim", "sim_scenario", "sim_scenario_1", "platooning"]
 
   #==============================================================================
   # MAP SERVICES
@@ -572,12 +588,24 @@ services:
       ]
     profiles: ["zenohd", "development"]
 
-  lint-fix:
+  linting:
     <<: *dev-base
     image: development:latest
-    container_name: lint-fix
+    container_name: linting
     command: ["/bin/bash", "/home/ubuntu/workspace/scripts/fix_all_linting.sh"]
-    profiles: ["lint", "lint-fix"]
+    profiles: ["linting"]
+
+  test:
+    <<: *dev-base
+    image: development:latest
+    container_name: test
+    command:
+      [
+        "/bin/bash",
+        "-c",
+        "cd packages && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && colcon test && colcon test-result --verbose",
+      ]
+    profiles: ["test"]
 
   #==============================================================================
   # CONTROL & TELEOPERATION SERVICES
@@ -757,6 +785,7 @@ services:
     volumes:
       - .:/home/ubuntu/workspace
     image: tracing:latest
+    pull_policy: build
     container_name: analysis
     command: ["/bin/bash"]
     profiles: ["tracing"]

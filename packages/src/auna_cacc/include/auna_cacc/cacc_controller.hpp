@@ -21,6 +21,7 @@
 #ifndef AUNA_CACC__CACC_CONTROLLER_HPP_
 #define AUNA_CACC__CACC_CONTROLLER_HPP_
 
+#include <cmath>
 #include <fstream>
 #include <iomanip>  // for std::setprecision
 #include <memory>   // for std::shared_ptr
@@ -31,6 +32,7 @@
 #include "auna_msgs/srv/set_float64.hpp"
 #include "etsi_its_cam_msgs/msg/cam.hpp"
 #include "etsi_its_msgs_utils/cam_access.hpp"
+#include "etsi_its_msgs_utils/impl/cam/cam_getters_common.h"
 #include "geometry_msgs/msg/pose_array.hpp"  // Added include for PoseArray
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
@@ -51,7 +53,6 @@ struct Parameters
   double kd;
   double max_velocity;
   bool use_waypoints;
-  std::string waypoint_file;
   int frequency;
   double target_velocity;
   double curvature_lookahead;
@@ -71,9 +72,9 @@ private:
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr
     sub_pose_stamped_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr sub_waypoints_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd_vel;
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::TimerBase::SharedPtr setup_timer_;
 
   // service for standstill_distance and time_gap
   rclcpp::Service<auna_msgs::srv::SetFloat64>::SharedPtr
@@ -85,9 +86,6 @@ private:
     client_set_target_velocity_;
   rclcpp::Service<auna_msgs::srv::SetFloat64>::SharedPtr
     client_set_extra_distance_;
-
-  // service for cacc_enable
-  rclcpp::Service<auna_msgs::srv::SetBool>::SharedPtr client_set_cacc_enable_;
 
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_x_lookahead_point_;
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_y_lookahead_point_;
@@ -151,14 +149,9 @@ private:
   std::vector<double> waypoints_y_;
   std::vector<double> waypoints_yaw_;
 
-  // auto mode
-  bool auto_mode_;
-  bool auto_mode_ready_;
-  bool cacc_ready_;
+  // Flags to track if we're in leader (no CAM) or follower (CAM) mode
+  bool is_leader_mode_;
   double target_velocity_;
-
-  // ros2 service server for auto_mode
-  rclcpp::Service<auna_msgs::srv::SetBool>::SharedPtr client_set_auto_mode_;
 
   // Flags to track first message reception
   bool first_cam_received_;
@@ -166,7 +159,6 @@ private:
   bool first_pose_received_;
 
   // general functions
-  void read_waypoints_from_csv();
   void update_waypoint_following();
   void publish_waypoint_pose(
     const rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr &
@@ -177,8 +169,8 @@ private:
   void cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg);
   void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
   void pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
+  void waypoints_callback(const geometry_msgs::msg::PoseArray::SharedPtr msg);
   void timer_callback();
-  void setup_timer_callback();
 
   // service callback functions
   void set_standstill_distance(
@@ -187,12 +179,6 @@ private:
   void set_time_gap(
     const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
     std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response);
-  void set_cacc_enable(
-    const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
-    std::shared_ptr<auna_msgs::srv::SetBool::Response> response);
-  void set_auto_mode(
-    const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
-    std::shared_ptr<auna_msgs::srv::SetBool::Response> response);
   void set_target_velocity(
     const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
     std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response);
@@ -243,15 +229,6 @@ private:
   double dbg_inP2_vel_err_ = 0;
   double dbg_inP2_geom_vel_ = 0;
   double dbg_inP2_yaw_rate_ = 0;
-
-  // Data logging
-  bool enable_data_logging_;
-  std::string log_file_path_;
-  std::ofstream log_file_;
-  int log_counter_ = 0;
-
-  rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr
-    pub_waypoints_pose_array_;    // Added publisher
 };
 
 #endif  // AUNA_CACC__CACC_CONTROLLER_HPP_

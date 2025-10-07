@@ -22,8 +22,6 @@
 
 #include <iostream>
 
-using namespace std;
-
 WallFollow::WallFollow()
 : Node("wallfollowing")
 {
@@ -123,11 +121,11 @@ double WallFollow::get_error(
 
   double swing = angle_b_ - angle_a_;
 
-  double alpha = atan((a * cos(swing) - b) / (a * sin(swing)));
+  double alpha = std::atan((a * std::cos(swing) - b) / (a * std::sin(swing)));
 
-  double Dt = b * cos(alpha);
+  double Dt = b * std::cos(alpha);
 
-  double Dt1 = Dt + lookahead_distance_ * sin(alpha);
+  double Dt1 = Dt + lookahead_distance_ * std::sin(alpha);
 
   return desired_distance - Dt1;
 }

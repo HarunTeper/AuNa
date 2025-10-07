@@ -26,9 +26,9 @@
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QVBoxLayout>
-#include <rviz_common/panel.hpp>
 
 #include "auna_control/control_panel_ros_interface.hpp"
+#include <rviz_common/panel.hpp>
 
 namespace auna_control
 {

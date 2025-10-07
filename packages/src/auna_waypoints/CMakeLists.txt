@@ -17,53 +17,67 @@ find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(ackermann_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(nav_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(rclcpp_action REQUIRED)
-find_package(std_srvs REQUIRED)
-find_package(tf2 REQUIRED)
-find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
-# Include directories
+# Include Cpp "include" directory
 include_directories(include)
 
 # Add libraries
 add_library(nav2_waypoint_publisher_node SHARED
-            src/nav2_waypoint_publisher/nav2_waypoint_publisher.cpp)
+  src/nav2_waypoint_publisher/nav2_waypoint_publisher.cpp)
+add_library(cacc_waypoint_publisher_node SHARED
+  src/cacc_waypoint_publisher/cacc_waypoint_publisher.cpp)
 
 # Create executables
 add_executable(nav2_waypoint_publisher
-                src/nav2_waypoint_publisher/nav2_waypoint_publisher_main.cpp)
+  src/nav2_waypoint_publisher/nav2_waypoint_publisher_main.cpp)
+add_executable(cacc_waypoint_publisher
+  src/cacc_waypoint_publisher/cacc_waypoint_publisher_main.cpp)
 
 # Target dependencies
 set(nav2_waypoint_publisher_dependencies
-    rclcpp geometry_msgs nav2_msgs rclcpp_action tf2_ros tf2_geometry_msgs)
+  rclcpp geometry_msgs nav2_msgs rclcpp_action tf2_ros tf2_geometry_msgs)
+set(cacc_waypoint_publisher_dependencies rclcpp geometry_msgs tf2_ros
+  tf2_geometry_msgs)
 
 ament_target_dependencies(nav2_waypoint_publisher_node
-                          ${nav2_waypoint_publisher_dependencies})
+  ${nav2_waypoint_publisher_dependencies})
 ament_target_dependencies(nav2_waypoint_publisher
-                          ${nav2_waypoint_publisher_dependencies})
-
-# Link libraries
+  ${nav2_waypoint_publisher_dependencies})
+ament_target_dependencies(cacc_waypoint_publisher_node
+  ${cacc_waypoint_publisher_dependencies})
+ament_target_dependencies(
+  cacc_waypoint_publisher ${cacc_waypoint_publisher_dependencies}) # Link
+  # libraries
 target_link_libraries(nav2_waypoint_publisher nav2_waypoint_publisher_node)
 target_link_libraries(nav2_waypoint_publisher_node yaml-cpp)
+target_link_libraries(cacc_waypoint_publisher cacc_waypoint_publisher_node)
+target_link_libraries(cacc_waypoint_publisher_node yaml-cpp)
+
+# Install Cpp executables
+install(TARGETS nav2_waypoint_publisher cacc_waypoint_publisher
+  DESTINATION lib/${PROJECT_NAME})
+
+install(
+  TARGETS nav2_waypoint_publisher_node cacc_waypoint_publisher_node
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
 
 # Install directories
 install(DIRECTORY launch config DESTINATION share/${PROJECT_NAME})
 
-# Install executables
-install(TARGETS nav2_waypoint_publisher DESTINATION lib/${PROJECT_NAME})
-
+# Install Python executables
 install(PROGRAMS scripts/curve_fitting.py DESTINATION lib/${PROJECT_NAME})
 
-# Install libraries
+# Also install extensionless launcher names for ros2 run convenience
 install(
-  TARGETS nav2_waypoint_publisher_node
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin)
+  PROGRAMS scripts/curve_fitting.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME curve_fitting)
 
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})

@@ -19,8 +19,6 @@
 // THE SOFTWARE.
 
 #include "auna_cacc/cacc_controller.hpp"
-#include <etsi_its_msgs_utils/impl/cam/cam_getters_common.h>
-#include <rclcpp/logging.hpp>
 
 CaccController::CaccController()
 : Node("cacc_controller")
@@ -34,43 +32,6 @@ CaccController::CaccController()
   first_cam_received_ = false;
   first_odom_received_ = false;
   first_pose_received_ = false;
-
-  // Initialize data logging
-  this->declare_parameter("enable_data_logging", true);
-  this->declare_parameter(
-    "log_file_path",
-    "/home/vscode/workspace/cacc_log.csv");
-
-  enable_data_logging_ = false;
-  log_file_path_ = this->get_parameter("log_file_path").as_string();
-
-  if (enable_data_logging_) {
-    RCLCPP_INFO(
-      this->get_logger(), "Data logging enabled. Writing to: %s",
-      log_file_path_.c_str());
-    log_file_.open(log_file_path_, std::ios::out | std::ios::trunc);
-    if (log_file_.is_open()) {
-      // Write CSV header (including new debug columns)
-      log_file_
-        << "timestamp,leader_x,leader_y,leader_velocity,leader_acceleration,"
-        "leader_curvature,"
-        << "follower_x,follower_y,follower_velocity,follower_acceleration,"
-        << "desired_distance,actual_distance,distance_error,"
-        << "z1,z2,z3,z4,"
-        << "alpha,s,"    // Debug values start here
-        << "invGam1,invGam2,invGam3,invGam4,"
-        << "inP1_pos_err,inP1_vel_err,inP1_geom_vel,inP1_yaw_rate,"
-        << "inP2_pos_err,inP2_vel_err,inP2_geom_vel,inP2_yaw_rate,"
-        << "commanded_accel,commanded_velocity,commanded_angular"
-        << std::endl;
-      log_file_.flush();
-    } else {
-      RCLCPP_ERROR(
-        this->get_logger(), "Failed to open log file: %s",
-        log_file_path_.c_str());
-      enable_data_logging_ = false;
-    }
-  }
 
   // Add topic name debug info
   RCLCPP_INFO(
@@ -87,7 +48,7 @@ CaccController::CaccController()
       this->cam_callback(msg);
     });
   sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    "odometry/filtered_ekf", 2,
+    "odometry/filtered", 2,
     [this](const nav_msgs::msg::Odometry::SharedPtr msg) {
       if (!first_odom_received_) {
         RCLCPP_INFO(this->get_logger(), "Received first odom message");
@@ -108,6 +69,14 @@ CaccController::CaccController()
       this->pose_callback(msg);
     });
 
+  // Subscribe to a single shared (absolute) waypoint topic with transient local
+  // QoS
+  sub_waypoints_ = this->create_subscription<geometry_msgs::msg::PoseArray>(
+    "/cacc/waypoints", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local(),
+    [this](const geometry_msgs::msg::PoseArray::SharedPtr msg) {
+      this->waypoints_callback(msg);
+    });
+
   pub_cmd_vel =
     this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel/cacc", 1);
   RCLCPP_INFO(
@@ -117,10 +86,6 @@ CaccController::CaccController()
     this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/x", 1);
   pub_y_lookahead_point_ =
     this->create_publisher<std_msgs::msg::Float64>("cacc/lookahead/y", 1);
-  pub_waypoints_pose_array_ =
-    this->create_publisher<geometry_msgs::msg::PoseArray>(
-    "cacc/waypoints",
-    1);
   pub_closest_pose_waypoint_ =
     this->create_publisher<geometry_msgs::msg::PoseStamped>(
     "cacc/closest_pose_waypoint", 1);
@@ -148,15 +113,9 @@ CaccController::CaccController()
     std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response) {
       this->set_time_gap(request, response);
     });
-  client_set_cacc_enable_ = this->create_service<auna_msgs::srv::SetBool>(
-    "/cacc/set_cacc_enable",
-    [this](const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
-    std::shared_ptr<auna_msgs::srv::SetBool::Response> response) {
-      this->set_cacc_enable(request, response);
-    });
   client_set_target_velocity_ =
     this->create_service<auna_msgs::srv::SetFloat64>(
-    "/cacc/set_target_velocity",
+    "cacc/set_target_velocity",
     [this](
       const std::shared_ptr<auna_msgs::srv::SetFloat64::Request>
       request,
@@ -164,7 +123,7 @@ CaccController::CaccController()
       this->set_target_velocity(request, response);
     });
   client_set_extra_distance_ = this->create_service<auna_msgs::srv::SetFloat64>(
-    "/cacc/set_extra_distance",
+    "cacc/set_extra_distance",
     [this](const std::shared_ptr<auna_msgs::srv::SetFloat64::Request> request,
     std::shared_ptr<auna_msgs::srv::SetFloat64::Response> response) {
       this->set_extra_distance(request, response);
@@ -177,7 +136,6 @@ CaccController::CaccController()
   this->declare_parameter("max_velocity", 1.0);
   this->declare_parameter("frequency", 50);
   this->declare_parameter("use_waypoints", false);
-  this->declare_parameter("waypoint_file", "/home/$USER/waypoints.txt");
   this->declare_parameter("target_velocity", 1.0);
   this->declare_parameter("curvature_lookahead", 1.0);
   this->declare_parameter("extra_distance", 0.0);
@@ -187,164 +145,70 @@ CaccController::CaccController()
     this->get_parameter("standstill_distance").as_double();
   params_.time_gap = this->get_parameter("time_gap").as_double();
   params_.kp = this->get_parameter("kp").as_double();
+  params_.kd = this->get_parameter("kd").as_double();
   params_.max_velocity = this->get_parameter("max_velocity").as_double();
   params_.frequency = this->get_parameter("frequency").as_int();
   params_.use_waypoints = this->get_parameter("use_waypoints").as_bool();
-  params_.waypoint_file = this->get_parameter("waypoint_file").as_string();
   params_.target_velocity = this->get_parameter("target_velocity").as_double();
   params_.curvature_lookahead =
     this->get_parameter("curvature_lookahead").as_double();
   params_.extra_distance = this->get_parameter("extra_distance").as_double();
 
   dt_ = 1.0 / params_.frequency;
-  auto_mode_ = false;
-  auto_mode_ready_ = false;
-  cacc_ready_ = false;
+  is_leader_mode_ = true;  // Start assuming leader mode (no CAM messages)
 
-  client_set_auto_mode_ = this->create_service<auna_msgs::srv::SetBool>(
-    "cacc/set_auto_mode",
-    [this](const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
-    std::shared_ptr<auna_msgs::srv::SetBool::Response> response) {
-      this->set_auto_mode(request, response);
-    });
+  // Initialize control (virtual leader) state so that in pure CAM-follow mode
+  // we can immediately mirror incoming CAM data without relying on waypoint
+  // updater to set them.
+  control_x_ = 0.0;
+  control_y_ = 0.0;
+  control_yaw_ = 0.0;
+  control_velocity_ = 0.0;
+  control_acceleration_ = 0.0;
+  control_yaw_rate_ = 0.0;
+  control_curvature_ = 0.0;
 
   timer_ = this->create_wall_timer(
     std::chrono::milliseconds(1000 / params_.frequency),
     [this]() {this->timer_callback();});
-  setup_timer_ =
-    this->create_wall_timer(
-    std::chrono::milliseconds(1000),
-    [this]() {this->setup_timer_callback();});
-  timer_->cancel();
-
-  if (params_.use_waypoints) {
-    read_waypoints_from_csv();
-  }
 
   dyn_params_handler_ = this->add_on_set_parameters_callback(
     [this](std::vector<rclcpp::Parameter> parameters)
     -> rcl_interfaces::msg::SetParametersResult {
       return this->dynamicParametersCallback(parameters);
     });
-
-  // Add cleanup for file logging
-  rclcpp::on_shutdown(
-    [this]() {
-      if (enable_data_logging_ && log_file_.is_open()) {
-        RCLCPP_INFO(this->get_logger(), "Closing log file");
-        log_file_.close();
-      }
-    });
 }
 
-void CaccController::read_waypoints_from_csv()
+void CaccController::waypoints_callback(
+  const geometry_msgs::msg::PoseArray::SharedPtr msg)
 {
-  std::string file_path = this->get_parameter("waypoint_file").as_string();
+  waypoints_x_.clear();
+  waypoints_y_.clear();
+  waypoints_yaw_.clear();
 
-  std::ifstream file(file_path, std::ifstream::in);
-  std::string line;
-  if (file.is_open()) {
-    waypoints_x_.clear();  // Clear the existing waypoints_x_ vector
-    waypoints_y_.clear();  // Clear the existing waypoints_y_ vector
-
-    while (std::getline(file, line)) {
-      std::istringstream iss(line);
-      std::string x, y;
-      std::getline(iss, x, ',');
-      std::getline(iss, y, ',');
-      try {
-        double x_value = std::stod(x);
-        double y_value = std::stod(y);
-
-        waypoints_x_.push_back(x_value);
-        waypoints_y_.push_back(y_value);
-      } catch (const std::invalid_argument & e) {
-        RCLCPP_ERROR(
-          this->get_logger(),
-          "Invalid waypoint format in CSV file: %s",
-          file_path.c_str());
-      }
-    }
-  } else {
-    RCLCPP_ERROR(
-      this->get_logger(), "Unable to open file: %s",
-      file_path.c_str());
+  if (msg->poses.empty()) {
+    RCLCPP_WARN(this->get_logger(), "Received empty waypoint array");
     return;
   }
-  file.close();
 
-  // Calculate yaw for each waypoint
-  waypoints_yaw_.clear();  // Clear the existing waypoints_yaw_ vector
+  waypoints_x_.reserve(msg->poses.size());
+  waypoints_y_.reserve(msg->poses.size());
+  waypoints_yaw_.reserve(msg->poses.size());
 
-  size_t num_waypoints = waypoints_x_.size();
-  for (size_t i = 0; i < num_waypoints; ++i) {
-    size_t prev_index = (i == 0) ? (num_waypoints - 1) : (i - 1);
-    size_t next_index = (i + 1) % num_waypoints;
-
-    double next_x = waypoints_x_[next_index];
-    double next_y = waypoints_y_[next_index];
-
-    double prev_x = waypoints_x_[prev_index];
-    double prev_y = waypoints_y_[prev_index];
-
-    double yaw = std::atan2(next_y - prev_y, next_x - prev_x);
+  for (const auto & pose : msg->poses) {
+    waypoints_x_.push_back(pose.position.x);
+    waypoints_y_.push_back(pose.position.y);
+    tf2::Quaternion q(pose.orientation.x, pose.orientation.y,
+      pose.orientation.z, pose.orientation.w);
+    tf2::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
     waypoints_yaw_.push_back(yaw);
   }
 
-  // Create and publish a pose array of all waypoints
-  geometry_msgs::msg::PoseArray pose_array;
-  pose_array.header.stamp = this->get_clock()->now();
-  pose_array.header.frame_id = "map";  // Use appropriate frame_id
-
-  pose_array.poses.resize(num_waypoints);
-
-  for (size_t i = 0; i < num_waypoints; ++i) {
-    // Set position
-    pose_array.poses[i].position.x = waypoints_x_[i];
-    pose_array.poses[i].position.y = waypoints_y_[i];
-    pose_array.poses[i].position.z = 0.0;
-
-    // Convert yaw to quaternion
-    tf2::Quaternion q;
-    q.setRPY(0.0, 0.0, waypoints_yaw_[i]);
-
-    // Set orientation
-    pose_array.poses[i].orientation.x = q.x();
-    pose_array.poses[i].orientation.y = q.y();
-    pose_array.poses[i].orientation.z = q.z();
-    pose_array.poses[i].orientation.w = q.w();
-  }
-
-  // Publish the pose array
-  pub_waypoints_pose_array_->publish(pose_array);
   RCLCPP_INFO(
-    this->get_logger(), "Published pose array with %zu waypoints",
-    num_waypoints);
-}
-
-void CaccController::setup_timer_callback()
-{
-  // if all last messages exist, start timer
-  if (last_cam_msg_ != nullptr && last_odom_msg_ != nullptr &&
-    last_pose_msg_ != nullptr)
-  {
-    RCLCPP_INFO(this->get_logger(), "CACC controller ready");
-    setup_timer_->cancel();
-    cacc_ready_ = true;
-  }
-  if (last_odom_msg_ != nullptr && last_pose_msg_ != nullptr) {
-    if (!auto_mode_ready_) {
-      RCLCPP_INFO(this->get_logger(), "Auto mode ready");
-      auto_mode_ready_ = true;
-    }
-  }
-  // Add debug log to show we're still waiting
-  RCLCPP_DEBUG(
-    this->get_logger(),
-    "Waiting for messages - CAM: %s, Odom: %s, Pose: %s",
-    (last_cam_msg_ != nullptr ? "received" : "waiting"),
-    (last_odom_msg_ != nullptr ? "received" : "waiting"),
-    (last_pose_msg_ != nullptr ? "received" : "waiting"));
+    this->get_logger(), "Loaded %zu waypoints (first: %.2f, %.2f, yaw=%.2f)",
+    waypoints_x_.size(), waypoints_x_[0], waypoints_y_[0], waypoints_yaw_[0]);
 }
 
 void CaccController::cam_callback(
@@ -448,6 +312,18 @@ void CaccController::cam_callback(
     cam_yaw_rate_ = 0.0;
     cam_curvature_ = 0.0;
   }
+
+  // Mirror CAM leader state into control_* when not using waypoints (pure
+  // leader-follow mode)
+  if (!params_.use_waypoints) {
+    control_x_ = cam_x_;
+    control_y_ = cam_y_;
+    control_yaw_ = cam_yaw_;
+    control_velocity_ = cam_velocity_;
+    control_acceleration_ = cam_acceleration_;
+    control_yaw_rate_ = cam_yaw_rate_;
+    control_curvature_ = cam_curvature_;
+  }
 }
 
 void CaccController::odom_callback(
@@ -464,7 +340,6 @@ void CaccController::odom_callback(
       msg->header.stamp.sec - last_odom_msg_->header.stamp.sec +
       (msg->header.stamp.nanosec - last_odom_msg_->header.stamp.nanosec) /
       1e9;
-
     dt = std::min(dt, 0.01);
     odom_acceleration_ = (odom_velocity_ - last_odom_velocity_) / dt;
   }
@@ -703,6 +578,11 @@ void CaccController::update_waypoint_following()
   } else {
     double required_time =
       accumulated_lookahead_distance / target_vel_for_lookahead;
+    // Lower bound required_time to avoid large yaw rates due to tiny distances
+    const double MIN_REQUIRED_TIME = 0.05;  // seconds
+    if (required_time < MIN_REQUIRED_TIME) {
+      required_time = MIN_REQUIRED_TIME;
+    }
     control_yaw_rate_ = yaw_difference / required_time;
   }
 
@@ -742,20 +622,59 @@ void CaccController::update_waypoint_following()
   control_acceleration_ = (control_velocity_ - control_last_velocity_) / dt_;
   control_last_velocity_ = control_velocity_;
 
-  // TODO(HarunTeper) check if target_velocity or control velocity should be
-  // used cam curvature depending on auto_mode Prevent division by zero when
-  // calculating control curvature
   if (std::abs(control_velocity_) < 0.01) {
     control_curvature_ = 0.0;
   } else {
-    control_curvature_ = control_yaw_rate_ / params_.target_velocity;
+    control_curvature_ = control_yaw_rate_ / control_velocity_;
   }
 }
 
 void CaccController::timer_callback()
 {
-  if (params_.use_waypoints) {
-    update_waypoint_following();
+  // Early return if we don't have required basic messages
+  if (!last_odom_msg_ || !last_pose_msg_) {
+    RCLCPP_DEBUG_THROTTLE(
+      this->get_logger(), *this->get_clock(), 5000,
+      "Waiting for required messages - Odom: %s, Pose: %s",
+      (last_odom_msg_ != nullptr ? "received" : "waiting"),
+      (last_pose_msg_ != nullptr ? "received" : "waiting"));
+    return;
+  }
+
+  // Dynamically determine mode based on CAM message availability
+  bool previous_mode = is_leader_mode_;
+  is_leader_mode_ = (last_cam_msg_ == nullptr);
+
+  // Log mode changes
+  if (previous_mode != is_leader_mode_) {
+    if (is_leader_mode_) {
+      RCLCPP_INFO(
+        this->get_logger(),
+        "Switching to LEADER mode (no CAM messages)");
+    } else {
+      RCLCPP_INFO(
+        this->get_logger(),
+        "Switching to FOLLOWER mode (CAM messages detected)");
+    }
+  }
+
+  // Handle waypoint-based or direct CAM following
+  if (!params_.use_waypoints) {
+    if (last_cam_msg_ == nullptr) {
+      RCLCPP_DEBUG(
+        this->get_logger(),
+        "Waiting for first CAM (use_waypoints=false)");
+      return;
+    }
+  } else {
+    if (waypoints_x_.empty()) {
+      RCLCPP_WARN_THROTTLE(
+        this->get_logger(), *this->get_clock(), 5000,
+        "use_waypoints=true but waypoint list is empty; "
+        "skipping virtual leader update");
+    } else {
+      update_waypoint_following();
+    }
   }
 
   RCLCPP_DEBUG(this->get_logger(), "=== CACC Following Status ===");
@@ -841,12 +760,12 @@ void CaccController::timer_callback()
   z_4_ = control_velocity_ * sin(control_yaw_) -
     odom_velocity_ * sin(pose_yaw_ + alpha_);
 
-  RCLCPP_INFO(this->get_logger(), "Error States:");
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(this->get_logger(), "Error States:");
+  RCLCPP_DEBUG(
     this->get_logger(),
-    "  Position errors - longitudinal: %.2f m, lateral: %.2f m", z_1_,
-    z_2_);
-  RCLCPP_INFO(
+    "  Position errors - longitudinal: %.2f m, lateral: %.2f m",
+    z_1_, z_2_);
+  RCLCPP_DEBUG(
     this->get_logger(),
     "  Velocity errors - longitudinal: %.2f m/s, lateral: %.2f m/s",
     z_3_, z_4_);
@@ -856,6 +775,7 @@ void CaccController::timer_callback()
     params_.standstill_distance + params_.time_gap * odom_velocity_;
   double term2 = params_.time_gap -
     params_.time_gap * sin(alpha_) * sin(control_yaw_ - pose_yaw_);
+
   invGam_Det_ = term1 * term2;
 
   // Prevent division by zero with minimum threshold
@@ -915,24 +835,24 @@ void CaccController::timer_callback()
   a_ = invGam_1_ * inP_1_ + invGam_2_ * inP_2_;
   w_ = invGam_3_ * inP_1_ + invGam_4_ * inP_2_;
 
-  RCLCPP_INFO(this->get_logger(), "Control Contributions:");
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(this->get_logger(), "Control Contributions:");
+  RCLCPP_DEBUG(
     this->get_logger(),
     "  Position error contribution: %.2f m/s² (gain kp=%.2f)",
     z_1_ * params_.kp, params_.kp);
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     this->get_logger(),
     "  Velocity error contribution: %.2f m/s² (z3=%.2f, z4=%.2f)",
     cos(alpha_) * z_3_ + sin(alpha_) * z_4_, z_3_, z_4_);
 
   // Additional diagnostic logs for turns
   if (std::abs(control_curvature_) > 0.01) {
-    RCLCPP_INFO(this->get_logger(), "Sharp Turn Detected:");
-    RCLCPP_INFO(
+    RCLCPP_DEBUG(this->get_logger(), "Sharp Turn Detected:");
+    RCLCPP_DEBUG(
       this->get_logger(),
       "  Leader yaw rate: %.2f rad/s, Leader velocity: %.2f m/s",
       control_yaw_rate_, control_velocity_);
-    RCLCPP_INFO(
+    RCLCPP_DEBUG(
       this->get_logger(),
       "  Curvature effect on acceleration: %.2f m/s²",
       (cos(control_yaw_) * s_ * control_yaw_rate_));
@@ -940,75 +860,50 @@ void CaccController::timer_callback()
 
   last_time_ = rclcpp::Clock().now();
 
-  // Update velocity
-  v_ = last_velocity_ + a_ * dt_;
+  // Update velocity using current odometry as base instead of pure integration
+  // This prevents drift and instability from accumulated integration errors
+  v_ = odom_velocity_ + a_ * dt_;
 
-  // Check if we're reversing and log specifically about that
-  if (v_ < 0 || a_ < -0.5) {
-    RCLCPP_WARN(
-      this->get_logger(),
-      "Negative velocity/deceleration detected: v=%.2f m/s, a=%.2f m/s²", v_,
-      a_);
-    RCLCPP_WARN(
-      this->get_logger(),
-      "  Leader-follower velocity difference: %.2f m/s",
-      control_velocity_ - odom_velocity_);
-  }
+  // Clamp velocity to reasonable bounds (both positive and negative)
+  // Prevent negative velocities (no reverse) and respect max velocity
+  v_ = std::max(0.0, std::min(v_, params_.max_velocity));
 
-  if (v_ > params_.max_velocity) {
-    v_ = params_.max_velocity;
+  // Additional safety: limit acceleration to prevent jumps
+  const double MAX_ACCEL =
+    5.0;    // m/s² - maximum allowed acceleration magnitude
+  double accel_limit = MAX_ACCEL * dt_;
+  double velocity_change = v_ - odom_velocity_;
+  if (std::abs(velocity_change) > accel_limit) {
+    v_ = odom_velocity_ + std::copysign(accel_limit, velocity_change);
+    RCLCPP_DEBUG(
+      this->get_logger(),
+      "Acceleration limited: requested change %.2f m/s, limited to %.2f m/s",
+      velocity_change, std::copysign(accel_limit, velocity_change));
   }
 
   last_velocity_ = v_;
+
+  // Log warnings for extreme cases
+  if (v_ < 0.01 && odom_velocity_ > 0.1) {
+    RCLCPP_WARN(
+      this->get_logger(),
+      "Commanding stop: current velocity=%.2f m/s, commanded=%.2f m/s",
+      odom_velocity_, v_);
+  }
 
   geometry_msgs::msg::Twist twist_msg;
   twist_msg.linear.x = v_;
   twist_msg.angular.z = w_;
 
-  RCLCPP_INFO(this->get_logger(), "Final Controls:");
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(this->get_logger(), "Final Controls:");
+  RCLCPP_DEBUG(
     this->get_logger(),
     "  Acceleration: %.2f m/s², Angular velocity: %.2f rad/s", a_,
     w_);
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     this->get_logger(), "  Commanded velocity: %.2f m/s (dt=%.3fs)",
     v_, dt_);
-  RCLCPP_INFO(this->get_logger(), "===========================");
-
-  // Log data to file if enabled
-  if (enable_data_logging_ && log_file_.is_open()) {
-    // Get current timestamp
-    auto now = this->get_clock()->now();
-    double timestamp = now.seconds() + now.nanoseconds() * 1e-9;
-
-    // Write all data to CSV, including new debug values
-    log_file_ << std::fixed << std::setprecision(6) << timestamp << ","
-              << cam_x_ << "," << cam_y_ << "," << cam_velocity_ << ","
-              << cam_acceleration_ << "," << cam_curvature_
-              << ","  // Leader state
-              << pose_x_ << "," << pose_y_ << "," << odom_velocity_ << ","
-              << odom_acceleration_ << ","  // Follower state
-              << distance_term << "," << actual_distance << ","
-              << (actual_distance - distance_term) << ","  // Distances
-              << z_1_ << "," << z_2_ << "," << z_3_ << "," << z_4_
-              << ","                                 // Error states
-              << dbg_alpha_ << "," << dbg_s_ << ","  // Debug: Geometry
-              << dbg_invGam_1_ << "," << dbg_invGam_2_ << "," << dbg_invGam_3_
-              << "," << dbg_invGam_4_ << ","  // Debug: InvGamma
-              << dbg_inP1_pos_err_ << "," << dbg_inP1_vel_err_ << ","
-              << dbg_inP1_geom_vel_ << "," << dbg_inP1_yaw_rate_
-              << ","  // Debug: inP1 terms
-              << dbg_inP2_pos_err_ << "," << dbg_inP2_vel_err_ << ","
-              << dbg_inP2_geom_vel_ << "," << dbg_inP2_yaw_rate_
-              << ","                           // Debug: inP2 terms
-              << a_ << "," << v_ << "," << w_  // Final commands
-              << std::endl;
-
-    // Flush periodically to ensure data is written even if program crashes
-    if (log_counter_++ % 10 == 0) {
-      log_file_.flush();
-    }
-  }
+  RCLCPP_DEBUG(this->get_logger(), "===========================");
 
   pub_cmd_vel->publish(twist_msg);
 }
@@ -1078,96 +973,14 @@ void CaccController::set_time_gap(
   response->success = true;
 }
 
-void CaccController::set_cacc_enable(
-  const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
-  std::shared_ptr<auna_msgs::srv::SetBool::Response> response)
-{
-  if (!cacc_ready_) {
-    RCLCPP_ERROR(
-      this->get_logger(),
-      "CACC controller not ready yet. Missing required messages.");
-    response->success = false;
-    return;
-  }
-
-  if (request->value) {
-    RCLCPP_INFO(this->get_logger(), "Enabling CACC controller");
-    last_cam_velocity_ = 0;
-    last_odom_velocity_ = 0;
-    last_velocity_ = 0;
-    last_time_ = rclcpp::Clock().now();
-    timer_->reset();
-  } else {
-    RCLCPP_INFO(this->get_logger(), "Disabling CACC controller");
-
-    geometry_msgs::msg::Twist twist_msg;
-
-    twist_msg.linear.x = 0.0;
-    twist_msg.angular.z = 0.0;
-
-    pub_cmd_vel->publish(twist_msg);
-
-    timer_->cancel();
-  }
-  response->success = true;
-}
-
-// service server callback for auto_mode
-void CaccController::set_auto_mode(
-  const std::shared_ptr<auna_msgs::srv::SetBool::Request> request,
-  std::shared_ptr<auna_msgs::srv::SetBool::Response> response)
-{
-  // Check if an actual CAM message is received - cannot be in auto mode if real
-  // CAMs are being received
-  if (last_cam_msg_ != nullptr) {
-    RCLCPP_ERROR(
-      this->get_logger(),
-      "CACC controller is already running with real CAM messages");
-    response->success = false;
-    return;
-  }
-
-  // Check if both odom and pose are ready
-  if (!auto_mode_ready_) {
-    RCLCPP_ERROR(
-      this->get_logger(),
-      "Auto mode not ready yet. Missing required messages.");
-    response->success = false;
-    return;
-  }
-
-  if (request->value) {
-    RCLCPP_INFO(this->get_logger(), "Enabling auto mode");
-    auto_mode_ = true;
-    timer_->reset();
-    setup_timer_->cancel();
-  } else {
-    RCLCPP_INFO(this->get_logger(), "Disabling auto mode");
-
-    geometry_msgs::msg::Twist twist_msg;
-
-    twist_msg.linear.x = 0.0;
-    twist_msg.angular.z = 0.0;
-
-    pub_cmd_vel->publish(twist_msg);
-
-    auto_mode_ = false;
-    timer_->cancel();
-  }
-  response->success = true;
-}
-
 rcl_interfaces::msg::SetParametersResult
 CaccController::dynamicParametersCallback(
   std::vector<rclcpp::Parameter> parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
-
-  for (auto parameter : parameters) {
-    const auto & type = parameter.get_type();
+  for (const auto & parameter : parameters) {
+    const auto type = parameter.get_type();
     const auto & name = parameter.get_name();
-
-    // print
     RCLCPP_INFO(
       this->get_logger(), "Parameter '%s' was changed.",
       name.c_str());
@@ -1183,18 +996,23 @@ CaccController::dynamicParametersCallback(
         params_.kd = parameter.as_double();
       } else if (name == "max_velocity") {
         params_.max_velocity = parameter.as_double();
-      } else if (name == "frequency") {
-        params_.frequency = parameter.as_int();
-      } else if (name == "use_waypoints") {
-        params_.use_waypoints = parameter.as_bool();
-      } else if (name == "waypoint_file") {
-        params_.waypoint_file = parameter.as_string();
       } else if (name == "target_velocity") {
         params_.target_velocity = parameter.as_double();
       } else if (name == "curvature_lookahead") {
         params_.curvature_lookahead = parameter.as_double();
       } else if (name == "extra_distance") {
         params_.extra_distance = parameter.as_double();
+      }
+    } else if (type == rclcpp::ParameterType::PARAMETER_INTEGER) {
+      if (name == "frequency") {
+        params_.frequency = parameter.as_int();
+        if (params_.frequency > 0) {
+          dt_ = 1.0 / params_.frequency;  // keep controller timing consistent
+        }
+      }
+    } else if (type == rclcpp::ParameterType::PARAMETER_BOOL) {
+      if (name == "use_waypoints") {
+        params_.use_waypoints = parameter.as_bool();
       }
     }
   }
