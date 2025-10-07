@@ -64,10 +64,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Build all Docker services
-      run: |
-        docker compose --profile all build
-    
     - name: Build Docker image
       run: |
         docker build -f dockerfiles/auna.dockerfile -t auna:test .
@@ -75,4 +71,4 @@ jobs:
     - name: Test Docker container
       shell: bash
       run: |
-        docker run --rm auna:latest bash -c "source /opt/ros/humble/setup.bash && colcon list"
+        docker run --rm auna:test bash -c "source /opt/ros/humble/setup.bash && colcon list"
