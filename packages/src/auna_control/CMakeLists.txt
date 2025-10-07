@@ -29,8 +29,8 @@ find_package(Qt5 REQUIRED COMPONENTS Widgets Core)
 
 # cmd_vel_multiplexer_node executable
 add_executable(cmd_vel_multiplexer_node
-  src/cmd_vel_multiplexer_node.cpp
-  src/cmd_vel_multiplexer_main.cpp
+  src/cmd_vel_multiplexer/cmd_vel_multiplexer_node.cpp
+  src/cmd_vel_multiplexer/cmd_vel_multiplexer_main.cpp
 )
 
 target_include_directories(cmd_vel_multiplexer_node PUBLIC
@@ -64,8 +64,8 @@ foreach(header "${auna_control_headers_to_moc}")
 endforeach()
 
 set(auna_control_source_files
-  src/control_panel.cpp
-  src/control_panel_ros_interface.cpp
+  src/control_panel/control_panel.cpp
+  src/control_panel/control_panel_ros_interface.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED

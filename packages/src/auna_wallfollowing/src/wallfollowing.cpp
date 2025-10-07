@@ -20,8 +20,6 @@
 
 #include "auna_wallfollowing/wallfollowing.hpp"
 
-#include <iostream>
-
 WallFollow::WallFollow()
 : Node("wallfollowing")
 {
@@ -172,12 +170,4 @@ void WallFollow::scan_callback(
 double WallFollow::radiansToDegree(const double & angleInRadians)
 {
   return angleInRadians * (180.0 / M_PI);
-}
-
-int main(int argc, char ** argv)
-{
-  rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<WallFollow>());
-  rclcpp::shutdown();
-  return 0;
 }

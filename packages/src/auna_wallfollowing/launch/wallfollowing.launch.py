@@ -45,7 +45,7 @@ def include_launch_description(context: LaunchContext):
 
     wallfollowing_node = Node(
         package='auna_wallfollowing',
-        executable='wallfollowing',
+        executable='wallfollowing_node',
         name='wallfollowing_node',
         output='screen',
         parameters=[config_file],

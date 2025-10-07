@@ -21,11 +21,17 @@ find_package(ackermann_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
-# Create executable
-add_executable(wallfollowing src/wallfollowing.cpp)
+# Create library
+add_library(wallfollowing_lib SHARED
+  src/wallfollowing.cpp
+)
 
-# Target dependencies
-ament_target_dependencies(wallfollowing
+target_include_directories(wallfollowing_lib PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+ament_target_dependencies(wallfollowing_lib
   rclcpp
   geometry_msgs
   ackermann_msgs
@@ -34,16 +40,35 @@ ament_target_dependencies(wallfollowing
   std_msgs
 )
 
-# Include directories
-target_include_directories(wallfollowing PUBLIC
+# Create executable
+add_executable(wallfollowing_node
+  src/wallfollowing_main.cpp
+)
+
+target_include_directories(wallfollowing_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
 
+target_link_libraries(wallfollowing_node wallfollowing_lib)
+
+ament_target_dependencies(wallfollowing_node
+  rclcpp
+)
+
 # Install executables
 install(TARGETS
-  wallfollowing
+  wallfollowing_node
   DESTINATION lib/${PROJECT_NAME}
+)
+
+# Install libraries
+install(
+  TARGETS wallfollowing_lib
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
 # Install directories
