@@ -20,7 +20,8 @@
 
 #include "auna_waypoints/cacc_waypoint_publisher.hpp"
 
-int main(int argc, char* argv[]) {
+int main(int argc, char * argv[])
+{
   rclcpp::init(argc, argv);
   auto node = std::make_shared<CaccWaypointPublisher>();
   rclcpp::spin(node);

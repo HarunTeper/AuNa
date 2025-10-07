@@ -31,7 +31,6 @@ from auna_common import yaml_launch
 
 def include_launch_description(context: LaunchContext):
     """Return launch description (using environment variables only)."""
-
     cacc_config = LaunchConfiguration('cacc_config')
     robot_index = int(os.environ.get('ROBOT_INDEX', '1'))
 

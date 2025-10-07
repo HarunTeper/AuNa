@@ -28,11 +28,12 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
-class CaccWaypointPublisher : public rclcpp::Node {
- public:
+class CaccWaypointPublisher : public rclcpp::Node
+{
+public:
   CaccWaypointPublisher();
 
- private:
+private:
   void publish_waypoints();
 
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr publisher_;

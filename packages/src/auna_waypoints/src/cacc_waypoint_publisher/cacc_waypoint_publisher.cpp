@@ -29,28 +29,31 @@
 #include "yaml-cpp/yaml.h"
 
 CaccWaypointPublisher::CaccWaypointPublisher()
-    : Node("cacc_waypoint_publisher") {
+: Node("cacc_waypoint_publisher")
+{
   this->declare_parameter<std::string>("waypoint_file", "");
   this->get_parameter("waypoint_file", waypoint_file_);
 
   auto qos = rclcpp::QoS(rclcpp::KeepLast(1)).transient_local();
   std::string topic_name = "/cacc/waypoints";
   publisher_ =
-      this->create_publisher<geometry_msgs::msg::PoseArray>(topic_name, qos);
+    this->create_publisher<geometry_msgs::msg::PoseArray>(topic_name, qos);
 
   // Publish waypoints once during initialization
   // The transient_local QoS policy ensures late subscribers receive the message
   publish_waypoints();
 }
 
-void CaccWaypointPublisher::publish_waypoints() {
+void CaccWaypointPublisher::publish_waypoints()
+{
   YAML::Node waypoints;
   try {
     waypoints = YAML::LoadFile(waypoint_file_);
-  } catch (const YAML::Exception& e) {
-    RCLCPP_ERROR(this->get_logger(),
-                 "Failed to load waypoint file: %s. Error: %s",
-                 waypoint_file_.c_str(), e.what());
+  } catch (const YAML::Exception & e) {
+    RCLCPP_ERROR(
+      this->get_logger(),
+      "Failed to load waypoint file: %s. Error: %s",
+      waypoint_file_.c_str(), e.what());
     return;
   }
 
@@ -61,7 +64,7 @@ void CaccWaypointPublisher::publish_waypoints() {
   constexpr bool kApplyRotation = true;
   constexpr double kRotationRadians = -M_PI / 2.0;
 
-  for (const auto& waypoint_node : waypoints) {
+  for (const auto & waypoint_node : waypoints) {
     geometry_msgs::msg::Pose pose;
 
     // Read position
@@ -74,9 +77,9 @@ void CaccWaypointPublisher::publish_waypoints() {
     double yr = y_orig;
     if (kApplyRotation) {
       xr = x_orig * std::cos(kRotationRadians) -
-           y_orig * std::sin(kRotationRadians);
+        y_orig * std::sin(kRotationRadians);
       yr = x_orig * std::sin(kRotationRadians) +
-           y_orig * std::cos(kRotationRadians);
+        y_orig * std::cos(kRotationRadians);
     }
     pose.position.x = xr;
     pose.position.y = yr;
@@ -117,13 +120,15 @@ void CaccWaypointPublisher::publish_waypoints() {
   }
 
   if (pose_array_msg->poses.empty()) {
-    RCLCPP_WARN(this->get_logger(), "No waypoints were loaded from %s",
-                waypoint_file_.c_str());
+    RCLCPP_WARN(
+      this->get_logger(), "No waypoints were loaded from %s",
+      waypoint_file_.c_str());
     return;
   }
 
-  RCLCPP_INFO(this->get_logger(), "Publishing %zu waypoints from %s to %s",
-              pose_array_msg->poses.size(), waypoint_file_.c_str(),
-              publisher_->get_topic_name());
+  RCLCPP_INFO(
+    this->get_logger(), "Publishing %zu waypoints from %s to %s",
+    pose_array_msg->poses.size(), waypoint_file_.c_str(),
+    publisher_->get_topic_name());
   publisher_->publish(std::move(pose_array_msg));
 }

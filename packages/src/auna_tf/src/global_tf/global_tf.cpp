@@ -25,39 +25,45 @@
 // Create a service callback to the Gazebo models to get the current robot
 // names.
 GlobalTF::GlobalTF()
-    : Node("global_tf_node"),
-      tf_broadcaster_(this),
-      static_tf_broadcaster_(this) {
+: Node("global_tf_node"),
+  tf_broadcaster_(this),
+  static_tf_broadcaster_(this)
+{
   service_timer_ = this->create_wall_timer(
-      std::chrono::milliseconds(100), [this]() { service_timer_callback(); });
+    std::chrono::milliseconds(100), [this]() {service_timer_callback();});
   modelClient_ =
-      this->create_client<gazebo_msgs::srv::GetModelList>("/get_model_list");
+    this->create_client<gazebo_msgs::srv::GetModelList>("/get_model_list");
 }
 
 // Callback for the timer. Creates a service call to get the Gazebo model names.
-void GlobalTF::service_timer_callback() {
+void GlobalTF::service_timer_callback()
+{
   auto request = std::make_shared<gazebo_msgs::srv::GetModelList::Request>();
   while (!modelClient_->wait_for_service(std::chrono::seconds(5))) {
     if (!rclcpp::ok()) {
-      RCLCPP_ERROR(rclcpp::get_logger("rclcpp"),
-                   "Interrupted while waiting for the service. Exiting.");
+      RCLCPP_ERROR(
+        rclcpp::get_logger("rclcpp"),
+        "Interrupted while waiting for the service. Exiting.");
       return;
     }
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
-                "service not available, waiting again...");
+    RCLCPP_INFO(
+      rclcpp::get_logger("rclcpp"),
+      "service not available, waiting again...");
   }
   auto result = modelClient_->async_send_request(
-      request,
-      std::bind(&GlobalTF::model_srv_callback, this, std::placeholders::_1));
+    request,
+    std::bind(&GlobalTF::model_srv_callback, this, std::placeholders::_1));
 }
 
 // Service callback of the Gazebo models.
 void GlobalTF::model_srv_callback(
-    const rclcpp::Client<gazebo_msgs::srv::GetModelList>::SharedFuture future) {
+  const rclcpp::Client<gazebo_msgs::srv::GetModelList>::SharedFuture future)
+{
   auto result = future.get();
   if (!result) {
-    RCLCPP_ERROR(this->get_logger(),
-                 "Failed to get model list from Gazebo service.");
+    RCLCPP_ERROR(
+      this->get_logger(),
+      "Failed to get model list from Gazebo service.");
     return;
   }
   for (std::string model_name : result.get()->model_names) {
@@ -66,32 +72,34 @@ void GlobalTF::model_srv_callback(
       // For each model name, check if already added. If not, add subscribers
       // for local tf topics.
       if (std::find(robot_models_.begin(), robot_models_.end(), model_name) ==
-          robot_models_.end()) {
+        robot_models_.end())
+      {
         robot_models_.push_back(model_name);
-        RCLCPP_INFO(this->get_logger(),
-                    "GLOBAL_TF: Creating TF subscriptions for robot: %s",
-                    model_name.c_str());
+        RCLCPP_INFO(
+          this->get_logger(),
+          "GLOBAL_TF: Creating TF subscriptions for robot: %s",
+          model_name.c_str());
 
         // Use capturing lambda to pass the robot name to the callback
         tf_subscribers_.push_back(
-            this->create_subscription<tf2_msgs::msg::TFMessage>(
-                "/" + model_name + "/tf",
-                rclcpp::QoS(10),  // Increased QoS depth
-                [this, robot_name = model_name](
-                    const tf2_msgs::msg::TFMessage::SharedPtr msg) {
-                  tf_callback(msg, robot_name, false);  // Dynamic transform
-                }));
+          this->create_subscription<tf2_msgs::msg::TFMessage>(
+            "/" + model_name + "/tf",
+            rclcpp::QoS(10),      // Increased QoS depth
+            [this, robot_name = model_name](
+              const tf2_msgs::msg::TFMessage::SharedPtr msg) {
+              tf_callback(msg, robot_name, false);      // Dynamic transform
+            }));
         // Define QoS profile for static transforms (compatible with
         // transient_local)
         auto static_qos = rclcpp::QoS(rclcpp::KeepLast(10))
-                              .transient_local();  // Increased QoS depth
+          .transient_local();                      // Increased QoS depth
         tf_subscribers_.push_back(
-            this->create_subscription<tf2_msgs::msg::TFMessage>(
-                "/" + model_name + "/tf_static", static_qos,
-                [this, robot_name = model_name](
-                    const tf2_msgs::msg::TFMessage::SharedPtr msg) {
-                  tf_callback(msg, robot_name, true);  // Static transform
-                }));
+          this->create_subscription<tf2_msgs::msg::TFMessage>(
+            "/" + model_name + "/tf_static", static_qos,
+            [this, robot_name = model_name](
+              const tf2_msgs::msg::TFMessage::SharedPtr msg) {
+              tf_callback(msg, robot_name, true);      // Static transform
+            }));
       }
     }
   }
@@ -99,9 +107,11 @@ void GlobalTF::model_srv_callback(
 
 // Callback for local tf topics. Publishes the transformations to the global tf
 // topic.
-void GlobalTF::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg,
-                           const std::string& robot_name, bool is_static) {
-  for (const geometry_msgs::msg::TransformStamped& message : msg->transforms) {
+void GlobalTF::tf_callback(
+  const tf2_msgs::msg::TFMessage::SharedPtr msg,
+  const std::string & robot_name, bool is_static)
+{
+  for (const geometry_msgs::msg::TransformStamped & message : msg->transforms) {
     // if (!is_static) {
     //   RCLCPP_INFO(
     //     this->get_logger(),
@@ -123,16 +133,16 @@ void GlobalTF::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg,
     // Case 1: map -> odom transform (Typically dynamic, but could be static if
     // odom is fixed relative to map temporarily)
     bool is_map_to_odom =
-        (original_header == "map" && original_child == "odom");
+      (original_header == "map" && original_child == "odom");
     bool is_gazebo_to_odom =
-        (original_header == "gazebo_world" && original_child == "odom");
+      (original_header == "gazebo_world" && original_child == "odom");
     bool is_gazebo_to_map =
-        (original_header == "gazebo_world" && original_child == "map");
+      (original_header == "gazebo_world" && original_child == "map");
     bool is_gazebo_to_gtbl = (original_header == "gazebo_world" &&
-                              original_child == "ground_truth_base_link");
+      original_child == "ground_truth_base_link");
     bool is_any_odom_frame =
-        (original_header == "odom" &&
-         (original_child == "base_link" || original_child == "base_footprint"));
+      (original_header == "odom" &&
+      (original_child == "base_link" || original_child == "base_footprint"));
     if (is_map_to_odom) {
       modified.header.frame_id = "map";
       modified.child_frame_id = robot_name + "/odom";
@@ -153,7 +163,8 @@ void GlobalTF::tf_callback(const tf2_msgs::msg::TFMessage::SharedPtr msg,
       // Prefix header if not already prefixed AND it's not a global frame
       // like 'map'
       if (modified.header.frame_id.rfind(robot_name + "/", 0) != 0 &&
-          original_header != "map") {
+        original_header != "map")
+      {
         modified.header.frame_id = robot_name + "/" + modified.header.frame_id;
       }
       // Prefix child if not already prefixed
