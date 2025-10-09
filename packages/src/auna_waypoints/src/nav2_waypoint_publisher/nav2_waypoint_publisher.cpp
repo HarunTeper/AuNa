@@ -26,8 +26,10 @@ WaypointPublisher::WaypointPublisher()
   tf_listener_(tf_buffer_)
 {
   // Publisher for the next waypoint being navigated to
-  next_waypoint_publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
-    "next_waypoint", 10);
+  next_waypoint_publisher_ =
+    this->create_publisher<geometry_msgs::msg::PoseStamped>(
+    "next_waypoint",
+    10);
   timer_ = this->create_wall_timer(
     std::chrono::milliseconds(1000),
     [this]() {timer_callback();});
@@ -134,10 +136,10 @@ WaypointPublisher::WaypointPublisher()
   // Publish the complete waypoint array
   publish_waypoint_array();
 
-  // Create a timer to periodically republish the waypoint array for visualization
+  // Create a timer to periodically republish the waypoint array for
+  // visualization
   waypoint_array_timer_ = this->create_wall_timer(
-    std::chrono::seconds(5),
-    [this]() {publish_waypoint_array();});
+    std::chrono::seconds(5), [this]() {publish_waypoint_array();});
 
   // to start from zero at first iteration
   current_pose_index_ = -number_of_waypoints_;
@@ -154,13 +156,17 @@ void WaypointPublisher::timer_callback()
   }
 
   RCLCPP_DEBUG(
-    this->get_logger(), "Timer callback: remaining_number_of_poses_=%d, threshold=%d",
-    remaining_number_of_poses_, static_cast<int>(number_of_waypoints_ * 0.5));
+    this->get_logger(),
+    "Timer callback: remaining_number_of_poses_=%d, threshold=%d",
+    remaining_number_of_poses_,
+    static_cast<int>(number_of_waypoints_ * 0.5));
 
   if (remaining_number_of_poses_ < number_of_waypoints_ * 0.5) {
     RCLCPP_INFO(
-      this->get_logger(), "Timer triggering waypoint publishing (remaining: %d < threshold: %d)",
-      remaining_number_of_poses_, static_cast<int>(number_of_waypoints_ * 0.5));
+      this->get_logger(),
+      "Timer triggering waypoint publishing (remaining: %d < threshold: %d)",
+      remaining_number_of_poses_,
+      static_cast<int>(number_of_waypoints_ * 0.5));
     publish_waypoints();
   }
 }
@@ -168,7 +174,10 @@ void WaypointPublisher::timer_callback()
 void WaypointPublisher::publish_waypoints()
 {
   RCLCPP_INFO(
-    this->get_logger(), "Publishing waypoints. Current pose index: %d, number_of_waypoints: %d, remaining_number_of_poses: %d", current_pose_index_, number_of_waypoints_,
+    this->get_logger(),
+    "Publishing waypoints. Current pose index: '%d, "
+    "number_of_waypoints: %d, remaining_number_of_poses: %d'",
+    current_pose_index_, number_of_waypoints_,
     remaining_number_of_poses_);
 
   // Safety check: ensure we have waypoints loaded
@@ -193,7 +202,8 @@ void WaypointPublisher::publish_waypoints()
     current_pose_index_ = nearest_index;
     RCLCPP_INFO(
       this->get_logger(),
-      "Selected nearest waypoint with matching orientation: %d (x=%.2f, y=%.2f)",
+      "Selected nearest waypoint with matching orientation: %d "
+      "(x=%.2f, y=%.2f)",
       current_pose_index_,
       poses_[current_pose_index_].pose.position.x,
       poses_[current_pose_index_].pose.position.y);
@@ -204,7 +214,8 @@ void WaypointPublisher::publish_waypoints()
       static_cast<int>(poses_.size());
     RCLCPP_WARN(
       this->get_logger(),
-      "No waypoint with matching orientation found, using fallback logic. Fallback index: %d (x=%.2f, y=%.2f)",
+      "No waypoint with matching orientation found, using fallback "
+      "logic. Fallback index: %d (x=%.2f, y=%.2f)",
       current_pose_index_,
       poses_[current_pose_index_].pose.position.x,
       poses_[current_pose_index_].pose.position.y);
@@ -216,7 +227,8 @@ void WaypointPublisher::publish_waypoints()
   {
     next_waypoint_publisher_->publish(poses_[current_pose_index_]);
     RCLCPP_DEBUG(
-      this->get_logger(), "Published next waypoint: (x=%.2f, y=%.2f, theta=%.2f)",
+      this->get_logger(),
+      "Published next waypoint: (x=%.2f, y=%.2f, theta=%.2f)",
       poses_[current_pose_index_].pose.position.x,
       poses_[current_pose_index_].pose.position.y,
       tf2::getYaw(poses_[current_pose_index_].pose.orientation));
@@ -225,14 +237,14 @@ void WaypointPublisher::publish_waypoints()
   auto goal_msg = NavigateThroughPoses::Goal();
 
   RCLCPP_INFO(this->get_logger(), "Waypoints to be sent in this goal:");
-  for (int i = current_pose_index_; i < current_pose_index_ + number_of_waypoints_; i++) {
+  for (int i = current_pose_index_;
+    i < current_pose_index_ + number_of_waypoints_; i++)
+  {
     const auto & pose = poses_[i % poses_.size()];
     RCLCPP_INFO(
       this->get_logger(), "  [%d] (x=%.2f, y=%.2f, theta=%.2f)",
-      static_cast<int>(i % poses_.size()),
-      pose.pose.position.x,
-      pose.pose.position.y,
-      tf2::getYaw(pose.pose.orientation));
+      static_cast<int>(i % poses_.size()), pose.pose.position.x,
+      pose.pose.position.y, tf2::getYaw(pose.pose.orientation));
     goal_msg.poses.push_back(pose);
   }
 
@@ -247,7 +259,9 @@ void WaypointPublisher::publish_waypoints()
   send_goal_options.result_callback = std::bind(
     &WaypointPublisher::result_callback, this, std::placeholders::_1);
 
-  RCLCPP_INFO(this->get_logger(), "Sending goal to nav2 NavigateThroughPoses action server");
+  RCLCPP_INFO(
+    this->get_logger(),
+    "Sending goal to nav2 NavigateThroughPoses action server");
   this->client_ptr_->async_send_goal(goal_msg, send_goal_options);
 }
 
@@ -262,7 +276,8 @@ void WaypointPublisher::goal_response_callback(
   } else {
     RCLCPP_INFO(
       this->get_logger(),
-      "Goal accepted by server, waiting for result (index: %d)", current_pose_index_);
+      "Goal accepted by server, waiting for result (index: %d)",
+      current_pose_index_);
     remaining_number_of_poses_ = number_of_waypoints_;
   }
 }
@@ -282,15 +297,19 @@ void WaypointPublisher::result_callback(
 {
   switch (result.code) {
     case rclcpp_action::ResultCode::SUCCEEDED:
-      RCLCPP_INFO(this->get_logger(), "Goal succeeded for waypoint index: %d", current_pose_index_);
+      RCLCPP_INFO(
+        this->get_logger(), "Goal succeeded for waypoint index: %d",
+        current_pose_index_);
       // Continue to next set of waypoints
       remaining_number_of_poses_ = 0;  // Trigger timer to publish new waypoints
       RCLCPP_INFO(
-        this->get_logger(), "Navigation will continue to next waypoints on next timer tick");
+        this->get_logger(),
+        "Navigation will continue to next waypoints on next timer tick");
       break;
     case rclcpp_action::ResultCode::ABORTED:
       RCLCPP_ERROR(
-        this->get_logger(), "Goal was aborted for waypoint index: %d (x=%.2f, y=%.2f)",
+        this->get_logger(),
+        "Goal was aborted for waypoint index: %d (x=%.2f, y=%.2f)",
         current_pose_index_,
         poses_[current_pose_index_].pose.position.x,
         poses_[current_pose_index_].pose.position.y);
@@ -298,7 +317,8 @@ void WaypointPublisher::result_callback(
       return;
     case rclcpp_action::ResultCode::CANCELED:
       RCLCPP_ERROR(
-        this->get_logger(), "Goal was canceled for waypoint index: %d (x=%.2f, y=%.2f)",
+        this->get_logger(),
+        "Goal was canceled for waypoint index: %d (x=%.2f, y=%.2f)",
         current_pose_index_,
         poses_[current_pose_index_].pose.position.x,
         poses_[current_pose_index_].pose.position.y);
@@ -306,9 +326,9 @@ void WaypointPublisher::result_callback(
       return;
     default:
       RCLCPP_ERROR(
-        this->get_logger(), "Unknown result code (%d) for waypoint index: %d (x=%.2f, y=%.2f)",
-        static_cast<int>(result.code),
-        current_pose_index_,
+        this->get_logger(),
+        "Unknown result code (%d) for waypoint index: %d (x=%.2f, y=%.2f)",
+        static_cast<int>(result.code), current_pose_index_,
         poses_[current_pose_index_].pose.position.x,
         poses_[current_pose_index_].pose.position.y);
       publish_waypoints();
