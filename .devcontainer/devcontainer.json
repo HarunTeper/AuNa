@@ -1,7 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json.
 {
 	// Configure container
-	"name": "PhoenixRacing",
+	"name": "AuNa DEV",
 	"dockerComposeFile": [
 		"../docker-compose.yml"
 	],

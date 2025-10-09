@@ -58,6 +58,9 @@ private:
   // create a timer and its callback
   rclcpp::TimerBase::SharedPtr timer_;
   void timer_callback();
+  
+  // timer for periodic waypoint array publishing
+  rclcpp::TimerBase::SharedPtr waypoint_array_timer_;
 
   // publish waypoints
   void publish_waypoints();
@@ -66,6 +69,9 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr
     waypoint_array_publisher_;
   void publish_waypoint_array();
+
+  // Publisher for the next waypoint being navigated to
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr next_waypoint_publisher_;
 
   // helper functions
   geometry_msgs::msg::PoseStamped get_robot_pose();

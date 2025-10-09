@@ -33,7 +33,7 @@ def include_launch_description(context: LaunchContext):
     launch_description_content = []
 
     # Get robot_index and construct namespace
-    robot_index = int(os.environ.get('ROBOT_INDEX', '0'))
+    robot_index = int(os.environ.get('ROBOT_INDEX', '1'))
     namespace = f"robot{robot_index}"
 
     # Package Directories
