@@ -58,7 +58,7 @@ private:
   // create a timer and its callback
   rclcpp::TimerBase::SharedPtr timer_;
   void timer_callback();
-  
+
   // timer for periodic waypoint array publishing
   rclcpp::TimerBase::SharedPtr waypoint_array_timer_;
 
