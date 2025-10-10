@@ -117,19 +117,8 @@ install(
   DESTINATION include
 )
 
-# Install directories
-install(
-  DIRECTORY config
-  DESTINATION share/${PROJECT_NAME}
-)
-
 install(
   DIRECTORY launch
-  DESTINATION share/${PROJECT_NAME}
-)
-
-install(
-  DIRECTORY rviz
   DESTINATION share/${PROJECT_NAME}
 )
 

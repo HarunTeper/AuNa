@@ -25,7 +25,6 @@ from launch_ros.actions import Node, PushRosNamespace
 from launch import LaunchDescription
 from launch.actions import OpaqueFunction
 from launch.launch_context import LaunchContext
-from ament_index_python.packages import get_package_share_directory
 
 
 def include_launch_description(context: LaunchContext):
@@ -36,23 +35,28 @@ def include_launch_description(context: LaunchContext):
     robot_index = int(os.environ.get('ROBOT_INDEX', '1'))
     namespace = f"robot{robot_index}"
 
-    # Package Directories
-    pkg_dir = get_package_share_directory('auna_waypoints')
-
     # Get MAP_NAME from environment variable, default to 'default' if not set
-    map_name = os.environ.get('MAP_NAME', 'default')
+    map_name = os.environ.get('MAP_NAME', 'racetrack_decorated')
 
-    # Config files
-    waypoints = os.path.join(pkg_dir, 'config', map_name, 'nav2_waypoints.yaml')
+    # auna_common paths
+    auna_common_path = "/home/ubuntu/workspace/auna_common"
+    waypoints_file = os.path.join(
+        auna_common_path,
+        'waypoints',
+        map_name,
+        'nav2_waypoints.yaml'
+    )
 
     nav2_waypoint_publisher_node = Node(
         package='auna_waypoints',
         executable='nav2_waypoint_publisher',
         name='nav2_waypoint_publisher',
-        parameters=[{'waypoint_file': waypoints}],
+        parameters=[{'waypoint_file': waypoints_file}],
         output='screen',
-        remappings=[('/tf', 'tf'),
-                    ('/tf_static', 'tf_static')]
+        remappings=[
+            ('/tf', 'tf'),
+            ('/tf_static', 'tf_static')
+        ]
     )
 
     push_ns = PushRosNamespace(namespace)

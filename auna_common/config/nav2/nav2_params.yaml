@@ -1,4 +1,4 @@
-amcl:
+/**/amcl:
   ros__parameters:
     use_sim_time: True
     alpha1: 0.5
@@ -45,7 +45,7 @@ amcl:
     initial_pose.z: 0.0
     initial_pose.yaw: 0.0
 
-bt_navigator:
+/**/bt_navigator:
   ros__parameters:
     use_sim_time: True
     global_frame: map
@@ -92,15 +92,15 @@ bt_navigator:
     - nav2_controller_selector_bt_node
     - nav2_goal_checker_selector_bt_node
 
-bt_navigator_navigate_through_poses_rclcpp_node:
+/**/bt_navigator_navigate_through_poses_rclcpp_node:
   ros__parameters:
     use_sim_time: True
 
-bt_navigator_navigate_to_pose_rclcpp_node:
+/**/bt_navigator_navigate_to_pose_rclcpp_node:
   ros__parameters:
     use_sim_time: True
 
-controller_server:
+/**/controller_server:
   ros__parameters:
     odom_topic: odom
     use_sim_time: True
@@ -163,7 +163,7 @@ controller_server:
       use_rotate_to_heading: false
       use_cost_regulated_linear_velocity_scaling: false
 
-local_costmap:
+/**/local_costmap:
   local_costmap:
     ros__parameters:
       update_frequency: 5.0
@@ -186,7 +186,7 @@ local_costmap:
         map_subscribe_transient_local: True
       always_send_full_costmap: True
 
-global_costmap:
+/**/global_costmap:
   global_costmap:
     ros__parameters:
       update_frequency: 1.0
@@ -213,13 +213,13 @@ global_costmap:
     ros__parameters:
       use_sim_time: True
 
-map_server:
+/**/map_server:
   ros__parameters:
     use_sim_time: True
     yaml_filename: "map.yaml"
     save_map_timeout: 5.0
 
-map_saver:
+/**/map_saver:
   ros__parameters:
     use_sim_time: True
     save_map_timeout: 5.0
@@ -227,7 +227,7 @@ map_saver:
     occupied_thresh_default: 0.65
     map_subscribe_transient_local: True
 
-planner_server:
+/**/planner_server:
   ros__parameters:
     use_sim_time: True
     planner_plugins: ["GridBased"]
@@ -263,13 +263,13 @@ planner_server:
         tolerance: 1e-10
         do_refinement: True               # Whether to recursively run the smoother 3 times on the results from prior runs to refine the results further
 
-planner_server_rclcpp_node:
+/**/planner_server_rclcpp_node:
   ros__parameters:
     use_sim_time: True
 
 ## legacy recoveries_server block removed (nav2_recoveries deprecated). Behavior plugins configured below in behavior_server.
 
-slam_toolbox:
+/**/slam_toolbox:
   ros__parameters:
 
     # Plugin params
@@ -343,7 +343,7 @@ slam_toolbox:
     minimum_distance_penalty: 0.5
     use_response_expansion: true
 
-behavior_server:
+/**/behavior_server:
   ros__parameters:
     costmap_topic: local_costmap/costmap_raw
     footprint_topic: local_costmap/published_footprint
@@ -366,11 +366,11 @@ behavior_server:
     min_rotational_vel: 0.4
     rotational_acc_lim: 3.2
 
-robot_state_publisher:
+/**/robot_state_publisher:
   ros__parameters:
     use_sim_time: True
 
-waypoint_follower:
+/**/waypoint_follower:
   ros__parameters:
     loop_rate: 20
     stop_on_failure: false

@@ -39,7 +39,6 @@ target_link_libraries(sample_node sample_node_lib)
 
 # Install directories
 install(DIRECTORY
-  config
   launch
   DESTINATION share/${PROJECT_NAME}
 )

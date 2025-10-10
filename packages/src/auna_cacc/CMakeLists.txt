@@ -55,7 +55,6 @@ target_link_libraries(cacc_controller cacc_controller_node)
 # Install directories
 install(DIRECTORY
   launch
-  config
   DESTINATION share/${PROJECT_NAME}
 )
 

@@ -21,7 +21,6 @@
 
 # packages/src/auna_ekf/launch/ekf.launch.py
 import os
-from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
@@ -37,9 +36,14 @@ def include_launch_description(context: LaunchContext):
     tf_remap = SetRemap(src='/tf', dst='tf')
     tf_static_remap = SetRemap(src='/tf_static', dst='tf_static')
 
-    auna_ekf_pkg_share = get_package_share_directory('auna_ekf')
-    ekf_local_config_path = os.path.join(
-        auna_ekf_pkg_share, 'config', 'ekf', 'ekf_local.yaml')
+    # auna_common paths
+    auna_common_path = "/home/ubuntu/workspace/auna_common"
+    ekf_local_config_file = os.path.join(
+        auna_common_path,
+        'config',
+        'ekf',
+        'ekf_local.yaml'
+    )
 
     use_sim_time = LaunchConfiguration('use_sim_time')
 
@@ -49,7 +53,7 @@ def include_launch_description(context: LaunchContext):
         name='ekf_filter_node',
         output='screen',
         parameters=[
-            ekf_local_config_path,
+            ekf_local_config_file,
             {'use_sim_time': use_sim_time}
         ],
     )

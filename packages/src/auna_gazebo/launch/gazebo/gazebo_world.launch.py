@@ -34,15 +34,20 @@ def include_launch_description(context: LaunchContext):
     """Return launch description."""
     # Package Directories
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
-    pkg_auna_gazebo = get_package_share_directory('auna_gazebo')
 
     # Launch Configurations
     use_sim_time = LaunchConfiguration('use_sim_time')
 
-    # Get the environment variable WORLD_NAME, fallback to 'default' if not set
+    # Get the environment variable WORLD_NAME, fallback to 'racetrack_decorated' if not set
     world_name = os.environ.get('WORLD_NAME', 'racetrack_decorated')
-    # Construct world path using resolved context
-    world = os.path.join(pkg_auna_gazebo, 'worlds', world_name + '.world')
+
+    # auna_common paths
+    auna_common_path = "/home/ubuntu/workspace/auna_common"
+    world_file = os.path.join(
+        auna_common_path,
+        'worlds',
+        f'{world_name}.world'
+    )
 
     return [
         IncludeLaunchDescription(
@@ -50,7 +55,7 @@ def include_launch_description(context: LaunchContext):
                 os.path.join(pkg_gazebo_ros, 'launch', 'gazebo.launch.py')
             ),
             launch_arguments={
-                'world': world,
+                'world': world_file,
                 'use_sim_time': use_sim_time,
             }.items()
         ),

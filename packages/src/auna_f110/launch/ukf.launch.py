@@ -70,8 +70,6 @@ def generate_launch_description():
     # Launch arguments
     namespace_arg = DeclareLaunchArgument('namespace', default_value='robot')
 
-    # Nodes and other launch files
-
     # Launch Description
     launch_description = LaunchDescription()
 

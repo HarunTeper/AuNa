@@ -22,8 +22,6 @@
 """Launch RViz2 with the default view for the navigation stack."""
 import os
 
-from ament_index_python.packages import get_package_share_directory
-
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, EmitEvent, RegisterEventHandler, OpaqueFunction
 from launch.event_handlers import OnProcessExit
@@ -89,9 +87,13 @@ def include_launch_description(context: LaunchContext):
 
 def generate_launch_description():
     """Launch RViz2 with the default view for the navigation stack."""
-    print("hello")
-    # Get the launch directory
-    pkg_dir = get_package_share_directory('auna_nav2')
+    # auna_common paths
+    auna_common_path = "/home/ubuntu/workspace/auna_common"
+    default_rviz_config = os.path.join(
+        auna_common_path,
+        'rviz',
+        'config_navigation_namespace.rviz'
+    )
 
     # Declare the launch arguments
     declare_namespace_cmd = DeclareLaunchArgument(
@@ -102,8 +104,7 @@ def generate_launch_description():
 
     declare_rviz_config_file_cmd = DeclareLaunchArgument(
         'rviz_config',
-        default_value=os.path.join(
-            pkg_dir, 'rviz', 'config_navigation_namespace.rviz'),
+        default_value=default_rviz_config,
         description='Full path to the RVIZ config file to use')
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(

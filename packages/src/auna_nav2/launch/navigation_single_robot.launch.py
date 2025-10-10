@@ -64,11 +64,16 @@ def include_launch_description(context: LaunchContext):
         robot_namespace = ''
 
     # Calculate initial pose based on robot index and world configuration
-    map_config_path = os.path.join(pkg_dir, "config",
-                                   "map_params", f"{world_name_str}.yaml")
+    auna_common_path = "/home/ubuntu/workspace/auna_common"
+    world_config_path = os.path.join(
+        auna_common_path,
+        'config',
+        'world_params',
+        f'{world_name_str}.yaml'
+    )
 
-    if robot_index >= 0 and os.path.exists(map_config_path):
-        with open(map_config_path, 'r') as f:
+    if robot_index >= 0 and os.path.exists(world_config_path):
+        with open(world_config_path, 'r') as f:
             map_config = yaml.safe_load(f)
         x_pose = map_config["spawn"]["offset"]["x"] + \
             robot_index * map_config["spawn"]["linear"]["x"]
@@ -152,19 +157,33 @@ def include_launch_description(context: LaunchContext):
 
 def generate_launch_description():
     """Return launch description."""
-    # # Package Directories
-    pkg_dir = get_package_share_directory('auna_nav2')
-
     # Paths to folders and files
-    map_name = os.environ.get('MAP_NAME', 'default')
+    map_name = os.environ.get('MAP_NAME', 'racetrack_decorated')
+
+    # auna_common paths
+    auna_common_path = "/home/ubuntu/workspace/auna_common"
     default_map_file = os.path.join(
-        pkg_dir, 'maps', map_name, 'map.yaml')
+        auna_common_path,
+        'maps',
+        map_name,
+        'map.yaml'
+    )
     default_params_file = os.path.join(
-        pkg_dir, 'config', 'nav2_params', 'nav2_params.yaml')
+        auna_common_path,
+        'config',
+        'nav2',
+        'nav2_params.yaml'
+    )
     default_rviz_config_file = os.path.join(
-        pkg_dir, 'rviz', 'config_navigation_namespace.rviz')
-    default_default_bt_xml_filename_file = os.path.join(get_package_share_directory(
-        'nav2_bt_navigator'), 'behavior_trees', 'navigate_w_replanning_and_recovery.xml')
+        auna_common_path,
+        'rviz',
+        'config_navigation_namespace.rviz'
+    )
+    default_default_bt_xml_filename_file = os.path.join(
+        get_package_share_directory('nav2_bt_navigator'),
+        'behavior_trees',
+        'navigate_w_replanning_and_recovery.xml'
+    )
 
     # Launch Arguments
     autostart_arg = DeclareLaunchArgument(

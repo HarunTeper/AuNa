@@ -21,9 +21,6 @@
 
 """Launch the localization nodes in the nav2 stack."""
 import os
-
-from ament_index_python.packages import get_package_share_directory
-
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, SetEnvironmentVariable
 from launch.substitutions import LaunchConfiguration
@@ -32,14 +29,24 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     """Launch the localization nodes in the nav2 stack."""
-    # Get the launch directory
-    pkg_dir = get_package_share_directory('auna_nav2')
-    bringup_dir = get_package_share_directory('auna_nav2')
-    config_dir = os.path.join(pkg_dir, 'config', 'nav2_params')
+    # Get map name from environment variable or default to 'racetrack_decorated'
+    map_name = os.environ.get('MAP_NAME', 'racetrack_decorated')
 
-    # Get map name from environment variable or default to 'default'
-    map_name = os.environ.get('MAP_NAME', 'default')
-    map_yaml_file = os.path.join(bringup_dir, 'maps', map_name, 'map.yaml')
+    # auna_common paths
+    auna_common_path = "/home/ubuntu/workspace/auna_common"
+    map_yaml_file = os.path.join(
+        auna_common_path,
+        'maps',
+        map_name,
+        'map.yaml'
+    )
+    nav2_params_file = os.path.join(
+        auna_common_path,
+        'config',
+        'nav2',
+        'nav2_params.yaml'
+    )
+
     declare_map_cmd = DeclareLaunchArgument(
         'map',
         default_value=map_yaml_file,
@@ -50,8 +57,10 @@ def generate_launch_description():
     autostart = LaunchConfiguration('autostart')
     lifecycle_nodes = ['map_server']
 
-    remappings = [('/tf', 'tf'),
-                  ('/tf_static', 'tf_static')]
+    remappings = [
+        ('/tf', 'tf'),
+        ('/tf_static', 'tf_static')
+    ]
 
     return LaunchDescription([
         # Set env var to print messages to stdout immediately
@@ -72,7 +81,7 @@ def generate_launch_description():
 
         DeclareLaunchArgument(
             'params_file',
-            default_value=os.path.join(config_dir, 'nav2_params.yaml'),
+            default_value=nav2_params_file,
             description='Full path to the ROS2 parameters file to use'),
 
         Node(
