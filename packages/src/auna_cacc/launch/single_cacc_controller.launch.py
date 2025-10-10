@@ -45,10 +45,7 @@ def include_launch_description(context: LaunchContext):
     param_dict = yaml_launch.get_yaml_value(
         cacc_config.perform(context), ['cacc_controller', 'ros__parameters'])
 
-    use_waypoints_env = os.environ.get('USE_WAYPOINTS')
-    if use_waypoints_env is not None:
-        use_waypoints_bool = use_waypoints_env.lower() == 'true'
-        param_dict['use_waypoints'] = use_waypoints_bool
+    # Rely solely on YAML (and node defaults) for 'use_waypoints'; no env override
 
     parameters = [param_dict]
     launch_description_content.append(PushRosNamespace(namespace))
