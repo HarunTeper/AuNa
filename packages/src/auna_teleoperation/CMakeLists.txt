@@ -19,12 +19,6 @@ find_package(rclpy REQUIRED)
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})
 
-# Install directories
-install(DIRECTORY
-  config/
-  DESTINATION share/${PROJECT_NAME}/config
-)
-
 # Install executables
 install(PROGRAMS
   auna_teleoperation/keyboard_teleop_hold.py

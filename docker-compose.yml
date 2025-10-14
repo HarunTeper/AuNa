@@ -32,6 +32,7 @@ x-package-base: &package-base
     <<: *build-auna
   volumes:
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+    - ./auna_common:/home/ubuntu/workspace/auna_common:ro
     - /var/run/lttng:/var/run/lttng:rw
 
 x-physical-base: &physical-base
@@ -41,6 +42,8 @@ x-physical-base: &physical-base
   volumes:
     # Packages
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+    # Common data
+    - ./auna_common:/home/ubuntu/workspace/auna_common:ro
     # IO
     - /dev:/dev
     # Tracing
@@ -53,6 +56,8 @@ x-gui-base: &gui-base
   volumes:
     # Packages
     - ./packages/src:/home/ubuntu/workspace/packages/src:cached
+    # Common data
+    - ./auna_common:/home/ubuntu/workspace/auna_common:ro
     # GUI
     - /tmp/.X11-unix:/tmp/.X11-unix:rw
     - ${XDG_RUNTIME_DIR}:/tmp/runtime-ubuntu:rw
@@ -622,7 +627,7 @@ services:
       [
         "/bin/bash",
         "-c",
-        "source /home/ubuntu/workspace/packages/install/setup.bash && cd packages && source install/setup.bash && exec ros2 run auna_teleoperation keyboard_teleop_hold --ros-args --params-file src/auna_teleoperation/config/key_teleop.yaml",
+        "source /home/ubuntu/workspace/packages/install/setup.bash && cd packages && source install/setup.bash && exec ros2 run auna_teleoperation keyboard_teleop_hold --ros-args --params-file /home/ubuntu/workspace/auna_common/config/teleoperation/key_teleop.yaml",
       ]
     profiles: ["teleop", "manual_control"]
 
@@ -784,6 +789,7 @@ services:
     <<: *package-base
     volumes:
       - .:/home/ubuntu/workspace
+      - ./auna_common:/home/ubuntu/workspace/auna_common:ro
     image: tracing:latest
     pull_policy: build
     container_name: analysis

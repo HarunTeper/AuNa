@@ -19,10 +19,7 @@ find_package(rclpy REQUIRED)
 # Install directories
 install(DIRECTORY
   behavior_trees
-  config
   launch
-  maps
-  rviz
   DESTINATION share/${PROJECT_NAME}
 )
 

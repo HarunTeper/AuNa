@@ -19,13 +19,11 @@
 # THE SOFTWARE.
 
 
+import os
 from launch_ros.actions import Node, PushRosNamespace
 from launch import LaunchDescription
-from launch.actions import OpaqueFunction, DeclareLaunchArgument
-from launch.substitutions import PathJoinSubstitution
+from launch.actions import OpaqueFunction
 from launch.launch_context import LaunchContext
-from launch_ros.substitutions import FindPackageShare
-import os
 
 
 def include_launch_description(context: LaunchContext):
@@ -36,12 +34,14 @@ def include_launch_description(context: LaunchContext):
     robot_index = int(os.environ.get('ROBOT_INDEX', '0'))
     namespace = f"robot{robot_index}"
 
-    # Get path to config file
-    config_file = PathJoinSubstitution([
-        FindPackageShare('auna_wallfollowing'),
+    # auna_common paths
+    auna_common_path = "/home/ubuntu/workspace/auna_common"
+    config_file = os.path.join(
+        auna_common_path,
         'config',
+        'wallfollowing',
         'wallfollowing.yaml'
-    ])
+    )
 
     wallfollowing_node = Node(
         package='auna_wallfollowing',
@@ -64,13 +64,6 @@ def generate_launch_description():
     """Return launch description."""
     # Launch Description
     launch_description = LaunchDescription()
-
-    # Declare config_file argument
-    launch_description.add_action(DeclareLaunchArgument(
-        'config_file',
-        default_value='',
-        description='Path to the configuration file for wallfollowing parameters.'
-    ))
 
     launch_description.add_action(OpaqueFunction(
         function=include_launch_description))

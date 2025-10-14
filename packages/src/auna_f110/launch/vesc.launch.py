@@ -20,14 +20,13 @@
 
 
 """Sensor launch file."""
-import os
-from ament_index_python.packages import get_package_share_directory
+
 from launch_ros.actions import Node
-from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch.launch_context import LaunchContext
 from auna_common import yaml_launch
+from launch import LaunchDescription
 
 
 def include_launch_description(context: LaunchContext):
@@ -86,16 +85,13 @@ def include_launch_description(context: LaunchContext):
 
 def generate_launch_description():
     """Return launch description."""
-    # Package Directories
-    pkg_dir = get_package_share_directory('auna_f110')
-
-    # Config files
-    vesc_config = os.path.join(pkg_dir, 'config', 'vesc.config.yaml')
-
     # Launch arguments
     namespace_arg = DeclareLaunchArgument('namespace', default_value='robot')
     vesc_config_arg = DeclareLaunchArgument(
-        'vesc_config', default_value=vesc_config)
+        'vesc_config',
+        default_value='/home/ubuntu/workspace/auna_common/config/f110/vesc.yaml',
+        description='Path to config file for vesc'
+    )
 
     # Launch Description
     launch_description = LaunchDescription()

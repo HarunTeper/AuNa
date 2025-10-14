@@ -21,6 +21,7 @@
 
 """Single robot spawn launch file."""
 import os
+import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import SetRemap, PushRosNamespace
 from launch import LaunchDescription
@@ -29,7 +30,6 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.actions import GroupAction, OpaqueFunction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.launch_context import LaunchContext
-from auna_common import yaml_launch
 
 
 def include_launch_description(context: LaunchContext):
@@ -46,22 +46,28 @@ def include_launch_description(context: LaunchContext):
     namespace = f'robot{robot_index}'
     urdf_namespace = f'robot{robot_index}'
     use_sim_time = LaunchConfiguration('use_sim_time')
-    x_pose = LaunchConfiguration('x_pose', default='0.0')
-    y_pose = LaunchConfiguration('y_pose', default='0.0')
-    z_pose = LaunchConfiguration('z_pose', default='0.0')
 
     world_name = os.environ.get('WORLD_NAME', 'racetrack_decorated')
 
-    map_path = os.path.join(
-        pkg_dir, "config", "map_params", f"{world_name}.yaml")
+    # auna_common paths
+    auna_common_path = "/home/ubuntu/workspace/auna_common"
+    world_params_file = os.path.join(
+        auna_common_path,
+        'config',
+        'world_params',
+        f'{world_name}.yaml'
+    )
+
+    # Load spawn parameters from YAML
+    with open(world_params_file, 'r') as f:
+        world_params = yaml.safe_load(f)
+
+    spawn_config = world_params['spawn']
     num = int(robot_index)
 
-    x_pose_value = yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "x"]) + \
-        num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "x"])
-    y_pose_value = yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "y"]) + \
-        num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "y"])
-    z_pose_value = yaml_launch.get_yaml_value(map_path, ["spawn", "offset", "z"]) + \
-        num * yaml_launch.get_yaml_value(map_path, ["spawn", "linear", "z"])
+    x_pose_value = spawn_config['offset']['x'] + num * spawn_config['linear']['x']
+    y_pose_value = spawn_config['offset']['y'] + num * spawn_config['linear']['y']
+    z_pose_value = spawn_config['offset']['z'] + num * spawn_config['linear']['z']
 
     x_pose = str(x_pose_value)
     y_pose = str(y_pose_value)

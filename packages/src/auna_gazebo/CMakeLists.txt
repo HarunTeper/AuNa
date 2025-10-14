@@ -49,10 +49,8 @@ target_link_libraries(robot_name_publisher robot_name_publisher_node)
 
 # Install directories
 install(DIRECTORY
-  config
   launch
   models
-  worlds
   DESTINATION share/${PROJECT_NAME}
 )
 

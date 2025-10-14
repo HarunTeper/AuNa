@@ -20,10 +20,6 @@
 
 
 """Launch RViz2 with the default view for the navigation stack."""
-import os
-
-from ament_index_python.packages import get_package_share_directory
-
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, EmitEvent, RegisterEventHandler, OpaqueFunction
 from launch.event_handlers import OnProcessExit
@@ -84,9 +80,6 @@ def include_launch_description(context: LaunchContext):
 
 def generate_launch_description():
     """Launch RViz2 with the default view for the navigation stack."""
-    # Get the launch directory
-    pkg_dir = get_package_share_directory('auna_f110')
-
     # Declare the launch arguments
     declare_namespace_cmd = DeclareLaunchArgument(
         'namespace',
@@ -94,9 +87,10 @@ def generate_launch_description():
         description=('Top-level namespace. The value will be used to replace the '
                      '<robot_namespace> keyword on the rviz config file.'))
 
+    # Use auna_common path
     declare_rviz_config_file_cmd = DeclareLaunchArgument(
         'rviz_config',
-        default_value=os.path.join(pkg_dir, 'rviz', 'config_navigation_namespace.rviz'),
+        default_value='/home/ubuntu/workspace/auna_common/rviz/config_navigation_namespace.rviz',
         description='Full path to the RVIZ config file to use')
 
     # Create the launch description and populate

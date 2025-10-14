@@ -21,21 +21,23 @@
 
 """Sensor launch file."""
 import os
-from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch.conditions import IfCondition
-from auna_common import yaml_launch
 
 
 def generate_launch_description():
     """Return launch description."""
-    # Paths to folders and files
-    physical_pkg_dir = get_package_share_directory('auna_f110')
-    config_file_dir = os.path.join(physical_pkg_dir, 'config')
-    joy_config_file_path = os.path.join(config_file_dir, 'teleop_joy.yaml')
+    # auna_common paths
+    auna_common_path = "/home/ubuntu/workspace/auna_common"
+    joy_config_file = os.path.join(
+        auna_common_path,
+        'config',
+        'f110',
+        'teleop_joy.yaml'
+    )
 
     # Launch arguments
     namespace_arg = DeclareLaunchArgument('namespace', default_value='robot')
@@ -52,8 +54,7 @@ def generate_launch_description():
         executable='joy_linux_node',
         name='joy_linux_node',
         namespace=namespace,
-        parameters=[yaml_launch.get_yaml_value(
-            joy_config_file_path, ['joy_node', 'ros__parameters'])],
+        parameters=[joy_config_file],
     )
 
     teleop_joy_node_ps4 = Node(
@@ -61,8 +62,7 @@ def generate_launch_description():
         executable='teleop_node',
         name='teleop_node',
         namespace=namespace,
-        parameters=[yaml_launch.get_yaml_value(
-            joy_config_file_path, ['teleop_joy_ps4', 'ros__parameters'])],
+        parameters=[joy_config_file],
         condition=IfCondition(use_ps4),
     )
 
@@ -71,8 +71,7 @@ def generate_launch_description():
         executable='teleop_node',
         name='teleop_node',
         namespace=namespace,
-        parameters=[yaml_launch.get_yaml_value(
-            joy_config_file_path, ['joy_teleop_g29', 'ros__parameters'])],
+        parameters=[joy_config_file],
         condition=IfCondition(use_g29),
     )
 

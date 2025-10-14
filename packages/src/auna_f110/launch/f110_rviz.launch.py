@@ -35,12 +35,11 @@ def generate_launch_description():
     # Paths to folders and files
     nav_launch_file_dir = os.path.join(navigation_pkg_dir, 'launch')
 
-    # Paths to folders and files
-    default_rviz_config_file = os.path.join(
-        navigation_pkg_dir, 'rviz', 'config_navigation_namespace.rviz')
-    default_params_file = os.path.join(
-        navigation_pkg_dir, 'config', 'nav2_params', 'nav2_params.yaml')
-    map_path = os.path.join(navigation_pkg_dir, 'maps', 'arena', 'map.yaml')
+    # Use auna_common paths
+    auna_common_path = "/home/ubuntu/workspace/auna_common"
+    default_rviz_config_file = f'{auna_common_path}/rviz/config_navigation_namespace.rviz'
+    default_params_file = f'{auna_common_path}/config/nav2/nav2_params.yaml'
+    map_path = f'{auna_common_path}/maps/arena/map.yaml'
 
     # Launch arguments
     namespace_arg = DeclareLaunchArgument('namespace', default_value='robot')

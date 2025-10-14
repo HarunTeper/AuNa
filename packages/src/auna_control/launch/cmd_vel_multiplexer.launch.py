@@ -22,14 +22,11 @@
 import os
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch.actions import DeclareLaunchArgument
-from launch_ros.substitutions import FindPackageShare
+from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
-    param_file = LaunchConfiguration('param_file')
-    topic_file = LaunchConfiguration('topic_file')
     use_sim_time = LaunchConfiguration('use_sim_time')
 
     # Get initial_source from environment variable or use default
@@ -38,33 +35,19 @@ def generate_launch_description():
 
     namespace = f'robot{robot_index}'
 
-    default_param_file = PathJoinSubstitution([
-        FindPackageShare('auna_control'),
+    # auna_common paths
+    auna_common_path = "/home/ubuntu/workspace/auna_common"
+    param_file = os.path.join(
+        auna_common_path,
         'config',
+        'control',
         'params.yaml'
-    ])
-    default_topic_file = PathJoinSubstitution([
-        FindPackageShare('auna_control'),
+    )
+    topic_file = os.path.join(
+        auna_common_path,
         'config',
+        'control',
         'topics.yaml'
-    ])
-
-    declare_param_file_arg = DeclareLaunchArgument(
-        'param_file',
-        default_value=default_param_file,
-        description='Path to the cmd_vel_multiplexer parameter YAML file'
-    )
-
-    declare_topic_file_arg = DeclareLaunchArgument(
-        'topic_file',
-        default_value=default_topic_file,
-        description='Path to the cmd_vel_multiplexer topic YAML file'
-    )
-
-    declare_namespace_arg = DeclareLaunchArgument(
-        'namespace',
-        default_value='',
-        description='Namespace for the node (empty for none)'
     )
 
     declare_use_sim_time_arg = DeclareLaunchArgument(
@@ -79,16 +62,14 @@ def generate_launch_description():
         namespace=namespace,
         name='cmd_vel_multiplexer_node',
         output='screen',
-        parameters=[param_file, {"topic_file": topic_file}, {
-            'use_sim_time': use_sim_time,
-            'initial_source': initial_source
-        }]
+        parameters=[
+            param_file,
+            {"topic_file": topic_file},
+            {'use_sim_time': use_sim_time, 'initial_source': initial_source}
+        ]
     )
 
     return LaunchDescription([
-        declare_param_file_arg,
-        declare_topic_file_arg,
-        declare_namespace_arg,
         declare_use_sim_time_arg,
         cmd_vel_multiplexer_node,
     ])

@@ -25,19 +25,21 @@ from launch_ros.actions import Node
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
-from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
     """Return launch description."""
-    # Package Directories
-    pkg_dir = get_package_share_directory('auna_waypoints')
+    # Get MAP_NAME from environment variable, default to 'racetrack_decorated' if not set
+    map_name = os.environ.get('MAP_NAME', 'racetrack_decorated')
 
-    # Get MAP_NAME from environment variable, default to 'default' if not set
-    map_name = os.environ.get('MAP_NAME', 'default')
-
-    # Config files
-    waypoints = os.path.join(pkg_dir, 'config', map_name, 'raw_waypoints.csv')
+    # auna_common paths
+    auna_common_path = "/home/ubuntu/workspace/auna_common"
+    waypoints_file = os.path.join(
+        auna_common_path,
+        'waypoints',
+        map_name,
+        'raw_waypoints.csv'
+    )
 
     # Launch Argument Configurations
     interpolation_distance = LaunchConfiguration('interpolation_distance')
@@ -84,16 +86,20 @@ def generate_launch_description():
         package='auna_waypoints',
         executable='curve_fitting.py',
         name='curve_fitting',
-        parameters=[{'waypoint_file': waypoints,
-                     'interpolation_distance': interpolation_distance,
-                     'plot_results': plot_results,
-                     'swap_xy': swap_xy,
-                     'output_file': output_file,
-                     'reverse_order': reverse_order,
-                     'is_closed_loop': is_closed_loop}],
+        parameters=[{
+            'waypoint_file': waypoints_file,
+            'interpolation_distance': interpolation_distance,
+            'plot_results': plot_results,
+            'swap_xy': swap_xy,
+            'output_file': output_file,
+            'reverse_order': reverse_order,
+            'is_closed_loop': is_closed_loop
+        }],
         output='screen',
-        remappings=[('/tf', 'tf'),
-                    ('/tf_static', 'tf_static')]
+        remappings=[
+            ('/tf', 'tf'),
+            ('/tf_static', 'tf_static')
+        ]
     )
 
     # Launch Description

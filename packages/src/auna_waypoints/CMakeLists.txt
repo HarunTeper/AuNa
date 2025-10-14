@@ -68,7 +68,7 @@ install(
   RUNTIME DESTINATION bin)
 
 # Install directories
-install(DIRECTORY launch config DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 
 # Install Python executables
 install(PROGRAMS scripts/curve_fitting.py DESTINATION lib/${PROJECT_NAME})
