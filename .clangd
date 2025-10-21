@@ -1,8 +1,8 @@
 CompileFlags:
   Add:
     - "-std=c++17"
-    - "-I/opt/ros/humble/include"
-    - "-I/opt/ros/humble/include/rclcpp"
+    - "-I/opt/ros/${ROS_DISTRO}/include"
+    - "-I/opt/ros/${ROS_DISTRO}/include/rclcpp"
     - "-I${workspaceFolder}/packages/install/include"
     # libstdc++ for gcc-11
     - "-I/usr/include/c++/11"

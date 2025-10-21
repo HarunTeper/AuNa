@@ -14,16 +14,20 @@ x-common-base: &common-base
   ipc: host
   pid: "host"
 
+# Common build arguments that should be included in all builds
+x-build-args: &build-args
+  ROS_DISTRO: ${ROS_DISTRO}
+  PIP_BREAK_SYSTEM_PACKAGES: ${PIP_BREAK_SYSTEM_PACKAGES}
+  HOST_UID: ${HOST_UID}
+  HOST_GID: ${HOST_GID}
+  ROS_DOMAIN_ID: ${ROS_DOMAIN_ID}
+  RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION}
+
 x-build-auna: &build-auna
   context: .
   dockerfile: dockerfiles/auna.dockerfile
   args:
-    - ROS_DISTRO=${ROS_DISTRO}
-    - PIP_BREAK_SYSTEM_PACKAGES=${PIP_BREAK_SYSTEM_PACKAGES}
-    - HOST_UID=${HOST_UID}
-    - HOST_GID=${HOST_GID}
-    - ROS_DOMAIN_ID=${ROS_DOMAIN_ID}
-    - RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION}
+    <<: *build-args
   target: runtime
 
 x-package-base: &package-base
@@ -118,7 +122,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${GAZEBO_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${GAZEBO_PACKAGES}
     image: gazebo:latest
     container_name: gazebo
     command:
@@ -139,7 +144,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${GAZEBO_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${GAZEBO_PACKAGES}
     image: spawn_robot:latest
     container_name: spawn_robot
     command: ["ros2", "launch", "auna_gazebo", "spawn_robot.launch.py"]
@@ -175,7 +181,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${GROUND_TRUTH_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${GROUND_TRUTH_PACKAGES}
     image: ground_truth_static_transform:latest
     container_name: ground_truth_static_transform
     command:
@@ -193,7 +200,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${GROUND_TRUTH_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${GROUND_TRUTH_PACKAGES}
     image: ground_truth:latest
     container_name: ground_truth
     command: ["ros2", "launch", "auna_ground_truth", "ground_truth.launch.py"]
@@ -229,7 +237,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${TF_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${TF_PACKAGES}
     image: global_tf:latest
     container_name: global_tf
     command:
@@ -244,7 +253,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${TF_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${TF_PACKAGES}
     image: localization_pose:latest
     container_name: localization_pose
     command:
@@ -287,7 +297,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${CONTROL_PANEL_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${CONTROL_PANEL_PACKAGES}
     image: cmd_multiplexer:latest
     container_name: cmd_multiplexer
     command: ["ros2", "launch", "auna_control", "cmd_vel_multiplexer.launch.py"]
@@ -326,7 +337,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${CONTROL_PANEL_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${CONTROL_PANEL_PACKAGES}
     image: control_panel:latest
     container_name: control_panel
     command: ["ros2", "launch", "auna_control", "control_panel.launch.py"]
@@ -362,7 +374,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${EKF_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${EKF_PACKAGES}
     image: ekf_localization:latest
     container_name: ekf_localization
     command: ["ros2", "launch", "auna_ekf", "ekf_sim.launch.py"]
@@ -398,7 +411,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${NAV2_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${NAV2_PACKAGES}
     image: nav2_stack:latest
     container_name: nav2_stack
     command:
@@ -441,7 +455,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${CACC_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${CACC_PACKAGES}
     image: cacc_controller:latest
     container_name: cacc_controller
     command: ["ros2", "launch", "auna_cacc", "single_cacc_controller.launch.py"]
@@ -477,7 +492,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${WALLFOLLOWING_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${WALLFOLLOWING_PACKAGES}
     image: wallfollowing:latest
     container_name: wallfollowing
     command: ["ros2", "launch", "auna_wallfollowing", "wallfollowing.launch.py"]
@@ -513,7 +529,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${WAYPOINT_PUBLISHER_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${WAYPOINT_PUBLISHER_PACKAGES}
     image: nav2_waypoint_publisher:latest
     container_name: nav2_waypoint_publisher
     command:
@@ -549,7 +566,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${WAYPOINT_PUBLISHER_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${WAYPOINT_PUBLISHER_PACKAGES}
     image: cacc_waypoint_publisher:latest
     pull_policy: build
     container_name: cacc_waypoint_publisher
@@ -565,7 +583,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${NAV2_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${NAV2_PACKAGES}
     image: map_server:latest
     container_name: map_server
     command:
@@ -620,7 +639,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${TELEOP_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${TELEOP_PACKAGES}
     image: teleop:latest
     container_name: teleop
     command:
@@ -639,7 +659,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${WAYPOINT_PUBLISHER_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${WAYPOINT_PUBLISHER_PACKAGES}
     image: curve_fitting:latest
     container_name: curve_fitting
     command: ["ros2", "launch", "auna_waypoints", "curve_fitting.launch.py"]
@@ -653,7 +674,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - INSTALL_PACKAGE_NAMES=${DEMO_PACKAGES}
+        <<: *build-args
+        INSTALL_PACKAGE_NAMES: ${DEMO_PACKAGES}
     image: talker:latest
     container_name: talker
     command: ["ros2", "run", "demo_nodes_cpp", "talker"]
@@ -664,7 +686,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - INSTALL_PACKAGE_NAMES=${DEMO_PACKAGES}
+        <<: *build-args
+        INSTALL_PACKAGE_NAMES: ${DEMO_PACKAGES}
     image: listener:latest
     container_name: listener
     command: ["ros2", "run", "demo_nodes_cpp", "listener"]
@@ -678,7 +701,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - INSTALL_PACKAGE_NAMES=${TF2_TOOLS_PACKAGES}
+        <<: *build-args
+        INSTALL_PACKAGE_NAMES: ${TF2_TOOLS_PACKAGES}
     image: tf2_trees:latest
     container_name: tf2_trees
     volumes:
@@ -699,7 +723,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - INSTALL_PACKAGE_NAMES=${RQT_PACKAGES}
+        <<: *build-args
+        INSTALL_PACKAGE_NAMES: ${RQT_PACKAGES}
     image: rqt:latest
     container_name: rqt
     command: ["rqt"]
@@ -725,7 +750,8 @@ services:
     build:
       <<: *build-auna
       args:
-        - PACKAGE_NAMES=${COMM_PACKAGES}
+        <<: *build-args
+        PACKAGE_NAMES: ${COMM_PACKAGES}
     image: cam_communication:latest
     container_name: cam_communication
     command:
