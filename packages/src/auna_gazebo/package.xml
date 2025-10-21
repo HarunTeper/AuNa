@@ -16,9 +16,10 @@
   <depend>auna_common</depend>
   <depend>auna_msgs</depend>
   <depend>gazebo_msgs</depend>
-  <depend>gazebo</depend>
-  <depend>gazebo_ros</depend>
-  <depend>gazebo_ros_pkgs</depend>
+  <depend>ros_gz_sim</depend>
+  <depend>ros_gz_bridge</depend>
+  <depend>ros_gz_image</depend>
+  <depend>gz_ros2_control</depend>
   <depend>xacro</depend>
 
   <test_depend>ament_lint_auto</test_depend>

@@ -39,6 +39,7 @@ def generate_launch_description():
     # Launch Configurations
     model = LaunchConfiguration('model')
     use_sim_time = LaunchConfiguration('use_sim_time')
+    urdf_namespace = LaunchConfiguration('urdf_namespace')
 
     # Launch Arguments
     model_arg = DeclareLaunchArgument(
@@ -53,6 +54,12 @@ def generate_launch_description():
         description='Use simulation (Gazebo) clock if true'
     )
 
+    urdf_namespace_arg = DeclareLaunchArgument(
+        'urdf_namespace',
+        default_value='robot0',
+        description='Namespace for URDF substitutions'
+    )
+
     # Define the robot state publisher
     robot_state_group = Node(
         package='robot_state_publisher',
@@ -61,7 +68,7 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'robot_description': Command([
-                'xacro ', model
+                'xacro ', model, ' urdf_namespace:=', urdf_namespace
             ]),
             'use_sim_time': use_sim_time
         }],
@@ -75,6 +82,7 @@ def generate_launch_description():
         # Launch Arguments
         model_arg,
         use_sim_time_arg,
+        urdf_namespace_arg,
         # Nodes
         robot_state_group
     ])

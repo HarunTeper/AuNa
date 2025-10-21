@@ -2,9 +2,10 @@
 <robot name="sam_bot" xmlns:xacro="http://ros.org/wiki/xacro">
   
   <!-- Arguments -->
-  <!-- <xacro:arg name="namespace" default=""/> -->
+  <xacro:arg name="urdf_namespace" default="robot0"/>
 
   <!-- Properties -->
+  <xacro:property name="urdf_namespace" value="$(arg urdf_namespace)"/>
   <xacro:property name="cameraSizeL" value="0.03"/>
   <xacro:property name="cameraSizeB" value="0.03"/>
   <xacro:property name="cameraSizeH" value="0.17"/>
@@ -333,60 +334,52 @@
   <!-- IMU Sensor -->
   <gazebo reference="imu_link">
     <sensor name="imu_sensor" type="imu">
-      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
-        <ros>
-          <remapping>~/out:=imu</remapping>
-        </ros>
-        <initial_orientation_as_reference>false</initial_orientation_as_reference>
-        <frame_name>imu_link</frame_name>
-        <!-- Remove redundant general noise parameter -->
-        <orientation_noise>
-          <x>
-            <mean>0.0</mean>
-            <stddev>0.001</stddev>
-          </x>
-          <y>
-            <mean>0.0</mean>
-            <stddev>0.001</stddev>
-          </y>
-          <z>
-            <mean>0.0</mean>
-            <stddev>0.001</stddev>
-          </z>
-        </orientation_noise>
-        <angular_velocity_noise>
-          <x>
-            <mean>0.0</mean>
-            <stddev>0.001</stddev>
-          </x>
-          <y>
-            <mean>0.0</mean>
-            <stddev>0.001</stddev>
-          </y>
-          <z>
-            <mean>0.0</mean>
-            <stddev>0.001</stddev>
-          </z>
-        </angular_velocity_noise>
-        <!-- Add linear acceleration noise -->
-        <linear_acceleration_noise>
-          <x>
-            <mean>0.0</mean>
-            <stddev>0.0017</stddev>
-          </x>
-          <y>
-            <mean>0.0</mean>
-            <stddev>0.0017</stddev>
-          </y>
-          <z>
-            <mean>0.0</mean>
-            <stddev>0.0017</stddev>
-          </z>
-        </linear_acceleration_noise>
-      </plugin>
+      <topic>/model/${urdf_namespace}/imu</topic>
       <always_on>true</always_on>
       <update_rate>200</update_rate>
       <visualize>true</visualize>
+      <imu>
+        <angular_velocity>
+          <x>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.001</stddev>
+            </noise>
+          </x>
+          <y>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.001</stddev>
+            </noise>
+          </y>
+          <z>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.001</stddev>
+            </noise>
+          </z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.0017</stddev>
+            </noise>
+          </x>
+          <y>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.0017</stddev>
+            </noise>
+          </y>
+          <z>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.0017</stddev>
+            </noise>
+          </z>
+        </linear_acceleration>
+      </imu>
     </sensor>
   </gazebo>
   
@@ -394,60 +387,33 @@
 
   <!-- Ackermann drive -->
   <gazebo>
-    <plugin name='ackermann_drive' filename='libgazebo_ros_ackermann_drive.so'>
-      <update_rate>100.0</update_rate>
+    <plugin
+      filename="gz-sim-ackermann-steering-system"
+      name="gz::sim::systems::AckermannSteering">
 
-      <!-- wheels -->
       <front_left_joint>left_wheel_front_hinge</front_left_joint>
       <front_right_joint>right_wheel_front_hinge</front_right_joint>
       <rear_left_joint>left_wheel_back_hinge</rear_left_joint>
       <rear_right_joint>right_wheel_back_hinge</rear_right_joint>
       <left_steering_joint>left_steering_hinge</left_steering_joint>
       <right_steering_joint>right_steering_hinge</right_steering_joint>
-      <steering_wheel_joint>steering_wheel_joint</steering_wheel_joint>
 
-      <!-- Max absolute steer angle for tyre in radians-->
-      <!-- Any cmd_vel angular z greater than this would be capped -->
       <max_steer>0.6458</max_steer>
-
-      <!-- Max absolute steering angle of steering wheel -->
-      <max_steering_angle>7.85</max_steering_angle>
-
-      <!-- Max absolute linear speed in m/s -->
       <max_speed>10.0</max_speed>
       
-      <left_steering_pid_gain>5 0 0.3</left_steering_pid_gain>
-      <left_steering_i_range>0 0</left_steering_i_range>
-      <right_steering_pid_gain>5 0 0.3</right_steering_pid_gain>
-      <right_steering_i_range>0 0</right_steering_i_range>
-      <linear_velocity_pid_gain>0.5 0 0</linear_velocity_pid_gain>
-      <linear_velocity_i_range>0 0</linear_velocity_i_range>
-
-      <!-- output -->
-      <publish_odom>true</publish_odom>
-      <publish_odom_tf>false</publish_odom_tf>
-      <publish_wheel_tf>false</publish_wheel_tf>
-      <publish_distance>true</publish_distance>
+      <topic>/model/${urdf_namespace}/cmd_vel</topic>
       
-      <odometry_frame>odom</odometry_frame>
-      <robot_base_frame>base_link</robot_base_frame>
-
-      <ros>
-        <remapping>cmd_vel:=cmd_vel_twist</remapping>
-        <remapping>odom:=odom</remapping>
-        <remapping>distance:=distance</remapping>
-        <remapping>/tf:=tf</remapping>
-      </ros>
-
+      <odom_publish_frequency>100</odom_publish_frequency>
+      <odom_topic>/model/${urdf_namespace}/odom</odom_topic>
+      <tf_topic>/model/${urdf_namespace}/tf</tf_topic>
     </plugin>
   </gazebo>
 
   <gazebo>
-    <plugin name="robot_joint_state" filename="libgazebo_ros_joint_state_publisher.so">
-      <ros>
-        <remapping>~/out:=joint_states</remapping>
-      </ros>
-      <update_rate>100</update_rate>
+    <plugin
+      filename="gz-sim-joint-state-publisher-system"
+      name="gz::sim::systems::JointStatePublisher">
+      <topic>/model/${urdf_namespace}/joint_states</topic>
       <joint_name>left_wheel_front_hinge</joint_name>
       <joint_name>right_wheel_front_hinge</joint_name>
       <joint_name>left_wheel_back_hinge</joint_name>
@@ -455,13 +421,16 @@
       <joint_name>left_steering_hinge</joint_name>
       <joint_name>right_steering_hinge</joint_name>
       <joint_name>steering_wheel_joint</joint_name>
-    </plugin>   
+    </plugin>
   </gazebo>
 
   <!-- Laser Sensor -->
   <gazebo reference="laser">
-    <sensor type="ray" name="laser">
-      <visualize>0</visualize>
+    <sensor name="laser" type="gpu_lidar">
+      <topic>/model/${urdf_namespace}/scan</topic>
+      <gz_frame_id>laser</gz_frame_id>
+      <visualize>true</visualize>
+      <update_rate>60</update_rate>
       <ray>
         <scan>
           <horizontal>
@@ -482,22 +451,16 @@
           <stddev>0.01</stddev>
         </noise>
       </ray>
-      <update_rate>60</update_rate>
-      <plugin name="laser" filename="libgazebo_ros_ray_sensor.so">
-        <ros>
-          <remapping>~/out:=scan</remapping>
-        </ros>
-        <output_type>sensor_msgs/LaserScan</output_type>
-      </plugin>
     </sensor>
   </gazebo>
   
   <!-- GPS Gazebo plugin -->
   <gazebo reference="gps_link">
-    <sensor name="gps_sensor" type="gps">
+    <sensor name="gps_sensor" type="navsat">
+      <topic>/model/${urdf_namespace}/navsat</topic>
       <always_on>true</always_on>
       <update_rate>10</update_rate>
-      <gps>
+      <navsat>
         <position_sensing>
           <horizontal>
             <noise type="gaussian">
@@ -512,20 +475,15 @@
             </noise>
           </vertical>
         </position_sensing>
-      </gps>
-      <plugin name="gps_plugin" filename="libgazebo_ros_gps_sensor.so">
-        <ros>
-          <remapping>~/out:=gps/fix</remapping>
-        </ros>
-        <frame_name>gps_link</frame_name>
-      </plugin>
+      </navsat>
     </sensor>
   </gazebo>
 
   <!-- Camera -->
   <gazebo reference="camera">
-    <sensor name="camera" type="camera" >
-      <visualize>0</visualize>
+    <sensor name="camera" type="camera">
+      <topic>/model/${urdf_namespace}/camera</topic>
+      <visualize>true</visualize>
       <update_rate>30</update_rate>
       <camera name="head">
         <horizontal_fov>1.3962634</horizontal_fov>
@@ -538,21 +496,8 @@
           <near>0.02</near>
           <far>300</far>
         </clip>
+        <optical_frame_id>camera</optical_frame_id>
       </camera>
-      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
-        <alwaysOn>true</alwaysOn>
-        <updateRate>0.0</updateRate>
-        <cameraName>camera</cameraName>
-        <imageTopicName>image_raw</imageTopicName>
-        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
-        <frameName>camera_link</frameName>
-        <hackBaseline>0.07</hackBaseline>
-        <distortionK1>0.0</distortionK1>
-        <distortionK2>0.0</distortionK2>
-        <distortionK3>0.0</distortionK3>
-        <distortionT1>0.0</distortionT1>
-        <distortionT2>0.0</distortionT2>
-      </plugin>
     </sensor>
   </gazebo>
 

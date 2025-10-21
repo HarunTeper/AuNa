@@ -23,7 +23,7 @@
 import os
 import yaml
 from ament_index_python.packages import get_package_share_directory
-from launch_ros.actions import SetRemap, PushRosNamespace
+from launch_ros.actions import SetRemap, PushRosNamespace, Node
 from launch import LaunchDescription
 from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
@@ -84,62 +84,78 @@ def include_launch_description(context: LaunchContext):
         ),
         launch_arguments={
             'use_sim_time': use_sim_time,
-        }.items()
-    )
-
-    spawn_robot = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(spawn_launch_file_dir,
-                         '_spawn_robot_entity.launch.py')
-        ),
-        launch_arguments={
-            'x_pose': x_pose,
-            'y_pose': y_pose,
-            'z_pose': z_pose,
             'urdf_namespace': urdf_namespace,
-            'name': name
         }.items()
     )
 
-    # localization_pose_publisher = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(
-    #         os.path.join(spawn_launch_file_dir,
-    #                      '_localization_pose_publisher.launch.py')
-    #     )
-    # )
+    # Spawn robot using new Gazebo
+    spawn_robot = Node(
+        package='ros_gz_sim',
+        executable='create',
+        arguments=[
+            '-name', name,
+            '-topic', 'robot_description',
+            '-x', x_pose,
+            '-y', y_pose,
+            '-z', z_pose,
+            '-allow_renaming', 'true',
+        ],
+        output='screen'
+    )
 
-    # ground_truth_cam = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(
-    #         os.path.join(spawn_launch_file_dir,
-    #                      '_ground_truth_cam.launch.py')
-    #     )
-    # )
+    # Bridge for standard topics
+    gz_bridge = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        name='parameter_bridge',
+        arguments=[
+            # Ackermann CMD (ROS -> Gz)
+            f'/model/{urdf_namespace}/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',
 
-    # ground_truth_transform = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(
-    #         os.path.join(spawn_launch_file_dir,
-    #                      '_ground_truth_transform.launch.py')
-    #     ),
-    #     condition=IfCondition(PythonExpression(ground_truth))
-    # )
+            # Odom (Gz -> ROS)
+            f'/model/{urdf_namespace}/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry',
 
-    # ground_truth_pose_publisher = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(
-    #         os.path.join(spawn_launch_file_dir,
-    #                      '_ground_truth_pose_publisher.launch.py')
-    #     ),
-    #     condition=IfCondition(PythonExpression(ground_truth))
-    # )
+            # TF (Gz -> ROS)
+            f'/model/{urdf_namespace}/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
 
-    # # EKF Localization
-    # ekf_node = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(
-    #         os.path.join(ekf_launch_file_dir, 'ekf.launch.py')
-    #     ),
-    #     launch_arguments={
-    #         'use_sim_time': use_sim_time,
-    #     }.items(),
-    # ),
+            # IMU (Gz -> ROS)
+            f'/model/{urdf_namespace}/imu@sensor_msgs/msg/Imu[gz.msgs.IMU',
+
+            # LIDAR (Gz -> ROS)
+            f'/model/{urdf_namespace}/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
+
+            # GPS/NavSat (Gz -> ROS)
+            f'/model/{urdf_namespace}/navsat@sensor_msgs/msg/NavSatFix[gz.msgs.NavSat',
+
+            # Joint States (Gz -> ROS)
+            f'/model/{urdf_namespace}/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model',
+        ],
+        remappings=[
+            (f'/model/{urdf_namespace}/cmd_vel', 'cmd_vel_twist'),
+            (f'/model/{urdf_namespace}/odom', 'odom'),
+            (f'/model/{urdf_namespace}/tf', 'tf'),
+            (f'/model/{urdf_namespace}/imu', 'imu'),
+            (f'/model/{urdf_namespace}/scan', 'scan'),
+            (f'/model/{urdf_namespace}/navsat', 'gps/fix'),
+            (f'/model/{urdf_namespace}/joint_states', 'joint_states'),
+        ],
+        output='screen'
+    )
+
+    # Specialized bridge for Camera topics
+    cam_bridge = Node(
+        package='ros_gz_image',
+        executable='image_bridge',
+        name='image_bridge',
+        arguments=[
+            f'/model/{urdf_namespace}/camera',
+        ],
+        remappings=[
+            (f'/model/{urdf_namespace}/camera', 'camera/image_raw'),
+            (f'/model/{urdf_namespace}/camera_info', 'camera/camera_info'),
+        ],
+        output='screen'
+    )
 
     # Main robot launch group with namespace and remappings
     robot_launch_group = GroupAction([
@@ -148,11 +164,8 @@ def include_launch_description(context: LaunchContext):
         tf_static_remap,
         robot_state_publisher,
         spawn_robot,
-        # delete_entity_service
-        # localization_pose_publisher,
-        # ground_truth_cam,
-        # ground_truth_transform,
-        # ground_truth_pose_publisher,
+        gz_bridge,
+        cam_bridge,
     ])
 
     launch_actions = []

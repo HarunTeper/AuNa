@@ -1,9 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<sdf version="1.4">
+<sdf version="1.6">
     <world name="flw">
-        <plugin name="gazebo_ros_state" filename="libgazebo_ros_state.so">
-          <update_rate>10.0</update_rate>
+        <!-- Core Gazebo system plugins -->
+        <plugin
+            filename="gz-sim-physics-system"
+            name="gz::sim::systems::Physics">
         </plugin>
+        <plugin
+            filename="gz-sim-user-commands-system"
+            name="gz::sim::systems::UserCommands">
+        </plugin>
+        <plugin
+            filename="gz-sim-scene-broadcaster-system"
+            name="gz::sim::systems::SceneBroadcaster">
+        </plugin>
+        <plugin
+            filename="gz-sim-sensors-system"
+            name="gz::sim::systems::Sensors">
+            <render_engine>ogre2</render_engine>
+        </plugin>
+        <plugin
+            filename="gz-sim-imu-system"
+            name="gz::sim::systems::Imu">
+        </plugin>
+
+        <!-- Old Gazebo Classic plugin removed for new Gazebo compatibility -->
         <physics type="ode">
             <real_time_update_rate>1000.0</real_time_update_rate>
             <max_step_size>0.001</max_step_size>
@@ -32,12 +53,7 @@
         <include>
             <uri>model://sun</uri>
         </include>
-        <gui>
-            <camera name="my_camera">
-                <pose>-3.2 7.8 31 0 1.5707963 1.5707963</pose>
-            </camera>
-        </gui>
-        
+
         <model name="arena_model">
             <pose>0 0 0  0 0 0</pose>
             <static>true</static>

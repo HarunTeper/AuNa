@@ -17,6 +17,8 @@ find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(auna_common REQUIRED)
 find_package(auna_msgs REQUIRED)
+find_package(ros_gz_sim REQUIRED)
+find_package(ros_gz_bridge REQUIRED)
 find_package(gazebo_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
@@ -29,44 +31,36 @@ find_package(tf2_ros REQUIRED)
 include_directories(include)
 
 # Add libraries
-add_library(robot_name_publisher_node SHARED src/robot_name_publisher/robot_name_publisher.cpp)
+add_library(robot_name_publisher_node SHARED
+  src/robot_name_publisher/robot_name_publisher.cpp)
 
 # Create executables
-add_executable(robot_name_publisher src/robot_name_publisher/robot_name_publisher_main.cpp)
+add_executable(robot_name_publisher
+  src/robot_name_publisher/robot_name_publisher_main.cpp)
 
 # Target dependencies
-set(robot_name_publisher_dependencies
-  rclcpp
-  gazebo_msgs
-  auna_msgs
-)
+set(robot_name_publisher_dependencies rclcpp gazebo_msgs auna_msgs)
 
-ament_target_dependencies(robot_name_publisher_node ${robot_name_publisher_dependencies})
-ament_target_dependencies(robot_name_publisher ${robot_name_publisher_dependencies})
+ament_target_dependencies(robot_name_publisher_node
+  ${robot_name_publisher_dependencies})
+ament_target_dependencies(robot_name_publisher
+  ${robot_name_publisher_dependencies})
 
 # Link libraries
 target_link_libraries(robot_name_publisher robot_name_publisher_node)
 
 # Install directories
-install(DIRECTORY
-  launch
-  models
-  DESTINATION share/${PROJECT_NAME}
-)
+install(DIRECTORY launch models DESTINATION share/${PROJECT_NAME})
 
 # Install executables
-install(TARGETS
-  robot_name_publisher
-  DESTINATION lib/${PROJECT_NAME}
-)
+install(TARGETS robot_name_publisher DESTINATION lib/${PROJECT_NAME})
 
 # Install libraries
-install(TARGETS
-  robot_name_publisher_node
+install(
+  TARGETS robot_name_publisher_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-)
+  RUNTIME DESTINATION bin)
 
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})
