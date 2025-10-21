@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-See%20Packages-blue.svg)](packages/)
 [![ROS2](https://img.shields.io/badge/ROS2-Humble-blue)](https://docs.ros.org/en/humble/)
-[![Docker](https://img.shields.io/badge/docker compose-blue)](https://docs.docker.com/compose/)
+[![Docker](https://img.shields.io/badge/docker%20compose-blue)](https://docs.docker.com/compose/)
 
 A comprehensive ROS2-based framework for autonomous vehicle simulation, featuring cooperative driving scenarios, multi-robot coordination, and advanced navigation algorithms. The system uses Docker Compose for easy deployment and provides Gazebo simulation with RViz visualization.
 
