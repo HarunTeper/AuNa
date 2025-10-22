@@ -330,42 +330,6 @@ services:
     profiles: ["sim_robot3", "sim_scenario", "platooning"]
 
   #==============================================================================
-  # CONTROL PANEL SERVICES
-  #==============================================================================
-  control_panel:
-    <<: *gui-base
-    build:
-      <<: *build-auna
-      args:
-        <<: *build-args
-        PACKAGE_NAMES: ${CONTROL_PANEL_PACKAGES}
-    image: control_panel:latest
-    container_name: control_panel
-    command: ["ros2", "launch", "auna_control", "control_panel.launch.py"]
-    profiles: ["control_panel"]
-
-  control_panel_robot1:
-    extends: control_panel
-    container_name: control_panel_robot1
-    environment:
-      - ROBOT_INDEX=1
-    profiles:
-      ["sim_robot1", "sim_scenario", "sim_scenario_1", "platooning", "racing"]
-
-  control_panel_robot2:
-    extends: control_panel
-    container_name: control_panel_robot2
-    environment:
-      - ROBOT_INDEX=2
-    profiles: ["sim_robot2", "sim_scenario", "platooning"]
-
-  control_panel_robot3:
-    extends: control_panel
-    container_name: control_panel_robot3
-    environment:
-      - ROBOT_INDEX=3
-    profiles: ["sim_robot3", "sim_scenario", "platooning"]
-
   #==============================================================================
   # EKF LOCALIZATION SERVICES
   #==============================================================================
@@ -412,7 +376,7 @@ services:
       <<: *build-auna
       args:
         <<: *build-args
-        PACKAGE_NAMES: ${NAV2_PACKAGES}
+        PACKAGE_NAMES: "${NAV2_PACKAGES} ${CONTROL_PANEL_PACKAGES}"
     image: nav2_stack:latest
     container_name: nav2_stack
     command:

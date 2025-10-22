@@ -33,22 +33,16 @@ A comprehensive ROS2-based framework for autonomous vehicle simulation, featurin
 
 The only supported method is through Docker Compose. You only need to specify the world name:
 
-#### Single Robot Scenario
+#### Racing Scenario (1 robot)
+This profile launches a single robot on the `racetrack_decorated` world, configured for racing.
 ```bash
-# Default world (racetrack_decorated)
-docker compose --profile sim_scenario_1 up
-
-# Specify custom world
-WORLD_NAME=arena docker compose --profile sim_scenario_1 up
+docker compose --profile racing up
 ```
 
-#### Multi-Robot Scenario (3 robots)
+#### Platooning Scenario (3 robots)
+This profile launches three robots in the `arena` world, configured for a platooning simulation.
 ```bash
-# Default world (racetrack_decorated) 
-docker compose --profile sim_scenario up
-
-# Specify custom world
-WORLD_NAME=arena docker compose --profile sim_scenario up
+docker compose --profile platooning up
 ```
 
 ### Available Worlds
