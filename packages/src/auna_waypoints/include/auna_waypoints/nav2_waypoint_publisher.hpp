@@ -40,14 +40,13 @@
 
 using NavigateThroughPoses = nav2_msgs::action::NavigateThroughPoses;
 using GoalHandleNavigateThroughPoses =
-  rclcpp_action::ClientGoalHandle<NavigateThroughPoses>;
+    rclcpp_action::ClientGoalHandle<NavigateThroughPoses>;
 
-class WaypointPublisher : public rclcpp::Node
-{
-public:
+class WaypointPublisher : public rclcpp::Node {
+ public:
   WaypointPublisher();
 
-private:
+ private:
   // create a namespace variable
   std::string namespace_;
 
@@ -67,29 +66,30 @@ private:
 
   // waypoint array publisher
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr
-    waypoint_array_publisher_;
+      waypoint_array_publisher_;
   void publish_waypoint_array();
 
   // Publisher for the next waypoint being navigated to
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr next_waypoint_publisher_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr
+      next_waypoint_publisher_;
 
   // helper functions
   geometry_msgs::msg::PoseStamped get_robot_pose();
   int find_nearest_waypoint_with_orientation(
-    const geometry_msgs::msg::PoseStamped & robot_pose);
+      const geometry_msgs::msg::PoseStamped& robot_pose);
   double normalize_angle(double angle);
   double angle_difference(double angle1, double angle2);
 
   // action client and callbacks
   rclcpp_action::Client<nav2_msgs::action::NavigateThroughPoses>::SharedPtr
-    client_ptr_;
+      client_ptr_;
   void goal_response_callback(
-    GoalHandleNavigateThroughPoses::SharedPtr goal_handle);
+      GoalHandleNavigateThroughPoses::SharedPtr goal_handle);
   void feedback_callback(
-    GoalHandleNavigateThroughPoses::SharedPtr,
-    const std::shared_ptr<const NavigateThroughPoses::Feedback> feedback);
+      GoalHandleNavigateThroughPoses::SharedPtr,
+      const std::shared_ptr<const NavigateThroughPoses::Feedback> feedback);
   void result_callback(
-    const GoalHandleNavigateThroughPoses::WrappedResult & result);
+      const GoalHandleNavigateThroughPoses::WrappedResult& result);
 
   // waypoint data
   std::vector<geometry_msgs::msg::PoseStamped> poses_;
@@ -97,7 +97,8 @@ private:
   int current_pose_index_ = 0;
   int remaining_number_of_poses_ = 0;
   bool remaining_decreased_ = false;
-  int number_of_waypoints_ = 20;
+  int number_of_waypoints_ = 5;
+  int waypoint_refresh_threshold_ = 2;
 };
 
 #endif  // AUNA_WAYPOINTS__NAV2_WAYPOINT_PUBLISHER_HPP_
