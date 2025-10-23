@@ -177,7 +177,7 @@ def generate_launch_description():
     default_rviz_config_file = os.path.join(
         auna_common_path,
         'rviz',
-        'config_navigation_namespace.rviz'
+        'config_navigation_control.rviz'
     )
     default_default_bt_xml_filename_file = os.path.join(
         get_package_share_directory('nav2_bt_navigator'),

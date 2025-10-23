@@ -32,7 +32,8 @@
 				"ms-vscode.cpptools-extension-pack",
 				"GitHub.copilot",
 				"GitHub.copilot-chat",
-				"mechatroner.rainbow-csv"
+				"mechatroner.rainbow-csv",
+				"rooveterinaryinc.roo-cline"
 			]
 		}
 	},
