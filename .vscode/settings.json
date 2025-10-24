@@ -10,6 +10,11 @@
         "editor.defaultFormatter": "ms-python.autopep8",
         "editor.formatOnSave": true
     },
+    "[cpp]": {
+        "editor.defaultFormatter": "zachflower.uncrustify",
+        "editor.formatOnSave": true
+    },
+    "uncrustify.configPath.linux": "scripts/uncrustify.cfg",
     "[yaml]": {
         "editor.formatOnSave": false
     }
