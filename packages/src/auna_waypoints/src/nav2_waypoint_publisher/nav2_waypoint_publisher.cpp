@@ -312,7 +312,7 @@ void WaypointPublisher::result_callback(
         current_pose_index_,
         poses_[current_pose_index_].pose.position.x,
         poses_[current_pose_index_].pose.position.y);
-      publish_waypoints();
+      // publish_waypoints();
       return;
     case rclcpp_action::ResultCode::CANCELED:
       RCLCPP_ERROR(
@@ -321,7 +321,7 @@ void WaypointPublisher::result_callback(
         current_pose_index_,
         poses_[current_pose_index_].pose.position.x,
         poses_[current_pose_index_].pose.position.y);
-      publish_waypoints();
+      // publish_waypoints();
       return;
     default:
       RCLCPP_ERROR(
@@ -330,7 +330,7 @@ void WaypointPublisher::result_callback(
         static_cast<int>(result.code), current_pose_index_,
         poses_[current_pose_index_].pose.position.x,
         poses_[current_pose_index_].pose.position.y);
-      publish_waypoints();
+      // publish_waypoints();
       return;
   }
   RCLCPP_INFO(
