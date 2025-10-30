@@ -31,23 +31,36 @@ A comprehensive ROS2-based framework for autonomous vehicle simulation, featurin
 
 ### Running Simulations
 
-The only supported method is through Docker Compose. You only need to specify the world name:
+The only supported method is through Docker Compose.
+
+**Important**: Before running a scenario, configure the world in the `.env` file:
+
+1. **Edit the `.env` file** in the project root:
+   ```bash
+   # For racing scenario
+   WORLD_NAME=racetrack_decorated
+   
+   # For platooning scenario
+   WORLD_NAME=arena
+   ```
+
+2. **Launch the scenario**:
 
 #### Racing Scenario (1 robot)
-This profile launches a single robot on the `racetrack_decorated` world, configured for racing.
+Set `WORLD_NAME=racetrack_decorated` in `.env`, then run:
 ```bash
 docker compose --profile racing up
 ```
 
 #### Platooning Scenario (3 robots)
-This profile launches three robots in the `arena` world, configured for a platooning simulation.
+Set `WORLD_NAME=arena` in `.env`, then run:
 ```bash
 docker compose --profile platooning up
 ```
 
 ### Available Worlds
-- `racetrack_decorated` - Racing track environment (default)
-- `arena` - Open arena environment
+- `racetrack_decorated` - Racing track environment (default for racing)
+- `arena` - Open arena environment (default for platooning)
 
 After launching, **Gazebo** and **RViz** windows will start automatically.
 
@@ -98,8 +111,6 @@ Once the simulation starts, you'll see both **Gazebo** (simulation) and **RViz**
 3. For additional robots:
    - Enter namespace: `robot2` 
    - Select input source: `cacc` (follower)
-
-![OMNeT++ Simulation](media/omnetSimulation.gif)
 
 ## 🐛 Troubleshooting
 
