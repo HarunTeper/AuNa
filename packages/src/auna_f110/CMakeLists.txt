@@ -22,7 +22,6 @@ find_package(rclcpp_action REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
-find_package(auna_common REQUIRED)
 find_package(teleop_twist_joy REQUIRED)
 
 # Include directories

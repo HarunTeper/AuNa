@@ -47,20 +47,15 @@ GroundTruthCam::GroundTruthCam()
 // Timer callback remains the same
 void GroundTruthCam::service_timer_callback()
 {
-  // No changes needed here
   auto request = std::make_shared<gazebo_msgs::srv::GetEntityState::Request>();
   request->name = name_;
-  while (!modelClient_->wait_for_service(std::chrono::seconds(5))) {
-    if (!rclcpp::ok()) {
-      RCLCPP_ERROR(
-        rclcpp::get_logger("rclcpp"),
-        "Interrupted while waiting for the service. Exiting.");
-      return;
-    }
-    RCLCPP_INFO(
-      rclcpp::get_logger("rclcpp"),
-      "service not available, waiting again...");
+
+  // Non-blocking check for service availability
+  if (!modelClient_->service_is_ready()) {
+    RCLCPP_DEBUG(this->get_logger(), "Gazebo service not available yet");
+    return;
   }
+
   auto result = modelClient_->async_send_request(
     request, std::bind(
       &GroundTruthCam::model_srv_callback, this,

@@ -21,7 +21,6 @@
 
 """Lidar sensor launch file."""
 import os
-import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import LifecycleNode, Node
 from launch_ros.event_handlers import OnStateTransition
@@ -34,7 +33,6 @@ from launch.actions import DeclareLaunchArgument, EmitEvent, RegisterEventHandle
 from launch.event_handlers import OnProcessStart
 from launch.events import matches_action
 from launch.launch_context import LaunchContext
-from auna_common import yaml_launch
 
 
 def include_launch_description(context: LaunchContext):
@@ -42,14 +40,6 @@ def include_launch_description(context: LaunchContext):
     # File Paths
     config_file_path = os.path.join(get_package_share_directory(
         'auna_f110'), 'config', 'lidar_params.yaml')
-
-    tmp_params_file = yaml_launch.get_yaml(config_file_path)
-    tmp_params_file = yaml_launch.insert_namespace(
-        tmp_params_file, context.launch_configurations['namespace'])
-    tmp_params_file = yaml_launch.get_temp_file(tmp_params_file)
-
-    with open(tmp_params_file, 'r') as file:
-        config_params = yaml.safe_load(file)['urg_node2']['ros__parameters']
 
     # Launch configurations
     namespace = LaunchConfiguration('namespace')
@@ -63,7 +53,7 @@ def include_launch_description(context: LaunchContext):
         executable='urg_node_driver',
         name=urg_node_name,
         remappings=[('scan', scan_topic_name)],
-        parameters=[config_params],
+        parameters=[config_file_path],
         namespace=namespace,
         output='screen',
     )

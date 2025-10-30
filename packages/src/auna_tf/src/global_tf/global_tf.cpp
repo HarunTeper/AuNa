@@ -39,17 +39,13 @@ GlobalTF::GlobalTF()
 void GlobalTF::service_timer_callback()
 {
   auto request = std::make_shared<gazebo_msgs::srv::GetModelList::Request>();
-  while (!modelClient_->wait_for_service(std::chrono::seconds(5))) {
-    if (!rclcpp::ok()) {
-      RCLCPP_ERROR(
-        rclcpp::get_logger("rclcpp"),
-        "Interrupted while waiting for the service. Exiting.");
-      return;
-    }
-    RCLCPP_INFO(
-      rclcpp::get_logger("rclcpp"),
-      "service not available, waiting again...");
+
+  // Non-blocking check for service availability
+  if (!modelClient_->service_is_ready()) {
+    RCLCPP_DEBUG(this->get_logger(), "Gazebo service not available yet");
+    return;
   }
+
   auto result = modelClient_->async_send_request(
     request,
     std::bind(&GlobalTF::model_srv_callback, this, std::placeholders::_1));

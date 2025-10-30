@@ -25,7 +25,6 @@ from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch.launch_context import LaunchContext
-from auna_common import yaml_launch
 from launch import LaunchDescription
 
 
@@ -38,19 +37,13 @@ def include_launch_description(context: LaunchContext):
     remappings = [('/tf', 'tf'),
                   ('/tf_static', 'tf_static')]
 
-    tmp_params_file = yaml_launch.get_yaml(vesc_config.perform(context))
-    tmp_params_file = yaml_launch.insert_namespace(
-        tmp_params_file, context.launch_configurations['namespace'])
-    tmp_params_file = yaml_launch.get_temp_file(tmp_params_file)
-
     # Nodes and other launch files
     vesc_driver_node = Node(
         package='vesc_driver',
         executable='vesc_driver_node',
         name='vesc_driver_node',
         namespace=namespace,
-        parameters=[yaml_launch.get_yaml_value(
-            tmp_params_file, ['vesc_driver_node', 'ros__parameters'])],
+        parameters=[vesc_config],
         output='screen'
     )
 
@@ -59,8 +52,7 @@ def include_launch_description(context: LaunchContext):
         executable='vesc_to_odom_node',
         name='vesc_to_odom_node',
         namespace=namespace,
-        parameters=[yaml_launch.get_yaml_value(
-            tmp_params_file, ['vesc_to_odom_node', 'ros__parameters'])],
+        parameters=[vesc_config],
         output='screen',
         remappings=remappings
     )
@@ -70,8 +62,7 @@ def include_launch_description(context: LaunchContext):
         executable='ackermann_to_vesc_node',
         name='ackermann_to_vesc_node',
         namespace=namespace,
-        parameters=[yaml_launch.get_yaml_value(
-            tmp_params_file, ['ackermann_to_vesc_node', 'ros__parameters'])],
+        parameters=[vesc_config],
         output='screen'
     )
 
