@@ -1,0 +1,47 @@
+# Arena waypoints in YAML format for nav2_waypoint_publisher
+# Converted from CSV format, orientations will be calculated automatically
+- position:
+    x: 3.17436982808834
+    y: -6.09016702472381
+    z: 0.0
+  orientation:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0
+- position:
+    x: 3.12244534755028
+    y: -6.49515898947217
+    z: 0.0
+  orientation:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0
+- position:
+    x: 3.10863301510316
+    y: -6.59710078705433
+    z: 0.0
+  orientation:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0
+- position:
+    x: 3.09429539807978
+    y: -6.69884096834255
+    z: 0.0
+  orientation:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0
+- position:
+    x: 3.07885093142631
+    y: -6.80110959510022
+    z: 0.0
+  orientation:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 1.0

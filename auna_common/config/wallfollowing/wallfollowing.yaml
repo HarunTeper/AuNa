@@ -1,0 +1,23 @@
+/**/wallfollowing_node:
+  ros__parameters:
+    # PID controller parameters
+    kp: 0.25
+    kd: 0.0
+    ki: 0.0
+    
+    # Controller parameters
+    desired_distance: 0.5
+    velocity: 1.5
+    max_steering_angle: 0.4189  # ~24 degrees
+    min_velocity: 1.0
+    max_velocity: 2.0
+    error_threshold: 1.0
+    
+    # Wall detection angles (in radians)
+    angle_a: 0.7854  # π/4 (45 degrees)
+    angle_b: 1.5708  # π/2 (90 degrees)
+    lookahead_distance: 1.0
+    
+    # Topic names
+    lidarscan_topic: "scan"
+    drive_topic: "cmd_vel/wallfollowing"

@@ -1,0 +1,117 @@
+teleop_joy_ps4:
+  ros__parameters:
+    axis_linear: 1
+    scale_linear: 0.7
+    scale_linear_turbo: 1.5
+
+    axis_angular: 0
+    scale_angular: 0.4
+
+    enable_button: 6        # L2 shoulder button
+    enable_turbo_button: 4  # L1 shoulder button
+
+joy_teleop_ps4:
+  ros__parameters:
+    walk:
+      type: topic
+      interface_type: geometry_msgs/msg/Twist
+      topic_name: cmd_vel
+      deadman_buttons: [6]
+      axis_mappings:
+        linear-x:
+          axis: 4
+          scale: 0.5
+          offset: 0
+        angular-z:
+          axis: 0
+          scale: 1.25
+          offset: 0.0
+    enable_emergency_stop:
+      type: service
+      interface_type: std_srvs/srv/Empty
+      service_name: /emergency_stop_enable
+      buttons: [9]
+    disable_emergency_stop:
+      type: service
+      interface_type: std_srvs/srv/Empty
+      service_name: /emergency_stop_disable
+      buttons: [8]
+    enable_auto_mode:
+      type: service
+      interface_type: auna_msgs/srv/SetBool
+      service_name: cacc/set_auto_mode
+      service_request:
+        value: True
+      buttons: [2]
+    disable_auto_mode:
+      type: service
+      interface_type: auna_msgs/srv/SetBool
+      service_name: cacc/set_auto_mode
+      service_request:
+        value: False
+      buttons: [1]
+    enable_cacc:
+      type: service
+      interface_type: auna_msgs/srv/SetBool
+      service_name: /cacc/set_cacc_enable
+      service_request:
+        value: True
+      buttons: [0]
+    disable_cacc:
+      type: service
+      interface_type: auna_msgs/srv/SetBool
+      service_name: /cacc/set_cacc_enable
+      service_request:
+        value: False
+      buttons: [3]
+    increase_target_velocity:
+      type: service
+      interface_type: auna_msgs/srv/SetFloat64
+      service_name: /cacc/set_target_velocity
+      service_request:
+        value: 1.0
+      buttons: [5]
+    decrease_target_velocity:
+      type: service
+      interface_type: auna_msgs/srv/SetFloat64
+      service_name: /cacc/set_target_velocity
+      service_request:
+        value: 0.0
+      buttons: [7]
+    increase_extra_distance:
+      type: service
+      interface_type: auna_msgs/srv/SetFloat64
+      service_name: /cacc/set_extra_distance
+      service_request:
+        value: 1.0
+      buttons: [4]
+    decrease_extra_distance:
+      type: service
+      interface_type: auna_msgs/srv/SetFloat64
+      service_name: /cacc/set_extra_distance
+      service_request:
+        value: 0.0
+      buttons: [10]
+
+joy_teleop_g29:
+  ros__parameters:
+    walk:
+      type: topic
+      interface_type: geometry_msgs/msg/Twist
+      topic_name: cmd_vel
+      deadman_buttons: [5]
+      axis_mappings:
+        linear-x:
+          axis: 2
+          scale: 1.0
+          offset: 1.0
+        angular-z:
+          axis: 0
+          scale: 5.0
+          offset: 0.0
+
+joy_node:
+  ros__parameters:
+    deadzone: 0.00
+    autorepeat_rate: 100.0
+    dev: /dev/input/ps4_controller

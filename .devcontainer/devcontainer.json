@@ -1,0 +1,44 @@
+// For format details, see https://aka.ms/devcontainer.json.
+{
+	// Configure container
+	"name": "AuNa DEV",
+	"dockerComposeFile": [
+		"../docker-compose.yml"
+	],
+	"service": "development",
+	"runServices": [
+		"development"
+	],
+	// Configure container user
+	"remoteUser": "ubuntu",
+	// Configure workspace mount point
+	"workspaceFolder": "/home/ubuntu/workspace",
+	//Post-create commands
+	"initializeCommand": "docker compose down development --remove-orphans",
+	// Configure VS Code extensions
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode.cmake-tools",
+				"llvm-vs-code-extensions.vscode-clangd",
+				"xaver.clang-format",
+				"ms-python.python",
+				"donjayamanne.python-extension-pack",
+				"donjayamanne.python-environment-manager",
+				"ms-azuretools.vscode-docker",
+				"p1c2u.docker-compose",
+				"ms-python.autopep8",
+				"ms-vscode.cpptools",
+				"ms-vscode.cpptools-extension-pack",
+				"GitHub.copilot",
+				"GitHub.copilot-chat",
+				"mechatroner.rainbow-csv",
+				"rooveterinaryinc.roo-cline",
+				"zachflower.uncrustify"
+			]
+		}
+	},
+	"containerEnv": {
+		"SHELL": "/bin/bash"
+	}
+}

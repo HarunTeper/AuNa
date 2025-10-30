@@ -1,3 +1,0 @@
-DeltaReferencePosition event_position
-PathDeltaTime event_delta_time
-InformationQuality information_quality

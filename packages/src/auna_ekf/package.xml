@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>auna_ekf</name>
+  <version>1.0.0</version>
+  <description>AuNa EKF Localization Package using robot_localization.</description>
+  <maintainer email="harun.teper@tu-dortmund.de">Harun Teper</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+
+  <depend>rclpy</depend>
+  <exec_depend>robot_localization</exec_depend>
+  <exec_depend>launch_ros</exec_depend> <!-- For Node, PushRosNamespace etc. in launch files -->
+  <exec_depend>ament_index_python</exec_depend> <!-- For get_package_share_directory -->
+
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

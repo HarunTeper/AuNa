@@ -2,5 +2,21 @@ build
 install
 log
 **/compile_commands.json
-**/.vscode
 **/.cache
+
+.idea
+*venv
+
+**/__pycache__/*
+
+**/__pycache__/*
+
+**/__pycache__/
+
+# tf2 trees
+frames_*.pdf
+frames_*.gv
+
+tf2_trees
+traces
+lttng

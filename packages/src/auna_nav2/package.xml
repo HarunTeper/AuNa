@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>auna_nav2</name>
+  <version>1.0.0</version>
+  <description>AuNa Nav2 Package</description>
+  <maintainer email="harun.teper@tu-dortmund.de">Harun Teper</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>rclpy</depend>
+  <depend>navigation2</depend>
+  <depend>rviz2</depend>
+
+  <depend>nav2_bringup</depend>
+  <depend>nav2_bt_navigator</depend>
+  <depend>nav2_amcl</depend>
+  <depend>nav2_controller</depend>
+  <depend>nav2_planner</depend>
+  <!-- nav2_recoveries deprecated; replaced by nav2_behaviors -->
+  <depend>nav2_behaviors</depend>
+  <depend>nav2_waypoint_follower</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  
+  <export>
+    <build_type>ament_cmake</build_type>
+    <gazebo_ros gazebo_model_path="${prefix}/models"/>
+  </export>
+</package>

@@ -1,0 +1,74 @@
+name: ROS2 CI
+
+on:
+  push:
+    branches: [ main, humble ]
+  pull_request:
+    branches: [ main, humble ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        ros_distribution: [humble]
+    
+    container:
+      image: ros:${{ matrix.ros_distribution }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Setup ROS2 workspace
+      run: |
+        apt-get update
+        apt-get install -y python3-colcon-common-extensions
+        
+    - name: Install dependencies
+      shell: bash
+      run: |
+        cd packages
+        rosdep update --rosdistro ${{ matrix.ros_distribution }}
+        rosdep install --from-paths src --ignore-src -r -y
+    
+    - name: Build packages
+      shell: bash
+      run: |
+        cd packages
+        source /opt/ros/${{ matrix.ros_distribution }}/setup.bash
+        colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+    
+    - name: Run tests
+      shell: bash
+      run: |
+        cd packages
+        source /opt/ros/${{ matrix.ros_distribution }}/setup.bash
+        source install/setup.bash
+        colcon test --return-code-on-test-failure
+    
+    - name: Show test results
+      run: |
+        cd packages
+        colcon test-result --verbose
+      if: always()
+
+
+  docker-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Build Docker image
+      run: |
+        docker build -f dockerfiles/auna.dockerfile -t auna:test .
+    
+    - name: Test Docker container
+      shell: bash
+      run: |
+        docker run --rm auna:test bash -c "source /opt/ros/humble/setup.bash && colcon list"
