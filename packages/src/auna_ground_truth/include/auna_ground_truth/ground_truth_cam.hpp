@@ -21,7 +21,26 @@
 #ifndef AUNA_GROUND_TRUTH__GROUND_TRUTH_CAM_HPP_
 #define AUNA_GROUND_TRUTH__GROUND_TRUTH_CAM_HPP_
 
+// Include standard library headers before ETSI ITS headers to avoid namespace issues
+#include <array>
+#include <cmath>
+#include <limits>
+#include <map>
+#include <stdexcept>
 #include <string>
+#include <tuple>
+
+// Workaround for etsi_its_msgs_utils namespace pollution
+// The library includes standard headers inside the etsi_its_cam_msgs::access namespace,
+// which causes std:: lookups to fail. We create a nested std namespace and pull in
+// all of ::std to fix this.
+namespace etsi_its_cam_msgs {
+namespace access {
+  namespace std {
+    using namespace ::std;
+  }
+}
+}
 
 #include "etsi_its_cam_msgs/msg/cam.hpp"
 #include "etsi_its_msgs_utils/cam_access.hpp"  // access functions

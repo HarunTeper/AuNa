@@ -21,12 +21,29 @@
 #ifndef AUNA_CACC__CACC_CONTROLLER_HPP_
 #define AUNA_CACC__CACC_CONTROLLER_HPP_
 
+#include <array>
 #include <cmath>
 #include <fstream>
 #include <iomanip>  // for std::setprecision
+#include <limits>
+#include <map>
 #include <memory>   // for std::shared_ptr
+#include <stdexcept>
 #include <string>   // for std::string
+#include <tuple>
 #include <vector>   // for std::vector
+
+// Workaround for etsi_its_msgs_utils namespace pollution
+// The library includes standard headers inside the etsi_its_cam_msgs::access namespace,
+// which causes std:: lookups to fail. We create a nested std namespace and pull in
+// all of ::std to fix this.
+namespace etsi_its_cam_msgs {
+namespace access {
+  namespace std {
+    using namespace ::std;
+  }
+}
+}
 
 #include "auna_msgs/srv/set_bool.hpp"
 #include "auna_msgs/srv/set_float64.hpp"
