@@ -612,13 +612,6 @@ services:
       ]
     profiles: ["zenohd", "development"]
 
-  linting:
-    <<: *dev-base
-    image: development:latest
-    container_name: linting
-    command: ["/bin/bash", "/home/ubuntu/workspace/scripts/fix_all_linting.sh"]
-    profiles: ["linting"]
-
   test:
     <<: *dev-base
     image: development:latest
