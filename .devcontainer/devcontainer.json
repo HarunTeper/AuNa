@@ -13,8 +13,9 @@
 	"remoteUser": "ubuntu",
 	// Configure workspace mount point
 	"workspaceFolder": "/home/ubuntu/workspace",
-	//Post-create commands
-	"initializeCommand": "docker compose down development --remove-orphans",
+	//Initialize command:
+	"initializeCommand": "docker compose down --remove-orphans",
+	"features": {},
 	// Configure VS Code extensions
 	"customizations": {
 		"vscode": {
@@ -32,7 +33,8 @@
 				"ms-vscode.cpptools-extension-pack",
 				"GitHub.copilot",
 				"GitHub.copilot-chat",
-				"mechatroner.rainbow-csv"
+				"mechatroner.rainbow-csv",
+				"zachflower.uncrustify"
 			]
 		}
 	},
