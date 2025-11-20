@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------
 
 # Build arguments
-ARG ROS_DISTRO
+ARG ROS_DISTRO=jazzy
 ARG PIP_BREAK_SYSTEM_PACKAGES
 ARG HOST_UID
 ARG HOST_GID
