@@ -88,7 +88,11 @@ def include_launch_description(context: LaunchContext):
         z_pose = 0.01
 
     # Path to the custom behavior tree in auna_common
-    bt_xml_path = os.path.join(auna_common_path, 'behavior_trees', 'navigate_through_poses_w_replanning_and_recovery.xml')
+    bt_xml_path = os.path.join(
+        auna_common_path,
+        'behavior_trees',
+        'navigate_through_poses_w_replanning_and_recovery.xml'
+    )
 
     # Create parameter substitutions for initial pose and nav2 parameters
     param_substitutions = {
