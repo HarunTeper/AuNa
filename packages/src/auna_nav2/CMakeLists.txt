@@ -18,7 +18,6 @@ find_package(rclpy REQUIRED)
 
 # Install directories
 install(DIRECTORY
-  behavior_trees
   launch
   DESTINATION share/${PROJECT_NAME}
 )
