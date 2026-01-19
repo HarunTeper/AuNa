@@ -25,13 +25,37 @@ WaypointPublisher::WaypointPublisher()
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_)
 {
+  // Declare and get parameters from config file
+  this->declare_parameter<std::string>("namespace", "");
+  this->get_parameter<std::string>("namespace", namespace_);
+  this->declare_parameter<std::string>("waypoint_file", "");
+  this->get_parameter<std::string>("waypoint_file", waypoint_file_);
+  this->declare_parameter<int>("number_of_waypoints", 5);
+  this->get_parameter<int>("number_of_waypoints", number_of_waypoints_);
+  this->declare_parameter<int>("waypoint_refresh_threshold", 2);
+  this->get_parameter<int>("waypoint_refresh_threshold", waypoint_refresh_threshold_);
+  this->declare_parameter<int>("timer_period_ms", 1000);
+  int timer_period_ms;
+  this->get_parameter<int>("timer_period_ms", timer_period_ms);
+  this->declare_parameter<int>("waypoint_array_publish_period_s", 5);
+  this->get_parameter<int>("waypoint_array_publish_period_s", waypoint_array_publish_period_s_);
+  this->declare_parameter<int>("waypoint_advance_offset", 1);
+  this->get_parameter<int>("waypoint_advance_offset", waypoint_advance_offset_);
+
+  RCLCPP_INFO(
+    this->get_logger(),
+    "Parameters loaded: number_of_waypoints=%d, waypoint_refresh_threshold=%d, "
+    "timer_period_ms=%d, waypoint_array_publish_period_s=%d, waypoint_advance_offset=%d",
+    number_of_waypoints_, waypoint_refresh_threshold_, timer_period_ms,
+    waypoint_array_publish_period_s_, waypoint_advance_offset_);
+
   // Publisher for the next waypoint being navigated to
   next_waypoint_publisher_ =
     this->create_publisher<geometry_msgs::msg::PoseStamped>(
     "next_waypoint",
     10);
   timer_ = this->create_wall_timer(
-    std::chrono::milliseconds(1000),
+    std::chrono::milliseconds(timer_period_ms),
     [this]() {timer_callback();});
 
   this->client_ptr_ = rclcpp_action::create_client<NavigateThroughPoses>(
@@ -44,11 +68,6 @@ WaypointPublisher::WaypointPublisher()
     this->create_publisher<geometry_msgs::msg::PoseArray>(
     "nav2_waypoints",
     qos_profile);
-
-  this->declare_parameter<std::string>("namespace", "");
-  this->get_parameter<std::string>("namespace", namespace_);
-  this->declare_parameter<std::string>("waypoint_file", "");
-  this->get_parameter<std::string>("waypoint_file", waypoint_file_);
 
   try {
     YAML::Node waypoints_yaml = YAML::LoadFile(waypoint_file_);
@@ -139,7 +158,8 @@ WaypointPublisher::WaypointPublisher()
   // Create a timer to periodically republish the waypoint array for
   // visualization
   waypoint_array_timer_ = this->create_wall_timer(
-    std::chrono::seconds(5), [this]() {publish_waypoint_array();});
+    std::chrono::seconds(waypoint_array_publish_period_s_),
+    [this]() {publish_waypoint_array();});
 
   // to start from zero at first iteration
   current_pose_index_ = -number_of_waypoints_;
@@ -219,6 +239,17 @@ void WaypointPublisher::publish_waypoints()
       poses_[current_pose_index_].pose.position.x,
       poses_[current_pose_index_].pose.position.y);
   }
+
+  // Apply waypoint advance offset to skip ahead (prevents targeting waypoint behind robot)
+  int original_index = current_pose_index_;
+  current_pose_index_ = (current_pose_index_ + waypoint_advance_offset_) %
+    static_cast<int>(poses_.size());
+  RCLCPP_DEBUG(
+    this->get_logger(),
+    "Applied waypoint_advance_offset=%d: index %d -> %d (x=%.2f, y=%.2f)",
+    waypoint_advance_offset_, original_index, current_pose_index_,
+    poses_[current_pose_index_].pose.position.x,
+    poses_[current_pose_index_].pose.position.y);
 
   // Publish the next waypoint being navigated to
   if (!poses_.empty() && current_pose_index_ >= 0 &&

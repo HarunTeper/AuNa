@@ -1,0 +1,12 @@
+/**/nav2_waypoint_publisher:
+  ros__parameters:
+    # Number of waypoints to send in each navigation goal
+    number_of_waypoints: 5
+    # Threshold for remaining waypoints before refreshing the goal
+    waypoint_refresh_threshold: 2
+    # Timer period in milliseconds for checking waypoint refresh
+    timer_period_ms: 1000
+    # Period in seconds for republishing waypoint array for visualization
+    waypoint_array_publish_period_s: 5
+    # Offset added to current waypoint index when advancing (1 = next waypoint)
+    waypoint_advance_offset: 1

@@ -46,12 +46,21 @@ def include_launch_description(context: LaunchContext):
         map_name,
         'nav2_waypoints.yaml'
     )
+    param_file = os.path.join(
+        auna_common_path,
+        'config',
+        'waypoints',
+        'params.yaml'
+    )
 
     nav2_waypoint_publisher_node = Node(
         package='auna_waypoints',
         executable='nav2_waypoint_publisher',
         name='nav2_waypoint_publisher',
-        parameters=[{'waypoint_file': waypoints_file}],
+        parameters=[
+            param_file,
+            {'waypoint_file': waypoints_file}
+        ],
         output='screen',
         remappings=[
             ('/tf', 'tf'),

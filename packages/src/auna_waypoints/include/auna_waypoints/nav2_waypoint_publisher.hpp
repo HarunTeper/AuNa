@@ -98,8 +98,12 @@ private:
   int current_pose_index_ = 0;
   int remaining_number_of_poses_ = 0;
   bool remaining_decreased_ = false;
-  int number_of_waypoints_ = 5;
-  int waypoint_refresh_threshold_ = 2;
+
+  // configurable parameters (loaded from config file)
+  int number_of_waypoints_;
+  int waypoint_refresh_threshold_;
+  int waypoint_advance_offset_;
+  int waypoint_array_publish_period_s_;
 };
 
 #endif  // AUNA_WAYPOINTS__NAV2_WAYPOINT_PUBLISHER_HPP_
