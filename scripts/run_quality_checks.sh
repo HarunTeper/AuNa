@@ -88,6 +88,11 @@ echo "Step 3/3: Running Build and Tests"
 echo "=========================================="
 echo ""
 
+echo "Cleaning build artifacts to ensure fresh build..."
+rm -rf "$WORKSPACE/packages/build" "$WORKSPACE/packages/install" "$WORKSPACE/packages/log"
+echo "✅ Cleaned build, install, and log directories"
+echo ""
+
 echo "Running build and tests via Docker Compose..."
 "${COMPOSE_CMD[@]}" --profile test up test
 

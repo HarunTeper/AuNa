@@ -51,9 +51,9 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-# Create non-root user, modify if one already exists
-RUN (getent group ubuntu && groupmod -o -g ${HOST_GID} ubuntu) || groupadd -o -g ${HOST_GID} ubuntu \
-    && (getent passwd ubuntu && usermod -o -u ${HOST_UID} -g ${HOST_GID} ubuntu) || useradd -m -o -u ${HOST_UID} -g ${HOST_GID} -s /bin/bash ubuntu \
+# Create non-root user for security
+RUN groupadd -g ${HOST_GID} ubuntu 2>/dev/null || groupmod -g ${HOST_GID} ubuntu \
+    && useradd -m -u ${HOST_UID} -g ${HOST_GID} -s /bin/bash ubuntu 2>/dev/null || usermod -u ${HOST_UID} -g ${HOST_GID} -s /bin/bash ubuntu \
     && echo 'ubuntu ALL=(root) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu \
     && chmod 0440 /etc/sudoers.d/ubuntu \
     && usermod -aG sudo ubuntu \
@@ -74,16 +74,12 @@ RUN if [ "${ROS_DISTRO}" = "humble" ]; then \
     && git clone https://gitlab.com/ros-tracing/ros2_tracing.git -b ${ROS_DISTRO} \
     && cd .. \
     && bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash && colcon build"; \
-    else \
-    mkdir -p /home/ubuntu/tracing/install; \
     fi
 
 # Enhanced bash configuration
 RUN echo 'PS1="\\[\\033[32m\\]\\u\\[\\033[0m\\] ➜ \\[\\033[34m\\]\\w\\[\\033[31m\\]\\$(__git_ps1 \\" (%s)\\")\\[\\033[0m\\] $ "' >> ~/.bashrc \
     && echo "source /opt/ros/\${ROS_DISTRO}/setup.bash" >> ~/.bashrc \
-    && if [ "${ROS_DISTRO}" = "humble" ]; then \
-    echo 'source /home/ubuntu/tracing/install/setup.bash' >> ~/.bashrc; \
-    fi \
+    && echo '[ -f /home/ubuntu/tracing/install/setup.bash ] && source /home/ubuntu/tracing/install/setup.bash' >> ~/.bashrc \
     && echo 'export RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION}' >> ~/.bashrc
 
 #------------------------------------------------------------------------------
@@ -110,23 +106,56 @@ USER ubuntu
 # Update rosdep database
 RUN sudo apt-get update && rosdep update
 
-# Install ROS dependencies
-RUN if [ -d "/tmp/packages" ]; then \
-    echo "Installing ROS dependencies..."; \
+# Install ROS dependencies for specified packages only
+RUN if [ -d "/tmp/packages" ] && [ -n "${PACKAGE_NAMES}" ]; then \
+    echo "Installing ROS dependencies for packages: ${PACKAGE_NAMES}"; \
+    for pkg in ${PACKAGE_NAMES}; do \
+    find /tmp/packages/src -type d -name "$pkg" | while read pkg_dir; do \
+    if [ -f "$pkg_dir/package.xml" ]; then \
+    echo "Installing dependencies for: $pkg"; \
+    rosdep install --from-paths "$pkg_dir" --ignore-src -r -y \
+    || echo "Warning: Some rosdep installations failed for $pkg"; \
+    fi; \
+    done; \
+    done; \
+    elif [ -d "/tmp/packages" ]; then \
+    echo "No packages specified, installing all ROS dependencies..."; \
     rosdep install --from-paths /tmp/packages --ignore-src -r -y \
     || echo "Warning: Some rosdep installations failed"; \
     fi
 
-# Install Python dependencies
-RUN if [ -d "/tmp/packages" ]; then \
-    echo "Installing Python requirements..."; \
+# Install Python dependencies for specified packages only
+RUN if [ -d "/tmp/packages" ] && [ -n "${PACKAGE_NAMES}" ]; then \
+    echo "Installing Python requirements for packages: ${PACKAGE_NAMES}"; \
+    for pkg in ${PACKAGE_NAMES}; do \
+    find /tmp/packages/src -type d -name "$pkg" | while read pkg_dir; do \
+    if [ -f "$pkg_dir/requirements.txt" ]; then \
+    echo "Installing requirements for: $pkg"; \
+    pip install --no-cache-dir -r "$pkg_dir/requirements.txt" \
+    || echo "Warning: pip install failed for $pkg"; \
+    fi; \
+    done; \
+    done; \
+    elif [ -d "/tmp/packages" ]; then \
+    echo "No packages specified, installing all Python requirements..."; \
     find /tmp/packages -name "requirements.txt" -exec pip install --no-cache-dir -r {} \; \
     || echo "Warning: Some pip installations failed"; \
     fi
 
-# Install Python packages (editable installs)
-RUN if [ -d "/tmp/packages" ]; then \
-    echo "Installing Python packages..."; \
+# Install Python packages (editable installs) for specified packages only
+RUN if [ -d "/tmp/packages" ] && [ -n "${PACKAGE_NAMES}" ]; then \
+    echo "Installing Python packages for: ${PACKAGE_NAMES}"; \
+    for pkg in ${PACKAGE_NAMES}; do \
+    find /tmp/packages/src -type d -name "$pkg" | while read pkg_dir; do \
+    if [ -f "$pkg_dir/pyproject.toml" ]; then \
+    echo "Installing package: $pkg"; \
+    pip install --no-cache-dir -e "$pkg_dir" \
+    || echo "Warning: pip install failed for $pkg"; \
+    fi; \
+    done; \
+    done; \
+    elif [ -d "/tmp/packages" ]; then \
+    echo "No packages specified, installing all Python packages..."; \
     find /tmp/packages -name "pyproject.toml" -exec dirname {} \; | while read dir; do \
     pip install --no-cache-dir -e "$dir" || echo "Warning: pip install failed for $dir"; \
     done; \
@@ -180,9 +209,7 @@ RUN sudo chown -R ubuntu:ubuntu /home/ubuntu/workspace \
     echo "Building packages..."; \
     cd /home/ubuntu/workspace/packages && \
     bash -c "source /opt/ros/\${ROS_DISTRO}/setup.bash && \
-    if [ \"\${ROS_DISTRO}\" = \"humble\" ]; then \
-    source /home/ubuntu/tracing/install/setup.bash 2>/dev/null || true; \
-    fi && \
+    source /home/ubuntu/tracing/install/setup.bash 2>/dev/null || true && \
     colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release"; \
     else \
     echo "No packages to build, skipping build step"; \
