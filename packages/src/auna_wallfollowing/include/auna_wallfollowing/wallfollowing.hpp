@@ -43,6 +43,10 @@ private:
   // Control variables
   double prev_error_;
   double integral_;
+  // Timestamp of the previous control update, used to compute the elapsed
+  // time (dt) between successive scan callbacks. Zero until the first update.
+  rclcpp::Time prev_time_;
+  bool prev_time_valid_;
 
   // Controller parameters
   double desired_distance_;
@@ -51,6 +55,16 @@ private:
   double min_velocity_;
   double max_velocity_;
   double error_threshold_;
+
+  // Bounds on the measured control period. Samples outside this range are
+  // treated as unreliable (dropped scans, debugger pauses, bag seeks) and the
+  // rate-dependent PID terms are skipped for that cycle.
+  double min_dt_;
+  double max_dt_;
+
+  // Clamp on the magnitude of the integral term to prevent windup once the
+  // integral is scaled by dt.
+  double max_integral_;
 
   // Angle parameters for wall detection
   double angle_a_;
@@ -88,10 +102,18 @@ private:
 
   /**
    * @brief PID control for wall following
+   *
+   * The integral and derivative terms are scaled by the measured elapsed time
+   * between consecutive scan callbacks, so that the tuned ki_ and kd_ gains
+   * keep their physical meaning (1/s and s respectively) independently of the
+   * LiDAR callback rate.
+   *
    * @param error Error from desired wall distance
    * @param velocity Base velocity
+   * @param dt Elapsed time since the previous control update, in seconds.
+   *           Values <= 0 disable the integral and derivative contributions.
    */
-  void pid_control(double error, double velocity);
+  void pid_control(double error, double velocity, double dt);
 
   /**
    * @brief Callback for laser scan messages
