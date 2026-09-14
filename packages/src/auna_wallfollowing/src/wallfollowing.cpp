@@ -52,6 +52,12 @@ void WallFollow::declare_parameters()
   this->declare_parameter("max_velocity", 2.0);
   this->declare_parameter("error_threshold", 1.0);
 
+  // Bounds used to sanity-check the measured control period, and the
+  // anti-windup clamp on the integral term.
+  this->declare_parameter("min_dt", 0.001);
+  this->declare_parameter("max_dt", 0.5);
+  this->declare_parameter("max_integral", 1.0);
+
   // Declare angle parameters
   this->declare_parameter("angle_a", M_PI / 4);
   this->declare_parameter("angle_b", M_PI / 2);
@@ -73,6 +79,10 @@ void WallFollow::declare_parameters()
   max_velocity_ = this->get_parameter("max_velocity").as_double();
   error_threshold_ = this->get_parameter("error_threshold").as_double();
 
+  min_dt_ = this->get_parameter("min_dt").as_double();
+  max_dt_ = this->get_parameter("max_dt").as_double();
+  max_integral_ = this->get_parameter("max_integral").as_double();
+
   angle_a_ = this->get_parameter("angle_a").as_double();
   angle_b_ = this->get_parameter("angle_b").as_double();
   lookahead_distance_ = this->get_parameter("lookahead_distance").as_double();
@@ -83,6 +93,8 @@ void WallFollow::declare_parameters()
   // Initialize control variables
   prev_error_ = 0.0;
   integral_ = 0.0;
+  prev_time_ = rclcpp::Time(0, 0, this->get_clock()->get_clock_type());
+  prev_time_valid_ = false;
 }
 
 double WallFollow::get_range(
@@ -128,10 +140,28 @@ double WallFollow::get_error(
   return desired_distance - Dt1;
 }
 
-void WallFollow::pid_control(double error, double velocity)
+void WallFollow::pid_control(double error, double velocity, double dt)
 {
-  double derivative = error - prev_error_;
-  integral_ += error;
+  // The proportional term is rate-independent and is always applied. The
+  // integral and derivative terms are only updated when a trustworthy elapsed
+  // time is available: on the first callback, and whenever the measured period
+  // is implausible, dt is signalled as <= 0 and those terms are held.
+  double derivative = 0.0;
+
+  if (dt > 0.0) {
+    derivative = (error - prev_error_) / dt;
+    integral_ += error * dt;
+
+    // Anti-windup: bound the accumulated integral so that a long-lived error
+    // (for example while the wall is out of range) cannot saturate the output
+    // for an extended period after the error is corrected.
+    if (integral_ > max_integral_) {
+      integral_ = max_integral_;
+    }
+    if (integral_ < -max_integral_) {
+      integral_ = -max_integral_;
+    }
+  }
 
   double angle = kp_ * error + kd_ * derivative + ki_ * integral_;
 
@@ -164,7 +194,33 @@ void WallFollow::scan_callback(
 {
   double error = get_error(scan_msg, desired_distance_);
 
-  pid_control(error, velocity_);
+  // Measure the actual elapsed time between control updates rather than
+  // assuming a fixed callback rate. this->now() follows use_sim_time, so the
+  // controller behaves consistently in Gazebo and on hardware.
+  const rclcpp::Time now = this->now();
+  double dt = -1.0;
+
+  if (prev_time_valid_) {
+    const double measured = (now - prev_time_).seconds();
+
+    if (measured >= min_dt_ && measured <= max_dt_) {
+      dt = measured;
+    } else {
+      // Implausible period: a dropped or duplicated scan, a paused simulation,
+      // or a jump in the clock source. Skip the rate-dependent terms for this
+      // cycle instead of injecting a large derivative spike.
+      RCLCPP_WARN_THROTTLE(
+        this->get_logger(), *this->get_clock(), 5000,
+        "Measured control period %.6f s outside [%.6f, %.6f] s; "
+        "skipping integral and derivative update for this cycle.",
+        measured, min_dt_, max_dt_);
+    }
+  }
+
+  prev_time_ = now;
+  prev_time_valid_ = true;
+
+  pid_control(error, velocity_, dt);
 }
 
 double WallFollow::radiansToDegree(const double & angleInRadians)

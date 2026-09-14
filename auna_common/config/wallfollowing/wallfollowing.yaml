@@ -12,6 +12,14 @@
     min_velocity: 1.0
     max_velocity: 2.0
     error_threshold: 1.0
+
+    # Elapsed-time (dt) handling for the integral and derivative terms.
+    # Measured control periods outside [min_dt, max_dt] seconds are treated as
+    # unreliable and the rate-dependent terms are held for that cycle.
+    min_dt: 0.001
+    max_dt: 0.5
+    # Anti-windup clamp on the accumulated integral term.
+    max_integral: 1.0
     
     # Wall detection angles (in radians)
     angle_a: 0.7854  # π/4 (45 degrees)
