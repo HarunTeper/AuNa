@@ -1,0 +1,57 @@
+cff-version: 1.2.0
+title: "AuNa: Autonomous Navigation System Simulator"
+message: >-
+  If you use AuNa in your research, please cite both the software
+  repository and the paper describing the framework.
+type: software
+authors:
+  - family-names: Teper
+    given-names: Harun
+    email: harun.teper@tu-dortmund.de
+    affiliation: "TU Dortmund University"
+repository-code: "https://github.com/HarunTeper/AuNa"
+abstract: >-
+  AuNa is an open-source ROS 2 framework and simulation testbed for
+  reproducible autonomous-navigation and multi-robot experiments. It
+  provides Gazebo-based multi-robot simulation, Nav2 integration,
+  a Cooperative Adaptive Cruise Control (CACC) controller for platooning,
+  wall following, EKF-based localization, ETSI ITS-G5 / V2X message
+  handling with optional OMNeT++ network simulation, and a Docker Compose
+  deployment for running complete cooperative-driving scenarios.
+keywords:
+  - ROS 2
+  - robotics
+  - autonomous driving
+  - multi-robot systems
+  - cooperative adaptive cruise control
+  - platooning
+  - Gazebo
+  - simulation
+  - V2X
+license: MIT
+preferred-citation:
+  type: article
+  title: >-
+    AuNa: Modularly Integrated Simulation Framework for Cooperative
+    Autonomous Navigation
+  authors:
+    - family-names: Teper
+      given-names: Harun
+    - family-names: Bayuwindra
+      given-names: Anggera
+    - family-names: Riebl
+      given-names: Raphael
+    - family-names: Severino
+      given-names: Ricardo
+    - family-names: Chen
+      given-names: Jian-Jia
+    - family-names: Chen
+      given-names: Kuan-Hsun
+  year: 2022
+  month: 7
+  journal: "arXiv"
+  doi: 10.48550/arXiv.2207.05544
+  url: "https://arxiv.org/abs/2207.05544"
+  notes: >-
+    Preprint (arXiv:2207.05544). Replace this entry if the work is
+    published in a peer-reviewed venue.
