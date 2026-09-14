@@ -27,7 +27,6 @@ AuNa/
 ├── packages/src/              # ROS2 packages source code
 │   ├── auna_cacc/            # Cooperative Adaptive Cruise Control
 │   ├── auna_comm/            # V2X communication protocols
-│   ├── auna_common/          # Common utilities and libraries
 │   ├── auna_control/         # Input multiplexing and control
 │   ├── auna_ekf/             # Extended Kalman Filter for localization
 │   ├── auna_f110/            # F1/10 platform-specific implementations
@@ -42,9 +41,10 @@ AuNa/
 │   ├── auna_tf/              # Transform frame management
 │   ├── auna_wallfollowing/   # Wall-following algorithms using LIDAR
 │   └── auna_waypoints/       # Waypoint management and processing
+├── auna_common/              # Shared config, maps, worlds, waypoints, RViz
+│                             #   (NOT a ROS 2 package; mounted read-only)
 ├── dockerfiles/              # Docker configuration
-├── tf2_trees/                # TF2 transform tree documentation
-├── traces/                   # Simulation and execution traces
+├── scripts/                  # Linting, copyright and quality-check scripts
 └── .github/                  # GitHub workflows and documentation
 ```
 
@@ -250,12 +250,14 @@ timer_ = this->create_wall_timer(
 - Manages communication between multiple robots
 - Supports network simulation integration with OMNeT++
 
-### auna_common (Common Utilities)
+### auna_common (Shared Configuration and Assets)
 
-- Shared utilities and helper functions across packages
-- Common data structures and algorithms
-- Utility classes for mathematical operations and transformations
-- Shared constants and configuration helpers
+- **Not a ROS 2 package**: no `package.xml`, not built by colcon
+- Holds node parameter files (`config/`), maps, worlds, waypoints, RViz
+  layouts and Nav2 behavior trees
+- Mounted into containers as a read-only volume, so parameter changes take
+  effect without rebuilding
+- Must not be added to the `*_PACKAGES` variables in `.env`
 
 ### auna_control (Control Multiplexer)
 

@@ -120,8 +120,10 @@ Gazebo world ─────┘                │
 | `auna_f110` | F1TENTH-class physical platform integration |
 | `auna_template` | Template package for new development |
 
-Shared assets live in `auna_common/` (worlds, maps, waypoints, RViz layouts,
-behavior trees, and per-component parameter files under `config/`).
+`auna_common/` is not a ROS 2 package. It holds the worlds, maps, waypoints,
+RViz layouts, behavior trees, and per-component parameter files under `config/`,
+and is mounted into the containers as a read-only volume — so changing a
+parameter takes effect on the next run without rebuilding anything.
 
 ## Supported configurations
 
@@ -237,9 +239,10 @@ templates. Pull requests should target the `main` branch.
 
 ## License
 
-AuNa is released under the [MIT License](LICENSE). All 16 ROS 2 packages in
-`packages/src/` declare `MIT` in their `package.xml`, and first-party source
-files carry MIT headers.
+AuNa is released under the [MIT License](LICENSE). This applies uniformly to
+the whole repository: all 16 ROS 2 packages in `packages/src/` declare `MIT` in
+their `package.xml`, and every first-party source file carries an MIT header.
+No third-party code is vendored here.
 
 AuNa depends on third-party software that is not vendored in this repository and
 remains under its own license, including ROS 2, Navigation2, Gazebo, and — when

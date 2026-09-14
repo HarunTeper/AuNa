@@ -1,19 +1,27 @@
 # AuNa Common Data
 
-This directory contains centralized configuration files, maps, waypoints, worlds, and visualization configurations for the AuNa autonomous vehicle framework. By centralizing these resources, we avoid rebuilding ROS2 packages when only parameters or data files change.
+This directory contains centralized configuration files, maps, waypoints, worlds, and visualization configurations for the AuNa autonomous vehicle framework. By centralizing these resources, we avoid rebuilding ROS 2 packages when only parameters or data files change.
+
+**This is not a ROS 2 package.** It has no `package.xml` and is not built by
+colcon. It is mounted into the containers as a read-only volume (see below), so
+it must not be listed in the `*_PACKAGES` variables in `.env` — those select
+ROS 2 packages under `packages/src/` for the Docker build.
 
 ## Directory Structure
 
 ```
 auna_common/
+├── behavior_trees/              # Nav2 behavior tree XML definitions
 ├── config/                      # Configuration files
 │   ├── cacc/                   # CACC controller parameters
 │   ├── control/                # Control multiplexer parameters
 │   ├── ekf/                    # Extended Kalman Filter parameters
-│   ├── f110/                   # F1/10 platform-specific configs
+│   ├── f110/                   # F1TENTH-class platform-specific configs
+│   ├── model_params/           # Robot model parameters
 │   ├── nav2/                   # Navigation2 stack parameters
 │   ├── teleoperation/          # Teleoperation parameters
 │   ├── wallfollowing/          # Wall following algorithm parameters
+│   ├── waypoints/              # Waypoint publisher parameters
 │   └── world_params/           # World-specific spawn and configuration
 ├── maps/                        # Map files for navigation
 │   ├── arena/
@@ -22,7 +30,7 @@ auna_common/
 │   ├── arena/
 │   └── racetrack_decorated/
 ├── worlds/                      # Gazebo world files
-└── rviz/                       # RViz visualization configurations
+└── rviz/                        # RViz visualization configurations
 ```
 
 ## Usage in Docker
@@ -47,7 +55,7 @@ volumes:
 - `config/ekf/ekf_global.yaml` - Global EKF localization parameters
 - `config/ekf/ekf_local.yaml` - Local EKF localization parameters
 
-### F1/10 Platform
+### F1TENTH-class Platform
 - `config/f110/lidar_params.yaml` - LIDAR sensor configuration
 - `config/f110/ukf.yaml` - Unscented Kalman Filter parameters
 - `config/f110/teleop_joy.yaml` - Joystick teleoperation configuration
